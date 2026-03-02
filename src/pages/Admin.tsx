@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from "@/components/AppHeader";
@@ -58,6 +58,31 @@ const Admin = () => {
     setDialogOpen(true);
   };
 
+  const [syncing, setSyncing] = useState(false);
+
+  const handleBulkSync = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("bulk-sync-stripe");
+      if (error) throw error;
+      const result = data as { synced: number; errors: { name: string; error: string }[] };
+      if (result.errors?.length > 0) {
+        toast({
+          title: `${result.synced} sincronizados, ${result.errors.length} erros`,
+          description: result.errors.map((e) => e.name).join(", "),
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: `${result.synced} produtos sincronizados com Stripe` });
+      }
+      fetchProducts();
+    } catch (err: any) {
+      toast({ title: "Erro na sincronização", description: err.message, variant: "destructive" });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleToggleActive = async (product: DbProduct) => {
     const newActive = !product.active;
     const { error } = await supabase
@@ -93,10 +118,16 @@ const Admin = () => {
       <main className="max-w-5xl mx-auto px-5 py-10">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Produtos</h1>
-          <Button onClick={handleNew}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Produto
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleBulkSync} disabled={syncing}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Sincronizando..." : "Sincronizar Stripe"}
+            </Button>
+            <Button onClick={handleNew}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Produto
+            </Button>
+          </div>
         </div>
 
         <ProductsTable

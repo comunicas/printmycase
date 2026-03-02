@@ -50,23 +50,49 @@ Deno.serve(async (req) => {
       );
     }
 
-    const PRICE_CENTS = 6990;
+    // Fetch product from DB
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const { data: product, error: productError } = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .eq("id", product_id)
+      .single();
+
+    if (productError || !product) {
+      return new Response(
+        JSON.stringify({ error: "Product not found" }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const origin =
       req.headers.get("origin") || req.headers.get("referer") || "https://artiscase-v2.lovable.app";
 
-    // Create Stripe Checkout Session via REST API
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
 
     const params = new URLSearchParams();
     params.append("payment_method_types[0]", "card");
     params.append("mode", "payment");
-    params.append("line_items[0][price_data][currency]", "brl");
-    params.append("line_items[0][price_data][unit_amount]", String(PRICE_CENTS));
-    params.append("line_items[0][price_data][product_data][name]", `Capa Personalizada - ${product_id}`);
-    params.append("line_items[0][price_data][product_data][description]", "Capa de celular personalizada com sua imagem");
+
+    // Use stripe_price_id if available, otherwise fallback to price_data
+    if (product.stripe_price_id) {
+      params.append("line_items[0][price]", product.stripe_price_id);
+    } else {
+      params.append("line_items[0][price_data][currency]", "brl");
+      params.append("line_items[0][price_data][unit_amount]", String(product.price_cents));
+      params.append("line_items[0][price_data][product_data][name]", `Capa Personalizada - ${product.name}`);
+      params.append("line_items[0][price_data][product_data][description]", product.description || "Capa de celular personalizada");
+    }
     params.append("line_items[0][quantity]", "1");
     params.append("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
-    params.append("cancel_url", `${origin}/customize/${product_id}`);
+    params.append("cancel_url", `${origin}/customize/${product.slug}`);
     params.append("metadata[user_id]", userId);
     params.append("metadata[product_id]", product_id);
 
@@ -86,16 +112,10 @@ Deno.serve(async (req) => {
       throw new Error(session.error?.message || "Stripe API error");
     }
 
-    // Insert order with service role to bypass RLS
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
     await supabaseAdmin.from("orders").insert({
       user_id: userId,
       product_id,
-      total_cents: PRICE_CENTS,
+      total_cents: product.price_cents,
       stripe_session_id: session.id,
       customization_data: {
         ...customization_data,
