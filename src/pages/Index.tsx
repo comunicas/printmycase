@@ -20,6 +20,24 @@ const Index = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleSelectFilter = (filterId: string | null) => {
+    setActiveFilter(filterId);
+    if (filterId) {
+      setBrightness(0);
+      setContrast(0);
+    }
+  };
+
+  const handleBrightnessChange = (v: number) => {
+    setBrightness(v);
+    if (activeFilter) setActiveFilter(null);
+  };
+
+  const handleContrastChange = (v: number) => {
+    setContrast(v);
+    if (activeFilter) setActiveFilter(null);
+  };
+
   // Get extra CSS filter from active preset
   const activeFilterObj = filters.find((f) => f.id === activeFilter);
   const extraFilter = activeFilterObj?.cssFilter ?? undefined;
@@ -71,15 +89,15 @@ const Index = () => {
                 contrast={contrast}
                 onScaleChange={setScale}
                 onRotationChange={setRotation}
-                onBrightnessChange={setBrightness}
-                onContrastChange={setContrast}
+                onBrightnessChange={handleBrightnessChange}
+                onContrastChange={handleContrastChange}
               />
             </TabsContent>
             <TabsContent value="filters">
               <FilterPresets
                 image={image}
                 activeFilter={activeFilter}
-                onSelectFilter={setActiveFilter}
+                onSelectFilter={handleSelectFilter}
               />
             </TabsContent>
           </Tabs>
