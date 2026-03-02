@@ -1,32 +1,88 @@
 
 
-# Fix Image Sizing and Hover in PhonePreview
+# Pagina de Produto - Template
 
-## Bug 1: Image oversized/cropped incorrectly (ROOT CAUSE)
+## Visao Geral
 
-The image layer div is intentionally 150% of the phone frame to prevent gaps during rotation. But `backgroundSize: ${scale}%` is calculated relative to this oversized div, not the phone frame.
+Criar uma pagina de produto (`/product/:id`) que serve como template para todos os produtos da loja. A pagina atual do editor de customizacao (`/customize/:id`) sera acessada a partir desta pagina via botao "Customizar".
 
-At `scale=100`:
-- Oversized div = 150% of phone frame
-- `backgroundSize: 100%` = image fills 100% of oversized div = **150% of phone frame**
-- Result: image appears zoomed in / cropped too tight
+## Estrutura da Pagina
 
-**Fix**: Normalize `backgroundSize` by the oversize factor:
+```text
++-- Header (mesmo da Index, com botao voltar funcional) -----+
+|  <- Voltar    Case Studio                          Ajuda    |
++-------------------------------------------------------------+
+|                                                             |
+|  +-- Galeria de Imagens --+  +-- Info do Produto ---------+ |
+|  |                        |  |                             | |
+|  |   [Imagem principal]   |  |  Capa iPhone 15 Pro Max    | |
+|  |                        |  |  ★★★★★ (42 avaliacoes)     | |
+|  |  [thumb] [thumb] [thumb]  |                             | |
+|  |                        |  |  R$ 79,90                   | |
+|  +------------------------+  |                             | |
+|                              |  [Selecao de cor]           | |
+|                              |  ● Preto ● Branco ● Azul   | |
+|                              |                             | |
+|                              |  [Customizar Minha Capa →]  | |
+|                              |  [Adicionar ao Carrinho]    | |
+|                              +-----------------------------+ |
+|                                                             |
+|  +-- Tabs: Descricao | Especificacoes | Avaliacoes -------+ |
+|  |                                                         | |
+|  |  Descricao do produto com detalhes sobre material,      | |
+|  |  protecao, compatibilidade, etc.                        | |
+|  |                                                         | |
+|  +-- Especificacoes: Material, Peso, Dimensoes, etc. -----+ |
+|                                                             |
++-------------------------------------------------------------+
 ```
-backgroundSize: `${scale * (100 / oversize)}%`
+
+## Componentes a Criar
+
+### 1. `src/pages/Product.tsx`
+Pagina principal do produto com layout responsivo (imagem a esquerda, info a direita em desktop; empilhado em mobile). Usa dados mockados de produto por enquanto. Contem:
+- Galeria de imagens com thumbnail selector
+- Bloco de informacoes (nome, preco, avaliacao, cores)
+- Botao "Customizar Minha Capa" que navega para `/customize/:id`
+- Botao "Adicionar ao Carrinho"
+- Tabs com Descricao, Especificacoes e Avaliacoes
+
+### 2. `src/components/ProductGallery.tsx`
+Galeria de imagens do produto com imagem principal e thumbnails clicaveis. Exibe imagens de placeholder do produto (frente, costas, lateral da capa).
+
+### 3. `src/components/ProductInfo.tsx`
+Bloco com nome, preco, avaliacao em estrelas, seletor de cor e botoes de acao. O botao "Customizar" usa `useNavigate` para ir ao editor.
+
+### 4. `src/components/ProductDetails.tsx`
+Componente com Tabs (Descricao, Especificacoes, Avaliacoes) usando os mesmos componentes Radix Tabs ja existentes. Especificacoes em formato de tabela com Material, Peso, Dimensoes, Compatibilidade, etc.
+
+### 5. `src/data/products.ts`
+Arquivo de dados mockados com interface `Product` contendo: id, nome, preco, descricao, imagens, cores disponiveis, especificacoes, avaliacao media e quantidade de reviews. Servira como template ate haver backend.
+
+## Alteracoes em Arquivos Existentes
+
+### `src/App.tsx`
+- Adicionar rota `/product/:id` para a pagina de produto
+- Mover a rota atual `/` para `/customize/:id` (editor de customizacao)
+- Rota `/` passa a ser a pagina de produto (ou redireciona para um produto default)
+
+### `src/pages/Index.tsx`
+- Renomear para `src/pages/Customize.tsx` para refletir seu papel real (editor de customizacao)
+- Ativar o botao "Voltar" no header para navegar de volta a pagina do produto
+
+## Fluxo de Navegacao
+
+```text
+/product/:id  →  [Customizar]  →  /customize/:id
+                                      ↑ [Voltar]
 ```
-At scale=100, this gives ~66.7% of the oversized div = 100% of the phone frame.
 
-## Bug 2: Move icon never visible on hover
+## Detalhes Tecnicos
 
-The Move icon div has `pointer-events-none` AND `hover:opacity-100`. Since pointer events are disabled, the CSS `:hover` state is never triggered. The icon remains invisible.
-
-**Fix**: Use the parent interaction div's group hover. Add `group/drag` to the interaction container and use `group-hover/drag:opacity-100` on the Move icon wrapper.
-
-## File Changed
-
-**`src/components/PhonePreview.tsx`**:
-1. Change `backgroundSize` from `${scale}%` to `${scale * (100 / oversize)}%` (line 75)
-2. Add `group/drag` class to interaction layer div (line 107)
-3. Change Move icon div from `hover:opacity-100` to `group-hover/drag:opacity-100` (line 113)
+- Dados mockados em `src/data/products.ts` com tipagem TypeScript
+- Navegacao via `react-router-dom` com `useParams` e `useNavigate`
+- Layout responsivo com Tailwind (`flex-col` mobile, `lg:flex-row` desktop)
+- Reutiliza componentes UI existentes: `Card`, `Button`, `Tabs`, `Badge`, `Separator`
+- Cores do produto como badges clicaveis com borda de selecao
+- Preco formatado em BRL com `Intl.NumberFormat`
 
