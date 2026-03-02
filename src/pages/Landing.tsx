@@ -1,19 +1,11 @@
 import { useNavigate, Link } from "react-router-dom";
 import {
-  Palette,
-  Shield,
-  Truck,
-  Smartphone,
-  Upload,
-  Package,
-  Star,
-  ArrowRight,
-  ChevronRight,
+  Palette, Shield, Truck, Smartphone, Upload, Package, Star, ArrowRight, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 import SeoHead from "@/components/SeoHead";
 import AppHeader from "@/components/AppHeader";
 import ProductCard from "@/components/ProductCard";
@@ -25,33 +17,20 @@ const testimonials = [
 ];
 
 const benefits = [
-  {
-    icon: Palette,
-    title: "100% Personalizada",
-    desc: "Use suas fotos, artes e designs favoritos. Cada capa é única como você.",
-  },
-  {
-    icon: Shield,
-    title: "Proteção Premium",
-    desc: "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m.",
-  },
-  {
-    icon: Truck,
-    title: "Frete Grátis",
-    desc: "Entrega gratuita para todo o Brasil. Receba em casa sem pagar nada a mais.",
-  },
+  { icon: Palette, title: "100% Personalizada", desc: "Use suas fotos, artes e designs favoritos. Cada capa é única como você." },
+  { icon: Shield, title: "Proteção Premium", desc: "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m." },
+  { icon: Truck, title: "Frete Grátis", desc: "Entrega gratuita para todo o Brasil. Receba em casa sem pagar nada a mais." },
 ];
 
 const steps = [
-  { icon: Smartphone, title: "Escolha seu modelo", desc: "Selecione o modelo do seu iPhone" },
+  { icon: Smartphone, title: "Escolha seu modelo", desc: "Selecione o modelo do seu celular" },
   { icon: Upload, title: "Envie sua imagem", desc: "Faça upload da sua foto ou design" },
   { icon: Package, title: "Receba em casa", desc: "Produção em 48h e entrega gratuita" },
 ];
 
-const featuredProducts = products.slice(0, 4);
-
 const Landing = () => {
   const navigate = useNavigate();
+  const { products: featuredProducts, loading } = useProducts(4);
 
   return (
     <>
@@ -67,7 +46,7 @@ const Landing = () => {
                 Sua capa, sua identidade.
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Transforme suas fotos favoritas em capas de iPhone únicas. Proteção premium com acabamento soft-touch e design 100% seu.
+                Transforme suas fotos favoritas em capas de celular únicas. Proteção premium com acabamento soft-touch e design 100% seu.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <Button size="lg" className="gap-2 text-base" onClick={() => navigate("/catalog")}>
@@ -117,9 +96,7 @@ const Landing = () => {
           {/* How it works */}
           <section id="como-funciona" className="py-16 px-5">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
-                Como funciona
-              </h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Como funciona</h2>
               <div className="grid md:grid-cols-3 gap-8">
                 {steps.map((s, i) => (
                   <div key={s.title} className="flex flex-col items-center text-center space-y-3">
@@ -142,14 +119,18 @@ const Landing = () => {
           {/* Featured Products */}
           <section id="destaques" className="py-16 px-5">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
-                Modelos em Destaque
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {featuredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Modelos em Destaque</h2>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {featuredProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              )}
               <div className="text-center mt-8">
                 <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
                   Ver Catálogo Completo <ChevronRight className="w-4 h-4" />
@@ -163,9 +144,7 @@ const Landing = () => {
           {/* Testimonials */}
           <section id="depoimentos" className="py-16 px-5 bg-muted/30">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
-                O que nossos clientes dizem
-              </h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">O que nossos clientes dizem</h2>
               <div className="grid md:grid-cols-3 gap-6">
                 {testimonials.map((t) => (
                   <Card key={t.name} className="border-0 shadow-sm">
@@ -187,18 +166,9 @@ const Landing = () => {
           {/* Final CTA */}
           <section className="py-20 px-5 bg-primary text-primary-foreground">
             <div className="max-w-2xl mx-auto text-center space-y-6">
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-                Pronto para criar sua capa única?
-              </h2>
-              <p className="text-lg opacity-90">
-                Escolha seu modelo, envie sua foto e receba uma capa exclusiva na sua porta.
-              </p>
-              <Button
-                size="lg"
-                variant="secondary"
-                className="gap-2 text-base font-semibold"
-                onClick={() => navigate("/catalog")}
-              >
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Pronto para criar sua capa única?</h2>
+              <p className="text-lg opacity-90">Escolha seu modelo, envie sua foto e receba uma capa exclusiva na sua porta.</p>
+              <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold" onClick={() => navigate("/catalog")}>
                 Comece Agora <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
@@ -211,9 +181,6 @@ const Landing = () => {
             <span className="font-semibold text-foreground">Case Studio</span>
             <nav className="flex items-center gap-4">
               <Link to="/catalog" className="hover:text-foreground transition-colors">Catálogo</Link>
-              <Link to="/product/iphone-17-pro-max" className="hover:text-foreground transition-colors">iPhone 17 Pro Max</Link>
-              <Link to="/product/iphone-17-pro" className="hover:text-foreground transition-colors">iPhone 17 Pro</Link>
-              <Link to="/product/iphone-17-air" className="hover:text-foreground transition-colors">iPhone 17 Air</Link>
             </nav>
             <span>© 2026 Case Studio</span>
           </div>

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
+import { formatPrice } from "@/data/products";
 
 const SITE_NAME = "Case Studio";
 const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://artiscase-v2.lovable.app";
@@ -8,6 +9,8 @@ const DESCRIPTION =
   "Crie capas de celular personalizadas com suas fotos. Proteção premium, acabamento soft-touch e frete grátis. iPhone 17, 15, 11, SE e mais.";
 
 const SeoHead = () => {
+  const { products } = useProducts(8);
+
   useEffect(() => {
     document.title = TITLE;
 
@@ -29,7 +32,6 @@ const SeoHead = () => {
     setMeta("name", "twitter:title", TITLE);
     setMeta("name", "twitter:description", DESCRIPTION);
 
-    // Canonical
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!canonical) {
       canonical = document.createElement("link");
@@ -38,52 +40,33 @@ const SeoHead = () => {
     }
     canonical.setAttribute("href", SITE_URL);
 
-    // JSON-LD
     const jsonLd = {
       "@context": "https://schema.org",
       "@graph": [
+        { "@type": "Organization", name: SITE_NAME, url: SITE_URL, description: DESCRIPTION },
         {
-          "@type": "Organization",
-          name: SITE_NAME,
-          url: SITE_URL,
-          description: DESCRIPTION,
+          "@type": "WebSite", name: SITE_NAME, url: SITE_URL,
+          potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/catalog?q={search_term_string}`, "query-input": "required name=search_term_string" },
         },
-        {
-          "@type": "WebSite",
-          name: SITE_NAME,
-          url: SITE_URL,
-          potentialAction: {
-            "@type": "SearchAction",
-            target: `${SITE_URL}/catalog?q={search_term_string}`,
-            "query-input": "required name=search_term_string",
-          },
-        },
-        {
-          "@type": "ItemList",
-          name: "Capas para iPhone",
-          numberOfItems: products.length,
-          itemListElement: products.slice(0, 8).map((p, i) => ({
-            "@type": "ListItem",
-            position: i + 1,
-            item: {
-              "@type": "Product",
-              name: p.name,
-              url: `${SITE_URL}/product/${p.id}`,
-              image: p.images[0],
-              offers: {
-                "@type": "Offer",
-                price: p.price,
-                priceCurrency: "BRL",
-                availability: "https://schema.org/InStock",
-              },
-              aggregateRating: {
-                "@type": "AggregateRating",
-                ratingValue: p.rating,
-                reviewCount: p.reviewCount,
-              },
-            },
-          })),
-        },
+        ...(products.length > 0
+          ? [{
+              "@type": "ItemList" as const,
+              name: "Capas para Celular",
+              numberOfItems: products.length,
+              itemListElement: products.map((p, i) => ({
+                "@type": "ListItem",
+                position: i + 1,
+                item: {
+                  "@type": "Product",
+                  name: p.name,
+                  url: `${SITE_URL}/product/${p.slug}`,
+                  image: p.images[0],
+                  offers: { "@type": "Offer", price: p.price_cents / 100, priceCurrency: "BRL", availability: "https://schema.org/InStock" },
+                  aggregateRating: { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: p.review_count },
+                },
+              })),
+            }]
+          : []),
       ],
     };
 
@@ -96,11 +79,8 @@ const SeoHead = () => {
     }
     script.textContent = JSON.stringify(jsonLd);
 
-    return () => {
-      script?.remove();
-      canonical?.remove();
-    };
-  }, []);
+    return () => { script?.remove(); canonical?.remove(); };
+  }, [products]);
 
   return null;
 };

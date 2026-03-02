@@ -4,7 +4,7 @@ import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { formatPrice, getProduct } from "@/data/products";
+import { formatPrice } from "@/data/products";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Order = Tables<"orders">;
@@ -19,18 +19,40 @@ const statusLabels: Record<string, { label: string; className: string }> = {
 
 const Orders = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<(Order & { product_name?: string })[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setOrders(data ?? []);
+    const fetchOrders = async () => {
+      const { data: ordersData } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!ordersData || ordersData.length === 0) {
+        setOrders([]);
         setLoading(false);
-      });
+        return;
+      }
+
+      // Get unique product_ids and fetch names from products table
+      const productIds = [...new Set(ordersData.map((o) => o.product_id))];
+      const { data: productsData } = await supabase
+        .from("products")
+        .select("slug, name")
+        .in("slug", productIds);
+
+      const nameMap = new Map((productsData ?? []).map((p) => [p.slug, p.name]));
+
+      setOrders(
+        ordersData.map((o) => ({
+          ...o,
+          product_name: nameMap.get(o.product_id) ?? o.product_id,
+        }))
+      );
+      setLoading(false);
+    };
+    fetchOrders();
   }, []);
 
   const breadcrumbs = [{ label: "Meus Pedidos" }];
@@ -42,14 +64,8 @@ const Orders = () => {
       <main className="flex-1 max-w-3xl mx-auto w-full p-5 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Meus Pedidos</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1"
-            onClick={() => navigate("/catalog")}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Catálogo
+          <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/catalog")}>
+            <ArrowLeft className="w-4 h-4" /> Catálogo
           </Button>
         </div>
 
@@ -60,43 +76,24 @@ const Orders = () => {
         ) : orders.length === 0 ? (
           <div className="text-center py-16 space-y-4">
             <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto" />
-            <p className="text-muted-foreground">
-              Você ainda não tem pedidos.
-            </p>
-            <Button onClick={() => navigate("/catalog")}>
-              Explorar Modelos
-            </Button>
+            <p className="text-muted-foreground">Você ainda não tem pedidos.</p>
+            <Button onClick={() => navigate("/catalog")}>Explorar Modelos</Button>
           </div>
         ) : (
           <div className="space-y-4">
             {orders.map((order) => {
               const status = statusLabels[order.status] ?? statusLabels.pending;
               return (
-                <div
-                  key={order.id}
-                  className="border rounded-xl p-4 bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
+                <div key={order.id} className="border rounded-xl p-4 bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">
-                      {getProduct(order.product_id)?.name ?? order.product_id}
-                    </p>
+                    <p className="font-medium text-foreground truncate">{order.product_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(order.created_at).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
+                      {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span
-                      className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${status.className}`}
-                    >
-                      {status.label}
-                    </span>
-                    <span className="font-semibold text-foreground">
-                      {formatPrice(order.total_cents / 100)}
-                    </span>
+                    <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${status.className}`}>{status.label}</span>
+                    <span className="font-semibold text-foreground">{formatPrice(order.total_cents / 100)}</span>
                   </div>
                 </div>
               );

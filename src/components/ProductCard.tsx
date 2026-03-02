@@ -14,7 +14,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Card
       className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
-      onClick={() => navigate(`/product/${product.id}`)}
+      onClick={() => navigate(`/product/${product.slug}`)}
     >
       <div className="aspect-[3/4] overflow-hidden">
         <img
@@ -26,9 +26,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </div>
       <CardContent className="p-3">
         <h3 className="text-sm font-semibold text-foreground line-clamp-2">{product.name}</h3>
-        <p className="text-base font-bold text-foreground mt-1">{formatPrice(product.price)}</p>
+        <p className="text-base font-bold text-foreground mt-1">{formatPrice(product.price_cents / 100)}</p>
         <div className="mt-1">
-          <StarRating rating={product.rating} reviewCount={product.reviewCount} />
+          <StarRating rating={product.rating} reviewCount={product.review_count} />
         </div>
       </CardContent>
     </Card>

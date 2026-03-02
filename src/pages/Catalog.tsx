@@ -1,8 +1,10 @@
-import { products } from "@/data/products";
 import AppHeader from "@/components/AppHeader";
 import ProductCard from "@/components/ProductCard";
+import { useProducts } from "@/hooks/useProducts";
 
 const Catalog = () => {
+  const { products, loading } = useProducts();
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader breadcrumbs={[{ label: "Catálogo" }]} />
@@ -13,11 +15,17 @@ const Catalog = () => {
           <span className="text-sm text-muted-foreground">{products.length} capas disponíveis</span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
