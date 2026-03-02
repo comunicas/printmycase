@@ -71,12 +71,10 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
         iPhone 15 Pro Max
       </div>
       <div className="relative">
-        {/* Phone frame */}
+        {/* Phone frame - back view */}
         <div className="relative w-[260px] h-[532px] rounded-[2.8rem] border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
-          {/* Notch */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100px] h-[26px] bg-foreground/80 rounded-b-xl z-20" />
 
-          {/* Case area */}
+          {/* Case area (image layer) */}
           <div
             ref={containerRef}
             className={`absolute inset-0 overflow-hidden touch-none ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
@@ -95,16 +93,34 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
                 onClick={() => inputRef.current?.click()}
                 className="flex items-center justify-center h-full w-full hover:bg-primary/5 transition-colors group"
               >
-                <div className="text-center space-y-2">
+                <div className="text-center space-y-3">
                   <Upload className="w-10 h-10 mx-auto text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
-                  <p className="text-xs text-muted-foreground/50 group-hover:text-primary/60">Upload image</p>
+                  <p className="text-xs text-muted-foreground/50 group-hover:text-primary/60">Toque para adicionar sua imagem</p>
                 </div>
               </button>
             )}
           </div>
 
-          {/* Bottom bar */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90px] h-[3px] bg-foreground/60 rounded-full z-20" />
+          {/* Camera module - top left */}
+          <div className="absolute top-5 left-5 z-20 pointer-events-none">
+            <div className="w-[72px] h-[72px] rounded-2xl border border-foreground/20 bg-foreground/10 backdrop-blur-sm flex flex-wrap items-center justify-center gap-1 p-2">
+              {/* Lens 1 - top left */}
+              <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
+              {/* Lens 2 - top right */}
+              <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
+              {/* Lens 3 - bottom left */}
+              <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
+              {/* Flash - bottom right */}
+              <div className="w-[22px] h-[22px] flex items-center justify-center">
+                <div className="w-[10px] h-[10px] rounded-full bg-yellow-300/60 border border-yellow-400/40" />
+              </div>
+            </div>
+          </div>
+
+          {/* Apple logo - centered */}
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <span className="text-2xl text-foreground/15 select-none" style={{ fontFamily: 'system-ui' }}></span>
+          </div>
         </div>
 
         {/* Floating change button */}
