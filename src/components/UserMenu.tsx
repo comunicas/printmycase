@@ -48,9 +48,9 @@ const UserMenu = () => {
           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/catalog")}>
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
           <User className="mr-2 h-4 w-4" />
-          Ver Modelos
+          Meu Perfil
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate("/orders")}>
           <ShoppingBag className="mr-2 h-4 w-4" />

@@ -10,6 +10,7 @@ import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Orders from "./pages/Orders";
+import Profile from "./pages/Profile";
 import AuthGuard from "./components/AuthGuard";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ const App = () => (
         <Route path="/customize/:id" element={<AuthGuard><Customize /></AuthGuard>} />
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/orders" element={<AuthGuard><Orders /></AuthGuard>} />
+        <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
