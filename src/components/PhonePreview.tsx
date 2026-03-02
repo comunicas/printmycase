@@ -34,13 +34,23 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const dx = ((e.clientX - startPos.current.x) / rect.width) * 100;
-    const dy = ((e.clientY - startPos.current.y) / rect.height) * 100;
+    const scaleFactor = scale / 100;
+    const sensitivity = 100 / scaleFactor;
+    const dx = ((e.clientX - startPos.current.x) / rect.width) * sensitivity;
+    const dy = ((e.clientY - startPos.current.y) / rect.height) * sensitivity;
+
+    // Convert drag delta to account for rotation
+    const rad = (rotation * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const rotatedDx = dx * cos + dy * sin;
+    const rotatedDy = -dx * sin + dy * cos;
+
     onPositionChange({
-      x: clamp(startOffset.current.x - dx),
-      y: clamp(startOffset.current.y - dy),
+      x: clamp(startOffset.current.x - rotatedDx),
+      y: clamp(startOffset.current.y - rotatedDy),
     });
-  }, [isDragging, onPositionChange]);
+  }, [isDragging, onPositionChange, scale, rotation]);
 
   const onPointerUp = useCallback(() => {
     setIsDragging(false);
@@ -55,7 +65,11 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
   const baseFilter = `brightness(${1 + brightness / 100}) contrast(${1 + contrast / 100})`;
   const combinedFilter = extraFilter ? `${baseFilter} ${extraFilter}` : baseFilter;
 
-  const imageStyle = image
+  // Oversized inner layer to prevent gaps when rotated
+  const oversize = 150;
+  const offset = -(oversize - 100) / 2;
+
+  const imageLayerStyle = image
     ? {
         backgroundImage: `url(${image})`,
         backgroundSize: `${scale}%`,
@@ -63,6 +77,10 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
         backgroundRepeat: "no-repeat" as const,
         transform: `rotate(${rotation}deg)`,
         filter: combinedFilter,
+        width: `${oversize}%`,
+        height: `${oversize}%`,
+        left: `${offset}%`,
+        top: `${offset}%`,
       }
     : {};
 
@@ -75,17 +93,24 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
         {/* Phone frame - back view */}
         <div className="relative w-[260px] h-[532px] rounded-[2.8rem] border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
 
-          {/* Case area (image layer) */}
+          {/* Image layer - oversized to cover rotation gaps */}
+          {image && (
+            <div
+              className="absolute pointer-events-none"
+              style={imageLayerStyle}
+            />
+          )}
+
+          {/* Interaction layer - handles drag and upload */}
           <div
             ref={containerRef}
-            className={`absolute inset-0 overflow-hidden touch-none group/image ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
-            style={imageStyle}
+            className={`absolute inset-0 z-10 touch-none ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
             {image && !isDragging && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/image:opacity-100 transition-opacity z-10">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 hover:opacity-100 transition-opacity">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
               </div>
             )}
@@ -105,13 +130,9 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
           {/* Camera module - top left */}
           <div className="absolute top-5 left-5 z-20 pointer-events-none">
             <div className="w-[72px] h-[72px] rounded-2xl border border-foreground/20 bg-foreground/10 backdrop-blur-sm flex flex-wrap items-center justify-center gap-1 p-2">
-              {/* Lens 1 - top left */}
               <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
-              {/* Lens 2 - top right */}
               <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
-              {/* Lens 3 - bottom left */}
               <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
-              {/* Flash - bottom right */}
               <div className="w-[22px] h-[22px] flex items-center justify-center">
                 <div className="w-[10px] h-[10px] rounded-full bg-yellow-300/60 border border-yellow-400/40" />
               </div>
