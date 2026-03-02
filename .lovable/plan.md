@@ -1,35 +1,52 @@
 
-# Drag-to-Reposition da Imagem no Preview
 
-## Objetivo
-Permitir que o usuario arraste a imagem dentro do preview do case para reposiciona-la livremente.
+# Redesign: Frame Traseiro do Celular com CTA de Upload
 
-## Abordagem
-Adicionar estado de posicao (offsetX, offsetY) e implementar drag nativo via mouse/touch events diretamente no `PhonePreview.tsx`, sem bibliotecas externas.
+## O que muda
 
-## Mudancas
+### 1. Remover imagem padrao (`src/pages/Index.tsx`)
+- Alterar o estado inicial de `image` de `sampleCase` para `null`
+- Remover o import do `sample-case.jpg`
+- O case inicia vazio, pronto para upload
 
-### 1. `src/pages/Index.tsx`
-- Adicionar estado `position: { x: number, y: number }` (default `{ x: 50, y: 50 }` representando `background-position` em %)
-- Passar `position` e `onPositionChange` como props para `PhonePreview`
+### 2. Redesenhar o frame para a parte traseira (`src/components/PhonePreview.tsx`)
+- Remover o notch (elemento frontal) e a barra inferior
+- Adicionar modulo de cameras traseiro no canto superior esquerdo com CSS:
+  - 3 lentes circulares dispostas em triangulo (estilo iPhone 15 Pro Max)
+  - Flash LED pequeno
+  - Moldura arredondada ao redor do modulo
+- Adicionar logo Apple centralizado (texto ou icone simples)
+- Manter o fundo limpo (`bg-foreground/5`) sem cor ou imagem pre-carregada
 
-### 2. `src/components/PhonePreview.tsx`
-- Receber novas props `position` e `onPositionChange`
-- Usar `backgroundPosition: \`${position.x}% ${position.y}%\`` no estilo da imagem (substituindo o "center" fixo)
-- Adicionar refs para tracking de drag: `isDragging`, `startPos`, `startOffset`
-- Implementar handlers `onPointerDown`, `onPointerMove`, `onPointerUp` na area do case:
-  - **PointerDown**: captura o pointer, registra posicao inicial
-  - **PointerMove**: calcula delta em pixels, converte para % baseado no tamanho do container, atualiza posicao
-  - **PointerUp**: libera o pointer, finaliza drag
-- Mudar cursor para `grab` / `grabbing` durante interacao
-- Adicionar `touch-action: none` no CSS para prevenir scroll durante drag em mobile
-
-### 3. Visual feedback
-- Cursor `grab` quando hovering sobre a imagem, `grabbing` durante o arrasto
-- Indicador sutil (icone de move) aparece brevemente ao passar o mouse sobre a imagem
+### 3. CTA de upload dentro do case
+- Quando nao ha imagem, exibir botao de upload centralizado dentro da area do case
+- Texto: "Toque para adicionar sua imagem"
+- Icone de upload com estilo sutil
+- O modulo de cameras e o logo ficam por cima (z-index superior) da imagem quando ela for adicionada
 
 ## Detalhes Tecnicos
-- Usar Pointer Events (funciona para mouse e touch)
-- Clampar valores de position entre 0% e 100% para nao sair dos limites
-- A conversao de pixels para % usa as dimensoes do container (260x532)
-- Nenhuma dependencia externa necessaria
+
+### Modulo de Cameras (CSS puro)
+```text
++---------------------------+
+|  +--------+               |
+|  | O  O   |               |
+|  |   O  * |  <- 3 lentes  |
+|  +--------+     + flash   |
+|                           |
+|                           |
+|         [Apple logo]      |
+|                           |
+|   [Upload sua imagem]     |  <- CTA quando vazio
+|                           |
++---------------------------+
+```
+
+- Lentes: circulos com `border`, `bg-foreground/20`, sombra interna
+- Flash: circulo menor amarelado
+- Moldura do modulo: `rounded-2xl`, `border`, `bg-foreground/10`
+
+### Arquivos Modificados
+1. **`src/components/PhonePreview.tsx`** - Substituir frame frontal por traseiro com cameras
+2. **`src/pages/Index.tsx`** - Remover imagem padrao, iniciar com `null`
+
