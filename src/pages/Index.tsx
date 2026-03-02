@@ -5,10 +5,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PhonePreview from "@/components/PhonePreview";
 import ControlPanel from "@/components/ControlPanel";
 import FilterPresets, { filters } from "@/components/FilterPresets";
-import sampleCase from "@/assets/sample-case.jpg";
-
 const Index = () => {
-  const [image, setImage] = useState<string | null>(sampleCase);
+  const [image, setImage] = useState<string | null>(null);
   const [scale, setScale] = useState(100);
   const [rotation, setRotation] = useState(0);
   const [brightness, setBrightness] = useState(0);
