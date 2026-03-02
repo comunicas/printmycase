@@ -14,6 +14,7 @@ const Index = () => {
   const [brightness, setBrightness] = useState(0);
   const [contrast, setContrast] = useState(0);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [position, setPosition] = useState({ x: 50, y: 50 });
 
   const handleImageUpload = (file: File) => {
     const reader = new FileReader();
@@ -51,6 +52,8 @@ const Index = () => {
             brightness={brightness}
             contrast={contrast}
             extraFilter={extraFilter}
+            position={position}
+            onPositionChange={setPosition}
             onImageUpload={handleImageUpload}
           />
         </div>
