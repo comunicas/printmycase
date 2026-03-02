@@ -1,11 +1,14 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, HelpCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PhonePreview from "@/components/PhonePreview";
 import ControlPanel from "@/components/ControlPanel";
 import FilterPresets, { filters } from "@/components/FilterPresets";
-const Index = () => {
+const Customize = () => {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [image, setImage] = useState<string | null>(null);
   const [scale, setScale] = useState(100);
   const [rotation, setRotation] = useState(0);
@@ -47,7 +50,11 @@ const Index = () => {
       {/* Header */}
       <header className="flex items-center justify-between px-5 py-3 border-b bg-card">
         <div className="flex items-center gap-2">
-          <button className="p-2 rounded-lg transition-colors opacity-50 cursor-default" disabled aria-label="Voltar (em breve)">
+          <button
+            className="p-2 rounded-lg transition-colors hover:bg-accent"
+            onClick={() => navigate(id ? `/product/${id}` : "/")}
+            aria-label="Voltar"
+          >
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <h1 className="text-base font-semibold text-foreground">Case Studio</h1>
@@ -118,4 +125,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Customize;
