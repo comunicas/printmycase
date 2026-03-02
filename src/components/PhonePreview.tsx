@@ -11,9 +11,10 @@ interface PhonePreviewProps {
   position: { x: number; y: number };
   onPositionChange: (pos: { x: number; y: number }) => void;
   onImageUpload: (file: File) => void;
+  modelName?: string;
 }
 
-const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload, modelName }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -39,7 +40,6 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
     const dx = ((e.clientX - startPos.current.x) / rect.width) * sensitivity;
     const dy = ((e.clientY - startPos.current.y) / rect.height) * sensitivity;
 
-    // Convert drag delta to account for rotation
     const rad = (rotation * Math.PI) / 180;
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
@@ -65,7 +65,6 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
   const baseFilter = `brightness(${1 + brightness / 100}) contrast(${1 + contrast / 100})`;
   const combinedFilter = extraFilter ? `${baseFilter} ${extraFilter}` : baseFilter;
 
-  // Oversized inner layer to prevent gaps when rotated
   const oversize = 150;
   const offset = -(oversize - 100) / 2;
 
@@ -87,21 +86,16 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="text-xs font-medium text-muted-foreground">
-        iPhone 15 Pro Max
+        {modelName ?? "iPhone"}
       </div>
       <div className="relative">
-        {/* Phone frame - back view */}
         <div className="relative w-[260px] h-[532px] rounded-[2.8rem] border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
-
-          {/* Image layer - oversized to cover rotation gaps */}
           {image && (
             <div
               className="absolute pointer-events-none"
               style={imageLayerStyle}
             />
           )}
-
-          {/* Interaction layer - handles drag and upload */}
           <div
             ref={containerRef}
             className={`absolute inset-0 z-10 touch-none group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
@@ -126,8 +120,6 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
               </button>
             )}
           </div>
-
-          {/* Camera module - top left */}
           <div className="absolute top-5 left-5 z-20 pointer-events-none">
             <div className="w-[72px] h-[72px] rounded-2xl border border-foreground/20 bg-foreground/10 backdrop-blur-sm flex flex-wrap items-center justify-center gap-1 p-2">
               <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
@@ -138,14 +130,10 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
               </div>
             </div>
           </div>
-
-          {/* Apple logo - centered */}
           <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
             <span className="text-2xl text-foreground/15 select-none" style={{ fontFamily: 'system-ui' }}></span>
           </div>
         </div>
-
-        {/* Floating change button */}
         {image && (
           <button
             onClick={() => inputRef.current?.click()}
@@ -155,7 +143,6 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
           </button>
         )}
       </div>
-
       <input
         ref={inputRef}
         type="file"

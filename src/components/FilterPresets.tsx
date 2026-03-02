@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";
 
 interface Filter {
@@ -8,10 +7,14 @@ interface Filter {
 }
 
 const filters: Filter[] = [
-  { id: "vivid", name: "Vivid", cssFilter: "brightness(1.1) contrast(1.2) saturate(1.3)" },
-  { id: "noir", name: "Noir", cssFilter: "brightness(0.9) contrast(1.3) grayscale(1)" },
-  { id: "warm", name: "Warm", cssFilter: "brightness(1.05) sepia(0.3) saturate(1.1)" },
-  { id: "cool", name: "Cool", cssFilter: "brightness(1.05) hue-rotate(15deg) saturate(0.9)" },
+  { id: "vivid", name: "Vibrante", cssFilter: "brightness(1.1) contrast(1.2) saturate(1.3)" },
+  { id: "noir", name: "P&B", cssFilter: "brightness(0.9) contrast(1.3) grayscale(1)" },
+  { id: "warm", name: "Quente", cssFilter: "brightness(1.05) sepia(0.3) saturate(1.1)" },
+  { id: "cool", name: "Frio", cssFilter: "brightness(1.05) hue-rotate(15deg) saturate(0.9)" },
+  { id: "retro", name: "Retrô", cssFilter: "sepia(0.4) contrast(1.1) brightness(0.95) saturate(0.8)" },
+  { id: "soft", name: "Suave", cssFilter: "brightness(1.1) contrast(0.9) saturate(0.85)" },
+  { id: "dramatic", name: "Dramático", cssFilter: "contrast(1.4) brightness(0.85) saturate(1.2)" },
+  { id: "pastel", name: "Pastel", cssFilter: "brightness(1.15) saturate(0.6) contrast(0.95)" },
 ];
 
 interface FilterPresetsProps {
@@ -25,7 +28,7 @@ const FilterPresets = ({ image, activeFilter, onSelectFilter }: FilterPresetsPro
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-primary" />
-        <span className="text-sm font-medium text-foreground">AI Filters</span>
+        <span className="text-sm font-medium text-foreground">Filtros</span>
       </div>
       <div className="grid grid-cols-4 gap-2">
         {filters.map((filter) => {
@@ -40,7 +43,6 @@ const FilterPresets = ({ image, activeFilter, onSelectFilter }: FilterPresetsPro
                   : "border-border hover:border-primary/40"
               }`}
             >
-              {/* Thumbnail */}
               <div
                 className="absolute inset-0 bg-muted"
                 style={
@@ -54,16 +56,11 @@ const FilterPresets = ({ image, activeFilter, onSelectFilter }: FilterPresetsPro
                     : { filter: filter.cssFilter }
                 }
               />
-              {/* Label overlay */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/80 to-transparent p-1.5 pt-4">
                 <span className="text-[10px] font-semibold text-background block leading-tight">
                   {filter.name}
                 </span>
               </div>
-              {/* AI badge */}
-              <Badge className="absolute top-1 right-1 px-1 py-0 text-[8px] h-4 bg-primary/90 hover:bg-primary/90">
-                AI
-              </Badge>
             </button>
           );
         })}

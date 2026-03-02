@@ -3,15 +3,14 @@ import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { products, formatPrice } from "@/data/products";
 import { cn } from "@/lib/utils";
+import AppHeader from "@/components/AppHeader";
 
 const Catalog = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="flex items-center px-5 py-3 border-b bg-card">
-        <h1 className="text-base font-semibold text-foreground">Case Studio</h1>
-      </header>
+      <AppHeader breadcrumbs={[{ label: "Catálogo" }]} />
 
       <main className="flex-1 w-full max-w-6xl mx-auto p-5 lg:p-10">
         <div className="flex items-baseline justify-between mb-6">

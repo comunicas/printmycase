@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, HelpCircle, ArrowRight } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PhonePreview from "@/components/PhonePreview";
 import ControlPanel from "@/components/ControlPanel";
 import FilterPresets, { filters } from "@/components/FilterPresets";
+import AppHeader from "@/components/AppHeader";
+import { getProduct } from "@/data/products";
+import { useToast } from "@/hooks/use-toast";
+
 const Customize = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const product = getProduct(id ?? "");
+  const { toast } = useToast();
+
   const [image, setImage] = useState<string | null>(null);
   const [scale, setScale] = useState(100);
   const [rotation, setRotation] = useState(0);
@@ -41,32 +47,22 @@ const Customize = () => {
     if (activeFilter) setActiveFilter(null);
   };
 
-  // Get extra CSS filter from active preset
   const activeFilterObj = filters.find((f) => f.id === activeFilter);
   const extraFilter = activeFilterObj?.cssFilter ?? undefined;
 
+  const productName = product?.name?.replace("Capa ", "") ?? "iPhone";
+
+  const breadcrumbs = [
+    { label: "Catálogo", to: "/catalog" },
+    ...(product ? [{ label: product.name, to: `/product/${product.id}` }] : []),
+    { label: "Customizar" },
+  ];
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between px-5 py-3 border-b bg-card">
-        <div className="flex items-center gap-2">
-          <button
-            className="p-2 rounded-lg transition-colors hover:bg-accent"
-            onClick={() => navigate(id ? `/product/${id}` : "/")}
-            aria-label="Voltar"
-          >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-          <h1 className="text-base font-semibold text-foreground">Case Studio</h1>
-        </div>
-        <button className="p-2 rounded-lg transition-colors opacity-50 cursor-default" disabled aria-label="Ajuda (em breve)">
-          <HelpCircle className="w-5 h-5 text-muted-foreground" />
-        </button>
-      </header>
+      <AppHeader breadcrumbs={breadcrumbs} />
 
-      {/* Main content */}
       <main className="flex-1 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-8 p-5 lg:p-10">
-        {/* Phone preview */}
         <div className="flex-shrink-0">
           <PhonePreview
             image={image}
@@ -78,15 +74,15 @@ const Customize = () => {
             position={position}
             onPositionChange={setPosition}
             onImageUpload={handleImageUpload}
+            modelName={productName}
           />
         </div>
 
-        {/* Right panel */}
         <div className="w-full max-w-sm space-y-6">
           <Tabs defaultValue="adjust" className="w-full">
             <TabsList className="w-full">
-              <TabsTrigger value="adjust" className="flex-1">Adjustments</TabsTrigger>
-              <TabsTrigger value="filters" className="flex-1">Filters</TabsTrigger>
+              <TabsTrigger value="adjust" className="flex-1">Ajustes</TabsTrigger>
+              <TabsTrigger value="filters" className="flex-1">Filtros</TabsTrigger>
             </TabsList>
             <TabsContent value="adjust">
               <ControlPanel
@@ -109,13 +105,29 @@ const Customize = () => {
             </TabsContent>
           </Tabs>
 
-          {/* Action buttons */}
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1">
-              Save Draft
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() =>
+                toast({
+                  title: "Rascunho salvo!",
+                  description: "Seu design foi salvo com sucesso.",
+                })
+              }
+            >
+              Salvar Rascunho
             </Button>
-            <Button className="flex-1 gap-1.5">
-              Checkout
+            <Button
+              className="flex-1 gap-1.5"
+              onClick={() =>
+                toast({
+                  title: "Em breve!",
+                  description: "Estamos preparando o checkout. Fique ligado!",
+                })
+              }
+            >
+              Finalizar Pedido
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
