@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
+import UserMenu from "@/components/UserMenu";
 
 interface Breadcrumb {
   label: string;
@@ -42,6 +43,7 @@ const AppHeader = ({ breadcrumbs }: AppHeaderProps) => {
           <Button variant="ghost" size="sm" onClick={() => navigate("/catalog")}>
             Ver Modelos
           </Button>
+          <UserMenu />
         </div>
       </nav>
     </header>

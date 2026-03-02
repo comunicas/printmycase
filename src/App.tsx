@@ -5,6 +5,10 @@ import Product from "./pages/Product";
 import Catalog from "./pages/Catalog";
 import Landing from "./pages/Landing";
 import Customize from "./pages/Customize";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ResetPassword from "./pages/ResetPassword";
+import AuthGuard from "./components/AuthGuard";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -15,7 +19,10 @@ const App = () => (
         <Route path="/" element={<Landing />} />
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/product/:id" element={<Product />} />
-        <Route path="/customize/:id" element={<Customize />} />
+        <Route path="/customize/:id" element={<AuthGuard><Customize /></AuthGuard>} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
