@@ -1,54 +1,120 @@
 
-# Pagina de Catalogo de Produtos
 
-## O que sera feito
+# Landing Page de Alta Conversao - Case Studio
 
-Criar uma nova pagina `/catalog` que lista todos os 20 modelos de capas disponiveis em um grid de cards clicaveis. Cada card mostra a imagem do produto, nome, preco e avaliacao. Clicar em um card navega para `/product/:id`.
+## Objetivo
 
-## Estrutura Visual
+Transformar a pagina inicial (`/`) em uma landing page de alta conversao com SEO otimizado, copy persuasiva, CTAs claros e dados estruturados para buscadores e agentes de IA. A pagina de catalogo continua existindo em `/catalog`.
+
+## Hierarquia de URLs (Jornada do Usuario)
 
 ```text
-+-- Header ---------------------------------------------------+
-|  Case Studio                                                 |
-+--------------------------------------------------------------+
-|                                                              |
-|  Nossos Modelos              [20 capas disponiveis]          |
-|                                                              |
-|  +----------+  +----------+  +----------+  +----------+     |
-|  | [imagem] |  | [imagem] |  | [imagem] |  | [imagem] |     |
-|  | iPhone   |  | iPhone   |  | iPhone   |  | iPhone   |     |
-|  | 17 Pro   |  | 17 Pro   |  | 17 Air   |  | 17       |     |
-|  | Max      |  |          |  |          |  |          |     |
-|  | R$69,90  |  | R$69,90  |  | R$69,90  |  | R$69,90  |     |
-|  | ★★★★★    |  | ★★★★★    |  | ★★★★★    |  | ★★★★★    |     |
-|  +----------+  +----------+  +----------+  +----------+     |
-|  ...mais cards...                                            |
-+--------------------------------------------------------------+
+/                    →  Landing page (descoberta, convencimento)
+/catalog             →  Catalogo completo (escolha do modelo)
+/product/:id         →  Detalhes do produto (avaliacao)
+/customize/:id       →  Editor de customizacao (criacao)
 ```
 
-## Arquivos a criar
+## Estrutura da Landing Page
 
-### 1. `src/pages/Catalog.tsx`
-- Header simples com titulo "Case Studio"
-- Subtitulo "Nossos Modelos" com contagem de produtos
-- Grid responsivo: 2 colunas mobile, 3 tablet, 4 desktop
-- Cada card usa componente `Card` existente com:
-  - Imagem do produto (primeira do array `images`)
-  - Nome do produto
-  - Preco formatado em BRL
-  - Estrelas de avaliacao e contagem de reviews
-- `useNavigate` para navegar ao clicar no card
+```text
++-- SEO Meta Tags + JSON-LD Schema.org ---------------------------+
 
-## Arquivos a modificar
++-- Header -------------------------------------------------------+
+|  Case Studio          [Ver Modelos]   [Customizar Agora]        |
++-----------------------------------------------------------------+
 
-### 2. `src/App.tsx`
-- Adicionar rota `/catalog` para a pagina de catalogo
-- Alterar redirect da rota `/` de `/product/iphone-17-pro-max` para `/catalog`
++-- Hero Section -------------------------------------------------+
+|  "Sua capa, sua identidade."                                    |
+|  "Crie capas personalizadas para iPhone com suas fotos e        |
+|   designs. Protecao premium com acabamento soft-touch."         |
+|  [Customizar Minha Capa →]    [Ver Todos os Modelos]            |
+|  ★★★★★ Mais de 1.000 capas criadas                              |
++-----------------------------------------------------------------+
 
-## Detalhes tecnicos
++-- Beneficios (3 colunas) --------------------------------------+
+|  🎨 100% Personalizada    🛡️ Protecao Premium   🚚 Frete Gratis |
+|  Desc. curta               Desc. curta            Desc. curta   |
++-----------------------------------------------------------------+
 
-- Importa `products` e `formatPrice` de `src/data/products.ts`
-- Reutiliza componentes `Card`, `CardContent` ja existentes
-- Grid com classes Tailwind: `grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4`
-- Cards com `cursor-pointer` e `hover:shadow-md` para feedback visual
-- Estrelas com icone `Star` do lucide-react (mesmo padrao do `ProductInfo`)
++-- Como Funciona (3 passos) ------------------------------------+
+|  1. Escolha seu modelo  →  2. Envie sua imagem  →  3. Receba   |
++-----------------------------------------------------------------+
+
++-- Produtos em Destaque (4 cards mais populares) ----------------+
+|  [Card] [Card] [Card] [Card]                                    |
+|  [Ver Catalogo Completo →]                                      |
++-----------------------------------------------------------------+
+
++-- Social Proof / Depoimentos -----------------------------------+
+|  "Melhor capa que ja tive!"  "Qualidade incrivel"               |
++-----------------------------------------------------------------+
+
++-- CTA Final ----------------------------------------------------+
+|  "Pronto para criar sua capa unica?"                            |
+|  [Comece Agora →]                                               |
++-----------------------------------------------------------------+
+
++-- Footer SEO ---------------------------------------------------+
+|  Links internos: Catalogo | Modelos populares | Contato         |
++-----------------------------------------------------------------+
+```
+
+## Arquivos a Criar
+
+### 1. `src/pages/Landing.tsx`
+Nova pagina com todas as secoes acima. Importa `products` e `formatPrice` do data. Reutiliza `Card`, `Button`, `Separator` existentes. Secoes:
+- **Hero**: headline principal, subtitulo, 2 CTAs (primario navega para `/catalog`, secundario para modelo mais popular)
+- **Beneficios**: grid de 3 cards com icones lucide-react (Palette, Shield, Truck)
+- **Como Funciona**: 3 passos com icones numerados (Smartphone, Upload, Package)
+- **Produtos em Destaque**: 4 primeiros produtos do array `products`, mesmos cards do catalogo, com link "Ver todos"
+- **Depoimentos**: 3 depoimentos mockados com nome e estrelas
+- **CTA Final**: bloco com fundo primario e botao contrastante
+- **Footer**: links internos para catalogo e modelos populares
+
+### 2. `src/components/SeoHead.tsx`
+Componente que injeta meta tags e dados estruturados JSON-LD via `document.head` usando `useEffect`:
+- Meta tags Open Graph e Twitter Cards
+- Schema.org `Organization`, `WebSite` com `SearchAction`
+- Schema.org `ItemList` com produtos para rich results
+- Canonical URL
+- Descricao otimizada para buscadores
+
+## Arquivos a Modificar
+
+### 3. `src/App.tsx`
+- Rota `/` passa a renderizar `Landing` em vez de redirect
+- Manter rotas `/catalog`, `/product/:id`, `/customize/:id`
+
+### 4. `index.html`
+- Atualizar `<title>` para "Case Studio | Capas Personalizadas para iPhone"
+- Atualizar meta description com copy otimizada
+- Atualizar og:title e og:description
+
+## Detalhes de SEO e AI-Readiness
+
+- **Title tag**: "Case Studio | Capas Personalizadas para iPhone"
+- **Meta description**: "Crie capas de celular personalizadas com suas fotos. Protecao premium, acabamento soft-touch e frete gratis. iPhone 17, 15, 11, SE e mais."
+- **JSON-LD**: Organization + WebSite + ItemList (produtos)
+- **Heading hierarchy**: h1 no hero, h2 por secao, h3 nos cards
+- **Links internos**: footer com links para catalogo e modelos populares
+- **Semantic HTML**: `<main>`, `<section>`, `<header>`, `<footer>`, `<nav>`
+- **robots.txt**: ja configurado para permitir todos os crawlers
+
+## Copy de Alta Conversao
+
+- **Headline**: "Sua capa, sua identidade."
+- **Sub**: "Transforme suas fotos favoritas em capas de iPhone unicas. Protecao premium com acabamento soft-touch e design 100% seu."
+- **CTA primario**: "Criar Minha Capa" (urgencia + posse)
+- **CTA secundario**: "Ver Modelos" (baixo compromisso)
+- **Social proof**: contagem de capas criadas + depoimentos
+- **Beneficios**: focados em dor do cliente (protecao, personalidade, conveniencia)
+
+## Detalhes Tecnicos
+
+- Componentes reutilizados: `Card`, `CardContent`, `Button`, `Separator`
+- Icones: `Palette`, `Shield`, `Truck`, `Smartphone`, `Upload`, `Package`, `Star`, `ArrowRight`, `ChevronRight` do lucide-react
+- Layout totalmente responsivo com Tailwind
+- Scroll suave entre secoes via IDs de ancora
+- Sem dependencias novas
+
