@@ -20,10 +20,10 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
 
-      <StarRating rating={product.rating} reviewCount={product.reviewCount} starSize="w-4 h-4" showText />
+      <StarRating rating={product.rating} reviewCount={product.review_count} starSize="w-4 h-4" showText />
 
       <p className="text-3xl font-bold text-foreground">
-        {formatPrice(product.price)}
+        {formatPrice(product.price_cents / 100)}
       </p>
 
       <Separator />
@@ -59,7 +59,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         <Button
           size="lg"
           className="w-full gap-2"
-          onClick={() => navigate(`/customize/${product.id}`)}
+          onClick={() => navigate(`/customize/${product.slug}`)}
         >
           Customizar Minha Capa
           <ArrowRight className="w-4 h-4" />

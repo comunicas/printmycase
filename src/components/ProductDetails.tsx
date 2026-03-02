@@ -51,7 +51,7 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
 
       <TabsContent value="reviews" className="pt-4">
         <p className="text-sm text-muted-foreground">
-          {product.reviewCount} avaliações • Média de {product.rating.toFixed(1)} estrelas
+          {product.review_count} avaliações • Média de {product.rating.toFixed(1)} estrelas
         </p>
         <p className="text-sm text-muted-foreground mt-2 italic">
           Em breve: avaliações de clientes.
