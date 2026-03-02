@@ -14,7 +14,125 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      addresses: {
+        Row: {
+          city: string
+          complement: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          label: string
+          neighborhood: string
+          number: string
+          state: string
+          street: string
+          user_id: string
+          zip_code: string
+        }
+        Insert: {
+          city?: string
+          complement?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          neighborhood?: string
+          number?: string
+          state?: string
+          street?: string
+          user_id: string
+          zip_code?: string
+        }
+        Update: {
+          city?: string
+          complement?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          neighborhood?: string
+          number?: string
+          state?: string
+          street?: string
+          user_id?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          address_id: string | null
+          created_at: string
+          customization_data: Json | null
+          id: string
+          product_id: string
+          status: Database["public"]["Enums"]["order_status"]
+          stripe_session_id: string | null
+          stripe_subscription_id: string | null
+          total_cents: number
+          user_id: string
+        }
+        Insert: {
+          address_id?: string | null
+          created_at?: string
+          customization_data?: Json | null
+          id?: string
+          product_id: string
+          status?: Database["public"]["Enums"]["order_status"]
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          total_cents: number
+          user_id: string
+        }
+        Update: {
+          address_id?: string | null
+          created_at?: string
+          customization_data?: Json | null
+          id?: string
+          product_id?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          total_cents?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_address_id_fkey"
+            columns: ["address_id"]
+            isOneToOne: false
+            referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +141,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      order_status: "pending" | "paid" | "shipped" | "delivered" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +268,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      order_status: ["pending", "paid", "shipped", "delivered", "cancelled"],
+    },
   },
 } as const
