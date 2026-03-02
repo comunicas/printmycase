@@ -25,7 +25,6 @@ const ControlPanel = ({
 
   return (
     <div className="space-y-3">
-      <span className="text-sm font-medium text-foreground">Adjustments</span>
       <div className="space-y-2.5">
         {controls.map((ctrl) => {
           const Icon = ctrl.icon;
