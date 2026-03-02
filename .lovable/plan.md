@@ -1,59 +1,47 @@
 
+# Pagina de Perfil do Usuario
 
-# Correcao de forwardRef e requisicoes duplicadas no useAuth
+Criar uma pagina `/profile` onde o usuario autenticado pode editar nome, telefone e avatar.
 
-## Problema 1: Requisicoes duplicadas ao perfil
+## O que sera feito
 
-O `useAuth` usa apenas `onAuthStateChange`, que dispara multiplos eventos (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED etc.), cada um gerando um novo valor de `user` (mesmo que seja o mesmo usuario). Como o `useEffect` de profile depende de `[user]` por referencia, cada evento dispara uma nova requisicao ao banco.
+1. **Criar pagina `src/pages/Profile.tsx`** com formulario para editar:
+   - Nome completo (campo texto)
+   - Telefone (campo texto)
+   - Avatar (upload de imagem com preview)
 
-### Correcao
+2. **Criar bucket de storage `avatars`** (publico) para armazenar as fotos de perfil, com politicas RLS para upload restrito ao proprio usuario.
 
-Refatorar `useAuth` seguindo o padrao recomendado:
-1. Chamar `getSession()` primeiro para restaurar sessao do storage - define user e loading uma unica vez
-2. Assinar `onAuthStateChange` apenas para mudancas subsequentes (sign in/out)
-3. No effect de profile, comparar `user.id` em vez da referencia do objeto para evitar fetches duplicados
+3. **Adicionar rota `/profile`** em `App.tsx` protegida por `AuthGuard`.
 
-```text
-useEffect(() => {
-  getSession() -> setUser, setLoading(false)
-  onAuthStateChange -> setUser (sem async, sem await)
-  return cleanup
-}, [])
+4. **Adicionar link "Meu Perfil"** no `UserMenu.tsx` para navegacao.
 
-useEffect(() => {
-  // Usa user?.id como dependencia via ref comparison
-  if (!user) { setProfile(null); return }
-  fetch profile...
-}, [user?.id])  // <-- chave: depender do ID, nao da referencia
-```
+5. **Adicionar `refetchProfile`** ao hook `useAuth.ts` para que a pagina de perfil possa atualizar os dados apos salvar.
 
-## Problema 2: Warnings de forwardRef
+## Detalhes tecnicos
 
-Os componentes `AppHeader`, `PhonePreview` e `ControlPanel` nao precisam realmente de `ref` -- os warnings provavelmente vem de componentes pai que tentam passar ref. A correcao e envolver cada um com `React.forwardRef` para que aceitem ref sem warning.
+### Storage (SQL migration)
+- Criar bucket `avatars` publico
+- Policy INSERT: usuario autenticado pode fazer upload em `{user_id}/*`
+- Policy UPDATE: usuario pode sobrescrever seus proprios arquivos
+- Policy DELETE: usuario pode deletar seus proprios arquivos
+
+### Profile.tsx
+- Usa `useAuth()` para carregar dados atuais
+- Upload de avatar via `supabase.storage.from('avatars').upload()`
+- URL publica via `getPublicUrl()`
+- Update de perfil via `supabase.from('profiles').update()`
+- Feedback com toast de sucesso/erro
+- Layout consistente com as outras paginas (AppHeader + breadcrumbs)
+
+### useAuth.ts
+- Expor funcao `refetchProfile()` que re-busca o perfil do banco
 
 ### Arquivos modificados
-
 | Arquivo | Alteracao |
 |---|---|
-| `src/hooks/useAuth.ts` | Adicionar `getSession()` inicial, usar `user?.id` como dep do profile effect |
-| `src/components/AppHeader.tsx` | Envolver com `forwardRef` |
-| `src/components/PhonePreview.tsx` | Envolver com `forwardRef` |
-| `src/components/ControlPanel.tsx` | Envolver com `forwardRef` |
-
-### Detalhes tecnicos
-
-**useAuth.ts** - Estrutura final:
-- `getSession()` no mount para restaurar sessao
-- `onAuthStateChange` sem async para mudancas futuras
-- Profile fetch com `[user?.id]` como dependencia (evita re-fetch quando a referencia muda mas o ID e o mesmo)
-
-**Componentes com forwardRef** - Padrao:
-```text
-const Component = forwardRef<HTMLDivElement, Props>((props, ref) => {
-  return <div ref={ref}>...</div>;
-});
-Component.displayName = "Component";
-export default Component;
-```
-
-Cada componente tera o ref aplicado ao elemento raiz (header, div externa).
+| `src/pages/Profile.tsx` | Novo - pagina de perfil |
+| `src/App.tsx` | Adicionar rota `/profile` com AuthGuard |
+| `src/components/UserMenu.tsx` | Adicionar link "Meu Perfil" |
+| `src/hooks/useAuth.ts` | Expor `refetchProfile` |
+| Migration SQL | Criar bucket avatars + policies |
