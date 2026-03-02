@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { Upload, Camera } from "lucide-react";
+import { useRef, useState, useCallback } from "react";
+import { Upload, Camera, Move } from "lucide-react";
 
 interface PhonePreviewProps {
   image: string | null;
@@ -8,11 +8,43 @@ interface PhonePreviewProps {
   brightness: number;
   contrast: number;
   extraFilter?: string;
+  position: { x: number; y: number };
+  onPositionChange: (pos: { x: number; y: number }) => void;
   onImageUpload: (file: File) => void;
 }
 
-const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilter, onImageUpload }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const startPos = useRef({ x: 0, y: 0 });
+  const startOffset = useRef({ x: 0, y: 0 });
+
+  const clamp = (v: number) => Math.max(0, Math.min(100, v));
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    if (!image) return;
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    startPos.current = { x: e.clientX, y: e.clientY };
+    startOffset.current = { x: position.x, y: position.y };
+  }, [image, position]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const dx = ((e.clientX - startPos.current.x) / rect.width) * 100;
+    const dy = ((e.clientY - startPos.current.y) / rect.height) * 100;
+    onPositionChange({
+      x: clamp(startOffset.current.x - dx),
+      y: clamp(startOffset.current.y - dy),
+    });
+  }, [isDragging, onPositionChange]);
+
+  const onPointerUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,7 +58,7 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
     ? {
         backgroundImage: `url(${image})`,
         backgroundSize: `${scale}%`,
-        backgroundPosition: "center",
+        backgroundPosition: `${position.x}% ${position.y}%`,
         backgroundRepeat: "no-repeat" as const,
         transform: `rotate(${rotation}deg)`,
         filter: combinedFilter,
@@ -45,7 +77,19 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100px] h-[26px] bg-foreground/80 rounded-b-xl z-20" />
 
           {/* Case area */}
-          <div className="absolute inset-0 overflow-hidden" style={imageStyle}>
+          <div
+            ref={containerRef}
+            className={`absolute inset-0 overflow-hidden touch-none ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+            style={imageStyle}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+          >
+            {image && !isDragging && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 hover-parent-opacity transition-opacity z-10">
+                <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
+              </div>
+            )}
             {!image && (
               <button
                 onClick={() => inputRef.current?.click()}
