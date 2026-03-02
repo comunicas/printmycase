@@ -1,30 +1,43 @@
 import { useState, useRef, ChangeEvent, FormEvent } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Camera, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { maskPhone } from "@/lib/masks";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const Profile = () => {
-  const { user, profile, refetchProfile } = useAuth();
+  const { user, profile, refetchProfile, signOut } = useAuth();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
-  const [phone, setPhone] = useState(profile?.phone ?? "");
+  const [phone, setPhone] = useState(profile?.phone ? maskPhone(profile.phone) : "");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Password
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  // Delete account
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   // Sync form when profile loads/changes
   const [lastProfileId, setLastProfileId] = useState<string | null>(null);
   if (profile && profile.id !== lastProfileId) {
     setLastProfileId(profile.id);
     setFullName(profile.full_name);
-    setPhone(profile.phone ?? "");
+    setPhone(profile.phone ? maskPhone(profile.phone) : "");
   }
 
   const currentAvatar = avatarPreview ?? profile?.avatar_url;
@@ -66,9 +79,12 @@ const Profile = () => {
         avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       }
 
+      // Store only digits
+      const rawPhone = phone.replace(/\D/g, "") || null;
+
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: fullName, phone: phone || null, avatar_url: avatarUrl })
+        .update({ full_name: fullName, phone: rawPhone, avatar_url: avatarUrl })
         .eq("id", user.id);
 
       if (error) throw error;
@@ -84,13 +100,52 @@ const Profile = () => {
     }
   };
 
+  const handleChangePassword = async (e: FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast({ title: "Senha muito curta", description: "Mínimo 6 caracteres.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Senhas não coincidem", description: "Verifique e tente novamente.", variant: "destructive" });
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setNewPassword("");
+      setConfirmPassword("");
+      toast({ title: "Senha alterada com sucesso!" });
+    } catch (err: any) {
+      toast({ title: "Erro ao alterar senha", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "EXCLUIR") return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account");
+      if (error) throw error;
+      await signOut();
+      navigate("/");
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir conta", description: err.message, variant: "destructive" });
+      setDeleting(false);
+    }
+  };
+
   const initials = (profile?.full_name || "U").slice(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader breadcrumbs={[{ label: "Meu Perfil" }]} />
 
-      <main className="max-w-lg mx-auto px-5 py-10">
+      <main className="max-w-lg mx-auto px-5 py-10 space-y-6">
+        {/* Profile info */}
         <Card>
           <CardHeader>
             <CardTitle>Meu Perfil</CardTitle>
@@ -147,7 +202,7 @@ const Profile = () => {
                 <Input
                   id="phone"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(maskPhone(e.target.value))}
                   placeholder="(11) 99999-9999"
                 />
               </div>
@@ -163,6 +218,99 @@ const Profile = () => {
                 Salvar alterações
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Change password */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Alterar senha</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Nova senha</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repita a senha"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <Button type="submit" variant="secondary" className="w-full" disabled={savingPassword}>
+                {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Alterar senha
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Delete account */}
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="text-lg text-destructive">Excluir conta</CardTitle>
+            <CardDescription>
+              Esta ação é irreversível. Todos os seus dados serão permanentemente removidos.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!showDeleteDialog ? (
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Excluir minha conta
+              </Button>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Digite <span className="font-bold text-destructive">EXCLUIR</span> para confirmar:
+                </p>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="EXCLUIR"
+                />
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowDeleteDialog(false);
+                      setDeleteConfirmText("");
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    disabled={deleteConfirmText !== "EXCLUIR" || deleting}
+                    onClick={handleDeleteAccount}
+                  >
+                    {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Confirmar exclusão
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
