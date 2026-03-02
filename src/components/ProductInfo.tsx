@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import StarRating from "@/components/StarRating";
 import type { Product } from "@/data/products";
 import { formatPrice } from "@/data/products";
 
@@ -15,33 +16,11 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   const navigate = useNavigate();
   const [selectedColor, setSelectedColor] = useState<string>(product.colors[0]?.id ?? "");
 
-  const fullStars = Math.floor(product.rating);
-  const hasHalf = product.rating - fullStars >= 0.5;
-
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
 
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={cn(
-                "w-4 h-4",
-                i < fullStars
-                  ? "fill-yellow-400 text-yellow-400"
-                  : i === fullStars && hasHalf
-                    ? "fill-yellow-400/50 text-yellow-400"
-                    : "text-muted-foreground/30"
-              )}
-            />
-          ))}
-        </div>
-        <span className="text-sm text-muted-foreground">
-          {product.rating.toFixed(1)} ({product.reviewCount} avaliações)
-        </span>
-      </div>
+      <StarRating rating={product.rating} reviewCount={product.reviewCount} starSize="w-4 h-4" showText />
 
       <p className="text-3xl font-bold text-foreground">
         {formatPrice(product.price)}
