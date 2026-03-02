@@ -48,11 +48,21 @@ export function useAuth() {
     return () => { cancelled = true; };
   }, [user?.id]);
 
+  const refetchProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url, phone")
+      .eq("id", user.id)
+      .single();
+    if (data) setProfile(data);
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
   };
 
-  return { user, profile, loading, signOut };
+  return { user, profile, loading, signOut, refetchProfile };
 }
