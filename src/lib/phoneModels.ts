@@ -41,7 +41,7 @@ export const phoneModels: PhoneModel[] = [
       { top: 18, left: 18, size: 38 },
       { top: 48, left: 48, size: 38 },
     ],
-    flash: { top: 50, left: 18, size: 14 },
+    flash: { top: 18, left: 50, size: 14 },
     hasLidar: false,
   },
   {
@@ -61,7 +61,7 @@ export const phoneModels: PhoneModel[] = [
       { top: 18, left: 18, size: 36 },
       { top: 48, left: 48, size: 36 },
     ],
-    flash: { top: 48, left: 18, size: 13 },
+    flash: { top: 18, left: 50, size: 13 },
     hasLidar: false,
   },
   {
@@ -81,7 +81,7 @@ export const phoneModels: PhoneModel[] = [
       { top: 15, left: 45, size: 36 },
       { top: 48, left: 15, size: 36 },
     ],
-    flash: { top: 18, left: 18, size: 13 },
+    flash: { top: 48, left: 48, size: 13 },
     hasLidar: false,
   },
   {
@@ -101,7 +101,7 @@ export const phoneModels: PhoneModel[] = [
       { top: 15, left: 45, size: 36 },
       { top: 48, left: 15, size: 36 },
     ],
-    flash: { top: 18, left: 18, size: 13 },
+    flash: { top: 48, left: 48, size: 13 },
     hasLidar: false,
   },
   {
@@ -118,7 +118,7 @@ export const phoneModels: PhoneModel[] = [
       borderRadius: 16,
     },
     lenses: [
-      { top: 10, left: 30, size: 30 },  // top center
+      { top: 10, left: 33, size: 30 },  // top center
       { top: 45, left: 10, size: 30 },  // bottom left
       { top: 45, left: 52, size: 30 },  // bottom right
     ],
@@ -140,7 +140,7 @@ export const phoneModels: PhoneModel[] = [
       borderRadius: 18,
     },
     lenses: [
-      { top: 10, left: 30, size: 30 },
+      { top: 10, left: 33, size: 30 },
       { top: 45, left: 10, size: 30 },
       { top: 45, left: 52, size: 30 },
     ],
@@ -162,9 +162,9 @@ export const phoneModels: PhoneModel[] = [
       borderRadius: 20,
     },
     lenses: [
-      { top: 10, left: 30, size: 28 },
-      { top: 44, left: 10, size: 28 },
-      { top: 44, left: 52, size: 28 },
+      { top: 10, left: 33, size: 30 },
+      { top: 44, left: 10, size: 30 },
+      { top: 44, left: 52, size: 30 },
     ],
     flash: { top: 12, left: 66, size: 9 },
     hasLidar: true,
