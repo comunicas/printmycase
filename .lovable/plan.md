@@ -1,57 +1,36 @@
 
+# Corrigir erro de runtime nas Edge Functions
 
-# Correcao de Erros nas Edge Functions e Proximos Passos
+## Problema
+Os logs mostram que o erro `Deno.core.runMicrotasks() is not supported` persiste em ambas as edge functions, e o `stripe-webhook` ainda executa `constructEvent` sincrono (versao antiga em cache). O import via `esm.sh` do Stripe SDK puxa polyfills Node incompativeis com o edge runtime, mesmo com `&no-dts`.
 
-## Problemas Encontrados nos Logs
+## Solucao
+Trocar o import `esm.sh` pelo especificador **`npm:`** nativo do Deno, que carrega o pacote diretamente sem polyfills problematicos.
 
-### 1. Edge Function `stripe-webhook` — Erro critico
-O Stripe SDK no Deno exige o metodo **assincrono** para verificar assinaturas de webhook:
+## Alteracoes
+
+### 1. `supabase/functions/create-checkout/index.ts`
+Linha 1 — trocar:
+```text
+import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-check&no-dts";
 ```
-SubtleCryptoProvider cannot be used in a synchronous context.
-Use `await constructEventAsync(...)` instead of `constructEvent(...)`
-```
-**Solucao:** Trocar `stripe.webhooks.constructEvent(...)` por `await stripe.webhooks.constructEventAsync(...)`.
-
-### 2. Edge Function `create-checkout` — Erro de runtime
-```
-Deno.core.runMicrotasks() is not supported in this environment
-```
-Isso e causado pela versao do Stripe SDK importada via esm.sh com polyfills Node incompativeis. 
-**Solucao:** Usar o import do Stripe otimizado para Deno: `https://esm.sh/stripe@17.7.0?target=deno&no-check&no-dts` (adicionando `no-dts`) ou pinando uma versao mais estavel.
-
-### 3. Triggers SQL nao foram criados
-A configuracao mostra que os triggers `on_auth_user_created` e `on_profiles_updated` **nao existem** no banco, apesar da migracao. Precisam ser recriados.
-
-## Plano de Implementacao
-
-### Passo 1: Corrigir `stripe-webhook`
-- Trocar `constructEvent` por `constructEventAsync` (com `await`)
-- Ajustar o import do Stripe para evitar erro de runtime
-
-### Passo 2: Corrigir `create-checkout`
-- Ajustar o import do Stripe para `https://esm.sh/stripe@17.7.0?target=deno&no-check&no-dts`
-- Garantir que o SDK funcione sem o polyfill Node problemático
-
-### Passo 3: Recriar triggers SQL
-Migracao para criar os dois triggers pendentes:
-```sql
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
-CREATE TRIGGER on_profiles_updated
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+por:
+```text
+import Stripe from "npm:stripe@17.7.0";
 ```
 
-### Passo 4: Reimplantar as edge functions
-Apos as correcoes, reimplantar ambas as functions para que as mudancas entrem em vigor.
+### 2. `supabase/functions/stripe-webhook/index.ts`
+Linha 1 — mesma troca:
+```text
+import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-check&no-dts";
+```
+por:
+```text
+import Stripe from "npm:stripe@17.7.0";
+```
 
-## Detalhes Tecnicos
+### 3. Reimplantar ambas as edge functions
+Apos a alteracao, fazer o deploy para garantir que o novo codigo entre em vigor.
 
-| Componente | Problema | Correcao |
-|---|---|---|
-| `stripe-webhook` | `constructEvent` sincrono | Usar `constructEventAsync` |
-| `create-checkout` | `runMicrotasks` nao suportado | Ajustar import esm.sh |
-| Triggers SQL | Nao existem no banco | Recriar via migracao |
-
+## Por que isso funciona
+O especificador `npm:` e suportado nativamente pelo Deno e pelo Supabase Edge Runtime. Ele carrega o pacote NPM diretamente sem os polyfills `deno.land/std/node` que causam o erro `runMicrotasks`. E a abordagem recomendada pela propria documentacao do Supabase para edge functions.
