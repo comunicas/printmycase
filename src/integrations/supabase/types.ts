@@ -68,7 +68,6 @@ export type Database = {
           product_id: string
           status: Database["public"]["Enums"]["order_status"]
           stripe_session_id: string | null
-          stripe_subscription_id: string | null
           total_cents: number
           user_id: string
         }
@@ -80,7 +79,6 @@ export type Database = {
           product_id: string
           status?: Database["public"]["Enums"]["order_status"]
           stripe_session_id?: string | null
-          stripe_subscription_id?: string | null
           total_cents: number
           user_id: string
         }
@@ -92,7 +90,6 @@ export type Database = {
           product_id?: string
           status?: Database["public"]["Enums"]["order_status"]
           stripe_session_id?: string | null
-          stripe_subscription_id?: string | null
           total_cents?: number
           user_id?: string
         }
