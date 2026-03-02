@@ -10,7 +10,7 @@ const App = () => (
     <Toaster />
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/product/iphone-15-pro-max" replace />} />
+        <Route path="/" element={<Navigate to="/product/iphone-17-pro-max" replace />} />
         <Route path="/product/:id" element={<Product />} />
         <Route path="/customize/:id" element={<Customize />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
