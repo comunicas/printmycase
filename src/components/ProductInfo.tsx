@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, ShoppingCart, Star } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -20,10 +20,8 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Name */}
       <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
 
-      {/* Rating */}
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-0.5">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -45,14 +43,12 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         </span>
       </div>
 
-      {/* Price */}
       <p className="text-3xl font-bold text-foreground">
         {formatPrice(product.price)}
       </p>
 
       <Separator />
 
-      {/* Color selector */}
       <div className="space-y-2">
         <p className="text-sm font-medium text-foreground">
           Cor:{" "}
@@ -80,7 +76,6 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
 
       <Separator />
 
-      {/* Actions */}
       <div className="flex flex-col gap-3 pt-1">
         <Button
           size="lg"
@@ -90,9 +85,8 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           Customizar Minha Capa
           <ArrowRight className="w-4 h-4" />
         </Button>
-        <Button size="lg" variant="outline" className="w-full gap-2">
-          <ShoppingCart className="w-4 h-4" />
-          Adicionar ao Carrinho
+        <Button size="lg" variant="outline" className="w-full gap-2" onClick={() => navigate("/catalog")}>
+          Ver Catálogo Completo
         </Button>
       </div>
     </div>

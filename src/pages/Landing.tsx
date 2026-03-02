@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { products, formatPrice } from "@/data/products";
 import { cn } from "@/lib/utils";
 import SeoHead from "@/components/SeoHead";
+import AppHeader from "@/components/AppHeader";
 
 const testimonials = [
   { name: "Ana C.", text: "Melhor capa que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
@@ -56,22 +57,7 @@ const Landing = () => {
     <>
       <SeoHead />
       <div className="min-h-screen bg-background flex flex-col">
-        {/* Header / Nav */}
-        <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-          <nav className="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
-            <Link to="/" className="text-lg font-bold text-foreground tracking-tight">
-              Case Studio
-            </Link>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/catalog")}>
-                Ver Modelos
-              </Button>
-              <Button size="sm" onClick={() => navigate(`/customize/${products[0].id}`)}>
-                Customizar Agora
-              </Button>
-            </div>
-          </nav>
-        </header>
+        <AppHeader />
 
         <main>
           {/* Hero */}
