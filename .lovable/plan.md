@@ -1,55 +1,44 @@
 
 
-# Corrigir Edge Functions: Substituir Stripe SDK por chamadas REST diretas
+# Corrigir import do Supabase nas Edge Functions
 
-## Problema
-O erro `Deno.core.runMicrotasks() is not supported` persiste com todas as abordagens de import do Stripe SDK (esm.sh, npm:). A versao 17.7.0 carrega polyfills Node incompativeis com o Supabase Edge Runtime.
+## Problema Identificado
+
+O erro `Deno.core.runMicrotasks() is not supported` **nao vem do Stripe** (que ja foi substituido por chamadas REST diretas). O erro vem do **import do Supabase client via `esm.sh`**:
+
+```
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
+```
+
+O `esm.sh` empacota polyfills Node.js incompativeis com o Edge Runtime do Supabase, causando o crash na funcao antes mesmo de processar a requisicao.
 
 ## Solucao
-Substituir o Stripe SDK por chamadas diretas a API REST do Stripe usando `fetch`. Isso elimina completamente a dependencia do SDK e os polyfills problematicos.
+
+Trocar o import `esm.sh` pelo especificador **`jsr:`** (JSR Registry), que e o metodo oficialmente recomendado pelo Supabase para Edge Functions:
+
+```typescript
+import { createClient } from "jsr:@supabase/supabase-js@2";
+```
 
 ## Alteracoes
 
 ### 1. `supabase/functions/create-checkout/index.ts`
-- Remover import do Stripe SDK
-- Criar sessao de checkout via `fetch` para `https://api.stripe.com/v1/checkout/sessions`
-- Usar `STRIPE_SECRET_KEY` no header `Authorization: Bearer`
-- Enviar parametros como `application/x-www-form-urlencoded` (formato exigido pela API Stripe)
-- Manter toda a logica de autenticacao, upload e insercao de pedido inalterada
+- Linha 1: trocar `"https://esm.sh/@supabase/supabase-js@2.98.0"` por `"jsr:@supabase/supabase-js@2"`
+- Tambem substituir `supabase.auth.getClaims(token)` por `supabase.auth.getUser(token)` — o metodo `getClaims` nao existe no SDK v2; o correto e `getUser` que retorna os dados do usuario autenticado
 
 ### 2. `supabase/functions/stripe-webhook/index.ts`
-- Remover import do Stripe SDK
-- Implementar verificacao de assinatura HMAC-SHA256 manualmente usando `crypto.subtle`
-- Comparar assinatura calculada com a do header `stripe-signature`
-- Parsear o evento diretamente do body JSON
-- Manter logica de atualizacao de status dos pedidos
+- Linha 1: mesma troca de import para `"jsr:@supabase/supabase-js@2"`
+
+### 3. Reimplantar ambas as edge functions
+
+## Por que isso resolve
+
+O especificador `jsr:` carrega o pacote diretamente do JSR Registry, que fornece modulos nativos para Deno sem polyfills Node.js. E o metodo recomendado pela documentacao oficial do Supabase para Edge Functions.
 
 ## Detalhes Tecnicos
 
-### Checkout Session via REST
-```text
-POST https://api.stripe.com/v1/checkout/sessions
-Authorization: Bearer sk_...
-Content-Type: application/x-www-form-urlencoded
-
-payment_method_types[0]=card
-mode=payment
-line_items[0][price_data][currency]=brl
-line_items[0][price_data][unit_amount]=6990
-...
-```
-
-### Verificacao de Webhook sem SDK
-A assinatura Stripe usa HMAC-SHA256:
-1. Extrair timestamp e assinatura do header `stripe-signature`
-2. Construir payload assinado: `{timestamp}.{body}`
-3. Calcular HMAC-SHA256 com o webhook secret
-4. Comparar com a assinatura recebida
-5. Verificar tolerancia de tempo (5 minutos)
-
-### Vantagens
-- Zero dependencia de pacotes externos para Stripe
-- Compatibilidade total com o Edge Runtime
-- Sem polyfills Node problematicos
-- Mais leve e rapido para inicializar
+| Arquivo | Problema | Correcao |
+|---|---|---|
+| `create-checkout/index.ts` | `esm.sh` import + `getClaims` inexistente | `jsr:` import + `getUser` |
+| `stripe-webhook/index.ts` | `esm.sh` import | `jsr:` import |
 
