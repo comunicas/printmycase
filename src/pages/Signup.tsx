@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import FormField from "@/components/ui/form-field";
+import SubmitButton from "@/components/forms/SubmitButton";
 import AppHeader from "@/components/AppHeader";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,7 +20,6 @@ const Signup = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -28,13 +28,11 @@ const Signup = () => {
         emailRedirectTo: window.location.origin,
       },
     });
-
     if (error) {
       toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
     } else {
       setSent(true);
     }
-
     setLoading(false);
   };
 
@@ -96,8 +94,7 @@ const Signup = () => {
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome completo</Label>
+            <FormField label="Nome completo" id="name" required>
               <Input
                 id="name"
                 placeholder="Seu nome"
@@ -105,9 +102,8 @@ const Signup = () => {
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            </FormField>
+            <FormField label="Email" id="email" required>
               <Input
                 id="email"
                 type="email"
@@ -116,9 +112,8 @@ const Signup = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+            </FormField>
+            <FormField label="Senha" id="password" required>
               <Input
                 id="password"
                 type="password"
@@ -128,10 +123,10 @@ const Signup = () => {
                 minLength={6}
                 required
               />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Criando..." : "Criar conta"}
-            </Button>
+            </FormField>
+            <SubmitButton loading={loading} className="w-full">
+              Criar conta
+            </SubmitButton>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">

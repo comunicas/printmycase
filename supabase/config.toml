@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.delete-account]
 verify_jwt = false
+
+[functions.admin-sync-stripe]
+verify_jwt = false

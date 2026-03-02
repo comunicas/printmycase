@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, ShoppingBag } from "lucide-react";
+import { LogOut, User, ShoppingBag, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,9 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 
 const UserMenu = () => {
   const { user, profile, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
 
   if (!user) {
@@ -56,6 +58,12 @@ const UserMenu = () => {
           <ShoppingBag className="mr-2 h-4 w-4" />
           Meus Pedidos
         </DropdownMenuItem>
+        {isAdmin && (
+          <DropdownMenuItem onClick={() => navigate("/admin")}>
+            <Shield className="mr-2 h-4 w-4" />
+            Admin
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut}>
           <LogOut className="mr-2 h-4 w-4" />

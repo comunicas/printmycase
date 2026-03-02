@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import FormField from "@/components/ui/form-field";
+import SubmitButton from "@/components/forms/SubmitButton";
 import AppHeader from "@/components/AppHeader";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,41 +18,32 @@ const ResetPassword = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setMode("update");
-    }
+    if (window.location.hash.includes("type=recovery")) setMode("update");
   }, []);
 
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       setSent(true);
     }
-
     setLoading(false);
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     const { error } = await supabase.auth.updateUser({ password: newPassword });
-
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       setUpdated(true);
     }
-
     setLoading(false);
   };
 
@@ -63,9 +55,7 @@ const ResetPassword = () => {
           <div className="w-full max-w-sm text-center space-y-4">
             <h1 className="text-2xl font-bold tracking-tight">Senha atualizada!</h1>
             <p className="text-sm text-muted-foreground">Sua senha foi alterada com sucesso.</p>
-            <Link to="/login">
-              <Button className="mt-4">Ir para login</Button>
-            </Link>
+            <Link to="/login"><Button className="mt-4">Ir para login</Button></Link>
           </div>
         </main>
       </div>
@@ -83,8 +73,7 @@ const ResetPassword = () => {
               <p className="text-sm text-muted-foreground">Defina sua nova senha abaixo</p>
             </div>
             <form onSubmit={handleUpdate} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-password">Nova senha</Label>
+              <FormField label="Nova senha" id="new-password" required>
                 <Input
                   id="new-password"
                   type="password"
@@ -94,10 +83,10 @@ const ResetPassword = () => {
                   minLength={6}
                   required
                 />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Atualizando..." : "Atualizar senha"}
-              </Button>
+              </FormField>
+              <SubmitButton loading={loading} className="w-full">
+                Atualizar senha
+              </SubmitButton>
             </form>
           </div>
         </main>
@@ -115,9 +104,7 @@ const ResetPassword = () => {
             <p className="text-sm text-muted-foreground">
               Enviamos um link para <strong>{email}</strong>. Verifique sua caixa de entrada.
             </p>
-            <Link to="/login">
-              <Button variant="outline" className="mt-4">Voltar ao login</Button>
-            </Link>
+            <Link to="/login"><Button variant="outline" className="mt-4">Voltar ao login</Button></Link>
           </div>
         </main>
       </div>
@@ -134,8 +121,7 @@ const ResetPassword = () => {
             <p className="text-sm text-muted-foreground">Informe seu email para receber o link de recuperação</p>
           </div>
           <form onSubmit={handleRequest} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <FormField label="Email" id="email" required>
               <Input
                 id="email"
                 type="email"
@@ -144,10 +130,10 @@ const ResetPassword = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Enviando..." : "Enviar link"}
-            </Button>
+            </FormField>
+            <SubmitButton loading={loading} className="w-full">
+              Enviar link
+            </SubmitButton>
           </form>
           <p className="text-center text-sm text-muted-foreground">
             <Link to="/login" className="text-primary hover:underline font-medium">

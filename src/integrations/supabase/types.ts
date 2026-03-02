@@ -103,6 +103,60 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          active: boolean | null
+          colors: Json | null
+          created_at: string | null
+          description: string | null
+          id: string
+          images: string[] | null
+          name: string
+          price_cents: number
+          rating: number | null
+          review_count: number | null
+          slug: string
+          specs: Json | null
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          colors?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          name: string
+          price_cents: number
+          rating?: number | null
+          review_count?: number | null
+          slug: string
+          specs?: Json | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          colors?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          name?: string
+          price_cents?: number
+          rating?: number | null
+          review_count?: number | null
+          slug?: string
+          specs?: Json | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -130,14 +184,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "user"
       order_status: "pending" | "paid" | "shipped" | "delivered" | "cancelled"
     }
     CompositeTypes: {
@@ -266,6 +345,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       order_status: ["pending", "paid", "shipped", "delivered", "cancelled"],
     },
   },
