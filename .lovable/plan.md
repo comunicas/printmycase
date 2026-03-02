@@ -1,52 +1,58 @@
 
 
-# Code Review Completo - Case Studio
+# Refatoracao do PhonePreview - Correcao de Imagem e Drag
 
-## Problemas Encontrados
+## Problemas Identificados
 
-### 1. Componente orfao: `NavLink.tsx`
-O arquivo `src/components/NavLink.tsx` nao e importado em nenhum lugar da aplicacao. E codigo legado sem utilidade.
+### 1. Imagem cortada incorretamente ao rotacionar (BUG PRINCIPAL)
+O `transform: rotate()` e o `background-image` estao aplicados no **mesmo div** que serve como container de interacao (com `overflow-hidden` no pai). Quando a rotacao e diferente de 0, o div inteiro gira dentro do frame que tem `overflow-hidden` e `rounded corners`, cortando as bordas da imagem e deixando areas vazias visiveis.
 
-**Acao**: Deletar `src/components/NavLink.tsx`.
+### 2. Direcao do drag invertida
+O calculo `startOffset.x - dx` subtrai o delta, o que tecnicamente move a imagem na direcao correta para `background-position`. Porem, quando ha rotacao aplicada, o eixo visual muda mas o calculo continua usando eixos fixos, causando confusao na direcao do arraste. Alem disso, o drag precisa considerar o fator de escala para mover proporcionalmente.
 
-### 2. Variaveis CSS de sidebar sem uso
-As variaveis `--sidebar-*` em `src/index.css` (tanto no `:root` quanto no `.dark`) nao sao usadas por nenhum componente da aplicacao. O componente `sidebar.tsx` existe nos UI components mas nunca e importado. Sao 16 linhas de CSS morto.
+### 3. Arquitetura da camada de imagem
+Toda a logica visual (background, transform, filter) e de interacao (pointer events) esta misturada num unico div. Isso impede tratar rotacao e escala corretamente sem afetar a area de clique.
 
-**Acao**: Remover todas as variaveis `--sidebar-*` do `:root` e `.dark` no `index.css`.
+## Solucao: Separar camadas de imagem e interacao
 
-### 3. Dependencias nao utilizadas no `App.tsx`
-- **`@tanstack/react-query`**: `QueryClient` e `QueryClientProvider` estao configurados no `App.tsx`, mas nenhum componente usa `useQuery` ou `useMutation`. E infraestrutura sem uso.
-- **`next-themes`**: Importado apenas no `sonner.tsx` para `useTheme()`, mas nao existe nenhum `ThemeProvider` na arvore de componentes. O `useTheme()` retorna sempre o valor default (`"system"`), nunca funcionando corretamente.
-- **Dois sistemas de toast**: `Toaster` (radix) e `Sonner` estao ambos montados no `App.tsx`, mas nenhum dos dois e usado na aplicacao.
+### Novo layout do PhonePreview
 
-**Acao**: Remover `QueryClientProvider` do `App.tsx`. Remover o componente `<Sonner />` (que depende de `next-themes` sem provider). Manter apenas o `<Toaster />` do radix caso venha a ser usado.
+```text
++-- Phone frame (overflow-hidden, rounded) --------+
+|                                                    |
+|   +-- Image Layer (inner div) --+                 |
+|   |  - backgroundImage           |                 |
+|   |  - backgroundSize (scale)    |                 |
+|   |  - backgroundPosition        |                 |
+|   |  - transform: rotate()       |                 |
+|   |  - filter (brightness, etc)  |                 |
+|   |  - tamanho 150% do container |                 |
+|   |    (para cobrir gaps na      |                 |
+|   |     rotacao)                 |                 |
+|   +------------------------------+                 |
+|                                                    |
+|   +-- Interaction Layer (pointer events) -+       |
+|   |  - absolute inset-0                    |       |
+|   |  - onPointerDown/Move/Up               |       |
+|   |  - Move icon overlay                   |       |
+|   +----------------------------------------+       |
+|                                                    |
+|   +-- Camera module (z-20) ---------+             |
+|   +-- Apple logo (z-20) ------------+             |
++----------------------------------------------------+
+```
 
-### 4. Conflito de `group` aninhado no `PhonePreview.tsx`
-Na linha 80, o container da imagem tem a classe `group`. Na linha 94, o botao de upload dentro dele tambem tem `group`. Isso causa conflito: o `group-hover` das linhas 97-98 responde ao hover do botao interno, nao do container externo. Nao causa bug visivel porque o botao ocupa 100% da area, mas e semanticamente incorreto e fragil.
+### Mudancas tecnicas em `PhonePreview.tsx`
 
-**Acao**: Renomear para usar `group/image` e `group/upload` com Tailwind named groups para evitar ambiguidade.
+1. **Criar div interno para a imagem**: Um div absolutamente posicionado com dimensoes maiores que o container (ex: 150% width/height, centrado com negative offsets) que recebe `backgroundImage`, `backgroundSize`, `backgroundPosition`, `transform: rotate()` e `filter`. Isso garante que ao rotacionar, nao haja gaps visiveis.
 
-### 5. Botoes do header sem funcionalidade
-Os botoes "ArrowLeft" (voltar) e "HelpCircle" (ajuda) no header do `Index.tsx` sao `<button>` sem `onClick`. Nao fazem nada.
+2. **Div separado para interacao**: Um div transparente `absolute inset-0` por cima, que captura os pointer events e mostra o icone de Move. Sem nenhum estilo visual.
 
-**Acao**: Desabilitar visualmente ou adicionar `aria-label` e `disabled` para indicar que sao placeholders.
+3. **Corrigir calculo do drag**: Ajustar a sensibilidade do drag dividindo pelo fator de escala (`scale/100`) para que o movimento seja proporcional ao zoom. Quando a imagem esta em 200%, arrastar deve mover menos em termos de `background-position`.
 
-### 6. Duplicacao de label "Adjustments"
-O titulo "Adjustments" aparece duas vezes: uma na `TabsTrigger` (linha 81 do Index) e outra dentro do `ControlPanel.tsx` (linha 28). O usuario ve "Adjustments" repetido.
+4. **Upload CTA**: Manter no div de interacao quando nao ha imagem.
 
-**Acao**: Remover o `<span>Adjustments</span>` do `ControlPanel.tsx`.
+### Arquivos modificados
 
-### 7. Input file nao reseta apos upload
-O `<input type="file">` no `PhonePreview.tsx` nao limpa o `value` apos selecao. Se o usuario tentar fazer upload da mesma imagem novamente, o `onChange` nao dispara.
-
-**Acao**: Adicionar `e.target.value = ''` no `handleFileChange` apos processar o arquivo.
-
-## Resumo de Arquivos Modificados
-
-1. **Deletar** `src/components/NavLink.tsx` -- componente orfao
-2. **`src/index.css`** -- remover variaveis `--sidebar-*`
-3. **`src/App.tsx`** -- remover QueryClientProvider, remover Sonner
-4. **`src/components/PhonePreview.tsx`** -- corrigir group aninhado, resetar input file
-5. **`src/components/ControlPanel.tsx`** -- remover label duplicado "Adjustments"
-6. **`src/pages/Index.tsx`** -- adicionar disabled/aria nos botoes do header
+1. **`src/components/PhonePreview.tsx`** -- Refatoracao completa da estrutura de camadas (imagem vs interacao), correcao da direcao de drag e da escala do movimento.
 
