@@ -1,85 +1,59 @@
 
 
-# Revisao Completa do Fluxo de Compra e CRUD do Usuario
+# Correcao de forwardRef e requisicoes duplicadas no useAuth
 
-Apos analisar todo o codigo do projeto, identifiquei **bugs reais, problemas de seguranca e codigo legado** que precisam ser corrigidos.
+## Problema 1: Requisicoes duplicadas ao perfil
 
----
+O `useAuth` usa apenas `onAuthStateChange`, que dispara multiplos eventos (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED etc.), cada um gerando um novo valor de `user` (mesmo que seja o mesmo usuario). Como o `useEffect` de profile depende de `[user]` por referencia, cada evento dispara uma nova requisicao ao banco.
 
-## Problemas Encontrados
+### Correcao
 
-### 1. Storage sem politicas de acesso (BUG CRITICO)
-O bucket `customizations` e privado mas nao tem politicas de storage configuradas. Isso significa que o upload de imagem na pagina de customizacao **falha silenciosamente** ou retorna erro de permissao. O usuario nao consegue fazer upload da imagem da capa.
+Refatorar `useAuth` seguindo o padrao recomendado:
+1. Chamar `getSession()` primeiro para restaurar sessao do storage - define user e loading uma unica vez
+2. Assinar `onAuthStateChange` apenas para mudancas subsequentes (sign in/out)
+3. No effect de profile, comparar `user.id` em vez da referencia do objeto para evitar fetches duplicados
 
-### 2. Pagina de pedidos mostra ID tecnico em vez do nome do produto
-Em `Orders.tsx`, a coluna exibida e `order.product_id` (ex: "iphone-17-air") em vez do nome legivel como "Capa iPhone 17 Air".
-
-### 3. useAuth tem race condition
-O hook `useAuth` chama `onAuthStateChange` e `getSession` em paralelo, ambos setando `loading = false`. Alem disso, faz chamadas async dentro do callback `onAuthStateChange`, o que a documentacao do SDK desaconselha pois pode causar deadlocks.
-
-### 4. Rascunho (Draft) salva imagem base64 no localStorage (legado)
-O `handleSaveDraft` em `Customize.tsx` salva a imagem inteira em base64 no localStorage (pode ter megabytes). Alem disso, o rascunho nunca e carregado de volta - e codigo morto.
-
-### 5. Customize nao valida se o produto existe
-Se o usuario acessar `/customize/produto-invalido`, a pagina renderiza com dados undefined sem mostrar erro.
-
-### 6. RLS policy "Service role can update orders" e RESTRICTIVE
-A policy esta marcada como RESTRICTIVE (nao permissiva), mas o service role ja ignora RLS. Essa policy e inutil e pode causar confusao.
-
-### 7. Coluna `stripe_subscription_id` na tabela orders (legado)
-Nao e usada em nenhum lugar do codigo. E residuo de uma implementacao anterior.
-
----
-
-## Plano de Correcoes
-
-### Correcao 1: Criar politicas de storage para o bucket `customizations`
-- Migrar: adicionar politicas que permitam usuarios autenticados fazer upload em `{user_id}/*` e ler seus proprios arquivos.
-
-### Correcao 2: Exibir nome do produto na listagem de pedidos
-- Em `Orders.tsx`, usar `getProduct(order.product_id)` para mostrar o nome legivel em vez do ID tecnico.
-
-### Correcao 3: Corrigir race condition no useAuth
-- Remover fetch de profile de dentro do `onAuthStateChange` callback
-- Usar um `useEffect` separado que reage a mudancas do `user` para buscar o profile
-- Garantir que `loading` so e setado `false` uma vez
-
-### Correcao 4: Remover salvamento de rascunho (codigo morto)
-- Remover `handleSaveDraft` e o botao "Salvar Rascunho" de `Customize.tsx`, ja que o rascunho nunca e restaurado.
-
-### Correcao 5: Validar produto na pagina de customizacao
-- Adicionar verificacao de produto invalido com redirecionamento para o catalogo e mensagem de erro.
-
-### Correcao 6: Remover coluna legada `stripe_subscription_id`
-- Migrar: remover a coluna `stripe_subscription_id` da tabela orders.
-
----
-
-## Detalhes Tecnicos
-
-### Storage Policies (SQL)
 ```text
--- Permitir upload autenticado na pasta do usuario
-CREATE POLICY "Users can upload own customizations"
-ON storage.objects FOR INSERT TO authenticated
-WITH CHECK (bucket_id = 'customizations' AND (storage.foldername(name))[1] = auth.uid()::text);
+useEffect(() => {
+  getSession() -> setUser, setLoading(false)
+  onAuthStateChange -> setUser (sem async, sem await)
+  return cleanup
+}, [])
 
--- Permitir leitura dos proprios arquivos
-CREATE POLICY "Users can read own customizations"
-ON storage.objects FOR SELECT TO authenticated
-USING (bucket_id = 'customizations' AND (storage.foldername(name))[1] = auth.uid()::text);
+useEffect(() => {
+  // Usa user?.id como dependencia via ref comparison
+  if (!user) { setProfile(null); return }
+  fetch profile...
+}, [user?.id])  // <-- chave: depender do ID, nao da referencia
 ```
 
-### useAuth refatorado
-- `onAuthStateChange`: apenas seta `user` e `loading`
-- `useEffect([user])`: busca profile quando user muda
-- Remove chamada duplicada de `getSession` (onAuthStateChange ja cobre o estado inicial)
+## Problema 2: Warnings de forwardRef
+
+Os componentes `AppHeader`, `PhonePreview` e `ControlPanel` nao precisam realmente de `ref` -- os warnings provavelmente vem de componentes pai que tentam passar ref. A correcao e envolver cada um com `React.forwardRef` para que aceitem ref sem warning.
 
 ### Arquivos modificados
+
 | Arquivo | Alteracao |
 |---|---|
-| `src/hooks/useAuth.ts` | Corrigir race condition, separar fetch de profile |
-| `src/pages/Orders.tsx` | Mostrar nome do produto em vez de ID |
-| `src/pages/Customize.tsx` | Remover draft, validar produto |
-| Migration SQL | Storage policies + remover coluna legada |
+| `src/hooks/useAuth.ts` | Adicionar `getSession()` inicial, usar `user?.id` como dep do profile effect |
+| `src/components/AppHeader.tsx` | Envolver com `forwardRef` |
+| `src/components/PhonePreview.tsx` | Envolver com `forwardRef` |
+| `src/components/ControlPanel.tsx` | Envolver com `forwardRef` |
 
+### Detalhes tecnicos
+
+**useAuth.ts** - Estrutura final:
+- `getSession()` no mount para restaurar sessao
+- `onAuthStateChange` sem async para mudancas futuras
+- Profile fetch com `[user?.id]` como dependencia (evita re-fetch quando a referencia muda mas o ID e o mesmo)
+
+**Componentes com forwardRef** - Padrao:
+```text
+const Component = forwardRef<HTMLDivElement, Props>((props, ref) => {
+  return <div ref={ref}>...</div>;
+});
+Component.displayName = "Component";
+export default Component;
+```
+
+Cada componente tera o ref aplicado ao elemento raiz (header, div externa).
