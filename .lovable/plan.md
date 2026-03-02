@@ -1,40 +1,22 @@
 
-# Padronizacao de formularios + Painel Admin com CRUD de produtos e Stripe
 
-## Status: ✅ Implementado
+# Atribuir role admin ao usuario Rafael Bruno
 
-### Concluído
+Sera executada uma insercao na tabela `user_roles` para atribuir a role `admin` ao usuario encontrado no banco.
 
-1. **Componentes de formulário padronizados** ✅
-   - `src/components/ui/form-field.tsx` - Label + Input + erro/hint
-   - `src/components/forms/FormCard.tsx` - Card wrapper com variante destructive
-   - `src/components/forms/SubmitButton.tsx` - Botão submit com loading
-   - Refatoradas: Login, Signup, ResetPassword, Profile
+## Dados do usuario
+- **Nome:** Rafael Bruno
+- **Email:** rafael@comunicas.com.br
+- **ID:** `8ade2db7-4961-499a-88ad-dffc6518e313`
 
-2. **Sistema de roles** ✅
-   - Enum `app_role` (admin, user)
-   - Tabela `user_roles` com RLS
-   - Função `has_role()` SECURITY DEFINER
-   - Hook `useAdmin` + componente `AdminGuard`
+## O que sera feito
 
-3. **Tabela products** ✅
-   - Schema completo com slug, price_cents, stripe IDs, images, specs, colors
-   - RLS: SELECT público (ativos), CRUD restrito a admins
-   - Trigger `handle_updated_at`
+Executar um INSERT na tabela `user_roles` com os seguintes dados:
 
-4. **Página Admin** ✅
-   - Rota `/admin` protegida por AuthGuard + AdminGuard
-   - CRUD completo: listar, criar, editar, ativar/desativar
-   - Dialog de formulário com geração automática de slug
-   - Link condicional no UserMenu (só aparece para admins)
+```text
+user_id: 8ade2db7-4961-499a-88ad-dffc6518e313
+role: admin
+```
 
-5. **Edge function `admin-sync-stripe`** ✅
-   - Actions: create, update_price, archive
-   - Validação de admin via service role
-   - Sincroniza produto + preço com Stripe
+Apos a insercao, o hook `useAdmin` passara a retornar `isAdmin: true` para este usuario, liberando acesso ao painel `/admin` e exibindo o link "Admin" no menu do usuario.
 
-## Próximos passos sugeridos
-- Inserir produtos existentes de `src/data/products.ts` na tabela `products`
-- Atualizar catálogo/produto para buscar do banco
-- Atualizar `create-checkout` para usar `stripe_price_id` do banco
-- Atribuir role admin ao primeiro usuário
