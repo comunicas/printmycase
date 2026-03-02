@@ -1,45 +1,54 @@
 
-
-# Expandir Catalogo de Produtos com Todos os Modelos
+# Pagina de Catalogo de Produtos
 
 ## O que sera feito
 
-Expandir o arquivo `src/data/products.ts` com todos os 20 modelos de iPhone da planilha, cada um com preco R$ 69,90 e imagens genericas de mockup de capa preta (usando URLs de imagens gratuitas de mockup de capas de celular).
+Criar uma nova pagina `/catalog` que lista todos os 20 modelos de capas disponiveis em um grid de cards clicaveis. Cada card mostra a imagem do produto, nome, preco e avaliacao. Clicar em um card navega para `/product/:id`.
 
-## Produtos a adicionar (20 modelos)
+## Estrutura Visual
 
-Baseado na planilha:
-- iPhone 17, 17 Air, 17 Pro, 17 Pro Max
-- iPhone Xs Max, X/Xs, Xr, X
-- iPhone SE 3
-- iPhone 11 Pro Max, 11 Pro, 11
-- iPhone 7/8 Plus, 7/8, 7 Plus, 7
+```text
++-- Header ---------------------------------------------------+
+|  Case Studio                                                 |
++--------------------------------------------------------------+
+|                                                              |
+|  Nossos Modelos              [20 capas disponiveis]          |
+|                                                              |
+|  +----------+  +----------+  +----------+  +----------+     |
+|  | [imagem] |  | [imagem] |  | [imagem] |  | [imagem] |     |
+|  | iPhone   |  | iPhone   |  | iPhone   |  | iPhone   |     |
+|  | 17 Pro   |  | 17 Pro   |  | 17 Air   |  | 17       |     |
+|  | Max      |  |          |  |          |  |          |     |
+|  | R$69,90  |  | R$69,90  |  | R$69,90  |  | R$69,90  |     |
+|  | ★★★★★    |  | ★★★★★    |  | ★★★★★    |  | ★★★★★    |     |
+|  +----------+  +----------+  +----------+  +----------+     |
+|  ...mais cards...                                            |
++--------------------------------------------------------------+
+```
 
-O produto existente (iPhone 15 Pro Max) sera mantido e atualizado para o preco de 69.90.
+## Arquivos a criar
 
-## Estrutura de cada produto
+### 1. `src/pages/Catalog.tsx`
+- Header simples com titulo "Case Studio"
+- Subtitulo "Nossos Modelos" com contagem de produtos
+- Grid responsivo: 2 colunas mobile, 3 tablet, 4 desktop
+- Cada card usa componente `Card` existente com:
+  - Imagem do produto (primeira do array `images`)
+  - Nome do produto
+  - Preco formatado em BRL
+  - Estrelas de avaliacao e contagem de reviews
+- `useNavigate` para navegar ao clicar no card
 
-Cada produto tera:
-- `id`: slug unico (ex: `iphone-17-pro-max`)
-- `name`: "Capa iPhone 17 Pro Max"
-- `price`: 69.90
-- `description`: descricao generica da capa personalizada
-- `images`: 3 imagens genericas de mockup (URLs de imagens de capas pretas)
-- `colors`: mesmas opcoes de cor para todos (Preto, Branco, Azul, Vermelho)
-- `specs`: especificacoes adaptadas por modelo (dimensoes, compatibilidade)
-- `rating`: valores variados entre 4.5-4.9
-- `reviewCount`: valores variados
+## Arquivos a modificar
 
-## Rota padrao
+### 2. `src/App.tsx`
+- Adicionar rota `/catalog` para a pagina de catalogo
+- Alterar redirect da rota `/` de `/product/iphone-17-pro-max` para `/catalog`
 
-Atualizar a rota `/` em `src/App.tsx` para redirecionar para `/product/iphone-17-pro-max` (modelo mais recente).
+## Detalhes tecnicos
 
-## Imagens
-
-Usaremos imagens de mockup genericas hospedadas em servicos gratuitos (ex: unsplash/pexels) mostrando capas de celular pretas. Caso nao carreguem, o placeholder SVG atual sera o fallback.
-
-## Arquivos modificados
-
-1. **`src/data/products.ts`** -- Expandir array `products` com 20 modelos, manter interfaces e funcoes utilitarias
-2. **`src/App.tsx`** -- Atualizar redirect padrao para o modelo mais recente
-
+- Importa `products` e `formatPrice` de `src/data/products.ts`
+- Reutiliza componentes `Card`, `CardContent` ja existentes
+- Grid com classes Tailwind: `grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4`
+- Cards com `cursor-pointer` e `hover:shadow-md` para feedback visual
+- Estrelas com icone `Star` do lucide-react (mesmo padrao do `ProductInfo`)
