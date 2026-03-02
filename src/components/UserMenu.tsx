@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -51,6 +51,10 @@ const UserMenu = () => {
         <DropdownMenuItem onClick={() => navigate("/catalog")}>
           <User className="mr-2 h-4 w-4" />
           Ver Modelos
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/orders")}>
+          <ShoppingBag className="mr-2 h-4 w-4" />
+          Meus Pedidos
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut}>
