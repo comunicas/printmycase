@@ -1,36 +1,85 @@
 
-Diagnóstico do problema: a compra está sendo finalizada, mas a tela de sucesso não conclui o fluxo visual.
 
-O que encontrei:
-- O pedido do seu teste foi gravado no backend com sucesso e marcado como pago (`status: paid`) para o mesmo `session_id` mostrado no print (`cs_test_a1x7...`).
-- Não há erros recentes nas funções de backend de checkout/webhook; só eventos de boot/shutdown.
-- O travamento visual acontece em `/checkout/success` com o spinner de carregamento do guard de autenticação.
+# Revisao Completa do Fluxo de Compra e CRUD do Usuario
 
-Conclusão:
-- A cobrança no Stripe funciona.
-- O que “falta” é corrigir o comportamento da página de sucesso (UX pós-pagamento), que hoje depende do `AuthGuard` e pode ficar presa em estado de loading em alguns cenários de retorno do Stripe.
+Apos analisar todo o codigo do projeto, identifiquei **bugs reais, problemas de seguranca e codigo legado** que precisam ser corrigidos.
 
-Plano de correção:
-1. Tornar a rota de sucesso resiliente (não bloquear confirmação do pagamento)
-- Em `src/App.tsx`, remover `AuthGuard` de `/checkout/success` para que a página de confirmação sempre abra, mesmo se a sessão de login estiver demorando para reidratar após voltar do Stripe.
+---
 
-2. Melhorar a experiência na `CheckoutSuccess`
-- Em `src/pages/CheckoutSuccess.tsx`, manter a confirmação visível para qualquer usuário.
-- Se usuário estiver autenticado: manter botão “Meus Pedidos”.
-- Se não estiver autenticado: mostrar CTA para login e depois ir para pedidos, sem bloquear a confirmação.
+## Problemas Encontrados
 
-3. Evitar spinner infinito no guard (hardening global)
-- Em `src/hooks/useAuth.ts` e/ou `src/components/AuthGuard.tsx`, adicionar fallback de timeout de loading (ex.: 3–5s) para impedir tela indefinida em casos de race/network.
-- Em timeout: tratar como “não autenticado” e redirecionar normalmente ao login (em vez de ficar carregando para sempre).
+### 1. Storage sem politicas de acesso (BUG CRITICO)
+O bucket `customizations` e privado mas nao tem politicas de storage configuradas. Isso significa que o upload de imagem na pagina de customizacao **falha silenciosamente** ou retorna erro de permissao. O usuario nao consegue fazer upload da imagem da capa.
 
-4. Ajuste opcional de robustez do checkout
-- Em `supabase/functions/create-checkout/index.ts`, normalizar a captura de `origin` (sem depender de `referer`) para garantir URLs de retorno consistentes no domínio atual.
+### 2. Pagina de pedidos mostra ID tecnico em vez do nome do produto
+Em `Orders.tsx`, a coluna exibida e `order.product_id` (ex: "iphone-17-air") em vez do nome legivel como "Capa iPhone 17 Air".
 
-5. Validação após ajuste
-- Teste completo: customizar produto → pagar no Stripe → retornar para `/checkout/success`.
-- Confirmar que:
-  - a tela de sucesso aparece imediatamente;
-  - o pedido segue sendo criado/atualizado como pago;
-  - usuário consegue abrir “Meus Pedidos” quando autenticado.
+### 3. useAuth tem race condition
+O hook `useAuth` chama `onAuthStateChange` e `getSession` em paralelo, ambos setando `loading = false`. Alem disso, faz chamadas async dentro do callback `onAuthStateChange`, o que a documentacao do SDK desaconselha pois pode causar deadlocks.
 
-Se você aprovar, eu implemento exatamente esses ajustes para destravar o pós-checkout sem mexer na lógica de pagamento que já está funcionando.
+### 4. Rascunho (Draft) salva imagem base64 no localStorage (legado)
+O `handleSaveDraft` em `Customize.tsx` salva a imagem inteira em base64 no localStorage (pode ter megabytes). Alem disso, o rascunho nunca e carregado de volta - e codigo morto.
+
+### 5. Customize nao valida se o produto existe
+Se o usuario acessar `/customize/produto-invalido`, a pagina renderiza com dados undefined sem mostrar erro.
+
+### 6. RLS policy "Service role can update orders" e RESTRICTIVE
+A policy esta marcada como RESTRICTIVE (nao permissiva), mas o service role ja ignora RLS. Essa policy e inutil e pode causar confusao.
+
+### 7. Coluna `stripe_subscription_id` na tabela orders (legado)
+Nao e usada em nenhum lugar do codigo. E residuo de uma implementacao anterior.
+
+---
+
+## Plano de Correcoes
+
+### Correcao 1: Criar politicas de storage para o bucket `customizations`
+- Migrar: adicionar politicas que permitam usuarios autenticados fazer upload em `{user_id}/*` e ler seus proprios arquivos.
+
+### Correcao 2: Exibir nome do produto na listagem de pedidos
+- Em `Orders.tsx`, usar `getProduct(order.product_id)` para mostrar o nome legivel em vez do ID tecnico.
+
+### Correcao 3: Corrigir race condition no useAuth
+- Remover fetch de profile de dentro do `onAuthStateChange` callback
+- Usar um `useEffect` separado que reage a mudancas do `user` para buscar o profile
+- Garantir que `loading` so e setado `false` uma vez
+
+### Correcao 4: Remover salvamento de rascunho (codigo morto)
+- Remover `handleSaveDraft` e o botao "Salvar Rascunho" de `Customize.tsx`, ja que o rascunho nunca e restaurado.
+
+### Correcao 5: Validar produto na pagina de customizacao
+- Adicionar verificacao de produto invalido com redirecionamento para o catalogo e mensagem de erro.
+
+### Correcao 6: Remover coluna legada `stripe_subscription_id`
+- Migrar: remover a coluna `stripe_subscription_id` da tabela orders.
+
+---
+
+## Detalhes Tecnicos
+
+### Storage Policies (SQL)
+```text
+-- Permitir upload autenticado na pasta do usuario
+CREATE POLICY "Users can upload own customizations"
+ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'customizations' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Permitir leitura dos proprios arquivos
+CREATE POLICY "Users can read own customizations"
+ON storage.objects FOR SELECT TO authenticated
+USING (bucket_id = 'customizations' AND (storage.foldername(name))[1] = auth.uid()::text);
+```
+
+### useAuth refatorado
+- `onAuthStateChange`: apenas seta `user` e `loading`
+- `useEffect([user])`: busca profile quando user muda
+- Remove chamada duplicada de `getSession` (onAuthStateChange ja cobre o estado inicial)
+
+### Arquivos modificados
+| Arquivo | Alteracao |
+|---|---|
+| `src/hooks/useAuth.ts` | Corrigir race condition, separar fetch de profile |
+| `src/pages/Orders.tsx` | Mostrar nome do produto em vez de ID |
+| `src/pages/Customize.tsx` | Remover draft, validar produto |
+| Migration SQL | Storage policies + remover coluna legada |
+
