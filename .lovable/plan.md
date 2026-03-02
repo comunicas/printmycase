@@ -1,118 +1,105 @@
 
 
-# Fase 2: Autenticacao — Login, Signup, Reset Password, AuthGuard e UserMenu
+# Fase 3: Checkout com Stripe, Salvamento de Customizacao e Pagina de Pedidos
 
-## Problemas a Corrigir Primeiro
+## Visao Geral
 
-Os triggers da Fase 1 (`handle_new_user` e `handle_updated_at`) existem como funcoes mas **nao foram conectados como triggers**. A migracao precisa corrigi-los.
+Esta fase conecta o fluxo de customizacao ao pagamento via Stripe e adiciona uma area para o usuario acompanhar seus pedidos. A imagem customizada sera salva no storage do backend e os dados da customizacao persistidos na tabela `orders`.
 
-## Migracao SQL
+## Passo 1: Habilitar Stripe
 
-Criar os triggers que ficaram faltando:
+Antes de qualquer codigo, precisamos ativar a integracao Stripe no projeto. Isso vai:
+- Solicitar sua chave secreta do Stripe
+- Desbloquear ferramentas e contexto adicional para implementar checkout
+
+**Voce precisara da sua Secret Key do Stripe** (encontrada em https://dashboard.stripe.com/apikeys).
+
+## Passo 2: Corrigir Triggers Pendentes (SQL)
+
+Os triggers da Fase 1 ainda nao foram conectados. Migracao necessaria:
 
 ```sql
--- Trigger: criar profile ao cadastrar usuario
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- Trigger: atualizar updated_at em profiles
 CREATE TRIGGER on_profiles_updated
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 ```
 
-## Componentes UI Necessarios
+## Passo 3: Storage para Imagens
 
-Criar componentes base que foram deletados na refatoracao e sao necessarios para formularios:
+Criar um bucket `customizations` no storage do backend para salvar as imagens customizadas dos usuarios. Isso permite que a imagem sobreviva apos o checkout e possa ser usada para producao.
 
-1. **`src/components/ui/input.tsx`** -- campo de texto padrao shadcn/ui
-2. **`src/components/ui/label.tsx`** -- label padrao shadcn/ui
+## Passo 4: Edge Function — Criar Sessao de Checkout
 
-## Configurar Google OAuth
+Criar `supabase/functions/create-checkout/index.ts`:
+- Recebe: `product_id`, `customization_data` (filtros, escala, rotacao, posicao), `image_url` (URL do storage)
+- Valida autenticacao via `getClaims()`
+- Cria um produto Stripe com o preco da capa (R$ 69,90 = 6990 centavos)
+- Cria uma Checkout Session em modo `payment`
+- Insere um registro na tabela `orders` com status `pending`
+- Retorna a URL do Stripe Checkout
 
-Usar a ferramenta **Configure Social Login** do Lovable Cloud para gerar o modulo `src/integrations/lovable/` com suporte a Google OAuth gerenciado.
+## Passo 5: Edge Function — Webhook do Stripe
 
-## Arquivos a Criar
+Criar `supabase/functions/stripe-webhook/index.ts`:
+- Endpoint publico (sem JWT) que recebe eventos do Stripe
+- Valida a assinatura do webhook
+- Evento `checkout.session.completed`: atualiza o status do pedido para `paid`
+- Evento `checkout.session.expired`: atualiza para `cancelled`
 
-### 1. `src/hooks/useAuth.ts`
-Hook central de autenticacao:
-- Escuta `onAuthStateChange` do Supabase
-- Expoe `user`, `profile`, `loading`, `signOut`
-- Busca dados do perfil na tabela `profiles`
+## Passo 6: Atualizar Pagina de Customizacao
 
-### 2. `src/components/AuthGuard.tsx`
-Wrapper que:
-- Verifica se ha usuario autenticado via `useAuth`
-- Mostra loading spinner enquanto verifica
-- Redireciona para `/login` se nao autenticado
+Modificar `src/pages/Customize.tsx`:
+- Botao "Finalizar Pedido" agora:
+  1. Faz upload da imagem para o storage
+  2. Chama a edge function `create-checkout`
+  3. Redireciona o usuario para a URL do Stripe Checkout
+- Botao "Salvar Rascunho" salva os dados no `localStorage` por enquanto
 
-### 3. `src/components/UserMenu.tsx`
-Dropdown no header:
-- Se logado: mostra nome/avatar + opcoes (Minha Conta, Sair)
-- Se nao logado: botao "Entrar"
+## Passo 7: Pagina de Sucesso do Checkout
 
-### 4. `src/pages/Login.tsx`
-- Formulario email + senha
-- Botao "Entrar com Google" (usando `lovable.auth.signInWithOAuth`)
-- Link para `/signup` e `/reset-password`
-- Redireciona para pagina anterior apos login
+Criar `src/pages/CheckoutSuccess.tsx`:
+- Exibe confirmacao do pedido
+- Mostra resumo: nome do produto, preview da customizacao
+- Botao para ver pedidos e botao para voltar ao catalogo
 
-### 5. `src/pages/Signup.tsx`
-- Formulario nome + email + senha
-- Botao "Criar com Google"
-- Link para `/login`
-- Mensagem de verificacao de email apos cadastro
+## Passo 8: Pagina de Pedidos (Minha Conta)
 
-### 6. `src/pages/ResetPassword.tsx`
-- Dois modos:
-  - **Solicitar reset**: campo de email, envia link via `resetPasswordForEmail`
-  - **Definir nova senha**: detecta `type=recovery` na URL, mostra campo de nova senha, chama `updateUser`
+Criar `src/pages/Orders.tsx`:
+- Lista todos os pedidos do usuario (da tabela `orders`)
+- Cada pedido mostra: nome do produto, data, status (com badge colorido), valor
+- Protegida com `AuthGuard`
 
-## Arquivos a Modificar
+## Passo 9: Atualizar Rotas e Navegacao
 
-### 7. `src/App.tsx`
-- Adicionar rotas: `/login`, `/signup`, `/reset-password`
-- Envolver `/customize/:id` com `AuthGuard`
+- Adicionar rotas: `/checkout/success`, `/orders`
+- Adicionar link "Meus Pedidos" no `UserMenu`
+- Proteger `/orders` com `AuthGuard`
 
-### 8. `src/components/AppHeader.tsx`
-- Substituir botao "Ver Modelos" pelo `UserMenu` (manter "Ver Modelos" tambem)
-- Importar e usar `useAuth` para estado de login
-
-## Fluxo de Autenticacao
-
-```text
-Usuario clica "Customizar"
-  |
-  v
-AuthGuard verifica sessao
-  |
-  +-- Logado --> abre /customize/:id
-  |
-  +-- Nao logado --> redireciona para /login?redirect=/customize/:id
-        |
-        +-- Login com email/senha --> volta para /customize/:id
-        +-- Login com Google --> volta para /customize/:id
-        +-- Nao tem conta --> /signup --> verificar email --> /login
-```
+---
 
 ## Detalhes Tecnicos
 
-- **Google OAuth**: Usar `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })` -- gerenciado automaticamente pelo Lovable Cloud
-- **Email/senha**: Usar `supabase.auth.signUp` e `supabase.auth.signInWithPassword`
-- **Confirmacao de email**: Mantida ativa (padrao do Supabase) -- usuarios precisam verificar email antes de logar
-- **Reset senha**: `redirectTo` aponta para `window.location.origin + '/reset-password'`
-- **Pacote necessario**: `@radix-ui/react-label` para o componente Label
+- **Preco**: Todos os produtos custam R$ 69,90 (6990 centavos). O preco e definido server-side na edge function, nao confiando no frontend.
+- **Storage**: Imagens salvas como `customizations/{user_id}/{timestamp}.png`
+- **Stripe mode**: `payment` (pagamento unico). Assinaturas ficam para uma fase futura.
+- **Webhook secret**: Sera necessario configurar o webhook no Stripe Dashboard apontando para a URL da edge function.
+- **RLS**: A tabela `orders` ja tem politicas para SELECT e INSERT do proprio usuario. O webhook usara `SUPABASE_SERVICE_ROLE_KEY` para atualizar status.
 
 ## Ordem de Implementacao
 
 ```text
-1. Migracao SQL (triggers)
-2. Configurar Google OAuth (ferramenta Configure Social Login)
-3. Criar input.tsx e label.tsx
-4. Criar useAuth hook
-5. Criar paginas Login, Signup, ResetPassword
-6. Criar AuthGuard e UserMenu
-7. Atualizar AppHeader com UserMenu
-8. Atualizar App.tsx com novas rotas
+1. Habilitar Stripe (ferramenta do Lovable)
+2. Migracao SQL (triggers)
+3. Criar bucket de storage
+4. Criar edge function create-checkout
+5. Criar edge function stripe-webhook
+6. Atualizar Customize.tsx com fluxo de checkout
+7. Criar CheckoutSuccess.tsx
+8. Criar Orders.tsx
+9. Atualizar App.tsx e UserMenu com novas rotas
 ```
+
