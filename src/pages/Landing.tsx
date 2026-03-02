@@ -73,7 +73,7 @@ const Landing = () => {
           <section id="beneficios" className="py-16 px-5">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
-                Por que escolher a Case Studio?
+                Por que escolher a ArtisCase?
               </h2>
               <div className="grid md:grid-cols-3 gap-6">
                 {benefits.map((b) => (
@@ -178,11 +178,11 @@ const Landing = () => {
         {/* Footer */}
         <footer className="border-t bg-card py-8 px-5">
           <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">Case Studio</span>
+            <span className="font-semibold text-foreground">ArtisCase</span>
             <nav className="flex items-center gap-4">
               <Link to="/catalog" className="hover:text-foreground transition-colors">Catálogo</Link>
             </nav>
-            <span>© 2026 Case Studio</span>
+            <span>© 2026 ArtisCase</span>
           </div>
         </footer>
       </div>

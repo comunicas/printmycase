@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import { useProducts } from "@/hooks/useProducts";
 import { formatPrice } from "@/data/products";
 
-const SITE_NAME = "Case Studio";
+const SITE_NAME = "ArtisCase";
 const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://artiscase-v2.lovable.app";
-const TITLE = "Case Studio | Capas Personalizadas para iPhone";
+const TITLE = "ArtisCase | Capas Personalizadas para iPhone";
 const DESCRIPTION =
   "Crie capas de celular personalizadas com suas fotos. Proteção premium, acabamento soft-touch e frete grátis. iPhone 17, 15, 11, SE e mais.";
 

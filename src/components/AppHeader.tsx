@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import UserMenu from "@/components/UserMenu";
+import logoArtisCase from "@/assets/logo-artiscase.png";
 
 interface Breadcrumb {
   label: string;
@@ -20,8 +21,8 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs }, ref)
     <header ref={ref} className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <nav className="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
         <div className="flex items-center gap-2 min-w-0">
-          <Link to="/" className="text-lg font-bold text-foreground tracking-tight flex-shrink-0">
-            Case Studio
+          <Link to="/" className="flex-shrink-0">
+            <img src={logoArtisCase} alt="ArtisCase" className="h-8 w-auto" />
           </Link>
           {breadcrumbs && breadcrumbs.length > 0 && (
             <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
