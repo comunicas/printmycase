@@ -5,15 +5,13 @@ interface PhonePreviewProps {
   image: string | null;
   scale: number;
   rotation: number;
-  brightness: number;
-  contrast: number;
   extraFilter?: string;
   position: { x: number; y: number };
   onPositionChange: (pos: { x: number; y: number }) => void;
   onImageUpload: (file: File) => void;
 }
 
-const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, rotation, extraFilter, position, onPositionChange, onImageUpload }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -51,8 +49,7 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
     if (file) onImageUpload(file);
   };
 
-  const baseFilter = `brightness(${1 + brightness / 100}) contrast(${1 + contrast / 100})`;
-  const combinedFilter = extraFilter ? `${baseFilter} ${extraFilter}` : baseFilter;
+  const combinedFilter = extraFilter || undefined;
 
   const imageStyle = image
     ? {
