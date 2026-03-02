@@ -1,31 +1,52 @@
 
-# Limpeza e Correcao de Problemas no Codigo
 
-## Problemas Identificados
+# Code Review Completo - Case Studio
 
-### 1. Classe CSS inexistente: `hover-parent-opacity`
-No `PhonePreview.tsx` (linha 87), o overlay com o icone de Move usa a classe `hover-parent-opacity`, que nao existe em nenhum CSS do projeto. O icone nunca aparece.
+## Problemas Encontrados
 
-**Solucao**: Substituir por logica CSS funcional usando `group-hover:opacity-100` do Tailwind, aplicando `group` no container pai.
+### 1. Componente orfao: `NavLink.tsx`
+O arquivo `src/components/NavLink.tsx` nao e importado em nenhum lugar da aplicacao. E codigo legado sem utilidade.
 
-### 2. Arquivo orfao: `src/assets/sample-case.jpg`
-O arquivo `sample-case.jpg` nao e mais importado em nenhum lugar apos a remocao da imagem padrao.
+**Acao**: Deletar `src/components/NavLink.tsx`.
 
-**Solucao**: Deletar o arquivo.
+### 2. Variaveis CSS de sidebar sem uso
+As variaveis `--sidebar-*` em `src/index.css` (tanto no `:root` quanto no `.dark`) nao sao usadas por nenhum componente da aplicacao. O componente `sidebar.tsx` existe nos UI components mas nunca e importado. Sao 16 linhas de CSS morto.
 
-### 3. Conflito de filtros duplicados
-Quando um filtro AI esta ativo (ex: Vivid = `brightness(1.1) contrast(1.2) saturate(1.3)`) e o usuario tambem ajusta brilho/contraste manualmente, ambos sao concatenados no CSS (`baseFilter + extraFilter`), causando dupla aplicacao de `brightness()` e `contrast()`.
+**Acao**: Remover todas as variaveis `--sidebar-*` do `:root` e `.dark` no `index.css`.
 
-**Solucao**: Quando um filtro AI estiver ativo, desabilitar os ajustes manuais de brilho e contraste (ou resetar para 0). Isso evita conflito e simplifica a experiencia.
+### 3. Dependencias nao utilizadas no `App.tsx`
+- **`@tanstack/react-query`**: `QueryClient` e `QueryClientProvider` estao configurados no `App.tsx`, mas nenhum componente usa `useQuery` ou `useMutation`. E infraestrutura sem uso.
+- **`next-themes`**: Importado apenas no `sonner.tsx` para `useTheme()`, mas nao existe nenhum `ThemeProvider` na arvore de componentes. O `useTheme()` retorna sempre o valor default (`"system"`), nunca funcionando corretamente.
+- **Dois sistemas de toast**: `Toaster` (radix) e `Sonner` estao ambos montados no `App.tsx`, mas nenhum dos dois e usado na aplicacao.
 
-### 4. Variaveis CSS duplicadas no `index.css`
-As variaveis `--sidebar-accent`, `--sidebar-bg`, `--sidebar-fg`, etc. estao definidas duas vezes no `:root` (linhas 39-43 e 48-55), causando sobreposicao.
+**Acao**: Remover `QueryClientProvider` do `App.tsx`. Remover o componente `<Sonner />` (que depende de `next-themes` sem provider). Manter apenas o `<Toaster />` do radix caso venha a ser usado.
 
-**Solucao**: Remover as variaveis duplicadas/legadas (linhas 39-43).
+### 4. Conflito de `group` aninhado no `PhonePreview.tsx`
+Na linha 80, o container da imagem tem a classe `group`. Na linha 94, o botao de upload dentro dele tambem tem `group`. Isso causa conflito: o `group-hover` das linhas 97-98 responde ao hover do botao interno, nao do container externo. Nao causa bug visivel porque o botao ocupa 100% da area, mas e semanticamente incorreto e fragil.
 
-## Arquivos Modificados
+**Acao**: Renomear para usar `group/image` e `group/upload` com Tailwind named groups para evitar ambiguidade.
 
-1. **`src/components/PhonePreview.tsx`** — Corrigir hover do icone Move com `group`/`group-hover`
-2. **`src/assets/sample-case.jpg`** — Deletar arquivo orfao
-3. **`src/pages/Index.tsx`** — Resetar brilho/contraste ao ativar filtro AI; resetar filtro ao ajustar manualmente
-4. **`src/index.css`** — Remover variaveis CSS sidebar duplicadas
+### 5. Botoes do header sem funcionalidade
+Os botoes "ArrowLeft" (voltar) e "HelpCircle" (ajuda) no header do `Index.tsx` sao `<button>` sem `onClick`. Nao fazem nada.
+
+**Acao**: Desabilitar visualmente ou adicionar `aria-label` e `disabled` para indicar que sao placeholders.
+
+### 6. Duplicacao de label "Adjustments"
+O titulo "Adjustments" aparece duas vezes: uma na `TabsTrigger` (linha 81 do Index) e outra dentro do `ControlPanel.tsx` (linha 28). O usuario ve "Adjustments" repetido.
+
+**Acao**: Remover o `<span>Adjustments</span>` do `ControlPanel.tsx`.
+
+### 7. Input file nao reseta apos upload
+O `<input type="file">` no `PhonePreview.tsx` nao limpa o `value` apos selecao. Se o usuario tentar fazer upload da mesma imagem novamente, o `onChange` nao dispara.
+
+**Acao**: Adicionar `e.target.value = ''` no `handleFileChange` apos processar o arquivo.
+
+## Resumo de Arquivos Modificados
+
+1. **Deletar** `src/components/NavLink.tsx` -- componente orfao
+2. **`src/index.css`** -- remover variaveis `--sidebar-*`
+3. **`src/App.tsx`** -- remover QueryClientProvider, remover Sonner
+4. **`src/components/PhonePreview.tsx`** -- corrigir group aninhado, resetar input file
+5. **`src/components/ControlPanel.tsx`** -- remover label duplicado "Adjustments"
+6. **`src/pages/Index.tsx`** -- adicionar disabled/aria nos botoes do header
+
