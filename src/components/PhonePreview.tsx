@@ -49,6 +49,7 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) onImageUpload(file);
+    e.target.value = '';
   };
 
   const baseFilter = `brightness(${1 + brightness / 100}) contrast(${1 + contrast / 100})`;
@@ -77,25 +78,25 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
           {/* Case area (image layer) */}
           <div
             ref={containerRef}
-            className={`absolute inset-0 overflow-hidden touch-none group ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+            className={`absolute inset-0 overflow-hidden touch-none group/image ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
             style={imageStyle}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
             {image && !isDragging && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/image:opacity-100 transition-opacity z-10">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
               </div>
             )}
             {!image && (
               <button
                 onClick={() => inputRef.current?.click()}
-                className="flex items-center justify-center h-full w-full hover:bg-primary/5 transition-colors group"
+                className="flex items-center justify-center h-full w-full hover:bg-primary/5 transition-colors group/upload"
               >
                 <div className="text-center space-y-3">
-                  <Upload className="w-10 h-10 mx-auto text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
-                  <p className="text-xs text-muted-foreground/50 group-hover:text-primary/60">Toque para adicionar sua imagem</p>
+                  <Upload className="w-10 h-10 mx-auto text-muted-foreground/40 group-hover/upload:text-primary/60 transition-colors" />
+                  <p className="text-xs text-muted-foreground/50 group-hover/upload:text-primary/60">Toque para adicionar sua imagem</p>
                 </div>
               </button>
             )}
