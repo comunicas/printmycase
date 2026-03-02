@@ -12,6 +12,8 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import AuthGuard from "./components/AuthGuard";
+import AdminGuard from "./components/AdminGuard";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -26,6 +28,7 @@ const App = () => (
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/orders" element={<AuthGuard><Orders /></AuthGuard>} />
         <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
+        <Route path="/admin" element={<AuthGuard><AdminGuard><Admin /></AdminGuard></AuthGuard>} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />

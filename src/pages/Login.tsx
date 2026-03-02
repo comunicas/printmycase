@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import FormField from "@/components/ui/form-field";
+import SubmitButton from "@/components/forms/SubmitButton";
 import AppHeader from "@/components/AppHeader";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,15 +21,12 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-
     if (error) {
       toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
     } else {
       navigate(redirect);
     }
-
     setLoading(false);
   };
 
@@ -71,8 +69,7 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <FormField label="Email" id="email">
               <Input
                 id="email"
                 type="email"
@@ -81,14 +78,16 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
+            </FormField>
+            <FormField
+              label="Senha"
+              id="password"
+              labelExtra={
                 <Link to="/reset-password" className="text-xs text-primary hover:underline">
                   Esqueceu a senha?
                 </Link>
-              </div>
+              }
+            >
               <Input
                 id="password"
                 type="password"
@@ -97,10 +96,10 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
+            </FormField>
+            <SubmitButton loading={loading} className="w-full">
+              Entrar
+            </SubmitButton>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
