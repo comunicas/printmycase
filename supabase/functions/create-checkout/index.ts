@@ -1,4 +1,3 @@
-import Stripe from "npm:stripe@17.7.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
 
 const corsHeaders = {
@@ -51,39 +50,43 @@ Deno.serve(async (req) => {
       );
     }
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-      apiVersion: "2025-04-30.basil",
-    });
-
     const PRICE_CENTS = 6990;
     const origin =
       req.headers.get("origin") || req.headers.get("referer") || "https://artiscase-v2.lovable.app";
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      line_items: [
-        {
-          price_data: {
-            currency: "brl",
-            unit_amount: PRICE_CENTS,
-            product_data: {
-              name: `Capa Personalizada - ${product_id}`,
-              description: "Capa de celular personalizada com sua imagem",
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/customize/${product_id}`,
-      metadata: {
-        user_id: userId,
-        product_id,
+    // Create Stripe Checkout Session via REST API
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
+
+    const params = new URLSearchParams();
+    params.append("payment_method_types[0]", "card");
+    params.append("mode", "payment");
+    params.append("line_items[0][price_data][currency]", "brl");
+    params.append("line_items[0][price_data][unit_amount]", String(PRICE_CENTS));
+    params.append("line_items[0][price_data][product_data][name]", `Capa Personalizada - ${product_id}`);
+    params.append("line_items[0][price_data][product_data][description]", "Capa de celular personalizada com sua imagem");
+    params.append("line_items[0][quantity]", "1");
+    params.append("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
+    params.append("cancel_url", `${origin}/customize/${product_id}`);
+    params.append("metadata[user_id]", userId);
+    params.append("metadata[product_id]", product_id);
+
+    const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${stripeKey}`,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
+      body: params.toString(),
     });
 
-    // Insert order with service role to bypass RLS for stripe_session_id
+    const session = await stripeRes.json();
+
+    if (!stripeRes.ok) {
+      console.error("Stripe API error:", session);
+      throw new Error(session.error?.message || "Stripe API error");
+    }
+
+    // Insert order with service role to bypass RLS
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
