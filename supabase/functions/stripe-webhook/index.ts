@@ -1,4 +1,4 @@
-import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-check";
+import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-check&no-dts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
 
 const corsHeaders = {
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     let event: Stripe.Event;
 
     if (webhookSecret && signature) {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     } else {
       // Fallback: parse without signature verification (dev mode)
       event = JSON.parse(body) as Stripe.Event;
