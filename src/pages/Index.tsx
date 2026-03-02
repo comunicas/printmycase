@@ -11,8 +11,6 @@ const Index = () => {
   const [image, setImage] = useState<string | null>(sampleCase);
   const [scale, setScale] = useState(100);
   const [rotation, setRotation] = useState(0);
-  const [brightness, setBrightness] = useState(0);
-  const [contrast, setContrast] = useState(0);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [position, setPosition] = useState({ x: 50, y: 50 });
 
@@ -49,8 +47,6 @@ const Index = () => {
             image={image}
             scale={scale}
             rotation={rotation}
-            brightness={brightness}
-            contrast={contrast}
             extraFilter={extraFilter}
             position={position}
             onPositionChange={setPosition}
@@ -69,12 +65,8 @@ const Index = () => {
               <ControlPanel
                 scale={scale}
                 rotation={rotation}
-                brightness={brightness}
-                contrast={contrast}
                 onScaleChange={setScale}
                 onRotationChange={setRotation}
-                onBrightnessChange={setBrightness}
-                onContrastChange={setContrast}
               />
             </TabsContent>
             <TabsContent value="filters">
