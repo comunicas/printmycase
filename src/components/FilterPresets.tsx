@@ -1,4 +1,3 @@
-import { forwardRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";
 
@@ -21,9 +20,9 @@ interface FilterPresetsProps {
   onSelectFilter: (filterId: string | null) => void;
 }
 
-const FilterPresets = forwardRef<HTMLDivElement, FilterPresetsProps>(({ image, activeFilter, onSelectFilter }, ref) => {
+const FilterPresets = ({ image, activeFilter, onSelectFilter }: FilterPresetsProps) => {
   return (
-    <div ref={ref} className="space-y-3">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-primary" />
         <span className="text-sm font-medium text-foreground">AI Filters</span>
@@ -71,9 +70,7 @@ const FilterPresets = forwardRef<HTMLDivElement, FilterPresetsProps>(({ image, a
       </div>
     </div>
   );
-});
-
-FilterPresets.displayName = "FilterPresets";
+};
 
 export default FilterPresets;
 export { filters };
