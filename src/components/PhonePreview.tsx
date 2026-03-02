@@ -72,7 +72,7 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
   const imageLayerStyle = image
     ? {
         backgroundImage: `url(${image})`,
-        backgroundSize: `${scale}%`,
+        backgroundSize: `${scale * (100 / oversize)}%`,
         backgroundPosition: `${position.x}% ${position.y}%`,
         backgroundRepeat: "no-repeat" as const,
         transform: `rotate(${rotation}deg)`,
@@ -104,13 +104,13 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
           {/* Interaction layer - handles drag and upload */}
           <div
             ref={containerRef}
-            className={`absolute inset-0 z-10 touch-none ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+            className={`absolute inset-0 z-10 touch-none group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
             {image && !isDragging && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 hover:opacity-100 transition-opacity">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
               </div>
             )}
