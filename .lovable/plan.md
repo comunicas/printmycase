@@ -1,120 +1,100 @@
 
 
-# Landing Page de Alta Conversao - Case Studio
+# Revisao Completa: Filtros, Hierarquia, Navegacao e Botoes
 
-## Objetivo
+## Problemas Identificados
 
-Transformar a pagina inicial (`/`) em uma landing page de alta conversao com SEO otimizado, copy persuasiva, CTAs claros e dados estruturados para buscadores e agentes de IA. A pagina de catalogo continua existindo em `/catalog`.
+### 1. Idioma Inconsistente (Ingles misturado com Portugues)
+- Customize: "Adjustments", "Filters", "Save Draft", "Checkout", "Scale", "Rotate", "Bright", "Contrast"
+- FilterPresets: "AI Filters", nomes dos filtros em ingles ("Vivid", "Noir", "Warm", "Cool")
+- PhonePreview: texto fixo "iPhone 15 Pro Max" independente do produto selecionado
 
-## Hierarquia de URLs (Jornada do Usuario)
+### 2. Navegacao Fragmentada
+- Cada pagina tem um header diferente, sem consistencia
+- Sem breadcrumbs para contexto de navegacao
+- Landing page tem nav completa, mas Catalog/Product/Customize nao
+- Botao "Voltar" no Product usa `navigate(-1)` (pode falhar se usuario acessou direto)
 
-```text
-/                    →  Landing page (descoberta, convencimento)
-/catalog             →  Catalogo completo (escolha do modelo)
-/product/:id         →  Detalhes do produto (avaliacao)
-/customize/:id       →  Editor de customizacao (criacao)
-```
+### 3. Botoes Sem Funcao
+- "Adicionar ao Carrinho" no ProductInfo: nao faz nada
+- "Save Draft" no Customize: nao faz nada
+- "Checkout" no Customize: nao faz nada
+- Botao "Ajuda" desabilitado em todas as paginas
 
-## Estrutura da Landing Page
+### 4. Filtros Limitados
+- Apenas 4 filtros CSS basicos rotulados como "AI" (enganoso)
+- Nomes em ingles
 
-```text
-+-- SEO Meta Tags + JSON-LD Schema.org ---------------------------+
+---
 
-+-- Header -------------------------------------------------------+
-|  Case Studio          [Ver Modelos]   [Customizar Agora]        |
-+-----------------------------------------------------------------+
+## Solucao Proposta
 
-+-- Hero Section -------------------------------------------------+
-|  "Sua capa, sua identidade."                                    |
-|  "Crie capas personalizadas para iPhone com suas fotos e        |
-|   designs. Protecao premium com acabamento soft-touch."         |
-|  [Customizar Minha Capa →]    [Ver Todos os Modelos]            |
-|  ★★★★★ Mais de 1.000 capas criadas                              |
-+-----------------------------------------------------------------+
+### A. Padronizar Idioma para Portugues
 
-+-- Beneficios (3 colunas) --------------------------------------+
-|  🎨 100% Personalizada    🛡️ Protecao Premium   🚚 Frete Gratis |
-|  Desc. curta               Desc. curta            Desc. curta   |
-+-----------------------------------------------------------------+
+**`src/components/ControlPanel.tsx`**
+- "Scale" -> "Escala"
+- "Rotate" -> "Rotacao"
+- "Bright" -> "Brilho"
+- "Contrast" -> "Contraste"
 
-+-- Como Funciona (3 passos) ------------------------------------+
-|  1. Escolha seu modelo  →  2. Envie sua imagem  →  3. Receba   |
-+-----------------------------------------------------------------+
+**`src/components/FilterPresets.tsx`**
+- "AI Filters" -> "Filtros"
+- "Vivid" -> "Vibrante"
+- "Noir" -> "Preto e Branco"
+- "Warm" -> "Quente"
+- "Cool" -> "Frio"
+- Adicionar mais 4 filtros: "Retro", "Suave", "Dramatico", "Pastel"
+- Remover badge "AI" (nao sao filtros de IA reais)
 
-+-- Produtos em Destaque (4 cards mais populares) ----------------+
-|  [Card] [Card] [Card] [Card]                                    |
-|  [Ver Catalogo Completo →]                                      |
-+-----------------------------------------------------------------+
+**`src/pages/Customize.tsx`**
+- "Adjustments" -> "Ajustes"
+- "Filters" -> "Filtros"
+- "Save Draft" -> "Salvar Rascunho"
+- "Checkout" -> "Finalizar Pedido"
 
-+-- Social Proof / Depoimentos -----------------------------------+
-|  "Melhor capa que ja tive!"  "Qualidade incrivel"               |
-+-----------------------------------------------------------------+
+### B. Header/Navegacao Consistente
 
-+-- CTA Final ----------------------------------------------------+
-|  "Pronto para criar sua capa unica?"                            |
-|  [Comece Agora →]                                               |
-+-----------------------------------------------------------------+
+Criar um componente `src/components/AppHeader.tsx` reutilizavel com:
+- Logo "Case Studio" (link para `/`)
+- Breadcrumb contextual (ex: Inicio > Catalogo > iPhone 17 Pro Max > Customizar)
+- Botao "Ver Modelos" sempre visivel
 
-+-- Footer SEO ---------------------------------------------------+
-|  Links internos: Catalogo | Modelos populares | Contato         |
-+-----------------------------------------------------------------+
-```
+Aplicar em todas as paginas: Landing, Catalog, Product, Customize.
+
+### C. Corrigir PhonePreview
+
+**`src/components/PhonePreview.tsx`**
+- Receber o nome do modelo como prop e exibir dinamicamente em vez de "iPhone 15 Pro Max" fixo
+
+### D. Melhorar Botoes com Feedback
+
+**`src/components/ProductInfo.tsx`**
+- Remover "Adicionar ao Carrinho" (nao ha carrinho implementado)
+- Manter apenas CTA primario "Customizar Minha Capa"
+- Adicionar botao secundario "Ver Catalogo Completo"
+
+**`src/pages/Customize.tsx`**
+- "Salvar Rascunho" -> exibir toast "Rascunho salvo!" (feedback visual)
+- "Finalizar Pedido" -> exibir toast "Em breve! Estamos preparando o checkout." (placeholder honesto)
+
+### E. Remover Botao de Ajuda Desabilitado
+
+Remover o botao de ajuda (`HelpCircle`) de todas as paginas -- botoes desabilitados sem funcao prejudicam a experiencia.
+
+---
 
 ## Arquivos a Criar
 
-### 1. `src/pages/Landing.tsx`
-Nova pagina com todas as secoes acima. Importa `products` e `formatPrice` do data. Reutiliza `Card`, `Button`, `Separator` existentes. Secoes:
-- **Hero**: headline principal, subtitulo, 2 CTAs (primario navega para `/catalog`, secundario para modelo mais popular)
-- **Beneficios**: grid de 3 cards com icones lucide-react (Palette, Shield, Truck)
-- **Como Funciona**: 3 passos com icones numerados (Smartphone, Upload, Package)
-- **Produtos em Destaque**: 4 primeiros produtos do array `products`, mesmos cards do catalogo, com link "Ver todos"
-- **Depoimentos**: 3 depoimentos mockados com nome e estrelas
-- **CTA Final**: bloco com fundo primario e botao contrastante
-- **Footer**: links internos para catalogo e modelos populares
-
-### 2. `src/components/SeoHead.tsx`
-Componente que injeta meta tags e dados estruturados JSON-LD via `document.head` usando `useEffect`:
-- Meta tags Open Graph e Twitter Cards
-- Schema.org `Organization`, `WebSite` com `SearchAction`
-- Schema.org `ItemList` com produtos para rich results
-- Canonical URL
-- Descricao otimizada para buscadores
+1. **`src/components/AppHeader.tsx`** -- Header reutilizavel com logo, breadcrumbs e navegacao
 
 ## Arquivos a Modificar
 
-### 3. `src/App.tsx`
-- Rota `/` passa a renderizar `Landing` em vez de redirect
-- Manter rotas `/catalog`, `/product/:id`, `/customize/:id`
-
-### 4. `index.html`
-- Atualizar `<title>` para "Case Studio | Capas Personalizadas para iPhone"
-- Atualizar meta description com copy otimizada
-- Atualizar og:title e og:description
-
-## Detalhes de SEO e AI-Readiness
-
-- **Title tag**: "Case Studio | Capas Personalizadas para iPhone"
-- **Meta description**: "Crie capas de celular personalizadas com suas fotos. Protecao premium, acabamento soft-touch e frete gratis. iPhone 17, 15, 11, SE e mais."
-- **JSON-LD**: Organization + WebSite + ItemList (produtos)
-- **Heading hierarchy**: h1 no hero, h2 por secao, h3 nos cards
-- **Links internos**: footer com links para catalogo e modelos populares
-- **Semantic HTML**: `<main>`, `<section>`, `<header>`, `<footer>`, `<nav>`
-- **robots.txt**: ja configurado para permitir todos os crawlers
-
-## Copy de Alta Conversao
-
-- **Headline**: "Sua capa, sua identidade."
-- **Sub**: "Transforme suas fotos favoritas em capas de iPhone unicas. Protecao premium com acabamento soft-touch e design 100% seu."
-- **CTA primario**: "Criar Minha Capa" (urgencia + posse)
-- **CTA secundario**: "Ver Modelos" (baixo compromisso)
-- **Social proof**: contagem de capas criadas + depoimentos
-- **Beneficios**: focados em dor do cliente (protecao, personalidade, conveniencia)
-
-## Detalhes Tecnicos
-
-- Componentes reutilizados: `Card`, `CardContent`, `Button`, `Separator`
-- Icones: `Palette`, `Shield`, `Truck`, `Smartphone`, `Upload`, `Package`, `Star`, `ArrowRight`, `ChevronRight` do lucide-react
-- Layout totalmente responsivo com Tailwind
-- Scroll suave entre secoes via IDs de ancora
-- Sem dependencias novas
+2. **`src/components/ControlPanel.tsx`** -- Traduzir labels para portugues
+3. **`src/components/FilterPresets.tsx`** -- Traduzir filtros, adicionar 4 novos, remover badge AI
+4. **`src/components/PhonePreview.tsx`** -- Receber `modelName` como prop
+5. **`src/components/ProductInfo.tsx`** -- Remover botao carrinho, adicionar link catalogo
+6. **`src/pages/Customize.tsx`** -- Traduzir tabs/botoes, passar modelo ao PhonePreview, toasts nos botoes, usar AppHeader
+7. **`src/pages/Product.tsx`** -- Usar AppHeader, remover header manual
+8. **`src/pages/Catalog.tsx`** -- Usar AppHeader, remover header manual
+9. **`src/pages/Landing.tsx`** -- Usar AppHeader no lugar do header atual
 
