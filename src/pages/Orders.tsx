@@ -4,7 +4,7 @@ import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { formatPrice } from "@/data/products";
+import { formatPrice, getProduct } from "@/data/products";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Order = Tables<"orders">;
@@ -78,7 +78,7 @@ const Orders = () => {
                 >
                   <div className="space-y-1 min-w-0">
                     <p className="font-medium text-foreground truncate">
-                      {order.product_id}
+                      {getProduct(order.product_id)?.name ?? order.product_id}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(order.created_at).toLocaleDateString("pt-BR", {

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -17,6 +17,15 @@ const Customize = () => {
   const product = getProduct(id ?? "");
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if product doesn't exist
+  useEffect(() => {
+    if (!product) {
+      toast({ title: "Produto não encontrado", description: "Redirecionando ao catálogo.", variant: "destructive" });
+      navigate("/catalog", { replace: true });
+    }
+  }, [product, navigate, toast]);
 
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -114,25 +123,6 @@ const Customize = () => {
     }
   };
 
-  const handleSaveDraft = () => {
-    const draft = {
-      productId: id,
-      image,
-      scale,
-      rotation,
-      brightness,
-      contrast,
-      activeFilter,
-      position,
-      savedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(`draft-${id}`, JSON.stringify(draft));
-    toast({
-      title: "Rascunho salvo!",
-      description: "Seu design foi salvo com sucesso.",
-    });
-  };
-
   const activeFilterObj = filters.find((f) => f.id === activeFilter);
   const extraFilter = activeFilterObj?.cssFilter ?? undefined;
 
@@ -192,13 +182,6 @@ const Customize = () => {
           </Tabs>
 
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handleSaveDraft}
-            >
-              Salvar Rascunho
-            </Button>
             <Button
               className="flex-1 gap-1.5"
               onClick={handleCheckout}

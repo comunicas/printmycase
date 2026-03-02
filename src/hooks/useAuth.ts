@@ -14,45 +14,37 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Listen to auth state changes — only set user & loading here
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          const { data } = await supabase
-            .from("profiles")
-            .select("id, full_name, avatar_url, phone")
-            .eq("id", currentUser.id)
-            .single();
-          setProfile(data);
-        } else {
-          setProfile(null);
-        }
-
+      (_event, session) => {
+        setUser(session?.user ?? null);
         setLoading(false);
       },
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        supabase
-          .from("profiles")
-          .select("id, full_name, avatar_url, phone")
-          .eq("id", currentUser.id)
-          .single()
-          .then(({ data }) => setProfile(data));
-      }
-
-      setLoading(false);
-    });
-
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fetch profile whenever user changes
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url, phone")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) setProfile(data);
+      });
+
+    return () => { cancelled = true; };
+  }, [user]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
