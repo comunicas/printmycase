@@ -1,47 +1,57 @@
 
-# Pagina de Perfil do Usuario
 
-Criar uma pagina `/profile` onde o usuario autenticado pode editar nome, telefone e avatar.
+# Mascara de telefone, alterar senha e excluir conta
 
-## O que sera feito
+## 1. Mascara de telefone
 
-1. **Criar pagina `src/pages/Profile.tsx`** com formulario para editar:
-   - Nome completo (campo texto)
-   - Telefone (campo texto)
-   - Avatar (upload de imagem com preview)
+Adicionar formatacao automatica no campo de telefone no formato `(XX) XXXXX-XXXX`. Sera implementada uma funcao utilitaria pura (sem dependencia externa) que formata o valor conforme o usuario digita, removendo caracteres nao-numericos e aplicando a mascara.
 
-2. **Criar bucket de storage `avatars`** (publico) para armazenar as fotos de perfil, com politicas RLS para upload restrito ao proprio usuario.
+## 2. Secao "Alterar senha"
 
-3. **Adicionar rota `/profile`** em `App.tsx` protegida por `AuthGuard`.
+Adicionar um card separado abaixo do formulario de perfil com dois campos: "Nova senha" e "Confirmar nova senha". Ao submeter, usa `supabase.auth.updateUser({ password })` para atualizar. Validacoes: minimo 6 caracteres, senhas devem coincidir.
 
-4. **Adicionar link "Meu Perfil"** no `UserMenu.tsx` para navegacao.
+## 3. Secao "Excluir conta"
 
-5. **Adicionar `refetchProfile`** ao hook `useAuth.ts` para que a pagina de perfil possa atualizar os dados apos salvar.
+Adicionar um card com botao destrutivo "Excluir minha conta". Ao clicar, exibe um dialog de confirmacao pedindo que o usuario digite "EXCLUIR" para confirmar. A exclusao sera feita via uma edge function `delete-account` que:
+- Valida o JWT do usuario
+- Remove o avatar do storage
+- Deleta o usuario via `supabase.auth.admin.deleteUser()`
+- Os dados em `profiles`, `orders`, `addresses` serao removidos em cascata (FK com ON DELETE CASCADE ja existe para profiles; para orders/addresses, sera verificado)
+
+## Arquivos
+
+| Arquivo | Acao |
+|---|---|
+| `src/pages/Profile.tsx` | Adicionar mascara de telefone, secao de alterar senha, secao de excluir conta com dialog de confirmacao |
+| `src/lib/masks.ts` | Novo - funcao `maskPhone(value: string): string` |
+| `supabase/functions/delete-account/index.ts` | Novo - edge function para deletar usuario |
+| `supabase/config.toml` | Adicionar config `[functions.delete-account]` com `verify_jwt = false` |
 
 ## Detalhes tecnicos
 
-### Storage (SQL migration)
-- Criar bucket `avatars` publico
-- Policy INSERT: usuario autenticado pode fazer upload em `{user_id}/*`
-- Policy UPDATE: usuario pode sobrescrever seus proprios arquivos
-- Policy DELETE: usuario pode deletar seus proprios arquivos
+### Mascara de telefone (`src/lib/masks.ts`)
+```text
+maskPhone("11999998888") -> "(11) 99999-8888"
+- Remove tudo que nao e digito
+- Limita a 11 digitos
+- Aplica formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX (8 digitos)
+```
 
-### Profile.tsx
-- Usa `useAuth()` para carregar dados atuais
-- Upload de avatar via `supabase.storage.from('avatars').upload()`
-- URL publica via `getPublicUrl()`
-- Update de perfil via `supabase.from('profiles').update()`
-- Feedback com toast de sucesso/erro
-- Layout consistente com as outras paginas (AppHeader + breadcrumbs)
+### Edge function `delete-account`
+- Extrai JWT do header Authorization
+- Valida com `supabase.auth.getUser(token)`
+- Usa service role client para `auth.admin.deleteUser(userId)`
+- Retorna 200 em sucesso ou erro apropriado
+- CORS headers inclusos
 
-### useAuth.ts
-- Expor funcao `refetchProfile()` que re-busca o perfil do banco
+### Fluxo de exclusao no frontend
+1. Usuario clica "Excluir minha conta"
+2. Dialog aparece pedindo digitar "EXCLUIR"
+3. Ao confirmar, chama `supabase.functions.invoke('delete-account')`
+4. Em sucesso, faz signOut e redireciona para `/`
 
-### Arquivos modificados
-| Arquivo | Alteracao |
-|---|---|
-| `src/pages/Profile.tsx` | Novo - pagina de perfil |
-| `src/App.tsx` | Adicionar rota `/profile` com AuthGuard |
-| `src/components/UserMenu.tsx` | Adicionar link "Meu Perfil" |
-| `src/hooks/useAuth.ts` | Expor `refetchProfile` |
-| Migration SQL | Criar bucket avatars + policies |
+### Alteracao de senha
+- Formulario independente do formulario de perfil (submit separado)
+- Usa `supabase.auth.updateUser({ password: newPassword })`
+- Limpa campos apos sucesso
+
