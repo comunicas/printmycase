@@ -13,10 +13,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { products, formatPrice } from "@/data/products";
-import { cn } from "@/lib/utils";
+import { products } from "@/data/products";
 import SeoHead from "@/components/SeoHead";
 import AppHeader from "@/components/AppHeader";
+import ProductCard from "@/components/ProductCard";
 
 const testimonials = [
   { name: "Ana C.", text: "Melhor capa que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
@@ -146,48 +146,9 @@ const Landing = () => {
                 Modelos em Destaque
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {featuredProducts.map((product) => {
-                  const fullStars = Math.floor(product.rating);
-                  const hasHalf = product.rating - fullStars >= 0.5;
-                  return (
-                    <Card
-                      key={product.id}
-                      className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
-                      onClick={() => navigate(`/product/${product.id}`)}
-                    >
-                      <div className="aspect-[3/4] overflow-hidden">
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                      <CardContent className="p-3">
-                        <h3 className="text-sm font-semibold text-foreground line-clamp-2">{product.name}</h3>
-                        <p className="text-base font-bold text-foreground mt-1">{formatPrice(product.price)}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <div className="flex items-center gap-0.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={cn(
-                                  "w-3 h-3",
-                                  i < fullStars
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : i === fullStars && hasHalf
-                                      ? "fill-yellow-400/50 text-yellow-400"
-                                      : "text-muted-foreground/30"
-                                )}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-xs text-muted-foreground">({product.reviewCount})</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                {featuredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
               </div>
               <div className="text-center mt-8">
                 <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
