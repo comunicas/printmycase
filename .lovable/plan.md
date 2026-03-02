@@ -1,100 +1,111 @@
 
 
-# Revisao Completa: Filtros, Hierarquia, Navegacao e Botoes
+# Code Review e Refatoracao - Case Studio
 
-## Problemas Identificados
+## Problemas Encontrados
 
-### 1. Idioma Inconsistente (Ingles misturado com Portugues)
-- Customize: "Adjustments", "Filters", "Save Draft", "Checkout", "Scale", "Rotate", "Bright", "Contrast"
-- FilterPresets: "AI Filters", nomes dos filtros em ingles ("Vivid", "Noir", "Warm", "Cool")
-- PhonePreview: texto fixo "iPhone 15 Pro Max" independente do produto selecionado
+### 1. Legado Vite Boilerplate
+- **`src/App.css`**: Arquivo inteiro e legado do template Vite (estilos `.logo`, `.card`, `.read-the-docs`, animacao `logo-spin`). Nao e importado por nenhum arquivo da aplicacao.
 
-### 2. Navegacao Fragmentada
-- Cada pagina tem um header diferente, sem consistencia
-- Sem breadcrumbs para contexto de navegacao
-- Landing page tem nav completa, mas Catalog/Product/Customize nao
-- Botao "Voltar" no Product usa `navigate(-1)` (pode falhar se usuario acessou direto)
+### 2. Conflito e Excesso de Fontes (`src/index.css`)
+- Importa **7 fontes do Google Fonts** (Inter, Montserrat, Cormorant Garamond, IBM Plex Mono, Poppins, Merriweather, JetBrains Mono) -- apenas Inter e usada.
+- Conflito: `--font-sans` aponta para Poppins, mas o `body` sobrescreve com `font-family: 'Inter'`. Resultado: a variavel CSS e ignorada.
 
-### 3. Botoes Sem Funcao
-- "Adicionar ao Carrinho" no ProductInfo: nao faz nada
-- "Save Draft" no Customize: nao faz nada
-- "Checkout" no Customize: nao faz nada
-- Botao "Ajuda" desabilitado em todas as paginas
+### 3. 40+ Componentes UI Nao Utilizados
+Componentes shadcn/ui instalados mas **nunca importados** pelo codigo da aplicacao (apenas referenciados internamente entre si):
+- accordion, alert-dialog, alert, aspect-ratio, avatar, badge, breadcrumb, calendar, carousel, chart, checkbox, collapsible, command, context-menu, dialog, drawer, dropdown-menu, form, hover-card, input-otp, input, label, menubar, navigation-menu, pagination, popover, progress, radio-group, resizable, scroll-area, select, sheet, sidebar, skeleton, sonner, switch, textarea, toggle, toggle-group
 
-### 4. Filtros Limitados
-- Apenas 4 filtros CSS basicos rotulados como "AI" (enganoso)
-- Nomes em ingles
+**Componentes efetivamente usados**: button, card, separator, slider, tabs, table, toast, toaster, tooltip
+
+### 4. 15+ Dependencias npm Nao Utilizadas
+Pacotes no `package.json` nunca importados pelo codigo da aplicacao:
+- `@tanstack/react-query`, `sonner`, `next-themes`, `recharts`, `react-hook-form`, `@hookform/resolvers`, `zod`, `date-fns`, `embla-carousel-react`, `input-otp`, `cmdk`, `react-resizable-panels`, `vaul`, `react-day-picker`
+- Multiplos pacotes Radix usados apenas por componentes UI nao utilizados
+
+### 5. Hook `use-mobile.tsx` Orfao
+- Usado apenas por `sidebar.tsx`, que nao e usado pela aplicacao.
+
+### 6. Re-export Desnecessario
+- `src/components/ui/use-toast.ts` apenas re-exporta `src/hooks/use-toast.ts`. Pode ser eliminado se os imports forem ajustados.
+
+### 7. Pagina 404 em Ingles
+- `NotFound.tsx`: "Oops! Page not found" e "Return to Home" -- inconsistente com o resto em portugues.
+
+### 8. URL Hardcoded no SeoHead
+- `SeoHead.tsx` usa `https://case-studio-pro-03.lovable.app` como URL fixa. Deveria usar a URL publicada real ou `window.location.origin`.
+
+### 9. Codigo Duplicado: Star Rating
+- A logica de renderizar estrelas (fullStars, hasHalf, loop de 5 Star icons) e copiada identicamente em 3 arquivos: `Landing.tsx`, `Catalog.tsx`, `ProductInfo.tsx`.
+
+### 10. Codigo Duplicado: Product Card
+- O card de produto (imagem + nome + preco + estrelas) e duplicado entre `Landing.tsx` e `Catalog.tsx` com markup quase identico.
 
 ---
 
-## Solucao Proposta
+## Plano de Refatoracao
 
-### A. Padronizar Idioma para Portugues
+### A. Deletar Legado
+- **Deletar `src/App.css`** (boilerplate Vite nao utilizado)
+- **Deletar componentes UI nao utilizados** (40 arquivos em `src/components/ui/`)
+- **Deletar `src/hooks/use-mobile.tsx`** (orfao)
+- **Deletar `src/components/ui/use-toast.ts`** (re-export redundante) e atualizar imports em `Customize.tsx` para usar `@/hooks/use-toast` diretamente
 
-**`src/components/ControlPanel.tsx`**
-- "Scale" -> "Escala"
-- "Rotate" -> "Rotacao"
-- "Bright" -> "Brilho"
-- "Contrast" -> "Contraste"
+### B. Limpar Fontes (`src/index.css`)
+- Remover imports de fontes nao usadas (Montserrat, Cormorant Garamond, IBM Plex Mono, Poppins, Merriweather, JetBrains Mono)
+- Manter apenas Inter
+- Alinhar `--font-sans` com Inter e remover a linha duplicada de `font-family` no body
 
-**`src/components/FilterPresets.tsx`**
-- "AI Filters" -> "Filtros"
-- "Vivid" -> "Vibrante"
-- "Noir" -> "Preto e Branco"
-- "Warm" -> "Quente"
-- "Cool" -> "Frio"
-- Adicionar mais 4 filtros: "Retro", "Suave", "Dramatico", "Pastel"
-- Remover badge "AI" (nao sao filtros de IA reais)
+### C. Remover Dependencias nao Utilizadas (`package.json`)
+- Remover: `@tanstack/react-query`, `sonner`, `next-themes`, `recharts`, `react-hook-form`, `@hookform/resolvers`, `zod`, `date-fns`, `embla-carousel-react`, `input-otp`, `cmdk`, `react-resizable-panels`, `vaul`, `react-day-picker`
+- Remover pacotes Radix usados apenas por componentes deletados: accordion, alert-dialog, aspect-ratio, avatar, checkbox, collapsible, context-menu, dialog, dropdown-menu, hover-card, label, menubar, navigation-menu, popover, progress, radio-group, scroll-area, select, sheet, switch, toggle, toggle-group
 
-**`src/pages/Customize.tsx`**
-- "Adjustments" -> "Ajustes"
-- "Filters" -> "Filtros"
-- "Save Draft" -> "Salvar Rascunho"
-- "Checkout" -> "Finalizar Pedido"
+### D. Extrair Componentes Reutilizaveis
+- **Criar `src/components/StarRating.tsx`**: componente que recebe `rating` e `reviewCount` (opcional) e renderiza as estrelas. Substituir nos 3 arquivos.
+- **Criar `src/components/ProductCard.tsx`**: componente que recebe um `Product` e renderiza o card clicavel com imagem, nome, preco e estrelas. Substituir em `Landing.tsx` e `Catalog.tsx`.
 
-### B. Header/Navegacao Consistente
+### E. Traduzir NotFound para Portugues (`src/pages/NotFound.tsx`)
+- "Page not found" -> "Pagina nao encontrada"
+- "Return to Home" -> "Voltar ao Inicio"
 
-Criar um componente `src/components/AppHeader.tsx` reutilizavel com:
-- Logo "Case Studio" (link para `/`)
-- Breadcrumb contextual (ex: Inicio > Catalogo > iPhone 17 Pro Max > Customizar)
-- Botao "Ver Modelos" sempre visivel
+### F. Corrigir SeoHead (`src/components/SeoHead.tsx`)
+- Substituir URL hardcoded por `window.location.origin` para funcionar em qualquer dominio
 
-Aplicar em todas as paginas: Landing, Catalog, Product, Customize.
+### G. Criar Documentacao Estrutural (`ARCHITECTURE.md`)
+Documentar a estrutura atual do projeto:
 
-### C. Corrigir PhonePreview
-
-**`src/components/PhonePreview.tsx`**
-- Receber o nome do modelo como prop e exibir dinamicamente em vez de "iPhone 15 Pro Max" fixo
-
-### D. Melhorar Botoes com Feedback
-
-**`src/components/ProductInfo.tsx`**
-- Remover "Adicionar ao Carrinho" (nao ha carrinho implementado)
-- Manter apenas CTA primario "Customizar Minha Capa"
-- Adicionar botao secundario "Ver Catalogo Completo"
-
-**`src/pages/Customize.tsx`**
-- "Salvar Rascunho" -> exibir toast "Rascunho salvo!" (feedback visual)
-- "Finalizar Pedido" -> exibir toast "Em breve! Estamos preparando o checkout." (placeholder honesto)
-
-### E. Remover Botao de Ajuda Desabilitado
-
-Remover o botao de ajuda (`HelpCircle`) de todas as paginas -- botoes desabilitados sem funcao prejudicam a experiencia.
+```text
+ARCHITECTURE.md
+- Visao geral do projeto
+- Stack tecnologica (React, Tailwind, Radix UI subset, Vite)
+- Hierarquia de URLs e jornada do usuario
+- Estrutura de pastas
+- Componentes da aplicacao (AppHeader, PhonePreview, ControlPanel, etc.)
+- Componentes UI base (shadcn subset: button, card, separator, slider, tabs, table, toast, tooltip)
+- Modelo de dados (products.ts)
+- SEO e dados estruturados
+- Convencoes de codigo
+```
 
 ---
 
 ## Arquivos a Criar
-
-1. **`src/components/AppHeader.tsx`** -- Header reutilizavel com logo, breadcrumbs e navegacao
+1. `src/components/StarRating.tsx`
+2. `src/components/ProductCard.tsx`
+3. `ARCHITECTURE.md`
 
 ## Arquivos a Modificar
+4. `src/index.css` -- limpar fontes
+5. `src/pages/Landing.tsx` -- usar ProductCard e StarRating
+6. `src/pages/Catalog.tsx` -- usar ProductCard
+7. `src/components/ProductInfo.tsx` -- usar StarRating
+8. `src/pages/NotFound.tsx` -- traduzir para portugues
+9. `src/components/SeoHead.tsx` -- URL dinamica
+10. `src/pages/Customize.tsx` -- ajustar import de useToast
+11. `package.json` -- remover dependencias nao utilizadas
 
-2. **`src/components/ControlPanel.tsx`** -- Traduzir labels para portugues
-3. **`src/components/FilterPresets.tsx`** -- Traduzir filtros, adicionar 4 novos, remover badge AI
-4. **`src/components/PhonePreview.tsx`** -- Receber `modelName` como prop
-5. **`src/components/ProductInfo.tsx`** -- Remover botao carrinho, adicionar link catalogo
-6. **`src/pages/Customize.tsx`** -- Traduzir tabs/botoes, passar modelo ao PhonePreview, toasts nos botoes, usar AppHeader
-7. **`src/pages/Product.tsx`** -- Usar AppHeader, remover header manual
-8. **`src/pages/Catalog.tsx`** -- Usar AppHeader, remover header manual
-9. **`src/pages/Landing.tsx`** -- Usar AppHeader no lugar do header atual
+## Arquivos a Deletar
+12. `src/App.css`
+13. `src/hooks/use-mobile.tsx`
+14. `src/components/ui/use-toast.ts`
+15. ~40 componentes UI nao utilizados em `src/components/ui/`
 
