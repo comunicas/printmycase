@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, forwardRef } from "react";
 import { Upload, Camera, Move } from "lucide-react";
 
 interface PhonePreviewProps {
@@ -14,7 +14,7 @@ interface PhonePreviewProps {
   modelName?: string;
 }
 
-const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload, modelName }: PhonePreviewProps) => {
+const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload, modelName }, ref) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -84,7 +84,7 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
     : {};
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div ref={ref} className="flex flex-col items-center gap-3">
       <div className="text-xs font-medium text-muted-foreground">
         {modelName ?? "iPhone"}
       </div>
@@ -152,6 +152,8 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
       />
     </div>
   );
-};
+});
+
+PhonePreview.displayName = "PhonePreview";
 
 export default PhonePreview;

@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -12,11 +13,11 @@ interface AppHeaderProps {
   breadcrumbs?: Breadcrumb[];
 }
 
-const AppHeader = ({ breadcrumbs }: AppHeaderProps) => {
+const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs }, ref) => {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header ref={ref} className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <nav className="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
         <div className="flex items-center gap-2 min-w-0">
           <Link to="/" className="text-lg font-bold text-foreground tracking-tight flex-shrink-0">
@@ -48,6 +49,8 @@ const AppHeader = ({ breadcrumbs }: AppHeaderProps) => {
       </nav>
     </header>
   );
-};
+});
+
+AppHeader.displayName = "AppHeader";
 
 export default AppHeader;

@@ -14,19 +14,21 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Listen to auth state changes — only set user & loading here
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
-        setLoading(false);
       },
     );
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch profile whenever user changes
   useEffect(() => {
     if (!user) {
       setProfile(null);
@@ -44,7 +46,7 @@ export function useAuth() {
       });
 
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user?.id]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
