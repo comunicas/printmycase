@@ -3,8 +3,10 @@ import { ArrowLeft, HelpCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PhonePreview from "@/components/PhonePreview";
+import PhoneModelSelector from "@/components/PhoneModelSelector";
 import ControlPanel from "@/components/ControlPanel";
 import FilterPresets, { filters } from "@/components/FilterPresets";
+import { phoneModels, getDefaultModel, type PhoneModel } from "@/lib/phoneModels";
 import sampleCase from "@/assets/sample-case.jpg";
 
 const Index = () => {
@@ -13,6 +15,7 @@ const Index = () => {
   const [rotation, setRotation] = useState(0);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [position, setPosition] = useState({ x: 50, y: 50 });
+  const [selectedModel, setSelectedModel] = useState<PhoneModel>(getDefaultModel());
 
   const handleImageUpload = (file: File) => {
     const reader = new FileReader();
@@ -20,7 +23,6 @@ const Index = () => {
     reader.readAsDataURL(file);
   };
 
-  // Get extra CSS filter from active preset
   const activeFilterObj = filters.find((f) => f.id === activeFilter);
   const extraFilter = activeFilterObj?.cssFilter ?? undefined;
 
@@ -42,7 +44,11 @@ const Index = () => {
       {/* Main content */}
       <main className="flex-1 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-8 p-5 lg:p-10">
         {/* Phone preview */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex flex-col items-center gap-4">
+          <PhoneModelSelector
+            selectedId={selectedModel.id}
+            onSelect={setSelectedModel}
+          />
           <PhonePreview
             image={image}
             scale={scale}
@@ -51,6 +57,7 @@ const Index = () => {
             position={position}
             onPositionChange={setPosition}
             onImageUpload={handleImageUpload}
+            phoneModel={selectedModel}
           />
         </div>
 
