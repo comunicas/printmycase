@@ -1,22 +1,39 @@
 
 
-# Atribuir role admin ao usuario Rafael Bruno
+# Cadastro em massa de produtos no banco de dados
 
-Sera executada uma insercao na tabela `user_roles` para atribuir a role `admin` ao usuario encontrado no banco.
+## Resumo
+Inserir 73 produtos na tabela `products` organizados por fabricante: Apple (26), Samsung (33), Xiaomi (10) e Motorola (4).
 
-## Dados do usuario
-- **Nome:** Rafael Bruno
-- **Email:** rafael@comunicas.com.br
-- **ID:** `8ade2db7-4961-499a-88ad-dffc6518e313`
+## Dados padrao para todos os produtos
 
-## O que sera feito
+| Campo | Valor |
+|---|---|
+| price_cents | 6990 (R$ 69,90) |
+| description | "Capa premium de policarbonato rigido com acabamento soft-touch. Protecao contra impactos com bordas elevadas para camera e tela. Totalmente personalizavel com suas fotos e designs favoritos." |
+| colors | Preto (#1a1a1a), Branco (#f5f5f5), Azul (#3b82f6), Vermelho (#ef4444) |
+| specs | Material, Peso, Dimensoes, Compatibilidade, Protecao, Acabamento, Carregamento sem fio |
+| images | 3 imagens placeholder do Unsplash |
+| rating | Entre 4.5 e 4.9 (variado) |
+| review_count | Entre 20 e 80 (variado) |
+| active | true |
 
-Executar um INSERT na tabela `user_roles` com os seguintes dados:
+## Convencao de slug
+- Formato: `marca-modelo` em lowercase, espacos substituidos por `-`
+- Exemplo: `iPhone 16 Pro Max` -> `iphone-16-pro-max`
+- Exemplo: `Galaxy S25 Ultra` -> `galaxy-s25-ultra`
+- Exemplo: `Redmi note14 Pro` -> `redmi-note14-pro`
 
-```text
-user_id: 8ade2db7-4961-499a-88ad-dffc6518e313
-role: admin
-```
+## Convencao de nome
+- Formato: `Capa [Modelo]`
+- Exemplo: `Capa iPhone 16 Pro Max`
+- Exemplo: `Capa Galaxy S25 Ultra`
 
-Apos a insercao, o hook `useAdmin` passara a retornar `isAdmin: true` para este usuario, liberando acesso ao painel `/admin` e exibindo o link "Admin" no menu do usuario.
+## Execucao
+Serao executados 4 blocos de INSERT (um por fabricante) usando a ferramenta de insercao de dados no banco, com specs e dimensoes aproximadas por modelo.
+
+## Secao tecnica
+- Cada INSERT contera todos os campos: slug, name, description, price_cents, images, specs, colors, rating, review_count, active
+- Os campos stripe_price_id e stripe_product_id ficarao NULL (serao preenchidos ao sincronizar com Stripe pelo painel admin)
+- Specs incluirao dimensoes e pesos aproximados por modelo baseados em dados publicos dos fabricantes
 
