@@ -77,14 +77,14 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
           {/* Case area (image layer) */}
           <div
             ref={containerRef}
-            className={`absolute inset-0 overflow-hidden touch-none ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+            className={`absolute inset-0 overflow-hidden touch-none group ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
             style={imageStyle}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
             {image && !isDragging && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 hover-parent-opacity transition-opacity z-10">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
               </div>
             )}
