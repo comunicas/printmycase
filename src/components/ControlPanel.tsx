@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Maximize, RotateCw, Sun, Contrast } from "lucide-react";
 
@@ -12,10 +13,10 @@ interface ControlPanelProps {
   onContrastChange: (v: number) => void;
 }
 
-const ControlPanel = ({
+const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
   scale, rotation, brightness, contrast,
   onScaleChange, onRotationChange, onBrightnessChange, onContrastChange,
-}: ControlPanelProps) => {
+}, ref) => {
   const controls = [
     { label: "Scale", value: scale, onChange: onScaleChange, min: 50, max: 200, defaultVal: 100, unit: "%", icon: Maximize },
     { label: "Rotate", value: rotation, onChange: onRotationChange, min: -180, max: 180, defaultVal: 0, unit: "°", icon: RotateCw },
@@ -24,7 +25,7 @@ const ControlPanel = ({
   ];
 
   return (
-    <div className="space-y-3">
+    <div ref={ref} className="space-y-3">
       <span className="text-sm font-medium text-foreground">Adjustments</span>
       <div className="space-y-2.5">
         {controls.map((ctrl) => {
@@ -58,6 +59,8 @@ const ControlPanel = ({
       </div>
     </div>
   );
-};
+});
+
+ControlPanel.displayName = "ControlPanel";
 
 export default ControlPanel;
