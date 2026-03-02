@@ -1,88 +1,45 @@
 
 
-# Pagina de Produto - Template
+# Expandir Catalogo de Produtos com Todos os Modelos
 
-## Visao Geral
+## O que sera feito
 
-Criar uma pagina de produto (`/product/:id`) que serve como template para todos os produtos da loja. A pagina atual do editor de customizacao (`/customize/:id`) sera acessada a partir desta pagina via botao "Customizar".
+Expandir o arquivo `src/data/products.ts` com todos os 20 modelos de iPhone da planilha, cada um com preco R$ 69,90 e imagens genericas de mockup de capa preta (usando URLs de imagens gratuitas de mockup de capas de celular).
 
-## Estrutura da Pagina
+## Produtos a adicionar (20 modelos)
 
-```text
-+-- Header (mesmo da Index, com botao voltar funcional) -----+
-|  <- Voltar    Case Studio                          Ajuda    |
-+-------------------------------------------------------------+
-|                                                             |
-|  +-- Galeria de Imagens --+  +-- Info do Produto ---------+ |
-|  |                        |  |                             | |
-|  |   [Imagem principal]   |  |  Capa iPhone 15 Pro Max    | |
-|  |                        |  |  ★★★★★ (42 avaliacoes)     | |
-|  |  [thumb] [thumb] [thumb]  |                             | |
-|  |                        |  |  R$ 79,90                   | |
-|  +------------------------+  |                             | |
-|                              |  [Selecao de cor]           | |
-|                              |  ● Preto ● Branco ● Azul   | |
-|                              |                             | |
-|                              |  [Customizar Minha Capa →]  | |
-|                              |  [Adicionar ao Carrinho]    | |
-|                              +-----------------------------+ |
-|                                                             |
-|  +-- Tabs: Descricao | Especificacoes | Avaliacoes -------+ |
-|  |                                                         | |
-|  |  Descricao do produto com detalhes sobre material,      | |
-|  |  protecao, compatibilidade, etc.                        | |
-|  |                                                         | |
-|  +-- Especificacoes: Material, Peso, Dimensoes, etc. -----+ |
-|                                                             |
-+-------------------------------------------------------------+
-```
+Baseado na planilha:
+- iPhone 17, 17 Air, 17 Pro, 17 Pro Max
+- iPhone Xs Max, X/Xs, Xr, X
+- iPhone SE 3
+- iPhone 11 Pro Max, 11 Pro, 11
+- iPhone 7/8 Plus, 7/8, 7 Plus, 7
 
-## Componentes a Criar
+O produto existente (iPhone 15 Pro Max) sera mantido e atualizado para o preco de 69.90.
 
-### 1. `src/pages/Product.tsx`
-Pagina principal do produto com layout responsivo (imagem a esquerda, info a direita em desktop; empilhado em mobile). Usa dados mockados de produto por enquanto. Contem:
-- Galeria de imagens com thumbnail selector
-- Bloco de informacoes (nome, preco, avaliacao, cores)
-- Botao "Customizar Minha Capa" que navega para `/customize/:id`
-- Botao "Adicionar ao Carrinho"
-- Tabs com Descricao, Especificacoes e Avaliacoes
+## Estrutura de cada produto
 
-### 2. `src/components/ProductGallery.tsx`
-Galeria de imagens do produto com imagem principal e thumbnails clicaveis. Exibe imagens de placeholder do produto (frente, costas, lateral da capa).
+Cada produto tera:
+- `id`: slug unico (ex: `iphone-17-pro-max`)
+- `name`: "Capa iPhone 17 Pro Max"
+- `price`: 69.90
+- `description`: descricao generica da capa personalizada
+- `images`: 3 imagens genericas de mockup (URLs de imagens de capas pretas)
+- `colors`: mesmas opcoes de cor para todos (Preto, Branco, Azul, Vermelho)
+- `specs`: especificacoes adaptadas por modelo (dimensoes, compatibilidade)
+- `rating`: valores variados entre 4.5-4.9
+- `reviewCount`: valores variados
 
-### 3. `src/components/ProductInfo.tsx`
-Bloco com nome, preco, avaliacao em estrelas, seletor de cor e botoes de acao. O botao "Customizar" usa `useNavigate` para ir ao editor.
+## Rota padrao
 
-### 4. `src/components/ProductDetails.tsx`
-Componente com Tabs (Descricao, Especificacoes, Avaliacoes) usando os mesmos componentes Radix Tabs ja existentes. Especificacoes em formato de tabela com Material, Peso, Dimensoes, Compatibilidade, etc.
+Atualizar a rota `/` em `src/App.tsx` para redirecionar para `/product/iphone-17-pro-max` (modelo mais recente).
 
-### 5. `src/data/products.ts`
-Arquivo de dados mockados com interface `Product` contendo: id, nome, preco, descricao, imagens, cores disponiveis, especificacoes, avaliacao media e quantidade de reviews. Servira como template ate haver backend.
+## Imagens
 
-## Alteracoes em Arquivos Existentes
+Usaremos imagens de mockup genericas hospedadas em servicos gratuitos (ex: unsplash/pexels) mostrando capas de celular pretas. Caso nao carreguem, o placeholder SVG atual sera o fallback.
 
-### `src/App.tsx`
-- Adicionar rota `/product/:id` para a pagina de produto
-- Mover a rota atual `/` para `/customize/:id` (editor de customizacao)
-- Rota `/` passa a ser a pagina de produto (ou redireciona para um produto default)
+## Arquivos modificados
 
-### `src/pages/Index.tsx`
-- Renomear para `src/pages/Customize.tsx` para refletir seu papel real (editor de customizacao)
-- Ativar o botao "Voltar" no header para navegar de volta a pagina do produto
-
-## Fluxo de Navegacao
-
-```text
-/product/:id  →  [Customizar]  →  /customize/:id
-                                      ↑ [Voltar]
-```
-
-## Detalhes Tecnicos
-
-- Dados mockados em `src/data/products.ts` com tipagem TypeScript
-- Navegacao via `react-router-dom` com `useParams` e `useNavigate`
-- Layout responsivo com Tailwind (`flex-col` mobile, `lg:flex-row` desktop)
-- Reutiliza componentes UI existentes: `Card`, `Button`, `Tabs`, `Badge`, `Separator`
-- Cores do produto como badges clicaveis com borda de selecao
-- Preco formatado em BRL com `Intl.NumberFormat`
+1. **`src/data/products.ts`** -- Expandir array `products` com 20 modelos, manter interfaces e funcoes utilitarias
+2. **`src/App.tsx`** -- Atualizar redirect padrao para o modelo mais recente
 
