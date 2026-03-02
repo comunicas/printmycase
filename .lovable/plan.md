@@ -1,52 +1,31 @@
 
+# Limpeza e Correcao de Problemas no Codigo
 
-# Redesign: Frame Traseiro do Celular com CTA de Upload
+## Problemas Identificados
 
-## O que muda
+### 1. Classe CSS inexistente: `hover-parent-opacity`
+No `PhonePreview.tsx` (linha 87), o overlay com o icone de Move usa a classe `hover-parent-opacity`, que nao existe em nenhum CSS do projeto. O icone nunca aparece.
 
-### 1. Remover imagem padrao (`src/pages/Index.tsx`)
-- Alterar o estado inicial de `image` de `sampleCase` para `null`
-- Remover o import do `sample-case.jpg`
-- O case inicia vazio, pronto para upload
+**Solucao**: Substituir por logica CSS funcional usando `group-hover:opacity-100` do Tailwind, aplicando `group` no container pai.
 
-### 2. Redesenhar o frame para a parte traseira (`src/components/PhonePreview.tsx`)
-- Remover o notch (elemento frontal) e a barra inferior
-- Adicionar modulo de cameras traseiro no canto superior esquerdo com CSS:
-  - 3 lentes circulares dispostas em triangulo (estilo iPhone 15 Pro Max)
-  - Flash LED pequeno
-  - Moldura arredondada ao redor do modulo
-- Adicionar logo Apple centralizado (texto ou icone simples)
-- Manter o fundo limpo (`bg-foreground/5`) sem cor ou imagem pre-carregada
+### 2. Arquivo orfao: `src/assets/sample-case.jpg`
+O arquivo `sample-case.jpg` nao e mais importado em nenhum lugar apos a remocao da imagem padrao.
 
-### 3. CTA de upload dentro do case
-- Quando nao ha imagem, exibir botao de upload centralizado dentro da area do case
-- Texto: "Toque para adicionar sua imagem"
-- Icone de upload com estilo sutil
-- O modulo de cameras e o logo ficam por cima (z-index superior) da imagem quando ela for adicionada
+**Solucao**: Deletar o arquivo.
 
-## Detalhes Tecnicos
+### 3. Conflito de filtros duplicados
+Quando um filtro AI esta ativo (ex: Vivid = `brightness(1.1) contrast(1.2) saturate(1.3)`) e o usuario tambem ajusta brilho/contraste manualmente, ambos sao concatenados no CSS (`baseFilter + extraFilter`), causando dupla aplicacao de `brightness()` e `contrast()`.
 
-### Modulo de Cameras (CSS puro)
-```text
-+---------------------------+
-|  +--------+               |
-|  | O  O   |               |
-|  |   O  * |  <- 3 lentes  |
-|  +--------+     + flash   |
-|                           |
-|                           |
-|         [Apple logo]      |
-|                           |
-|   [Upload sua imagem]     |  <- CTA quando vazio
-|                           |
-+---------------------------+
-```
+**Solucao**: Quando um filtro AI estiver ativo, desabilitar os ajustes manuais de brilho e contraste (ou resetar para 0). Isso evita conflito e simplifica a experiencia.
 
-- Lentes: circulos com `border`, `bg-foreground/20`, sombra interna
-- Flash: circulo menor amarelado
-- Moldura do modulo: `rounded-2xl`, `border`, `bg-foreground/10`
+### 4. Variaveis CSS duplicadas no `index.css`
+As variaveis `--sidebar-accent`, `--sidebar-bg`, `--sidebar-fg`, etc. estao definidas duas vezes no `:root` (linhas 39-43 e 48-55), causando sobreposicao.
 
-### Arquivos Modificados
-1. **`src/components/PhonePreview.tsx`** - Substituir frame frontal por traseiro com cameras
-2. **`src/pages/Index.tsx`** - Remover imagem padrao, iniciar com `null`
+**Solucao**: Remover as variaveis duplicadas/legadas (linhas 39-43).
 
+## Arquivos Modificados
+
+1. **`src/components/PhonePreview.tsx`** — Corrigir hover do icone Move com `group`/`group-hover`
+2. **`src/assets/sample-case.jpg`** — Deletar arquivo orfao
+3. **`src/pages/Index.tsx`** — Resetar brilho/contraste ao ativar filtro AI; resetar filtro ao ajustar manualmente
+4. **`src/index.css`** — Remover variaveis CSS sidebar duplicadas
