@@ -1,29 +1,24 @@
 import { useRef, useState, useCallback } from "react";
 import { Upload, Camera, Move } from "lucide-react";
-import CameraModule from "@/components/CameraModule";
-import type { PhoneModel } from "@/lib/phoneModels";
 
 interface PhonePreviewProps {
   image: string | null;
   scale: number;
   rotation: number;
+  brightness: number;
+  contrast: number;
   extraFilter?: string;
   position: { x: number; y: number };
   onPositionChange: (pos: { x: number; y: number }) => void;
   onImageUpload: (file: File) => void;
-  phoneModel: PhoneModel;
 }
 
-const FRAME_WIDTH = 260;
-
-const PhonePreview = ({ image, scale, rotation, extraFilter, position, onPositionChange, onImageUpload, phoneModel }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
-
-  const frameHeight = Math.round(FRAME_WIDTH * phoneModel.aspectRatio);
 
   const clamp = (v: number) => Math.max(0, Math.min(100, v));
 
@@ -56,7 +51,8 @@ const PhonePreview = ({ image, scale, rotation, extraFilter, position, onPositio
     if (file) onImageUpload(file);
   };
 
-  const combinedFilter = extraFilter || undefined;
+  const baseFilter = `brightness(${1 + brightness / 100}) contrast(${1 + contrast / 100})`;
+  const combinedFilter = extraFilter ? `${baseFilter} ${extraFilter}` : baseFilter;
 
   const imageStyle = image
     ? {
@@ -72,20 +68,13 @@ const PhonePreview = ({ image, scale, rotation, extraFilter, position, onPositio
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="text-xs font-medium text-muted-foreground">
-        {phoneModel.name}
+        iPhone 15 Pro Max
       </div>
       <div className="relative">
         {/* Phone frame */}
-        <div
-          className="relative border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden"
-          style={{
-            width: FRAME_WIDTH,
-            height: frameHeight,
-            borderRadius: phoneModel.borderRadius,
-          }}
-        >
-          {/* Camera module overlay */}
-          <CameraModule model={phoneModel} frameWidth={FRAME_WIDTH} />
+        <div className="relative w-[260px] h-[532px] rounded-[2.8rem] border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
+          {/* Notch */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100px] h-[26px] bg-foreground/80 rounded-b-xl z-20" />
 
           {/* Case area */}
           <div

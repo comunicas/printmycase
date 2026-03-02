@@ -1,20 +1,26 @@
 import { Slider } from "@/components/ui/slider";
-import { Maximize, RotateCw } from "lucide-react";
+import { Maximize, RotateCw, Sun, Contrast } from "lucide-react";
 
 interface ControlPanelProps {
   scale: number;
   rotation: number;
+  brightness: number;
+  contrast: number;
   onScaleChange: (v: number) => void;
   onRotationChange: (v: number) => void;
+  onBrightnessChange: (v: number) => void;
+  onContrastChange: (v: number) => void;
 }
 
 const ControlPanel = ({
-  scale, rotation,
-  onScaleChange, onRotationChange,
+  scale, rotation, brightness, contrast,
+  onScaleChange, onRotationChange, onBrightnessChange, onContrastChange,
 }: ControlPanelProps) => {
   const controls = [
     { label: "Scale", value: scale, onChange: onScaleChange, min: 50, max: 200, defaultVal: 100, unit: "%", icon: Maximize },
     { label: "Rotate", value: rotation, onChange: onRotationChange, min: -180, max: 180, defaultVal: 0, unit: "°", icon: RotateCw },
+    { label: "Bright", value: brightness, onChange: onBrightnessChange, min: -100, max: 100, defaultVal: 0, unit: "", icon: Sun },
+    { label: "Contrast", value: contrast, onChange: onContrastChange, min: -100, max: 100, defaultVal: 0, unit: "", icon: Contrast },
   ];
 
   return (
