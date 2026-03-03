@@ -26,8 +26,11 @@ function calcNewPrice(current: number, type: "fixed" | "percent", value: number,
   return Math.max(0, Math.round(current * factor));
 }
 
+const BATCH_SIZE = 5;
+
 const BulkPriceDialog = ({ open, onOpenChange, products, adjustType, adjustValue, direction, onDone }: Props) => {
   const [applying, setApplying] = useState(false);
+  const [progress, setProgress] = useState<{ current: number; total: number; phase: string } | null>(null);
   const { toast } = useToast();
 
   const previews = products.map((p) => ({
@@ -35,35 +38,48 @@ const BulkPriceDialog = ({ open, onOpenChange, products, adjustType, adjustValue
     newPrice: calcNewPrice(p.price_cents, adjustType, adjustValue, direction),
   }));
 
+  const processBatches = async <T,>(items: T[], fn: (item: T) => Promise<boolean>, phase: string) => {
+    let errors = 0;
+    for (let i = 0; i < items.length; i += BATCH_SIZE) {
+      const batch = items.slice(i, i + BATCH_SIZE);
+      const results = await Promise.all(batch.map(fn));
+      errors += results.filter((ok) => !ok).length;
+      setProgress({ current: Math.min(i + BATCH_SIZE, items.length), total: items.length, phase });
+    }
+    return errors;
+  };
+
   const handleApply = async () => {
     setApplying(true);
-    let errors = 0;
 
-    for (const item of previews) {
+    // Phase 1: DB updates
+    const dbErrors = await processBatches(previews, async (item) => {
       const { error } = await supabase
         .from("products")
         .update({ price_cents: item.newPrice })
         .eq("id", item.id);
+      return !error;
+    }, "Atualizando banco de dados");
 
-      if (error) {
-        errors++;
-        continue;
-      }
-
-      if (item.stripe_product_id) {
-        await supabase.functions.invoke("admin-sync-stripe", {
+    // Phase 2: Stripe sync
+    const stripeItems = previews.filter((p) => p.stripe_product_id);
+    if (stripeItems.length > 0) {
+      await processBatches(stripeItems, async (item) => {
+        const { error } = await supabase.functions.invoke("admin-sync-stripe", {
           body: { action: "update_price", product_id: item.id },
         });
-      }
+        return !error;
+      }, "Sincronizando pagamentos");
     }
 
-    if (errors > 0) {
-      toast({ title: `${previews.length - errors} atualizados, ${errors} erros`, variant: "destructive" });
+    if (dbErrors > 0) {
+      toast({ title: `${previews.length - dbErrors} atualizados, ${dbErrors} erros`, variant: "destructive" });
     } else {
       toast({ title: `${previews.length} preços atualizados com sucesso` });
     }
 
     setApplying(false);
+    setProgress(null);
     onOpenChange(false);
     onDone();
   };
@@ -93,6 +109,21 @@ const BulkPriceDialog = ({ open, onOpenChange, products, adjustType, adjustValue
             </div>
           ))}
         </div>
+
+        {progress && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{progress.phase}</span>
+              <span>{progress.current} de {progress.total}</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${(progress.current / progress.total) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={applying}>
