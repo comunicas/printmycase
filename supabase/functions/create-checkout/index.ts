@@ -27,8 +27,7 @@ Deno.serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } =
-      await supabase.auth.getUser(token);
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
     if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -37,20 +36,15 @@ Deno.serve(async (req) => {
     }
 
     const userId = userData.user.id;
-
-    const { product_id, customization_data, image_url } = await req.json();
+    const { product_id, customization_data, image_url, shipping_cents, address_id } = await req.json();
 
     if (!product_id) {
-      return new Response(
-        JSON.stringify({ error: "product_id is required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "product_id is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Fetch product from DB
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -63,25 +57,44 @@ Deno.serve(async (req) => {
       .single();
 
     if (productError || !product) {
-      return new Response(
-        JSON.stringify({ error: "Product not found" }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Product not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const origin =
-      req.headers.get("origin") || req.headers.get("referer") || "https://artiscase-v2.lovable.app";
+    // Fetch address snapshot if provided
+    let shippingAddress = null;
+    if (address_id) {
+      const { data: addr } = await supabaseAdmin
+        .from("addresses")
+        .select("*")
+        .eq("id", address_id)
+        .single();
+      if (addr) {
+        shippingAddress = {
+          street: addr.street,
+          number: addr.number,
+          complement: addr.complement,
+          neighborhood: addr.neighborhood,
+          city: addr.city,
+          state: addr.state,
+          zip_code: addr.zip_code,
+          label: addr.label,
+        };
+      }
+    }
 
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "https://artiscase-v2.lovable.app";
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
+    const shippingValue = shipping_cents ? Number(shipping_cents) : 0;
+    const totalCents = product.price_cents + shippingValue;
 
     const params = new URLSearchParams();
     params.append("payment_method_types[0]", "card");
     params.append("mode", "payment");
 
-    // Use stripe_price_id if available, otherwise fallback to price_data
+    // Product line item
     if (product.stripe_price_id) {
       params.append("line_items[0][price]", product.stripe_price_id);
     } else {
@@ -91,6 +104,16 @@ Deno.serve(async (req) => {
       params.append("line_items[0][price_data][product_data][description]", product.description || "Capa de celular personalizada");
     }
     params.append("line_items[0][quantity]", "1");
+
+    // Shipping line item
+    if (shippingValue > 0) {
+      params.append("line_items[1][price_data][currency]", "brl");
+      params.append("line_items[1][price_data][unit_amount]", String(shippingValue));
+      params.append("line_items[1][price_data][product_data][name]", "Frete");
+      params.append("line_items[1][price_data][product_data][description]", "Envio para todo o Brasil");
+      params.append("line_items[1][quantity]", "1");
+    }
+
     params.append("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
     params.append("cancel_url", `${origin}/customize/${product.slug}`);
     params.append("metadata[user_id]", userId);
@@ -115,7 +138,10 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from("orders").insert({
       user_id: userId,
       product_id,
-      total_cents: product.price_cents,
+      total_cents: totalCents,
+      shipping_cents: shippingValue || null,
+      shipping_address: shippingAddress,
+      address_id: address_id || null,
       stripe_session_id: session.id,
       customization_data: {
         ...customization_data,

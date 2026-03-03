@@ -66,9 +66,12 @@ export type Database = {
           customization_data: Json | null
           id: string
           product_id: string
+          shipping_address: Json | null
+          shipping_cents: number | null
           status: Database["public"]["Enums"]["order_status"]
           stripe_session_id: string | null
           total_cents: number
+          tracking_code: string | null
           user_id: string
         }
         Insert: {
@@ -77,9 +80,12 @@ export type Database = {
           customization_data?: Json | null
           id?: string
           product_id: string
+          shipping_address?: Json | null
+          shipping_cents?: number | null
           status?: Database["public"]["Enums"]["order_status"]
           stripe_session_id?: string | null
           total_cents: number
+          tracking_code?: string | null
           user_id: string
         }
         Update: {
@@ -88,9 +94,12 @@ export type Database = {
           customization_data?: Json | null
           id?: string
           product_id?: string
+          shipping_address?: Json | null
+          shipping_cents?: number | null
           status?: Database["public"]["Enums"]["order_status"]
           stripe_session_id?: string | null
           total_cents?: number
+          tracking_code?: string | null
           user_id?: string
         }
         Relationships: [
