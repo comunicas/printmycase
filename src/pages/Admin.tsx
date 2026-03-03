@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsTable from "@/components/admin/ProductsTable";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import BulkPriceDialog from "@/components/admin/BulkPriceDialog";
 import { formatPrice } from "@/data/products";
 
 export interface DbProduct {
@@ -59,6 +60,13 @@ const Admin = () => {
   const [orders, setOrders] = useState<DbOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [trackingInputs, setTrackingInputs] = useState<Record<string, string>>({});
+
+  // Bulk price
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAdjustType, setBulkAdjustType] = useState<"fixed" | "percent">("percent");
+  const [bulkAdjustValue, setBulkAdjustValue] = useState("");
+  const [bulkDirection, setBulkDirection] = useState<"increase" | "decrease">("increase");
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -203,11 +211,56 @@ const Admin = () => {
               </div>
             </div>
 
+            {/* Bulk price action bar */}
+            {selectedIds.size > 0 && (
+              <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border bg-muted/50 p-3">
+                <span className="text-sm font-medium">{selectedIds.size} selecionado{selectedIds.size > 1 ? "s" : ""}</span>
+                <select
+                  value={bulkAdjustType}
+                  onChange={(e) => setBulkAdjustType(e.target.value as "fixed" | "percent")}
+                  className="h-9 rounded-md border bg-background px-2 text-sm"
+                >
+                  <option value="percent">Percentual (%)</option>
+                  <option value="fixed">Valor fixo (R$)</option>
+                </select>
+                <Input
+                  type="number"
+                  min="0"
+                  step={bulkAdjustType === "fixed" ? "0.01" : "1"}
+                  placeholder={bulkAdjustType === "fixed" ? "0,00" : "10"}
+                  value={bulkAdjustValue}
+                  onChange={(e) => setBulkAdjustValue(e.target.value)}
+                  className="w-24 text-sm"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!bulkAdjustValue || Number(bulkAdjustValue) <= 0}
+                  onClick={() => { setBulkDirection("increase"); setBulkDialogOpen(true); }}
+                >
+                  + Aumentar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!bulkAdjustValue || Number(bulkAdjustValue) <= 0}
+                  onClick={() => { setBulkDirection("decrease"); setBulkDialogOpen(true); }}
+                >
+                  − Diminuir
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                  Limpar seleção
+                </Button>
+              </div>
+            )}
+
             <ProductsTable
               products={products}
               loading={loading}
               onEdit={handleEdit}
               onToggleActive={handleToggleActive}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
             />
 
             <ProductFormDialog
@@ -215,6 +268,16 @@ const Admin = () => {
               onOpenChange={setDialogOpen}
               product={editingProduct}
               onSaved={handleSaved}
+            />
+
+            <BulkPriceDialog
+              open={bulkDialogOpen}
+              onOpenChange={setBulkDialogOpen}
+              products={products.filter((p) => selectedIds.has(p.id))}
+              adjustType={bulkAdjustType}
+              adjustValue={bulkAdjustType === "fixed" ? Math.round(Number(bulkAdjustValue) * 100) : Number(bulkAdjustValue)}
+              direction={bulkDirection}
+              onDone={() => { setSelectedIds(new Set()); fetchProducts(); }}
             />
           </TabsContent>
 

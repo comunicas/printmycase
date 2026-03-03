@@ -8,12 +8,14 @@ interface Props {
   loading: boolean;
   onEdit: (product: DbProduct) => void;
   onToggleActive: (product: DbProduct) => void;
+  selectedIds: Set<string>;
+  onSelectionChange: (ids: Set<string>) => void;
 }
 
 const formatCents = (cents: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 
-const ProductsTable = ({ products, loading, onEdit, onToggleActive }: Props) => {
+const ProductsTable = ({ products, loading, onEdit, onToggleActive, selectedIds, onSelectionChange }: Props) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -35,6 +37,16 @@ const ProductsTable = ({ products, loading, onEdit, onToggleActive }: Props) => 
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-10">
+              <input
+                type="checkbox"
+                checked={products.length > 0 && selectedIds.size === products.length}
+                onChange={(e) => {
+                  onSelectionChange(e.target.checked ? new Set(products.map((p) => p.id)) : new Set());
+                }}
+                className="accent-primary h-4 w-4"
+              />
+            </TableHead>
             <TableHead className="w-16">Img</TableHead>
             <TableHead>Nome</TableHead>
             <TableHead>Slug</TableHead>
@@ -47,6 +59,18 @@ const ProductsTable = ({ products, loading, onEdit, onToggleActive }: Props) => 
         <TableBody>
           {products.map((p) => (
             <TableRow key={p.id}>
+              <TableCell>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(p.id)}
+                  onChange={(e) => {
+                    const next = new Set(selectedIds);
+                    e.target.checked ? next.add(p.id) : next.delete(p.id);
+                    onSelectionChange(next);
+                  }}
+                  className="accent-primary h-4 w-4"
+                />
+              </TableCell>
               <TableCell>
                 {p.images?.[0] ? (
                   <img src={p.images[0]} alt={p.name} className="h-10 w-10 rounded object-cover" />
