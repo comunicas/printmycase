@@ -1,31 +1,49 @@
 
 
-# Refinar UX da página de Confirmação de Compra
+# Alteração de preços em massa (Bulk Price Update)
 
-A tela atual já funciona (como mostra o screenshot), mas pode ser melhorada visualmente para transmitir mais confiança e celebração.
+## Resumo
+Adicionar funcionalidade no painel admin para selecionar múltiplos produtos e aplicar uma alteração de preço em massa — por valor fixo ou percentual — atualizando o banco de dados e sincronizando com o Stripe automaticamente.
 
-## Melhorias propostas
+## UX proposta
 
-### 1. Adicionar logo ArtisCase acima do ícone de sucesso
-Reforçar a marca na tela de confirmação, como feito em Login/Signup.
+Na aba "Produtos", adicionar:
+1. **Checkbox** em cada linha da tabela + checkbox "selecionar todos" no header
+2. **Barra de ações em massa** que aparece quando há produtos selecionados, contendo:
+   - Dropdown para tipo de ajuste: "Valor fixo (R$)" ou "Percentual (%)"
+   - Input para o valor (ex: `5,00` ou `10`)
+   - Botões "+/-" para aumentar ou diminuir
+   - Botão "Aplicar" com confirmação
+   - Contador de selecionados: "3 produtos selecionados"
 
-### 2. Animação sutil no ícone de check
-Adicionar uma animação de escala/fade-in no ícone verde ao carregar a página (via CSS `animate-in`).
+```text
+[✓] Selecionar todos    |  3 selecionados
+┌─────────────────────────────────────────────────┐
+│  Ajuste: [Percentual ▼]  Valor: [10]           │
+│  [+ Aumentar]  [- Diminuir]  [Aplicar]         │
+└─────────────────────────────────────────────────┘
+```
 
-### 3. Melhorar hierarquia visual
-- Aumentar o ícone de check (w-20 h-20 no circle, w-10 h-10 no ícone)
-- Adicionar um card com borda suave ao redor do conteúdo para destacar do fundo
-- Separar visualmente o código de referência com um divider
+## Fluxo
+1. Admin seleciona produtos via checkbox
+2. Escolhe tipo (fixo/percentual) e valor
+3. Clica em "Aumentar" ou "Diminuir"
+4. Dialog de confirmação mostra preview: nome, preço atual → preço novo
+5. Ao confirmar: atualiza `price_cents` no DB para cada produto e chama `admin-sync-stripe` com `action: "update_price"` para os que têm `stripe_product_id`
 
-### 4. Mensagem mais detalhada
-- Adicionar texto secundário: "Acompanhe o status do seu pedido na página Meus Pedidos"
-- Mover referência para dentro de um badge/chip mais elegante
+## Arquivos afetados
 
-### 5. Botões com melhor destaque
-- "Meus Pedidos" como botão principal (preenchido)
-- "Voltar ao Catálogo" como secundário (outline)
-- Inverter a ordem atual para guiar o usuário para acompanhar o pedido
+### 1. `src/components/admin/ProductsTable.tsx`
+- Adicionar coluna de checkbox
+- Checkbox no header para selecionar todos
+- Props: `selectedIds`, `onSelectionChange`
 
-## Arquivo afetado
-- `src/pages/CheckoutSuccess.tsx` — redesign do layout e conteúdo
+### 2. `src/components/admin/BulkPriceDialog.tsx` (novo)
+- Dialog de confirmação com preview de preços antigos → novos
+- Lógica de aplicação (update DB + sync Stripe por produto)
+
+### 3. `src/pages/Admin.tsx`
+- Estado de seleção (`selectedIds`)
+- Barra de ações em massa com inputs de ajuste
+- Integração com `BulkPriceDialog`
 
