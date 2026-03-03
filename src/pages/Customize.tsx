@@ -222,6 +222,12 @@ const Customize = () => {
               </div>
             )}
 
+            {shipping && !shipping.allowed && (
+              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
+                No momento, realizamos envios apenas para a região Sudeste (SP, RJ, MG, ES).
+              </div>
+            )}
+
             {product && (
               <div className="border-t pt-3 space-y-1 text-sm">
                 <div className="flex justify-between">
@@ -241,7 +247,7 @@ const Customize = () => {
           </div>
 
           <div className="flex gap-3">
-            <Button className="flex-1 gap-1.5" onClick={handleCheckout} disabled={checkoutLoading || !shipping}>
+            <Button className="flex-1 gap-1.5" onClick={handleCheckout} disabled={checkoutLoading || !shipping || !shipping.allowed}>
               {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (<>Finalizar Pedido <ArrowRight className="w-4 h-4" /></>)}
             </Button>
           </div>

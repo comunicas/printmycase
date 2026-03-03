@@ -106,10 +106,13 @@ export function getStateByZip(zip: string): string | null {
   return zipPrefixToState[clean.substring(0, 2)] ?? null;
 }
 
+export const ALLOWED_REGIONS = ["Sudeste"];
+
 export interface ShippingResult {
   region: string;
   state: string;
   priceCents: number;
+  allowed: boolean;
 }
 
 export function getShippingByZip(zip: string): ShippingResult | null {
@@ -123,5 +126,6 @@ export function getShippingByZip(zip: string): ShippingResult | null {
     region: region.name,
     state,
     priceCents: region.priceCents,
+    allowed: ALLOWED_REGIONS.includes(region.name),
   };
 }
