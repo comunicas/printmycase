@@ -64,7 +64,7 @@ const Admin = () => {
   // Bulk price
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAdjustType, setBulkAdjustType] = useState<"fixed" | "percent">("percent");
-  const [bulkAdjustValue, setBulkAdjustValue] = useState("");
+  const [bulkAdjustValue, setBulkAdjustValue] = useState("10");
   const [bulkDirection, setBulkDirection] = useState<"increase" | "decrease">("increase");
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
 
