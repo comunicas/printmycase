@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, Package, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsTable from "@/components/admin/ProductsTable";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import { formatPrice } from "@/data/products";
 
 export interface DbProduct {
   id: string;
@@ -25,12 +28,37 @@ export interface DbProduct {
   updated_at: string;
 }
 
+interface DbOrder {
+  id: string;
+  user_id: string;
+  product_id: string;
+  total_cents: number;
+  shipping_cents: number | null;
+  tracking_code: string | null;
+  status: string;
+  created_at: string;
+  stripe_session_id: string | null;
+}
+
+const statusLabels: Record<string, string> = {
+  pending: "Pendente",
+  paid: "Pago",
+  shipped: "Enviado",
+  delivered: "Entregue",
+  cancelled: "Cancelado",
+};
+
 const Admin = () => {
   const [products, setProducts] = useState<DbProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const { toast } = useToast();
+
+  // Orders
+  const [orders, setOrders] = useState<DbOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [trackingInputs, setTrackingInputs] = useState<Record<string, string>>({});
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -46,7 +74,27 @@ const Admin = () => {
     setLoading(false);
   }, [toast]);
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  const fetchOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast({ title: "Erro ao carregar pedidos", description: error.message, variant: "destructive" });
+    } else {
+      setOrders((data as any[]) ?? []);
+      // Pre-fill tracking inputs
+      const inputs: Record<string, string> = {};
+      (data ?? []).forEach((o: any) => {
+        if (o.tracking_code) inputs[o.id] = o.tracking_code;
+      });
+      setTrackingInputs(inputs);
+    }
+    setOrdersLoading(false);
+  }, [toast]);
+
+  useEffect(() => { fetchProducts(); fetchOrders(); }, [fetchProducts, fetchOrders]);
 
   const handleEdit = (product: DbProduct) => {
     setEditingProduct(product);
@@ -95,7 +143,6 @@ const Admin = () => {
       return;
     }
 
-    // If deactivating and has stripe product, archive on Stripe
     if (!newActive && product.stripe_product_id) {
       await supabase.functions.invoke("admin-sync-stripe", {
         body: { action: "archive", product_id: product.id },
@@ -112,37 +159,118 @@ const Admin = () => {
     fetchProducts();
   };
 
+  const handleSaveTracking = async (orderId: string) => {
+    const code = trackingInputs[orderId]?.trim();
+    if (!code) return;
+    const { error } = await supabase
+      .from("orders")
+      .update({ tracking_code: code, status: "shipped" } as any)
+      .eq("id", orderId);
+    if (error) {
+      toast({ title: "Erro ao salvar rastreio", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Código de rastreio salvo" });
+      fetchOrders();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader breadcrumbs={[{ label: "Admin" }, { label: "Produtos" }]} />
+      <AppHeader breadcrumbs={[{ label: "Admin" }]} />
       <main className="max-w-5xl mx-auto px-5 py-10">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Produtos</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleBulkSync} disabled={syncing}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "Sincronizando..." : "Sincronizar Stripe"}
-            </Button>
-            <Button onClick={handleNew}>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Produto
-            </Button>
-          </div>
-        </div>
+        <Tabs defaultValue="products" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="products" className="gap-1.5">
+              <Package className="w-4 h-4" /> Produtos
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="gap-1.5">
+              <Truck className="w-4 h-4" /> Pedidos
+            </TabsTrigger>
+          </TabsList>
 
-        <ProductsTable
-          products={products}
-          loading={loading}
-          onEdit={handleEdit}
-          onToggleActive={handleToggleActive}
-        />
+          <TabsContent value="products">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold">Produtos</h1>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleBulkSync} disabled={syncing}>
+                  <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                  {syncing ? "Sincronizando..." : "Sincronizar Stripe"}
+                </Button>
+                <Button onClick={handleNew}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Produto
+                </Button>
+              </div>
+            </div>
 
-        <ProductFormDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          product={editingProduct}
-          onSaved={handleSaved}
-        />
+            <ProductsTable
+              products={products}
+              loading={loading}
+              onEdit={handleEdit}
+              onToggleActive={handleToggleActive}
+            />
+
+            <ProductFormDialog
+              open={dialogOpen}
+              onOpenChange={setDialogOpen}
+              product={editingProduct}
+              onSaved={handleSaved}
+            />
+          </TabsContent>
+
+          <TabsContent value="orders">
+            <h1 className="text-2xl font-bold mb-6">Pedidos</h1>
+            {ordersLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              </div>
+            ) : orders.length === 0 ? (
+              <p className="text-muted-foreground text-center py-12">Nenhum pedido encontrado.</p>
+            ) : (
+              <div className="space-y-3">
+                {orders.map((order) => (
+                  <div key={order.id} className="border rounded-xl p-4 bg-card space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <p className="text-xs text-muted-foreground font-mono">{order.id.slice(0, 8)}</p>
+                        <p className="text-sm text-foreground">
+                          {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          {statusLabels[order.status] ?? order.status}
+                        </span>
+                        <span className="font-semibold text-sm">{formatPrice(order.total_cents / 100)}</span>
+                        {order.shipping_cents != null && (
+                          <span className="text-xs text-muted-foreground">(frete {formatPrice(order.shipping_cents / 100)})</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Tracking code input */}
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Código de rastreio"
+                        value={trackingInputs[order.id] ?? ""}
+                        onChange={(e) => setTrackingInputs((prev) => ({ ...prev, [order.id]: e.target.value }))}
+                        className="max-w-xs text-sm font-mono"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSaveTracking(order.id)}
+                        disabled={!trackingInputs[order.id]?.trim()}
+                      >
+                        Salvar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

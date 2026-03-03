@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShoppingBag, ArrowLeft } from "lucide-react";
+import { ShoppingBag, ArrowLeft, Truck, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Order = Tables<"orders">;
+type Order = Tables<"orders"> & {
+  shipping_cents?: number | null;
+  tracking_code?: string | null;
+  shipping_address?: any;
+};
 
 const statusLabels: Record<string, { label: string; className: string }> = {
   pending: { label: "Pendente", className: "bg-yellow-100 text-yellow-800" },
@@ -35,7 +39,6 @@ const Orders = () => {
         return;
       }
 
-      // Get unique product_ids and fetch names from products table
       const productIds = [...new Set(ordersData.map((o) => o.product_id))];
       const { data: productsData } = await supabase
         .from("products")
@@ -45,7 +48,7 @@ const Orders = () => {
       const nameMap = new Map((productsData ?? []).map((p) => [p.slug, p.name]));
 
       setOrders(
-        ordersData.map((o) => ({
+        ordersData.map((o: any) => ({
           ...o,
           product_name: nameMap.get(o.product_id) ?? o.product_id,
         }))
@@ -83,18 +86,47 @@ const Orders = () => {
           <div className="space-y-4">
             {orders.map((order) => {
               const status = statusLabels[order.status] ?? statusLabels.pending;
+              const shippingCents = (order as any).shipping_cents as number | null;
+              const trackingCode = (order as any).tracking_code as string | null;
+              const productCents = order.total_cents - (shippingCents ?? 0);
+
               return (
-                <div key={order.id} className="border rounded-xl p-4 bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">{order.product_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-                    </p>
+                <div key={order.id} className="border rounded-xl p-4 bg-card space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">{order.product_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${status.className}`}>{status.label}</span>
+                      <span className="font-semibold text-foreground">{formatPrice(order.total_cents / 100)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${status.className}`}>{status.label}</span>
-                    <span className="font-semibold text-foreground">{formatPrice(order.total_cents / 100)}</span>
-                  </div>
+
+                  {/* Shipping details */}
+                  {(shippingCents != null || trackingCode) && (
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground border-t pt-2">
+                      {shippingCents != null && (
+                        <span className="flex items-center gap-1">
+                          <Truck className="w-3.5 h-3.5" />
+                          Produto {formatPrice(productCents / 100)} + Frete {formatPrice(shippingCents / 100)}
+                        </span>
+                      )}
+                      {trackingCode && (
+                        <a
+                          href={`https://rastreamento.correios.com.br/app/index.php`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-primary hover:underline font-medium"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Rastreio: {trackingCode}
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
