@@ -1,8 +1,11 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, ShoppingBag, ArrowLeft, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import AppHeader from "@/components/AppHeader";
 import { useAuth } from "@/hooks/useAuth";
+import logoArtisCase from "@/assets/logo-artiscase.png";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
@@ -17,53 +20,61 @@ const CheckoutSuccess = () => {
       <AppHeader breadcrumbs={breadcrumbs} />
 
       <main className="flex-1 flex items-center justify-center p-5">
-        <div className="text-center max-w-md space-y-6">
-          <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-            <CheckCircle className="w-8 h-8 text-green-600" />
-          </div>
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-8 pb-8 space-y-6 text-center">
+            <img src={logoArtisCase} alt="ArtisCase" className="h-10 mx-auto" />
 
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">
-              Pedido Confirmado!
-            </h1>
-            <p className="text-muted-foreground">
-              Seu pagamento foi processado com sucesso. Você receberá um e-mail
-              com os detalhes do pedido.
-            </p>
-          </div>
+            <div className="mx-auto w-20 h-20 rounded-full bg-green-100 flex items-center justify-center animate-scale-in">
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
 
-          {sessionId && (
-            <p className="text-xs text-muted-foreground font-mono truncate">
-              Ref: {sessionId.slice(0, 20)}…
-            </p>
-          )}
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-foreground">
+                Pedido Confirmado!
+              </h1>
+              <p className="text-muted-foreground">
+                Seu pagamento foi processado com sucesso. Você receberá um e-mail
+                com os detalhes do pedido.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Acompanhe o status do seu pedido na página <strong>Meus Pedidos</strong>.
+              </p>
+            </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            {!loading && user ? (
-              <Button
-                variant="outline"
-                className="gap-2"
-                onClick={() => navigate("/orders")}
-              >
-                <ShoppingBag className="w-4 h-4" />
-                Meus Pedidos
+            {sessionId && (
+              <>
+                <Separator />
+                <div className="inline-flex items-center gap-2 bg-muted rounded-full px-4 py-1.5 text-xs text-muted-foreground font-mono mx-auto">
+                  Ref: {sessionId.slice(0, 20)}…
+                </div>
+              </>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+              {!loading && user ? (
+                <Button
+                  className="gap-2"
+                  onClick={() => navigate("/orders")}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  Meus Pedidos
+                </Button>
+              ) : !loading ? (
+                <Button
+                  className="gap-2"
+                  onClick={() => navigate("/login?redirect=/orders")}
+                >
+                  <LogIn className="w-4 h-4" />
+                  Entrar para ver pedidos
+                </Button>
+              ) : null}
+              <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
+                <ArrowLeft className="w-4 h-4" />
+                Voltar ao Catálogo
               </Button>
-            ) : !loading ? (
-              <Button
-                variant="outline"
-                className="gap-2"
-                onClick={() => navigate("/login?redirect=/orders")}
-              >
-                <LogIn className="w-4 h-4" />
-                Entrar para ver pedidos
-              </Button>
-            ) : null}
-            <Button className="gap-2" onClick={() => navigate("/catalog")}>
-              <ArrowLeft className="w-4 h-4" />
-              Voltar ao Catálogo
-            </Button>
-          </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
