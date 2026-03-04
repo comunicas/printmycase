@@ -1,23 +1,23 @@
 
 
-# Diagnóstico: Emails não funcionam
+# Corrigir domínio de email nas Edge Functions
 
-## Problemas encontrados
+## Problema
+O domínio configurado para envio de emails é `studio.artiscase.com`, mas ambas as Edge Functions (`notify-order-status` e `auth-email-hook`) referenciam `notify.studio.artiscase.com` — um subdomínio que não está registrado nem verificado.
 
-### 1. Função `notify-order-status` não está registrada no config.toml
-A função existe no código mas **não está listada** em `supabase/config.toml`. Isso significa que ela nunca foi deployada e qualquer chamada a ela retorna erro. Precisa adicionar a entrada com `verify_jwt = false` (a função faz validação de JWT internamente).
+## Correções
 
-### 2. Domínio de email com DNS pendente
-O domínio `notify.studio.artiscase.com` está com status **Pending** — os registros DNS ainda não foram verificados. Enquanto o DNS não estiver verificado, nenhum email (transacional ou de autenticação) será enviado por esse domínio.
+### 1. `supabase/functions/notify-order-status/index.ts`
+- Linha 10: `SENDER_DOMAIN` de `"notify.studio.artiscase.com"` → `"studio.artiscase.com"`
+- Linha 11: `FROM` de `"ArtisCase <noreply@notify.studio.artiscase.com>"` → `"ArtisCase <noreply@studio.artiscase.com>"`
 
-## Plano de correção
+### 2. `supabase/functions/auth-email-hook/index.ts`
+- Linha 38: `SENDER_DOMAIN` de `"notify.studio.artiscase.com"` → `"studio.artiscase.com"`
+- Linha 41: `FROM_DOMAIN` de `"notify.studio.artiscase.com"` → `"studio.artiscase.com"`
 
-### Arquivo: `supabase/config.toml`
-- Adicionar entrada `[functions.notify-order-status]` com `verify_jwt = false`
+### 3. Re-deploy ambas as funções
+Após as correções, fazer deploy de `notify-order-status` e `auth-email-hook`.
 
-### Deploy
-- Fazer deploy da edge function `notify-order-status` após a correção do config
-
-### DNS (ação do usuário)
-- O usuário precisa configurar os registros DNS do domínio `notify.studio.artiscase.com` no provedor de DNS. Isso pode ser verificado em **Cloud → Email**.
+### Resultado
+Os emails passarão a usar o domínio correto (`studio.artiscase.com`) que está efetivamente configurado e aguardando verificação DNS.
 
