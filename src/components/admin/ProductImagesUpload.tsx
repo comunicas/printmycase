@@ -4,15 +4,22 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, Check } from "lucide-react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
+interface StorageImage {
+  url: string;
+  name: string;
+}
+
 interface Props {
   productId: string | null;
   value: string[];
   onChange: (urls: string[]) => void;
 }
 
+const IGNORED_FILES = new Set([".emptyFolderPlaceholder"]);
+
 const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
   const { toast } = useToast();
-  const [allImages, setAllImages] = useState<string[]>([]);
+  const [allImages, setAllImages] = useState<StorageImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -20,41 +27,32 @@ const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
   const fetchImages = useCallback(async () => {
     setLoading(true);
     try {
-      // List all folders (product ids) in the bucket
-      const { data: folders, error: foldersErr } = await supabase.storage
+      const { data: folders, error } = await supabase.storage
         .from("product-assets")
         .list("", { limit: 500 });
-      if (foldersErr) throw foldersErr;
+      if (error) throw error;
 
-      const urls: string[] = [];
+      const images: StorageImage[] = [];
 
-      for (const folder of folders || []) {
-        // Skip non-folder items (files at root)
-        if (folder.id) {
-          // It's a file at root level
-          const { data } = supabase.storage
-            .from("product-assets")
-            .getPublicUrl(folder.name);
-          urls.push(data.publicUrl);
-          continue;
-        }
+      for (const item of folders || []) {
+        if (IGNORED_FILES.has(item.name)) continue;
 
-        // It's a folder — list files inside
-        const { data: files, error: filesErr } = await supabase.storage
+        // List files inside each folder
+        const { data: files } = await supabase.storage
           .from("product-assets")
-          .list(folder.name, { limit: 200 });
-        if (filesErr) continue;
+          .list(item.name, { limit: 200 });
 
         for (const file of files || []) {
-          if (!file.name || file.name === ".emptyFolderPlaceholder") continue;
+          if (!file.name || IGNORED_FILES.has(file.name)) continue;
+          const path = `${item.name}/${file.name}`;
           const { data } = supabase.storage
             .from("product-assets")
-            .getPublicUrl(`${folder.name}/${file.name}`);
-          urls.push(data.publicUrl);
+            .getPublicUrl(path);
+          images.push({ url: data.publicUrl, name: file.name });
         }
       }
 
-      setAllImages(urls);
+      setAllImages(images);
     } catch (err: any) {
       toast({ title: "Erro ao carregar imagens", description: err.message, variant: "destructive" });
     } finally {
@@ -98,7 +96,6 @@ const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
         newUrls.push(data.publicUrl);
       }
 
-      // Add uploaded images to selection and refresh list
       onChange([...value, ...newUrls]);
       await fetchImages();
       toast({ title: `${newUrls.length} imagem(ns) enviada(s)!` });
@@ -113,37 +110,34 @@ const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
 
   return (
     <div className="space-y-3">
-      {/* Selected count */}
       {value.length > 0 && (
         <p className="text-xs text-muted-foreground">{value.length} imagem(ns) selecionada(s)</p>
       )}
 
-      {/* Image grid — all available images */}
       {allImages.length > 0 ? (
         <div className="grid grid-cols-4 gap-2 max-h-60 overflow-y-auto rounded-md border border-border p-2">
-          {allImages.map((url) => {
+          {allImages.map(({ url, name }) => {
             const selected = value.includes(url);
             return (
               <button
                 key={url}
                 type="button"
                 onClick={() => toggleImage(url)}
-                className={`relative rounded-md overflow-hidden border-2 transition-all ${
+                className={`relative flex flex-col items-center rounded-md overflow-hidden border-2 transition-all ${
                   selected
                     ? "border-primary ring-2 ring-primary/30"
                     : "border-transparent hover:border-muted-foreground/40"
                 }`}
               >
-                <img
-                  src={url}
-                  alt=""
-                  className="h-20 w-full object-cover"
-                />
+                <img src={url} alt={name} className="h-20 w-full object-cover" />
                 {selected && (
                   <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
                     <Check className="h-5 w-5 text-primary-foreground drop-shadow" />
                   </div>
                 )}
+                <span className="w-full truncate px-1 py-0.5 text-[10px] text-muted-foreground text-center">
+                  {name}
+                </span>
               </button>
             );
           })}
@@ -152,7 +146,6 @@ const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
         <p className="text-sm text-muted-foreground">Nenhuma imagem no storage.</p>
       )}
 
-      {/* Upload new */}
       <div
         onClick={() => fileRef.current?.click()}
         className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/30 p-3 text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
