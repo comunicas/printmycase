@@ -1,54 +1,33 @@
 
 
-# Melhorias na confirmação e histórico de pedidos
+# Adicionar seletor de status nos pedidos do Admin
 
-## 1. Migração: novos status de pedido
+## O que muda
 
-O enum `order_status` atual tem: `pending`, `paid`, `shipped`, `delivered`, `cancelled`. Precisa incluir os novos status do fluxo de produto customizado:
+No tab "Pedidos" do painel admin, substituir o badge estático de status por um `<select>` dropdown que permite o admin alterar o status do pedido diretamente. Ao mudar, faz `UPDATE` na tabela `orders` via Supabase e exibe toast de confirmação.
 
-- `analyzing` (Em Análise) — pagamento confirmado, equipe revisando
-- `customizing` (Customizando) — arte sendo preparada
-- `producing` (Produzindo) — capa em produção
+## Detalhes técnicos
 
-SQL: `ALTER TYPE order_status ADD VALUE 'analyzing' AFTER 'paid'; ALTER TYPE order_status ADD VALUE 'customizing' AFTER 'analyzing'; ALTER TYPE order_status ADD VALUE 'producing' AFTER 'customizing';`
+### `src/pages/Admin.tsx`
 
-Atualizar também o webhook para setar `analyzing` em vez de `paid` quando o pagamento é confirmado.
+1. Atualizar `statusLabels` para incluir os novos status (`analyzing`, `customizing`, `producing`).
 
-## 2. CheckoutSuccess — mostrar info do produto
+2. Substituir o `<span>` do status (linha 304-306) por um `<select>` com as opções:
+   - `pending` → Pendente
+   - `analyzing` → Em Análise
+   - `customizing` → Customizando
+   - `producing` → Produzindo
+   - `shipped` → Enviado
+   - `delivered` → Entregue
+   - `cancelled` → Cancelado
 
-Atualmente a página de sucesso não mostra qual produto foi comprado. Buscar o pedido mais recente do usuário via `stripe_session_id` (já vem no query param `session_id`) para exibir:
-- Nome do produto (ex: "Capa Personalizada - Motorola Edge 50 Pro")
-- Valor total
-- Prazo estimado: "5 a 7 dias úteis"
+3. Adicionar handler `handleStatusChange(orderId, newStatus)` que:
+   - Faz `supabase.from("orders").update({ status: newStatus }).eq("id", orderId)`
+   - Exibe toast de sucesso/erro
+   - Atualiza a lista local de pedidos (otimistic update ou refetch)
 
-Fazer um `useEffect` que consulta `orders` por `stripe_session_id` e depois `products` pelo `product_id`.
+4. Quando o status mudar para `shipped`, manter o comportamento existente do tracking code (já presente).
 
-## 3. Orders — redesign dos cards
-
-Problemas atuais (visíveis no screenshot): mostra UUIDs em vez de nomes de produto, layout confuso.
-
-Mudanças:
-- Prefixar com "Capa Personalizada - " + nome do produto
-- Adicionar timeline visual dos status com ícones/steps ao invés de badge isolado
-- Status mapeados para o fluxo customizado:
-  - `pending` → "Aguardando Pagamento"
-  - `analyzing` → "Em Análise"
-  - `customizing` → "Customizando"
-  - `producing` → "Produzindo"
-  - `shipped` → "Enviado"
-  - `delivered` → "Entregue"
-  - `cancelled` → "Cancelado"
-- Mostrar prazo estimado: "Prazo: 5 a 7 dias úteis"
-- Simplificar exibição de preço (total apenas, sem breakdown de frete visível por padrão)
-
-## 4. Webhook update
-
-No `stripe-webhook/index.ts`, mudar `checkout.session.completed` para setar status `analyzing` em vez de `paid`.
-
-## Arquivos afetados
-
-- **Migração SQL**: adicionar 3 valores ao enum `order_status`
-- **`supabase/functions/stripe-webhook/index.ts`**: status `paid` → `analyzing`
-- **`src/pages/CheckoutSuccess.tsx`**: buscar dados do pedido/produto, exibir nome e prazo
-- **`src/pages/Orders.tsx`**: novo mapa de status, timeline visual, nome legível, prazo estimado
+### Nenhuma migração necessária
+A RLS já permite admins atualizarem pedidos (`Admins can update orders`), e os novos valores do enum já existem no banco.
 
