@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2, Truck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PhonePreview from "@/components/PhonePreview";
 import ControlPanel from "@/components/ControlPanel";
@@ -10,17 +9,11 @@ import FilterPresets, { filters } from "@/components/FilterPresets";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { formatPrice } from "@/data/products";
-import { getShippingByZip, type ShippingResult } from "@/lib/shipping";
-import { maskCEP } from "@/lib/masks";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading: productLoading } = useProduct(id);
   const { toast } = useToast();
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,50 +31,6 @@ const Customize = () => {
   const [contrast, setContrast] = useState(0);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [position, setPosition] = useState({ x: 50, y: 50 });
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-
-  // Shipping
-  const [zipInput, setZipInput] = useState("");
-  const [shipping, setShipping] = useState<ShippingResult | null>(null);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const [addresses, setAddresses] = useState<any[]>([]);
-
-  // Load saved addresses
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("addresses")
-      .select("*")
-      .order("is_default", { ascending: false })
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setAddresses(data);
-          const defaultAddr = data.find((a: any) => a.is_default) || data[0];
-          setSelectedAddressId(defaultAddr.id);
-          setZipInput(maskCEP(defaultAddr.zip_code));
-          const result = getShippingByZip(defaultAddr.zip_code);
-          if (result) setShipping(result);
-        }
-      });
-  }, [user]);
-
-  const handleZipChange = (value: string) => {
-    const masked = maskCEP(value);
-    setZipInput(masked);
-    setSelectedAddressId(null);
-    const clean = masked.replace(/\D/g, "");
-    if (clean.length >= 2) {
-      setShipping(getShippingByZip(clean));
-    } else {
-      setShipping(null);
-    }
-  };
-
-  const handleSelectAddress = (addr: any) => {
-    setSelectedAddressId(addr.id);
-    setZipInput(maskCEP(addr.zip_code));
-    setShipping(getShippingByZip(addr.zip_code));
-  };
 
   const handleImageUpload = (file: File) => {
     setImageFile(file);
@@ -98,40 +47,15 @@ const Customize = () => {
   const handleBrightnessChange = (v: number) => { setBrightness(v); if (activeFilter) setActiveFilter(null); };
   const handleContrastChange = (v: number) => { setContrast(v); if (activeFilter) setActiveFilter(null); };
 
-  const handleCheckout = async () => {
-    if (!user || !product) return;
-    if (!shipping) {
-      toast({ title: "Informe o CEP", description: "Precisamos do CEP para calcular o frete.", variant: "destructive" });
-      return;
-    }
-    setCheckoutLoading(true);
-    try {
-      let imageUrl: string | null = null;
-      if (imageFile) {
-        const ext = imageFile.name.split(".").pop() || "png";
-        const path = `${user.id}/${Date.now()}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from("customizations").upload(path, imageFile);
-        if (uploadError) throw new Error("Erro ao fazer upload da imagem: " + uploadError.message);
-        imageUrl = path;
-      }
-      const customizationData = { scale, rotation, brightness, contrast, activeFilter, position };
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          product_id: product.id,
-          customization_data: customizationData,
-          image_url: imageUrl,
-          shipping_cents: shipping.priceCents,
-          address_id: selectedAddressId,
-        },
-      });
-      if (error) throw error;
-      if (data?.url) { window.location.href = data.url; } else { throw new Error("URL de checkout não retornada"); }
-    } catch (err: any) {
-      console.error("Checkout error:", err);
-      toast({ title: "Erro no checkout", description: err.message || "Tente novamente.", variant: "destructive" });
-    } finally {
-      setCheckoutLoading(false);
-    }
+  const handleContinue = () => {
+    if (!product) return;
+    const customData = {
+      image, // base64
+      imageFileName: imageFile?.name || null,
+      scale, rotation, brightness, contrast, activeFilter, position,
+    };
+    sessionStorage.setItem("customization", JSON.stringify(customData));
+    navigate(`/checkout/${product.slug}`);
   };
 
   const activeFilterObj = filters.find((f) => f.id === activeFilter);
@@ -143,10 +67,6 @@ const Customize = () => {
     ...(product ? [{ label: product.name, to: `/product/${product.slug}` }] : []),
     { label: "Customizar" },
   ];
-
-  const productPriceCents = product?.price_cents ?? 0;
-  const shippingCents = shipping?.priceCents ?? 0;
-  const totalCents = productPriceCents + shippingCents;
 
   if (productLoading) {
     return (
@@ -183,74 +103,9 @@ const Customize = () => {
             </TabsContent>
           </Tabs>
 
-          {/* Shipping & Summary */}
-          <div className="border rounded-xl p-4 bg-card space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Truck className="w-4 h-4" />
-              Calcular frete
-            </div>
-
-            {addresses.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {addresses.map((addr: any) => (
-                  <button
-                    key={addr.id}
-                    onClick={() => handleSelectAddress(addr)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                      selectedAddressId === addr.id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                    }`}
-                  >
-                    {addr.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <Input
-              placeholder="00000-000"
-              value={zipInput}
-              onChange={(e) => handleZipChange(e.target.value)}
-              maxLength={9}
-              className="font-mono"
-            />
-
-            {shipping && (
-              <div className="text-xs text-muted-foreground">
-                {shipping.region} ({shipping.state}) — {formatPrice(shipping.priceCents / 100)}
-              </div>
-            )}
-
-            {shipping && !shipping.allowed && (
-              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-                No momento, realizamos envios apenas para a região Sudeste (SP, RJ, MG, ES).
-              </div>
-            )}
-
-            {product && (
-              <div className="border-t pt-3 space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Produto</span>
-                  <span>{formatPrice(productPriceCents / 100)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Frete</span>
-                  <span>{shipping ? formatPrice(shippingCents / 100) : "—"}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-foreground border-t pt-1">
-                  <span>Total</span>
-                  <span>{shipping ? formatPrice(totalCents / 100) : "—"}</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex gap-3">
-            <Button className="flex-1 gap-1.5" onClick={handleCheckout} disabled={checkoutLoading || !shipping || !shipping.allowed}>
-              {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (<>Finalizar Pedido <ArrowRight className="w-4 h-4" /></>)}
-            </Button>
-          </div>
+          <Button className="w-full gap-1.5" onClick={handleContinue}>
+            Continuar <ArrowRight className="w-4 h-4" />
+          </Button>
         </div>
       </main>
     </div>
