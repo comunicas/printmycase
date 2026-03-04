@@ -10,6 +10,7 @@ import ProductsTable from "@/components/admin/ProductsTable";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import BulkPriceDialog from "@/components/admin/BulkPriceDialog";
 import { formatPrice } from "@/data/products";
+import { resolveProductInfo } from "@/lib/products";
 
 export interface DbProduct {
   id: string;
@@ -101,19 +102,9 @@ const Admin = () => {
     }
     const ordersData = (data as any[]) ?? [];
 
-    // Enrich with product info
-    const productIds = [...new Set(ordersData.map((o) => o.product_id))];
-    const [bySlug, byId] = await Promise.all([
-      supabase.from("products").select("id, slug, name, images").in("slug", productIds),
-      supabase.from("products").select("id, slug, name, images").in("id", productIds.filter((id) => /^[0-9a-f-]{36}$/i.test(id))),
-    ]);
-    const allProducts = [...(bySlug.data ?? []), ...(byId.data ?? [])];
-    const nameMap = new Map<string, { name: string; image?: string }>();
-    for (const p of allProducts) {
-      const img = (p.images as string[] | null)?.[0];
-      nameMap.set(p.slug, { name: p.name, image: img });
-      nameMap.set(p.id, { name: p.name, image: img });
-    }
+    // Enrich with product info using shared helper
+    const productIds = ordersData.map((o) => o.product_id);
+    const nameMap = await resolveProductInfo(productIds);
 
     const enriched = ordersData.map((o) => ({
       ...o,
@@ -225,6 +216,11 @@ const Admin = () => {
     } else {
       toast({ title: "Código de rastreio salvo" });
       fetchOrders();
+
+      // Send shipped notification with tracking code
+      supabase.functions.invoke("notify-order-status", {
+        body: { order_id: orderId, new_status: "shipped" },
+      }).catch((err) => console.error("Email notification error:", err));
     }
   };
 
