@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
       supabaseAdmin
         .from("products")
         .select("name")
-        .or(`id.eq.${order.product_id},slug.eq.${order.product_id}`)
+        .or(`id.eq."${order.product_id}",slug.eq."${order.product_id}"`)
         .limit(1)
         .single(),
     ]);
@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("notify-order-status error:", err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

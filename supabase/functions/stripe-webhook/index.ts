@@ -61,16 +61,29 @@ Deno.serve(async (req) => {
     const signature = req.headers.get("stripe-signature");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
-    // Verify signature if webhook secret is configured
-    if (webhookSecret && signature) {
-      const valid = await verifyStripeSignature(body, signature, webhookSecret);
-      if (!valid) {
-        console.error("Invalid Stripe webhook signature");
-        return new Response(JSON.stringify({ error: "Invalid signature" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    if (!webhookSecret) {
+      console.error("STRIPE_WEBHOOK_SECRET not configured");
+      return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!signature) {
+      console.error("Missing Stripe signature header");
+      return new Response(JSON.stringify({ error: "Missing signature" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const valid = await verifyStripeSignature(body, signature, webhookSecret);
+    if (!valid) {
+      console.error("Invalid Stripe webhook signature");
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const event = JSON.parse(body);
@@ -100,7 +113,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("stripe-webhook error:", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Webhook error" }),
+      JSON.stringify({ error: "An error occurred processing the webhook" }),
       {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

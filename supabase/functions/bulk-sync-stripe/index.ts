@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("bulk-sync-stripe error:", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Internal server error" }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
