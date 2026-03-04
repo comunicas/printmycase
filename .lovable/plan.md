@@ -1,22 +1,35 @@
 
 
-# Fix: Image clipping above 150% scale
+# Compressão Automática de Imagens Grandes
 
-## Problem
-The image layer uses a fixed `oversize = 150` (150% of the phone frame). When `scale` exceeds ~150%, `backgroundSize` surpasses the container bounds, causing visible clipping.
+## Problema
+Imagens de alta resolução (ex: 4000×8000px, 5MB+) são armazenadas como base64 no `sessionStorage`, que tem limite de ~5MB. Além disso, imagens muito grandes degradam performance do preview e do upload para o storage no checkout.
 
-Math: `backgroundSize = scale * (100 / 150)%` → at scale 200, that's 133%, but the container is only 150% wide/tall with offset -25%. The image overflows.
+## Solução
 
-## Solution
+### `src/pages/Customize.tsx` — Comprimir no `handleImageUpload`
 
-**`src/components/PhonePreview.tsx`** — Make `oversize` dynamic based on scale:
+Após ler a imagem com `FileReader`, antes de salvar no state:
 
-```ts
-const oversize = Math.max(150, scale * 1.25);
-const offset = -(oversize - 100) / 2;
+1. Criar um `canvas` temporário
+2. Se a imagem exceder **2000×4000px**, redimensionar proporcionalmente para caber nesse limite
+3. Exportar como JPEG com qualidade 0.85 via `canvas.toDataURL('image/jpeg', 0.85)`
+4. Usar o dataUrl comprimido no state (em vez do original)
+5. Manter o `imageFile` original para referência do nome
+
+```text
+Fluxo:
+File → FileReader → Image() → check dimensions
+  ├─ Se <= 2000×4000: usar original (sem compressão)
+  └─ Se > 2000×4000: canvas resize → toDataURL JPEG 0.85 → usar comprimido
 ```
 
-This ensures the container always has enough room for the current scale level. At scale 200, oversize becomes 250, and backgroundSize = `200 * (100/250) = 80%` — well within bounds.
+### Detalhes técnicos
+- Função utilitária `compressImage(dataUrl, maxW, maxH, quality): Promise<string>` dentro do próprio arquivo ou em `src/lib/utils.ts`
+- Preserva aspect ratio ao redimensionar
+- Toast informativo quando compressão é aplicada: "Imagem otimizada automaticamente"
+- A resolução reportada (`imageResolution`) continua mostrando a resolução **original** (para o badge HD/Baixa)
 
-Single change, ~2 lines modified (lines 70-71).
+### Arquivo afetado
+- **`src/pages/Customize.tsx`** — adicionar função de compressão e integrar no `handleImageUpload`
 
