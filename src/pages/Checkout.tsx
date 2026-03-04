@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2, Truck } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import { type ShippingResult } from "@/lib/shipping";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
+import OrderSummary from "@/components/checkout/OrderSummary";
 
 interface CustomizationData {
   image: string | null;
@@ -168,26 +169,11 @@ const Checkout = () => {
           onAddressChange={handleAddressChange}
         />
 
-        {/* Order summary */}
-        <div className="border rounded-xl p-4 bg-card space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Truck className="w-4 h-4" /> Resumo do pedido
-          </div>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Produto</span>
-              <span>{formatPrice(productPriceCents / 100)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Frete</span>
-              <span>{shipping ? formatPrice(shippingCents / 100) : "—"}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-foreground border-t pt-1">
-              <span>Total</span>
-              <span>{shipping ? formatPrice(totalCents / 100) : "—"}</span>
-            </div>
-          </div>
-        </div>
+        <OrderSummary
+          productPriceCents={productPriceCents}
+          shippingCents={shippingCents}
+          hasShipping={!!shipping}
+        />
 
         <Button
           className="w-full gap-1.5"
