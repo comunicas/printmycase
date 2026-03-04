@@ -76,6 +76,7 @@ const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, sca
         backgroundRepeat: "no-repeat" as const,
         transform: `rotate(${rotation}deg)`,
         filter: combinedFilter,
+        transition: "filter 0.3s ease",
         width: `${oversize}%`,
         height: `${oversize}%`,
         left: `${offset}%`,
