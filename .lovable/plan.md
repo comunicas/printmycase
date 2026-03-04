@@ -1,33 +1,20 @@
 
 
-# Adicionar seletor de status nos pedidos do Admin
+# Incluir imagem e nome do produto nos pedidos
 
-## O que muda
+## Problema
+O `product_id` nos pedidos às vezes contém um UUID em vez do slug, fazendo com que o fallback mostre o UUID cru. Além disso, não há imagem do produto nos cards.
 
-No tab "Pedidos" do painel admin, substituir o badge estático de status por um `<select>` dropdown que permite o admin alterar o status do pedido diretamente. Ao mudar, faz `UPDATE` na tabela `orders` via Supabase e exibe toast de confirmação.
+## Mudanças em `src/pages/Orders.tsx`
 
-## Detalhes técnicos
+1. **Buscar imagens junto com nomes**: alterar a query de products para incluir `slug, name, images` e também buscar por `id` (UUID) além de `slug`, cobrindo ambos os casos.
 
-### `src/pages/Admin.tsx`
+2. **Guardar imagem no state**: expandir o tipo para incluir `product_image?: string` e mapear a primeira imagem do produto.
 
-1. Atualizar `statusLabels` para incluir os novos status (`analyzing`, `customizing`, `producing`).
+3. **Exibir imagem no card**: adicionar um thumbnail do produto (primeira imagem) ao lado do nome no header do card, com tamanho ~60x60px e `rounded-lg object-cover`.
 
-2. Substituir o `<span>` do status (linha 304-306) por um `<select>` com as opções:
-   - `pending` → Pendente
-   - `analyzing` → Em Análise
-   - `customizing` → Customizando
-   - `producing` → Produzindo
-   - `shipped` → Enviado
-   - `delivered` → Entregue
-   - `cancelled` → Cancelado
+4. **Layout do header**: reorganizar para `flex` horizontal com imagem à esquerda, nome/data no centro, e preço à direita.
 
-3. Adicionar handler `handleStatusChange(orderId, newStatus)` que:
-   - Faz `supabase.from("orders").update({ status: newStatus }).eq("id", orderId)`
-   - Exibe toast de sucesso/erro
-   - Atualiza a lista local de pedidos (otimistic update ou refetch)
-
-4. Quando o status mudar para `shipped`, manter o comportamento existente do tracking code (já presente).
-
-### Nenhuma migração necessária
-A RLS já permite admins atualizarem pedidos (`Admins can update orders`), e os novos valores do enum já existem no banco.
+## Arquivos afetados
+- `src/pages/Orders.tsx`
 
