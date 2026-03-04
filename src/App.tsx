@@ -5,13 +5,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ResetPassword from "./pages/ResetPassword";
-import CheckoutSuccess from "./pages/CheckoutSuccess";
-import NotFound from "./pages/NotFound";
 import AuthGuard from "./components/AuthGuard";
 import AdminGuard from "./components/AdminGuard";
+
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const Catalog = lazy(() => import("./pages/Catalog"));
 const Product = lazy(() => import("./pages/Product"));
