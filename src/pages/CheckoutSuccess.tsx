@@ -18,6 +18,7 @@ const CheckoutSuccess = () => {
 
   const [orderInfo, setOrderInfo] = useState<{
     productName: string;
+    productImage?: string;
     totalCents: number;
   } | null>(null);
 
@@ -33,14 +34,19 @@ const CheckoutSuccess = () => {
 
       if (!order) return;
 
+      const isUuid = /^[0-9a-f-]{36}$/i.test(order.product_id);
+
       const { data: product } = await supabase
         .from("products")
-        .select("name")
-        .eq("slug", order.product_id)
+        .select("name, images")
+        .eq(isUuid ? "id" : "slug", order.product_id)
         .maybeSingle();
+
+      const img = (product?.images as string[] | null)?.[0];
 
       setOrderInfo({
         productName: product?.name ?? order.product_id,
+        productImage: img,
         totalCents: order.total_cents,
       });
     };
@@ -77,11 +83,19 @@ const CheckoutSuccess = () => {
               <>
                 <Separator />
                 <div className="space-y-3 text-left">
-                  <div className="flex items-start gap-3">
-                    <Package className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3">
+                    {orderInfo.productImage ? (
+                      <img
+                        src={orderInfo.productImage}
+                        alt={orderInfo.productName}
+                        className="w-[60px] h-[60px] rounded-lg object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <Package className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    )}
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        Capa Personalizada - {orderInfo.productName}
+                        {orderInfo.productName}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {formatPrice(orderInfo.totalCents / 100)}
