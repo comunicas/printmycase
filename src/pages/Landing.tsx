@@ -19,13 +19,13 @@ const testimonials = [
 const benefits = [
   { icon: Palette, title: "100% Personalizada", desc: "Use suas fotos, artes e designs favoritos. Cada capa é única como você." },
   { icon: Shield, title: "Proteção Premium", desc: "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m." },
-  { icon: Truck, title: "Frete Grátis", desc: "Entrega gratuita para todo o Brasil. Receba em casa sem pagar nada a mais." },
+  { icon: Truck, title: "Envio Rápido", desc: "Frete acessível para a região Sudeste. Produção em até 48h e entrega ágil." },
 ];
 
 const steps = [
   { icon: Smartphone, title: "Escolha seu modelo", desc: "Selecione o modelo do seu celular" },
   { icon: Upload, title: "Envie sua imagem", desc: "Faça upload da sua foto ou design" },
-  { icon: Package, title: "Receba em casa", desc: "Produção em 48h e entrega gratuita" },
+  { icon: Package, title: "Receba em casa", desc: "Produção em 48h e envio rápido" },
 ];
 
 const Landing = () => {

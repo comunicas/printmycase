@@ -90,7 +90,7 @@ function buildEmailHtml(params: {
     ${trackingSection}
     <!-- CTA -->
     <tr><td align="center" style="padding:32px 0;">
-      <a href="${appUrl}/pedidos" target="_blank" style="display:inline-block;padding:14px 32px;background:hsl(265,83%,57%);color:#fff;font-size:14px;font-weight:600;text-decoration:none;border-radius:1.5rem;">Ver Meus Pedidos</a>
+      <a href="${appUrl}/orders" target="_blank" style="display:inline-block;padding:14px 32px;background:hsl(265,83%,57%);color:#fff;font-size:14px;font-weight:600;text-decoration:none;border-radius:1.5rem;">Ver Meus Pedidos</a>
     </td></tr>
     <!-- Footer -->
     <tr><td align="center" style="padding-top:24px;border-top:1px solid #eee;">
