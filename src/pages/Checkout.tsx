@@ -131,7 +131,7 @@ const Checkout = () => {
         throw new Error("URL de checkout não retornada");
       }
     } catch (err: any) {
-      console.error("Checkout error:", err);
+      console.error("Checkout error:", err?.message);
       toast({ title: "Erro no checkout", description: err.message || "Tente novamente.", variant: "destructive" });
     } finally {
       setCheckoutLoading(false);
