@@ -1,30 +1,28 @@
 
 
-# Galeria de Imagens: Selecionar do Storage Existente
+# Melhorar seletor de imagens da galeria
 
-## Entendimento
-O usuário quer que "Imagens da Galeria" funcione como um **seletor de imagens já existentes no bucket `product-assets`** do storage — não como um upload de novos arquivos. O admin deve ver todas as imagens disponíveis no storage e selecionar quais associar ao produto.
+## Problemas atuais
+1. O grid mostra apenas a imagem sem nenhum identificador — difícil saber qual é qual
+2. Código legado: lógica de detecção de pastas vs. arquivos no root é desnecessária e confusa
+3. Placeholder `.emptyFolderPlaceholder` precisa ser filtrado
 
 ## Plano
 
-### 1. Reescrever `ProductImagesUpload` como seletor de imagens do storage
-- Ao abrir, listar todos os arquivos do bucket `product-assets` via `supabase.storage.from("product-assets").list()`
-- Exibir grid com todas as imagens disponíveis no storage
-- Permitir selecionar/deselecionar imagens com checkbox ou clique (toggle)
-- Imagens já associadas ao produto ficam pré-selecionadas
-- Ao alterar a seleção, chamar `onChange` com o array atualizado de URLs públicas
-- Manter botão de remover nas imagens já selecionadas
+### 1. Refatorar `ProductImagesUpload.tsx`
+- **Armazenar nome do arquivo junto com a URL** — mudar o state de `string[]` para `{ url: string; name: string }[]`
+- **Exibir o nome do arquivo** abaixo de cada thumbnail no grid (truncado se longo)
+- **Simplificar `fetchImages`** — remover lógica legada de detecção root file vs folder, manter apenas a listagem recursiva de pastas
+- **Filtrar placeholders** (`.emptyFolderPlaceholder`) como já faz, mas de forma mais limpa
+- Extrair o nome legível do path: `folder/gallery-123.png` → `gallery-123.png`
 
-### 2. Manter upload como opção secundária
-- Manter o botão de upload existente para que o admin possa enviar novas imagens ao storage quando necessário
-- Após upload, a nova imagem aparece automaticamente na galeria disponível
+### 2. Layout do grid
+- Cada item mostra: thumbnail + nome do arquivo abaixo (texto pequeno, truncado)
+- Manter seleção por clique com check overlay
 
-### 3. Sem alterações nos demais arquivos
-- `ProductFormDialog` e `ProductGallery` já funcionam com array de URLs — não precisam de mudança
-
-## Arquivos afetados
+## Arquivo afetado
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/components/admin/ProductImagesUpload.tsx` | Reescrever para listar imagens do storage e permitir seleção |
+| `src/components/admin/ProductImagesUpload.tsx` | Refatorar fetch, adicionar nome do arquivo no grid |
 
