@@ -163,10 +163,10 @@ const Checkout = () => {
       <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10 space-y-6">
 
         {/* Mini preview */}
-        {customization.image && (
+        {(customization.editedImage || customization.image) && (
           <div className="flex items-center gap-4 border rounded-xl p-4 bg-card">
             <img
-              src={customization.image}
+              src={customization.editedImage || customization.image}
               alt="Preview da customização"
               className="w-16 h-16 rounded-lg object-cover border"
             />
