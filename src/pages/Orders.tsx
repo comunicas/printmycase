@@ -1,29 +1,37 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShoppingBag, ArrowLeft, Truck, ExternalLink } from "lucide-react";
+import { ShoppingBag, ArrowLeft, Clock, Search, Paintbrush, Factory, Truck, CheckCircle, XCircle, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
-import type { Tables } from "@/integrations/supabase/types";
 
-type Order = Tables<"orders"> & {
-  shipping_cents?: number | null;
+type OrderRow = {
+  id: string;
+  product_id: string;
+  total_cents: number;
+  status: string;
+  created_at: string;
   tracking_code?: string | null;
-  shipping_address?: any;
 };
 
-const statusLabels: Record<string, { label: string; className: string }> = {
-  pending: { label: "Pendente", className: "bg-yellow-100 text-yellow-800" },
-  paid: { label: "Pago", className: "bg-green-100 text-green-800" },
-  shipped: { label: "Enviado", className: "bg-blue-100 text-blue-800" },
-  delivered: { label: "Entregue", className: "bg-emerald-100 text-emerald-800" },
-  cancelled: { label: "Cancelado", className: "bg-red-100 text-red-800" },
-};
+const statusFlow = [
+  { key: "pending", label: "Aguardando Pagamento", icon: CreditCard },
+  { key: "analyzing", label: "Em Análise", icon: Search },
+  { key: "customizing", label: "Customizando", icon: Paintbrush },
+  { key: "producing", label: "Produzindo", icon: Factory },
+  { key: "shipped", label: "Enviado", icon: Truck },
+  { key: "delivered", label: "Entregue", icon: CheckCircle },
+];
+
+function getStepIndex(status: string) {
+  const idx = statusFlow.findIndex((s) => s.key === status);
+  return idx >= 0 ? idx : 0;
+}
 
 const Orders = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<(Order & { product_name?: string })[]>([]);
+  const [orders, setOrders] = useState<(OrderRow & { product_name?: string })[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -85,48 +93,92 @@ const Orders = () => {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => {
-              const status = statusLabels[order.status] ?? statusLabels.pending;
-              const shippingCents = (order as any).shipping_cents as number | null;
-              const trackingCode = (order as any).tracking_code as string | null;
-              const productCents = order.total_cents - (shippingCents ?? 0);
+              const isCancelled = order.status === "cancelled";
+              const currentStep = getStepIndex(order.status);
 
               return (
-                <div key={order.id} className="border rounded-xl p-4 bg-card space-y-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">{order.product_name}</p>
+                <div key={order.id} className="border rounded-xl p-5 bg-card space-y-4">
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <p className="font-semibold text-foreground">
+                        Capa Personalizada - {order.product_name}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                        {new Date(order.created_at).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${status.className}`}>{status.label}</span>
-                      <span className="font-semibold text-foreground">{formatPrice(order.total_cents / 100)}</span>
-                    </div>
+                    <span className="font-semibold text-foreground text-lg">
+                      {formatPrice(order.total_cents / 100)}
+                    </span>
                   </div>
 
-                  {/* Shipping details */}
-                  {(shippingCents != null || trackingCode) && (
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground border-t pt-2">
-                      {shippingCents != null && (
-                        <span className="flex items-center gap-1">
-                          <Truck className="w-3.5 h-3.5" />
-                          Produto {formatPrice(productCents / 100)} + Frete {formatPrice(shippingCents / 100)}
-                        </span>
-                      )}
-                      {trackingCode && (
-                        <a
-                          href={`https://rastreamento.correios.com.br/app/index.php`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-primary hover:underline font-medium"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          Rastreio: {trackingCode}
-                        </a>
-                      )}
+                  {/* Status */}
+                  {isCancelled ? (
+                    <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                      <XCircle className="w-4 h-4" />
+                      Cancelado
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 overflow-x-auto pb-1">
+                      {statusFlow.map((step, i) => {
+                        const Icon = step.icon;
+                        const isActive = i <= currentStep;
+                        const isCurrent = i === currentStep;
+                        return (
+                          <div key={step.key} className="flex items-center">
+                            <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                              <div
+                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                                  isCurrent
+                                    ? "bg-primary text-primary-foreground"
+                                    : isActive
+                                    ? "bg-primary/20 text-primary"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <span
+                                className={`text-[10px] text-center leading-tight ${
+                                  isCurrent ? "font-semibold text-foreground" : "text-muted-foreground"
+                                }`}
+                              >
+                                {step.label}
+                              </span>
+                            </div>
+                            {i < statusFlow.length - 1 && (
+                              <div
+                                className={`w-4 h-0.5 mt-[-16px] ${
+                                  i < currentStep ? "bg-primary/40" : "bg-muted"
+                                }`}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
+
+                  {/* Footer info */}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="w-3.5 h-3.5" />
+                    Prazo: 5 a 7 dias úteis
+                    {order.tracking_code && (
+                      <a
+                        href="https://rastreamento.correios.com.br/app/index.php"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-auto text-primary hover:underline font-medium"
+                      >
+                        Rastreio: {order.tracking_code}
+                      </a>
+                    )}
+                  </div>
                 </div>
               );
             })}
