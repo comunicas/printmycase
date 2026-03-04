@@ -30,6 +30,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
   const [description, setDescription] = useState("");
   const [priceReais, setPriceReais] = useState("");
   const [imagesRaw, setImagesRaw] = useState("");
+  const [deviceImage, setDeviceImage] = useState("");
   const [active, setActive] = useState(true);
 
   useEffect(() => {
@@ -39,6 +40,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
       setDescription(product.description ?? "");
       setPriceReais((product.price_cents / 100).toFixed(2).replace(".", ","));
       setImagesRaw(product.images?.join("\n") ?? "");
+      setDeviceImage(product.device_image ?? "");
       setActive(product.active);
     } else {
       setName("");
@@ -46,6 +48,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
       setDescription("");
       setPriceReais("");
       setImagesRaw("");
+      setDeviceImage("");
       setActive(true);
     }
   }, [product, open]);
@@ -85,7 +88,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
 
         const { error } = await supabase
           .from("products")
-          .update({ name, slug, description, price_cents: priceCents, images, active })
+          .update({ name, slug, description, price_cents: priceCents, images, active, device_image: deviceImage || null })
           .eq("id", product.id);
         if (error) throw error;
 
@@ -105,7 +108,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
       } else {
         const { data, error } = await supabase
           .from("products")
-          .insert({ name, slug, description, price_cents: priceCents, images, active })
+          .insert({ name, slug, description, price_cents: priceCents, images, active, device_image: deviceImage || null })
           .select("id")
           .single();
         if (error) throw error;
@@ -188,6 +191,15 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
               onChange={(e) => setImagesRaw(e.target.value)}
               rows={3}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              placeholder="https://..."
+            />
+          </FormField>
+
+          <FormField label="Imagem do Aparelho (URL)" id="pDeviceImage" hint="Foto de referência do celular sem capa">
+            <Input
+              id="pDeviceImage"
+              value={deviceImage}
+              onChange={(e) => setDeviceImage(e.target.value)}
               placeholder="https://..."
             />
           </FormField>

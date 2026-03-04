@@ -23,6 +23,7 @@ export interface Product {
   active: boolean;
   stripe_price_id: string | null;
   stripe_product_id: string | null;
+  device_image: string | null;
   created_at: string | null;
   updated_at: string | null;
 }

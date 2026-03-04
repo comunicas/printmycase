@@ -61,6 +61,7 @@ function mapRow(row: any): Product {
     active: row.active,
     stripe_price_id: row.stripe_price_id,
     stripe_product_id: row.stripe_product_id,
+    device_image: row.device_image ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
