@@ -27,35 +27,43 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
   ];
 
   return (
-    <div ref={ref} className={`space-y-3 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
-      <div className="space-y-2.5">
+    <div ref={ref} className={`space-y-2 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
+      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ajustes</span>
+      <div className="space-y-3">
         {controls.map((ctrl) => {
           const Icon = ctrl.icon;
           const isDefault = ctrl.value === ctrl.defaultVal;
+          
           return (
-            <div key={ctrl.label} className="flex items-center gap-3">
-              <button
-                onClick={() => ctrl.onChange(ctrl.defaultVal)}
-                disabled={disabled}
-                className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                  isDefault ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary hover:bg-primary/20"
-                }`}
-                title={`Resetar ${ctrl.label}`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-              </button>
-              <Slider
-                value={[ctrl.value]}
-                onValueChange={(v) => ctrl.onChange(v[0])}
-                min={ctrl.min}
-                max={ctrl.max}
-                step={1}
-                className="flex-1"
-                disabled={disabled}
-              />
-              <span className="flex-shrink-0 w-12 text-right text-xs font-mono text-muted-foreground">
-                {ctrl.value}{ctrl.unit}
-              </span>
+            <div key={ctrl.label} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Icon className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">{ctrl.label}</span>
+                </div>
+                <button
+                  onClick={() => ctrl.onChange(ctrl.defaultVal)}
+                  disabled={disabled || isDefault}
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded transition-colors ${
+                    isDefault
+                      ? "text-muted-foreground/40"
+                      : "text-primary hover:bg-primary/10 cursor-pointer"
+                  }`}
+                >
+                  {ctrl.value}{ctrl.unit}
+                </button>
+              </div>
+              <div className="relative">
+                <Slider
+                  value={[ctrl.value]}
+                  onValueChange={(v) => ctrl.onChange(v[0])}
+                  min={ctrl.min}
+                  max={ctrl.max}
+                  step={1}
+                  className="flex-1"
+                  disabled={disabled}
+                />
+              </div>
             </div>
           );
         })}
