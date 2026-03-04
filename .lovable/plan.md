@@ -1,24 +1,22 @@
 
 
-# Validação de Resolução de Imagem no Upload
+# Fix: Image clipping above 150% scale
 
-## Situação Atual
-Não há nenhuma validação — qualquer imagem é aceita. O mockup exibe em 260×532px (tela), mas para impressão de capas (~7×15cm) é necessário no mínimo **827×1772px a 300 DPI**.
+## Problem
+The image layer uses a fixed `oversize = 150` (150% of the phone frame). When `scale` exceeds ~150%, `backgroundSize` surpasses the container bounds, causing visible clipping.
 
-## Proposta
+Math: `backgroundSize = scale * (100 / 150)%` → at scale 200, that's 133%, but the container is only 150% wide/tall with offset -25%. The image overflows.
 
-### 1. Validar resolução no upload (`src/pages/Customize.tsx`)
-- Ao receber o arquivo, criar um `Image()` para ler `naturalWidth` e `naturalHeight`
-- Se menor que 800×1600px, mostrar toast de **aviso** (não bloquear) informando que a qualidade pode ficar comprometida
-- Se menor que 400×800px, mostrar toast **destrutivo** recomendando outra imagem
+## Solution
 
-### 2. Indicador visual de qualidade (`src/components/PhonePreview.tsx`)
-- Badge discreto no canto do preview: "HD" (verde) se resolução boa, "Baixa resolução" (amarelo/vermelho) se insuficiente
+**`src/components/PhonePreview.tsx`** — Make `oversize` dynamic based on scale:
 
-### 3. Texto informativo
-- Adicionar texto auxiliar no estado vazio do upload: "Recomendado: 827×1772px ou superior"
+```ts
+const oversize = Math.max(150, scale * 1.25);
+const offset = -(oversize - 100) / 2;
+```
 
-### Arquivos afetados
-- `src/pages/Customize.tsx` — validação no `handleImageUpload`
-- `src/components/PhonePreview.tsx` — badge de qualidade e texto de recomendação
+This ensures the container always has enough room for the current scale level. At scale 200, oversize becomes 250, and backgroundSize = `200 * (100/250) = 80%` — well within bounds.
+
+Single change, ~2 lines modified (lines 70-71).
 
