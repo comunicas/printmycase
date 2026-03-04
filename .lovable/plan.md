@@ -1,22 +1,18 @@
 
 
-# Auto-preenchimento de endereço via ViaCEP
+# Validação em tempo real (blur) no checkout
 
-## Mudança
+## Abordagem
 
-Quando o usuário digitar um CEP completo (8 dígitos) no campo de CEP do checkout, fazer uma chamada à API pública `https://viacep.com.br/ws/{cep}/json/` e preencher automaticamente os campos rua, bairro, cidade e estado.
+Adicionar um estado `touched` por campo. Ao sair de cada campo (onBlur), marcar aquele campo como "touched". Mostrar erro inline quando o campo está touched OU submitted.
 
-## Implementação em `src/pages/Checkout.tsx`
+## Mudanças em `src/pages/Checkout.tsx`
 
-1. **Na função `handleZipChange`**, quando `clean.length === 8`:
-   - Fazer `fetch` para `https://viacep.com.br/ws/${clean}/json/`
-   - Se retornar dados válidos (sem `erro: true`), preencher `street` (logradouro), `neighborhood` (bairro), `city` (localidade), `state` (uf), `complement` (complemento, se vier)
-   - Limpar `selectedAddressId` para indicar endereço novo
-   - Manter o cálculo de frete existente (`getShippingByZip`)
+1. **Novo estado `touched`** — objeto `Record<string, boolean>` com chaves: `zip`, `street`, `number`, `neighborhood`, `city`, `state`
+2. **Helper `handleBlur(field)`** — seta `touched[field] = true`
+3. **Condição de exibição de erro** — mudar de `submitted ? errors.X : undefined` para `(submitted || touched.X) ? errors.X : undefined`
+4. **Adicionar `onBlur` em cada Input** — chamar `handleBlur` com o nome do campo correspondente
+5. **Borda vermelha condicional** — ajustar className para usar `(submitted || touched.X)` em vez de apenas `submitted`
 
-2. **Estado de loading** opcional: mostrar um spinner ou texto "Buscando..." no campo CEP enquanto a API responde
-
-3. **Tratamento de erro**: se a API falhar ou retornar CEP inválido, não preencher nada — o usuário digita manualmente
-
-Nenhuma nova dependência necessária — usa `fetch` nativo.
+Nenhum novo componente ou dependência.
 
