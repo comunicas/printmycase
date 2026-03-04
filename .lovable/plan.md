@@ -1,42 +1,40 @@
 
 
-# Filtros por Marca + Paginacao no Catalogo
+# Refinar Página do Produto — Foco em Customização
 
-## Contexto
+## Mudanças
 
-73 produtos ativos. Marcas extraidas do nome: Samsung (33), Apple (26), Xiaomi (7), Motorola (4). Nao existe coluna de marca — sera extraida client-side pelo prefixo do nome.
+### 1. Migração: adicionar coluna `device_image` à tabela `products`
+- Nova coluna `device_image text nullable` na tabela `products`
+- Armazenará a URL de uma imagem de referência do aparelho (sem capa)
+- Admin poderá fazer upload via painel existente
 
-## Plano
+### 2. Atualizar tipo `Product` — `src/lib/types.ts`
+- Adicionar campo `device_image: string | null`
 
-### 1. Logica de filtragem e paginacao — `src/hooks/useProducts.ts`
+### 3. Atualizar `mapRow` — `src/hooks/useProducts.ts`
+- Mapear `device_image` do row
 
-- Adicionar parametros opcionais ao hook: `brand?: string`
-- Extrair marca do nome do produto client-side com funcao utilitaria (`extractBrand`)
-- Nao adicionar coluna ao banco (desnecessario com 73 produtos — tudo cabe em uma query)
-- Retornar todos os produtos e filtrar client-side
-- Adicionar paginacao client-side: `page`, `pageSize` (ex: 12 por pagina), retornar `totalPages`
+### 4. Simplificar `ProductInfo` — `src/components/ProductInfo.tsx`
+- **Remover**: seletor de cores (state `selectedColor` + swatches)
+- **Remover**: botão "Ver Catálogo Completo"
+- Manter: nome, rating, preço, botão "Customizar Minha Case"
 
-### 2. Barra de filtros — `src/pages/Catalog.tsx`
+### 5. Exibir imagem do aparelho — `src/components/ProductGallery.tsx`
+- Se `device_image` existir, exibir como imagem adicional na galeria (ou em destaque)
+- Fallback: usar a primeira imagem do array `images` caso `device_image` seja null
 
-- Adicionar chips/botoes horizontais: "Todos", "Apple", "Samsung", "Motorola", "Xiaomi"
-- Estado local `selectedBrand` e `currentPage`
-- Filtrar produtos pelo brand selecionado
-- Paginar o resultado filtrado (12 por pagina)
-- Mostrar controles de paginacao (anterior/proximo + indicador de pagina)
-- Atualizar contador: "{n} capas disponíveis"
-
-### 3. Funcao utilitaria — `src/lib/utils.ts`
-
-Adicionar `extractBrand(productName: string)`:
-- "Capa iPhone..." → "Apple"
-- "Capa Galaxy..." → "Samsung"
-- "Capa Moto..." → "Motorola"
-- "Capa Redmi/Poco/Xiaomi..." → "Xiaomi"
+### 6. Painel Admin — `src/components/admin/ProductFormDialog.tsx`
+- Adicionar campo de input para URL da `device_image` no formulário de edição de produto
 
 ## Arquivos afetados
 
-| Arquivo | Mudanca |
+| Arquivo | Mudança |
 |---------|---------|
-| `src/lib/utils.ts` | Adicionar `extractBrand()` |
-| `src/pages/Catalog.tsx` | Filtros por marca + paginacao |
+| Migração SQL | `ALTER TABLE products ADD COLUMN device_image text` |
+| `src/lib/types.ts` | Adicionar `device_image` |
+| `src/hooks/useProducts.ts` | Mapear novo campo |
+| `src/components/ProductInfo.tsx` | Remover cores e botão catálogo |
+| `src/components/ProductGallery.tsx` | Suportar `device_image` |
+| `src/components/admin/ProductFormDialog.tsx` | Campo para `device_image` |
 
