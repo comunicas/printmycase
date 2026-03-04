@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PhonePreview from "@/components/PhonePreview";
 import ControlPanel from "@/components/ControlPanel";
@@ -9,11 +9,14 @@ import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 
+const DEFAULTS = { scale: 100, rotation: 0, brightness: 0, contrast: 0, activeFilter: null as string | null, position: { x: 50, y: 50 } };
+
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading: productLoading } = useProduct(id);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const draftRestored = useRef(false);
 
   useEffect(() => {
     if (!productLoading && !product) {
@@ -24,12 +27,57 @@ const Customize = () => {
 
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [scale, setScale] = useState(100);
-  const [rotation, setRotation] = useState(0);
-  const [brightness, setBrightness] = useState(0);
-  const [contrast, setContrast] = useState(0);
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const [position, setPosition] = useState({ x: 50, y: 50 });
+  const [scale, setScale] = useState(DEFAULTS.scale);
+  const [rotation, setRotation] = useState(DEFAULTS.rotation);
+  const [brightness, setBrightness] = useState(DEFAULTS.brightness);
+  const [contrast, setContrast] = useState(DEFAULTS.contrast);
+  const [activeFilter, setActiveFilter] = useState<string | null>(DEFAULTS.activeFilter);
+  const [position, setPosition] = useState(DEFAULTS.position);
+
+  // --- Draft restore on mount ---
+  useEffect(() => {
+    if (!product?.slug || draftRestored.current) return;
+    draftRestored.current = true;
+    const key = `draft-customize-${product.slug}`;
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.image) setImage(d.image);
+      if (d.scale != null) setScale(d.scale);
+      if (d.rotation != null) setRotation(d.rotation);
+      if (d.brightness != null) setBrightness(d.brightness);
+      if (d.contrast != null) setContrast(d.contrast);
+      if (d.activeFilter !== undefined) setActiveFilter(d.activeFilter);
+      if (d.position) setPosition(d.position);
+      toast({ title: "Rascunho restaurado" });
+    } catch { /* ignore corrupt data */ }
+  }, [product?.slug, toast]);
+
+  // --- Auto-save draft with debounce ---
+  useEffect(() => {
+    if (!product?.slug) return;
+    const timeout = setTimeout(() => {
+      const key = `draft-customize-${product.slug}`;
+      sessionStorage.setItem(key, JSON.stringify({ image, scale, rotation, brightness, contrast, activeFilter, position }));
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [product?.slug, image, scale, rotation, brightness, contrast, activeFilter, position]);
+
+  const isModified = scale !== DEFAULTS.scale || rotation !== DEFAULTS.rotation ||
+    brightness !== DEFAULTS.brightness || contrast !== DEFAULTS.contrast ||
+    activeFilter !== DEFAULTS.activeFilter ||
+    position.x !== DEFAULTS.position.x || position.y !== DEFAULTS.position.y;
+
+  const handleReset = useCallback(() => {
+    setScale(DEFAULTS.scale);
+    setRotation(DEFAULTS.rotation);
+    setBrightness(DEFAULTS.brightness);
+    setContrast(DEFAULTS.contrast);
+    setActiveFilter(DEFAULTS.activeFilter);
+    setPosition(DEFAULTS.position);
+    if (product?.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
+  }, [product?.slug]);
 
   const handleImageUpload = (file: File) => {
     setImageFile(file);
@@ -49,11 +97,12 @@ const Customize = () => {
   const handleContinue = () => {
     if (!product) return;
     const customData = {
-      image, // base64
+      image,
       imageFileName: imageFile?.name || null,
       scale, rotation, brightness, contrast, activeFilter, position,
     };
     sessionStorage.setItem("customization", JSON.stringify(customData));
+    if (product.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
     navigate(`/checkout/${product.slug}`);
   };
 
@@ -87,7 +136,14 @@ const Customize = () => {
           />
         </div>
         <div className="w-full max-w-sm space-y-6">
-          <h1 className="text-lg font-semibold text-foreground">Customizar</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-semibold text-foreground">Customizar</h1>
+            {isModified && (
+              <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1 text-muted-foreground">
+                <RotateCcw className="w-3.5 h-3.5" /> Resetar
+              </Button>
+            )}
+          </div>
 
           <FilterPresets image={image} activeFilter={activeFilter} onSelectFilter={handleSelectFilter} disabled={!image} />
 
