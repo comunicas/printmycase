@@ -4,9 +4,10 @@ import { ShoppingBag, ArrowLeft, Clock, Search, Paintbrush, Factory, Truck, Chec
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { formatPrice } from "@/data/products";
+import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
 import { useAuth } from "@/hooks/useAuth";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 type OrderRow = {
   id: string;
@@ -117,9 +118,7 @@ const Orders = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          </div>
+          <LoadingSpinner />
         ) : orders.length === 0 ? (
           <div className="text-center py-16 space-y-4">
             <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto" />

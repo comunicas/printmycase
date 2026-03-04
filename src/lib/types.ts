@@ -20,7 +20,7 @@ export interface Product {
   specs: ProductSpec[];
   rating: number;
   review_count: number;
-  active: boolean | null;
+  active: boolean;
   stripe_price_id: string | null;
   stripe_product_id: string | null;
   created_at: string | null;

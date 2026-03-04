@@ -7,7 +7,7 @@ import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { formatPrice } from "@/data/products";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import { type ShippingResult } from "@/lib/shipping";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
@@ -150,11 +150,7 @@ const Checkout = () => {
   ];
 
   if (productLoading || !customization) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <LoadingSpinner variant="fullPage" />;
   }
 
   return (

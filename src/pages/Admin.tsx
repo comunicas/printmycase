@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, RefreshCw, Package, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
@@ -9,26 +10,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsTable from "@/components/admin/ProductsTable";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import BulkPriceDialog from "@/components/admin/BulkPriceDialog";
-import { formatPrice } from "@/data/products";
+import { type Product, formatPrice } from "@/lib/types";
+import { statusLabels } from "@/lib/constants";
 import { resolveProductInfo } from "@/lib/products";
-
-export interface DbProduct {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  price_cents: number;
-  stripe_price_id: string | null;
-  stripe_product_id: string | null;
-  images: string[];
-  specs: any[];
-  colors: any[];
-  rating: number;
-  review_count: number;
-  active: boolean;
-  created_at: string;
-  updated_at: string;
-}
 
 interface DbOrder {
   id: string;
@@ -44,22 +28,12 @@ interface DbOrder {
   product_image?: string;
 }
 
-const statusLabels: Record<string, string> = {
-  pending: "Pendente",
-  paid: "Pago",
-  analyzing: "Em Análise",
-  customizing: "Customizando",
-  producing: "Produzindo",
-  shipped: "Enviado",
-  delivered: "Entregue",
-  cancelled: "Cancelado",
-};
 
 const Admin = () => {
-  const [products, setProducts] = useState<DbProduct[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
 
   // Orders
@@ -123,7 +97,7 @@ const Admin = () => {
 
   useEffect(() => { fetchProducts(); fetchOrders(); }, [fetchProducts, fetchOrders]);
 
-  const handleEdit = (product: DbProduct) => {
+  const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setDialogOpen(true);
   };
@@ -158,7 +132,7 @@ const Admin = () => {
     }
   };
 
-  const handleToggleActive = async (product: DbProduct) => {
+  const handleToggleActive = async (product: Product) => {
     const newActive = !product.active;
     const { error } = await supabase
       .from("products")
@@ -349,9 +323,7 @@ const Admin = () => {
             </div>
 
             {ordersLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-              </div>
+              <LoadingSpinner />
             ) : orders.length === 0 ? (
               <p className="text-muted-foreground text-center py-12">Nenhum pedido encontrado.</p>
             ) : (

@@ -1,13 +1,14 @@
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil, Power } from "lucide-react";
-import type { DbProduct } from "@/pages/Admin";
+import type { Product } from "@/lib/types";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 interface Props {
-  products: DbProduct[];
+  products: Product[];
   loading: boolean;
-  onEdit: (product: DbProduct) => void;
-  onToggleActive: (product: DbProduct) => void;
+  onEdit: (product: Product) => void;
+  onToggleActive: (product: Product) => void;
   selectedIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
 }
@@ -17,11 +18,7 @@ const formatCents = (cents: number) =>
 
 const ProductsTable = ({ products, loading, onEdit, onToggleActive, selectedIds, onSelectionChange }: Props) => {
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (products.length === 0) {

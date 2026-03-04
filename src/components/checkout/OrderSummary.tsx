@@ -1,5 +1,5 @@
 import { Truck } from "lucide-react";
-import { formatPrice } from "@/data/products";
+import { formatPrice } from "@/lib/types";
 
 interface OrderSummaryProps {
   productPriceCents: number;

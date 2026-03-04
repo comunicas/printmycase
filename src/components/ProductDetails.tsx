@@ -5,7 +5,7 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import type { Product } from "@/data/products";
+import type { Product } from "@/lib/types";
 
 interface ProductDetailsProps {
   product: Product;

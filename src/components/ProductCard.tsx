@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import StarRating from "@/components/StarRating";
-import type { Product } from "@/data/products";
-import { formatPrice } from "@/data/products";
+import { type Product, formatPrice } from "@/lib/types";
 
 interface ProductCardProps {
   product: Product;

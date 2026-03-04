@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import StarRating from "@/components/StarRating";
-import type { Product } from "@/data/products";
-import { formatPrice } from "@/data/products";
+import { type Product, formatPrice } from "@/lib/types";
 
 interface ProductInfoProps {
   product: Product;

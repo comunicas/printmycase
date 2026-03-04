@@ -1,6 +1,7 @@
 import AppHeader from "@/components/AppHeader";
 import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const Catalog = () => {
   const { products, loading } = useProducts();
@@ -16,9 +17,7 @@ const Catalog = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          </div>
+          <LoadingSpinner />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {products.map((product) => (
