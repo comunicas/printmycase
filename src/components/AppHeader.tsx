@@ -22,24 +22,24 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs }, ref)
       <nav className="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
         <div className="flex items-center gap-2 min-w-0">
           <Link to="/" className="flex-shrink-0">
-            <img src={logoArtisCase} alt="ArtisCase" className="h-8 w-auto" />
+            <img alt="ArtisCase" className="h-8 w-auto" src="/lovable-uploads/4824363f-6c57-4e39-a449-04a7c58c4a1a.png" />
           </Link>
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-              {breadcrumbs.map((crumb, i) => (
-                <span key={i} className="flex items-center gap-1 min-w-0">
+          {breadcrumbs && breadcrumbs.length > 0 &&
+          <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+              {breadcrumbs.map((crumb, i) =>
+            <span key={i} className="flex items-center gap-1 min-w-0">
                   <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-                  {crumb.to ? (
-                    <Link to={crumb.to} className="hover:text-foreground transition-colors truncate">
+                  {crumb.to ?
+              <Link to={crumb.to} className="hover:text-foreground transition-colors truncate">
                       {crumb.label}
-                    </Link>
-                  ) : (
-                    <span className="text-foreground font-medium truncate">{crumb.label}</span>
-                  )}
+                    </Link> :
+
+              <span className="text-foreground font-medium truncate">{crumb.label}</span>
+              }
                 </span>
-              ))}
+            )}
             </div>
-          )}
+          }
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Button variant="ghost" size="sm" onClick={() => navigate("/catalog")}>
@@ -48,8 +48,8 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs }, ref)
           <UserMenu />
         </div>
       </nav>
-    </header>
-  );
+    </header>);
+
 });
 
 AppHeader.displayName = "AppHeader";
