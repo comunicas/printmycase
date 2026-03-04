@@ -205,6 +205,11 @@ const Admin = () => {
     } else {
       toast({ title: `Status atualizado para "${statusLabels[newStatus]}"` });
       setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: newStatus } : o));
+
+      // Send email notification (fire-and-forget)
+      supabase.functions.invoke("notify-order-status", {
+        body: { order_id: orderId, new_status: newStatus },
+      }).catch((err) => console.error("Email notification error:", err));
     }
   };
 
