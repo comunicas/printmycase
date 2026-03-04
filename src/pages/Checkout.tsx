@@ -53,6 +53,7 @@ const Checkout = () => {
   // Shipping
   const [shipping, setShipping] = useState<ShippingResult | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   // Load customization from sessionStorage
   useEffect(() => {
@@ -113,16 +114,27 @@ const Checkout = () => {
     setSaveAddress(false);
   };
 
-  const isFormValid = useMemo(() => {
-    return street.trim() && number.trim() && neighborhood.trim() && city.trim() && state.trim() && zipInput.replace(/\D/g, "").length === 8 && shipping?.allowed;
+  // Field errors
+  const errors = useMemo(() => {
+    const cleanZip = zipInput.replace(/\D/g, "");
+    return {
+      zip: !cleanZip ? "CEP obrigatório" : cleanZip.length < 8 ? "CEP incompleto" : (shipping && !shipping.allowed ? "Região não atendida" : ""),
+      street: !street.trim() ? "Rua obrigatória" : "",
+      number: !number.trim() ? "Número obrigatório" : "",
+      neighborhood: !neighborhood.trim() ? "Bairro obrigatório" : "",
+      city: !city.trim() ? "Cidade obrigatória" : "",
+      state: !state.trim() ? "Estado obrigatório" : "",
+    };
   }, [street, number, neighborhood, city, state, zipInput, shipping]);
+
+  const isFormValid = useMemo(() => {
+    return Object.values(errors).every((e) => !e);
+  }, [errors]);
 
   const handleCheckout = async () => {
     if (!user || !product || !customization || !shipping) return;
-    if (!isFormValid) {
-      toast({ title: "Preencha o endereço completo", variant: "destructive" });
-      return;
-    }
+    setSubmitted(true);
+    if (!isFormValid) return;
     setCheckoutLoading(true);
     try {
       // Upload image if exists
@@ -257,14 +269,14 @@ const Checkout = () => {
         {/* Address form */}
         <FormCard title="Endereço de entrega" description="Preencha o endereço completo para envio.">
           <div className="space-y-4">
-            <FormField label="CEP" id="zip" required>
+            <FormField label="CEP" id="zip" required error={submitted ? errors.zip : undefined}>
               <Input
                 id="zip"
                 placeholder="00000-000"
                 value={zipInput}
                 onChange={(e) => handleZipChange(e.target.value)}
                 maxLength={9}
-                className="font-mono"
+                className={`font-mono ${submitted && errors.zip ? "border-destructive" : ""}`}
               />
             </FormField>
 
@@ -281,11 +293,11 @@ const Checkout = () => {
             )}
 
             <div className="grid grid-cols-3 gap-3">
-              <FormField label="Rua" id="street" required className="col-span-2">
-                <Input id="street" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Rua, Av, Travessa..." />
+              <FormField label="Rua" id="street" required className="col-span-2" error={submitted ? errors.street : undefined}>
+                <Input id="street" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Rua, Av, Travessa..." className={submitted && errors.street ? "border-destructive" : ""} />
               </FormField>
-              <FormField label="Número" id="number" required>
-                <Input id="number" value={number} onChange={(e) => setNumber(e.target.value)} placeholder="123" />
+              <FormField label="Número" id="number" required error={submitted ? errors.number : undefined}>
+                <Input id="number" value={number} onChange={(e) => setNumber(e.target.value)} placeholder="123" className={submitted && errors.number ? "border-destructive" : ""} />
               </FormField>
             </div>
 
@@ -293,16 +305,16 @@ const Checkout = () => {
               <Input id="complement" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, Bloco..." />
             </FormField>
 
-            <FormField label="Bairro" id="neighborhood" required>
-              <Input id="neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
+            <FormField label="Bairro" id="neighborhood" required error={submitted ? errors.neighborhood : undefined}>
+              <Input id="neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} className={submitted && errors.neighborhood ? "border-destructive" : ""} />
             </FormField>
 
             <div className="grid grid-cols-3 gap-3">
-              <FormField label="Cidade" id="city" required className="col-span-2">
-                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
+              <FormField label="Cidade" id="city" required className="col-span-2" error={submitted ? errors.city : undefined}>
+                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} className={submitted && errors.city ? "border-destructive" : ""} />
               </FormField>
-              <FormField label="Estado" id="state" required>
-                <Input id="state" value={state} onChange={(e) => setState(e.target.value)} placeholder="SP" maxLength={2} className="uppercase" />
+              <FormField label="Estado" id="state" required error={submitted ? errors.state : undefined}>
+                <Input id="state" value={state} onChange={(e) => setState(e.target.value)} placeholder="SP" maxLength={2} className={`uppercase ${submitted && errors.state ? "border-destructive" : ""}`} />
               </FormField>
             </div>
 
