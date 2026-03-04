@@ -1,20 +1,18 @@
 
 
-# Incluir imagem e nome do produto nos pedidos
+# Ajuste na página de confirmação: imagem e nome do produto
 
 ## Problema
-O `product_id` nos pedidos às vezes contém um UUID em vez do slug, fazendo com que o fallback mostre o UUID cru. Além disso, não há imagem do produto nos cards.
+A página de confirmação (`CheckoutSuccess.tsx`) busca o produto apenas por `slug` (linha 39), mas o `product_id` armazenado no pedido é um UUID. Isso faz com que o fallback exiba o UUID cru (visível no screenshot). Além disso, não exibe a imagem do produto.
 
-## Mudanças em `src/pages/Orders.tsx`
+## Mudanças em `src/pages/CheckoutSuccess.tsx`
 
-1. **Buscar imagens junto com nomes**: alterar a query de products para incluir `slug, name, images` e também buscar por `id` (UUID) além de `slug`, cobrindo ambos os casos.
+1. **Buscar produto por UUID e slug**: aplicar a mesma lógica do Orders — tentar primeiro por `id` (UUID), depois por `slug` como fallback.
 
-2. **Guardar imagem no state**: expandir o tipo para incluir `product_image?: string` e mapear a primeira imagem do produto.
+2. **Incluir imagem no state**: expandir o tipo de `orderInfo` para incluir `productImage?: string` e buscar o campo `images` do produto.
 
-3. **Exibir imagem no card**: adicionar um thumbnail do produto (primeira imagem) ao lado do nome no header do card, com tamanho ~60x60px e `rounded-lg object-cover`.
+3. **Exibir imagem**: substituir o ícone `Package` por um thumbnail do produto (quando disponível), com ~60x60px `rounded-lg object-cover`, ao lado do nome e preço.
 
-4. **Layout do header**: reorganizar para `flex` horizontal com imagem à esquerda, nome/data no centro, e preço à direita.
-
-## Arquivos afetados
-- `src/pages/Orders.tsx`
+## Arquivo afetado
+- `src/pages/CheckoutSuccess.tsx`
 
