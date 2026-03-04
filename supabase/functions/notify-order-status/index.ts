@@ -119,15 +119,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // User-context client to validate the JWT via signing-keys
+    // User-context client to validate JWT claims via signing-keys
     const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
 
-    const { data: { user: caller }, error: authError } = await supabaseUser.auth.getUser();
-    if (authError || !caller) {
+    const { data: claimsData, error: authError } = await supabaseUser.auth.getClaims(token);
+    const callerUserId = claimsData?.claims?.sub;
+    if (authError || !callerUserId) {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
 
     // Check admin role
     const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
-      _user_id: caller.id,
+      _user_id: callerUserId,
       _role: "admin",
     });
     if (!isAdmin) {
