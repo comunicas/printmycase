@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, X } from "lucide-react";
+import { Upload, Check } from "lucide-react";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 interface Props {
   productId: string | null;
@@ -11,27 +12,80 @@ interface Props {
 
 const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
   const { toast } = useToast();
+  const [allImages, setAllImages] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFiles = async (files: FileList) => {
-    const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    if (imageFiles.length === 0) {
-      toast({ title: "Selecione imagens válidas", variant: "destructive" });
-      return;
+  const fetchImages = useCallback(async () => {
+    setLoading(true);
+    try {
+      // List all folders (product ids) in the bucket
+      const { data: folders, error: foldersErr } = await supabase.storage
+        .from("product-assets")
+        .list("", { limit: 500 });
+      if (foldersErr) throw foldersErr;
+
+      const urls: string[] = [];
+
+      for (const folder of folders || []) {
+        // Skip non-folder items (files at root)
+        if (folder.id) {
+          // It's a file at root level
+          const { data } = supabase.storage
+            .from("product-assets")
+            .getPublicUrl(folder.name);
+          urls.push(data.publicUrl);
+          continue;
+        }
+
+        // It's a folder — list files inside
+        const { data: files, error: filesErr } = await supabase.storage
+          .from("product-assets")
+          .list(folder.name, { limit: 200 });
+        if (filesErr) continue;
+
+        for (const file of files || []) {
+          if (!file.name || file.name === ".emptyFolderPlaceholder") continue;
+          const { data } = supabase.storage
+            .from("product-assets")
+            .getPublicUrl(`${folder.name}/${file.name}`);
+          urls.push(data.publicUrl);
+        }
+      }
+
+      setAllImages(urls);
+    } catch (err: any) {
+      toast({ title: "Erro ao carregar imagens", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchImages();
+  }, [fetchImages]);
+
+  const toggleImage = (url: string) => {
+    if (value.includes(url)) {
+      onChange(value.filter((v) => v !== url));
+    } else {
+      onChange([...value, url]);
+    }
+  };
+
+  const handleUpload = async (files: FileList) => {
+    const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) return;
 
     const id = productId || crypto.randomUUID();
     setUploading(true);
 
     try {
       const newUrls: string[] = [];
-      const startIndex = value.length;
-
-      for (let i = 0; i < imageFiles.length; i++) {
-        const file = imageFiles[i];
+      for (const file of imageFiles) {
         const ext = file.name.split(".").pop() || "png";
-        const path = `${id}/gallery-${startIndex + i}-${Date.now()}.${ext}`;
+        const path = `${id}/gallery-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
 
         const { error } = await supabase.storage
           .from("product-assets")
@@ -41,11 +95,12 @@ const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
         const { data } = supabase.storage
           .from("product-assets")
           .getPublicUrl(path);
-
         newUrls.push(data.publicUrl);
       }
 
+      // Add uploaded images to selection and refresh list
       onChange([...value, ...newUrls]);
+      await fetchImages();
       toast({ title: `${newUrls.length} imagem(ns) enviada(s)!` });
     } catch (err: any) {
       toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
@@ -54,50 +109,60 @@ const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
     }
   };
 
-  const handleRemove = (index: number) => {
-    onChange(value.filter((_, i) => i !== index));
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
-  };
+  if (loading) return <LoadingSpinner variant="inline" className="py-4" />;
 
   return (
     <div className="space-y-3">
+      {/* Selected count */}
       {value.length > 0 && (
-        <div className="grid grid-cols-3 gap-2">
-          {value.map((url, i) => (
-            <div key={i} className="relative group">
-              <img
-                src={url}
-                alt={`Galeria ${i + 1}`}
-                className="h-24 w-full rounded-md border border-border object-cover"
-              />
-              <button
-                type="button"
-                onClick={() => handleRemove(i)}
-                className="absolute -right-1.5 -top-1.5 rounded-full bg-destructive p-1 text-destructive-foreground shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
-        </div>
+        <p className="text-xs text-muted-foreground">{value.length} imagem(ns) selecionada(s)</p>
       )}
 
+      {/* Image grid — all available images */}
+      {allImages.length > 0 ? (
+        <div className="grid grid-cols-4 gap-2 max-h-60 overflow-y-auto rounded-md border border-border p-2">
+          {allImages.map((url) => {
+            const selected = value.includes(url);
+            return (
+              <button
+                key={url}
+                type="button"
+                onClick={() => toggleImage(url)}
+                className={`relative rounded-md overflow-hidden border-2 transition-all ${
+                  selected
+                    ? "border-primary ring-2 ring-primary/30"
+                    : "border-transparent hover:border-muted-foreground/40"
+                }`}
+              >
+                <img
+                  src={url}
+                  alt=""
+                  className="h-20 w-full object-cover"
+                />
+                {selected && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
+                    <Check className="h-5 w-5 text-primary-foreground drop-shadow" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">Nenhuma imagem no storage.</p>
+      )}
+
+      {/* Upload new */}
       <div
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={handleDrop}
         onClick={() => fileRef.current?.click()}
-        className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/30 p-6 text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+        className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/30 p-3 text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
       >
         {uploading ? (
           <p className="text-sm">Enviando...</p>
         ) : (
           <>
-            <Upload className="h-6 w-6" />
-            <p className="text-sm">Clique ou arraste imagens da galeria</p>
+            <Upload className="h-4 w-4" />
+            <p className="text-sm">Enviar nova imagem ao storage</p>
           </>
         )}
       </div>
@@ -109,7 +174,7 @@ const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
         multiple
         className="hidden"
         onChange={(e) => {
-          if (e.target.files && e.target.files.length > 0) handleFiles(e.target.files);
+          if (e.target.files && e.target.files.length > 0) handleUpload(e.target.files);
           e.target.value = "";
         }}
       />
