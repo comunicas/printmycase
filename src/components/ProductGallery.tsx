@@ -8,8 +8,11 @@ interface ProductGalleryProps {
 }
 
 const ProductGallery = ({ images, productName, deviceImage }: ProductGalleryProps) => {
-  // Priorizar device_image; ignorar array images (mocado)
-  const allImages = deviceImage ? [deviceImage] : images.length > 0 ? images : [];
+  // Combinar device_image (primeiro) + imagens da galeria
+  const allImages = [
+    ...(deviceImage ? [deviceImage] : []),
+    ...images,
+  ].filter(Boolean);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   return (

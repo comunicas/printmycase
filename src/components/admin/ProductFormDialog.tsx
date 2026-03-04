@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import FormField from "@/components/ui/form-field";
 import SubmitButton from "@/components/forms/SubmitButton";
 import DeviceImageUpload from "@/components/admin/DeviceImageUpload";
+import ProductImagesUpload from "@/components/admin/ProductImagesUpload";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [priceReais, setPriceReais] = useState("");
-  const [imagesRaw, setImagesRaw] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [deviceImage, setDeviceImage] = useState("");
   const [active, setActive] = useState(true);
 
@@ -40,7 +41,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
       setSlug(product.slug);
       setDescription(product.description ?? "");
       setPriceReais((product.price_cents / 100).toFixed(2).replace(".", ","));
-      setImagesRaw(product.images?.join("\n") ?? "");
+      setImages(product.images ?? []);
       setDeviceImage(product.device_image ?? "");
       setActive(product.active);
     } else {
@@ -48,7 +49,7 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
       setSlug("");
       setDescription("");
       setPriceReais("");
-      setImagesRaw("");
+      setImages([]);
       setDeviceImage("");
       setActive(true);
     }
@@ -77,11 +78,6 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
       setSaving(false);
       return;
     }
-
-    const images = imagesRaw
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
 
     try {
       if (isEditing) {
@@ -185,14 +181,11 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
             />
           </FormField>
 
-          <FormField label="Imagens (URLs, uma por linha)" id="pImages">
-            <textarea
-              id="pImages"
-              value={imagesRaw}
-              onChange={(e) => setImagesRaw(e.target.value)}
-              rows={3}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              placeholder="https://..."
+          <FormField label="Imagens da Galeria" id="pImages" hint="Fotos adicionais do produto">
+            <ProductImagesUpload
+              productId={product?.id ?? null}
+              value={images}
+              onChange={setImages}
             />
           </FormField>
 
