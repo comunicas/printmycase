@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { DbProduct } from "@/pages/Admin";
+import type { Product } from "@/lib/types";
 
 const fmt = (cents: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
@@ -11,7 +11,7 @@ const fmt = (cents: number) =>
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  products: DbProduct[];
+  products: Product[];
   adjustType: "fixed" | "percent";
   adjustValue: number; // cents for fixed, whole number for percent
   direction: "increase" | "decrease";

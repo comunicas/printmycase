@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const AdminGuard = ({ children }: { children: ReactNode }) => {
   const { isAdmin, loading } = useAdmin();
@@ -13,11 +14,7 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
   }, [loading]);
 
   if (loading && !timedOut) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <LoadingSpinner variant="fullPage" />;
   }
 
   if (!isAdmin) {

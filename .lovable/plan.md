@@ -1,50 +1,31 @@
 
+# Plano de Refatoração V1
 
-# Fase 2: Eliminação de Legados e Consolidação
+## ✅ Fase 1: Correção de Bugs Críticos — CONCLUÍDA
+- Fix `delete-account` (jsr: import + getUser)
+- Fix URL `/pedidos` → `/orders` no email
+- Fix mini preview no checkout (editedImage)
+- Fix mensagens de frete na landing
 
-## 1. Mover tipos e `formatPrice` de `src/data/products.ts` para `src/lib/types.ts`
+## ✅ Fase 2: Eliminação de Legados e Consolidação — CONCLUÍDA
+- Criado `src/lib/types.ts` (Product, ProductColor, ProductSpec, formatPrice)
+- Criado `src/lib/constants.ts` (statusLabels, statusColors)
+- Criado `src/components/ui/loading-spinner.tsx` (fullPage + inline)
+- Deletado `src/data/products.ts`
+- Unificado `DbProduct` → `Product` em Admin + 3 componentes admin
+- Atualizado imports em 15+ arquivos
+- Otimizado `resolveProductInfo` com query `.or()` única
 
-- Criar `src/lib/types.ts` com as interfaces `Product`, `ProductColor`, `ProductSpec` e a função `formatPrice`
-- Unificar `DbProduct` (de `Admin.tsx`) com `Product` — são praticamente idênticos, a diferença é que `DbProduct` tem `active: boolean` (não nullable) e campos `any[]` para specs/colors. Usaremos uma única interface `Product` com `active: boolean` (non-null)
-- Atualizar **11 arquivos** que importam de `@/data/products` para importar de `@/lib/types`
-- Remover `src/data/products.ts`
-- Remover a interface `DbProduct` de `Admin.tsx` e importar `Product` de `@/lib/types`
+## 🔲 Fase 3: Melhorias de Arquitetura
+- AuthContext (React Context para evitar múltiplas chamadas getSession)
+- Lazy loading de rotas (React.lazy + Suspense)
+- Otimizar SeoHead (receber produtos como prop)
 
-## 2. Criar `src/lib/constants.ts` com `statusLabels` unificado
+## 🔲 Fase 4: Atualização de Documentação
+- Reescrever ARCHITECTURE.md completo
 
-- Extrair `statusLabels` e `statusColors` (usados em `Admin.tsx` e `notify-order-status`)
-- Incluir o `statusFlow` com ícones (usado em `Orders.tsx`) — ou manter separado pois depende de Lucide (client-only)
-- `Admin.tsx` e `Orders.tsx` importarão de `@/lib/constants.ts`
-- A edge function `notify-order-status` continuará com sua cópia local (edge functions não podem importar de `src/`)
-
-## 3. Extrair componente `LoadingSpinner`
-
-- Criar `src/components/ui/loading-spinner.tsx` com duas variantes:
-  - `fullPage`: spinner centralizado em tela cheia (`min-h-screen`)
-  - `inline`: spinner centralizado em container (`py-12`)
-- Substituir os **10 spinners duplicados** em: `Customize.tsx`, `Catalog.tsx`, `AdminGuard.tsx`, `Admin.tsx`, `Product.tsx`, `AuthGuard.tsx`, `Landing.tsx`, `Checkout.tsx`, `ProductsTable.tsx`, `Orders.tsx`
-
-## 4. Otimizar `resolveProductInfo`
-
-- Substituir as 2 queries paralelas (by slug + by id) por uma única query usando `.or()`:
-  ```
-  .or(`slug.in.(${slugs}),id.in.(${uuids})`)
-  ```
-
-## Arquivos afetados
-
-| Ação | Arquivo |
-|------|---------|
-| Criar | `src/lib/types.ts` |
-| Criar | `src/lib/constants.ts` |
-| Criar | `src/components/ui/loading-spinner.tsx` |
-| Deletar | `src/data/products.ts` |
-| Editar | `src/pages/Admin.tsx` — remover `DbProduct`, importar de types/constants |
-| Editar | `src/pages/Orders.tsx` — importar constants, usar LoadingSpinner |
-| Editar | `src/pages/Catalog.tsx`, `Product.tsx`, `Checkout.tsx`, `CheckoutSuccess.tsx`, `Customize.tsx`, `Landing.tsx` — imports + spinner |
-| Editar | `src/components/ProductCard.tsx`, `ProductDetails.tsx`, `ProductInfo.tsx`, `SeoHead.tsx` — imports |
-| Editar | `src/components/checkout/OrderSummary.tsx`, `AddressForm.tsx` — imports |
-| Editar | `src/components/AdminGuard.tsx`, `AuthGuard.tsx`, `admin/ProductsTable.tsx` — spinner |
-| Editar | `src/hooks/useProducts.ts` — import Product |
-| Editar | `src/lib/products.ts` — otimizar query |
-
+## 🔲 Fase 5: Polimento para V1
+- SEO: remover hardcoded "iPhone", SearchAction sem busca
+- Error boundaries globais
+- Acessibilidade (labels, aria-labels)
+- Testes unitários (masks, shipping, formatPrice)

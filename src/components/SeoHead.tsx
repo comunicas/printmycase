@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useProducts } from "@/hooks/useProducts";
-import { formatPrice } from "@/data/products";
+
 
 const SITE_NAME = "ArtisCase";
 const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://artiscase-v2.lovable.app";

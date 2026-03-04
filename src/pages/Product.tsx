@@ -4,17 +4,14 @@ import ProductInfo from "@/components/ProductInfo";
 import ProductDetails from "@/components/ProductDetails";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const Product = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading } = useProduct(id);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <LoadingSpinner variant="fullPage" />;
   }
 
   if (!product) {

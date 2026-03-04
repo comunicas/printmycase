@@ -8,6 +8,7 @@ import FilterPresets, { filters } from "@/components/FilterPresets";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const DEFAULTS = { scale: 100, rotation: 0, brightness: 0, contrast: 0, activeFilter: null as string | null, position: { x: 50, y: 50 } };
 const PHONE_W = 260;
@@ -234,11 +235,7 @@ const Customize = () => {
   ];
 
   if (productLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <LoadingSpinner variant="fullPage" />;
   }
 
   return (

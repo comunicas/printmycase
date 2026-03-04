@@ -9,6 +9,7 @@ import { useProducts } from "@/hooks/useProducts";
 import SeoHead from "@/components/SeoHead";
 import AppHeader from "@/components/AppHeader";
 import ProductCard from "@/components/ProductCard";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const testimonials = [
   { name: "Ana C.", text: "Melhor capa que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
@@ -121,9 +122,7 @@ const Landing = () => {
             <div className="max-w-5xl mx-auto">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Modelos em Destaque</h2>
               {loading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                </div>
+                <LoadingSpinner />
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {featuredProducts.map((product) => (

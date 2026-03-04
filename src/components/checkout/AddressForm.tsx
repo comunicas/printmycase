@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getShippingByZip, type ShippingResult } from "@/lib/shipping";
 import { maskCEP } from "@/lib/masks";
-import { formatPrice } from "@/data/products";
+import { formatPrice } from "@/lib/types";
 
 export interface AddressData {
   street: string;

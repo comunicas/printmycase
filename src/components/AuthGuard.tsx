@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const AUTH_TIMEOUT_MS = 5000;
 
@@ -16,11 +17,7 @@ const AuthGuard = ({ children }: { children: ReactNode }) => {
   }, [loading]);
 
   if (loading && !timedOut) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <LoadingSpinner variant="fullPage" />;
   }
 
   if (!user) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Product } from "@/data/products";
+import type { Product } from "@/lib/types";
 
 export function useProducts(limit?: number) {
   const [products, setProducts] = useState<Product[]>([]);

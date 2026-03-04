@@ -11,12 +11,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import type { DbProduct } from "@/pages/Admin";
+import type { Product } from "@/lib/types";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  product: DbProduct | null;
+  product: Product | null;
   onSaved: () => void;
 }
 
