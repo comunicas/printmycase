@@ -16,7 +16,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
       onClick={() => navigate(`/product/${product.slug}`)}
     >
-      <div className="aspect-square overflow-hidden bg-muted flex items-center justify-center">
+      <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
         {(product.device_image || product.images[0]) ? (
           <img
             src={product.device_image ?? product.images[0]}
