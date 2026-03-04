@@ -1,68 +1,37 @@
 
 
-# Code Review e Refatoração — Emails + Pedidos
+# Diagnóstico: DNS do domínio de email `notify.studio.artiscase.com`
 
-## Problemas Encontrados
+## Situação Atual
 
-### 1. `notify-order-status` — Bugs e Riscos
+O domínio de email `notify.studio.artiscase.com` está com status **Pending** — a verificação DNS ainda não foi concluída. Isso significa que **nenhum email** (autenticação ou notificação de pedido) será enviado pelo domínio customizado até que o DNS esteja correto.
 
-- **Email API incorreta**: Usa `fetch("https://api.lovable.dev/api/v1/email/send")` diretamente, mas deveria usar `sendLovableEmail` de `@lovable.dev/email-js` com `sender_domain` e `from`, igual ao `auth-email-hook`. A API raw pode não funcionar sem os campos obrigatórios (`from`, `sender_domain`).
-- **Logo como texto, não imagem**: O template HTML usa `<span>ArtisCase</span>` em vez da imagem do logo que já está no bucket `email-assets`. Os templates de auth usam a imagem — inconsistência visual.
-- **Sem validação de autenticação**: `verify_jwt = false` mas não verifica se quem chama é admin. Qualquer pessoa pode invocar a função e disparar emails. Precisa checar `has_role(uid, 'admin')`.
-- **CORS headers incompletos**: Faltam headers como `x-supabase-client-platform` que o SDK envia.
-- **`handleSaveTracking` não notifica**: Quando o admin salva tracking code e o status muda para `shipped`, não chama `notify-order-status`. O usuário não recebe o email com o rastreio.
+A screenshot mostra que o domínio `notify.studio.artiscase.com` também está como **Verifying** na seção de domínios customizados (hosting). São duas verificações separadas mas usam registros semelhantes.
 
-### 2. `Admin.tsx` — Problemas de UX/Lógica
+## O que você precisa fazer na Hostinger
 
-- **Duplicação de resolução de produto**: A lógica de buscar produto por slug/UUID está duplicada em `Admin.tsx`, `Orders.tsx` e `CheckoutSuccess.tsx`. Deveria ser um helper reutilizável.
-- **`handleSaveTracking` sobrescreve sem confirmar**: Muda status para `shipped` direto sem enviar notificação.
+No painel DNS do domínio `artiscase.com` na Hostinger, adicione estes registros (como `notify.studio` é um sub-subdomínio de `artiscase.com`):
 
-### 3. `Orders.tsx` — Realtime incompleto
+| Tipo | Host/Nome | Valor |
+|------|-----------|-------|
+| **A** | `notify.studio` | `185.158.133.1` |
+| **TXT** | `_lovable.notify.studio` | `lovable_verify=2d3faca428bfd9de03121a436792f756d0d31a00e6a70d38b63be844f39200db` |
 
-- **Realtime não filtra por `user_id`**: O channel escuta TODAS as atualizações da tabela `orders`, não apenas as do usuário atual. Embora RLS proteja os dados no SELECT inicial, o realtime payload pode conter dados de outros usuários (o filtro deveria ser server-side com `filter`).
-- **`product_name`/`product_image` perdidos no update**: Quando o realtime atualiza um pedido, o spread `{ ...o, ...payload.new }` sobrescreve os campos enriquecidos (`product_name`, `product_image`) pois eles não existem no payload do banco.
+**Dica importante**: Na Hostinger, o campo "Host" geralmente pede apenas o prefixo (sem o `.artiscase.com`). Então coloque exatamente `notify.studio` e `_lovable.notify.studio`.
 
-### 4. Templates de Auth — Menores
+Se a Hostinger já tem registros conflitantes para `notify.studio` (como CNAME), remova-os antes de adicionar o registro A.
 
-- Templates estão corretos e consistentes. Sem problemas funcionais.
+## Após adicionar os registros
 
----
+- A propagação DNS pode levar até 72 horas, mas geralmente leva minutos a poucas horas.
+- Use [DNSChecker.org](https://dnschecker.org) para verificar se `notify.studio.artiscase.com` já aponta para `185.158.133.1`.
+- Depois que o DNS propagar, tanto o domínio customizado quanto o domínio de email serão verificados automaticamente pelo Lovable.
 
-## Plano de Refatoração
+## Sobre o código
 
-### A. Criar helper `resolveProductInfo` (novo arquivo `src/lib/products.ts`)
+O código das edge functions (`auth-email-hook` e `notify-order-status`) está correto e pronto — ambos já usam `notify.studio.artiscase.com` como `sender_domain`. Não há correção de código necessária. O único bloqueio é a configuração DNS na Hostinger.
 
-Função reutilizável que recebe uma lista de `product_id`s e retorna um `Map<string, { name, image }>`. Remover duplicação de `Admin.tsx`, `Orders.tsx` e `CheckoutSuccess.tsx`.
+## Nenhuma mudança de código necessária
 
-### B. Refatorar `notify-order-status/index.ts`
-
-1. Usar `sendLovableEmail` de `@lovable.dev/email-js` com `sender_domain: "notify.studio.artiscase.com"` e `from: "ArtisCase <noreply@notify.studio.artiscase.com>"`
-2. Substituir o `<span>ArtisCase</span>` pelo `<img>` do logo no bucket `email-assets`
-3. Adicionar validação: verificar JWT do chamador e confirmar que é admin via `has_role`
-4. Corrigir CORS headers (adicionar headers do SDK)
-
-### C. Corrigir `Admin.tsx`
-
-1. Em `handleSaveTracking`, após salvar tracking + status `shipped`, chamar `notify-order-status` para que o email inclua o código de rastreio
-2. Usar o helper `resolveProductInfo`
-
-### D. Corrigir `Orders.tsx` realtime
-
-1. Adicionar `filter: "user_id=eq.{userId}"` no channel subscription para receber apenas updates do próprio usuário
-2. Preservar `product_name` e `product_image` no merge do payload realtime (não sobrescrever campos enriquecidos)
-3. Usar o helper `resolveProductInfo`
-
-### E. Simplificar `CheckoutSuccess.tsx`
-
-1. Usar o helper `resolveProductInfo`
-
----
-
-## Arquivos afetados
-
-- `src/lib/products.ts` — novo helper
-- `supabase/functions/notify-order-status/index.ts` — refatoração completa
-- `src/pages/Admin.tsx` — tracking notification + usar helper
-- `src/pages/Orders.tsx` — fix realtime + usar helper
-- `src/pages/CheckoutSuccess.tsx` — usar helper
+Este é um problema exclusivamente de configuração DNS. Assim que os registros forem adicionados e propagados, os emails começarão a funcionar automaticamente.
 
