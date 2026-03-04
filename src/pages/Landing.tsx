@@ -18,15 +18,15 @@ const testimonials = [
 ];
 
 const benefits = [
-  { icon: Palette, title: "100% Personalizada", desc: "Use suas fotos, artes e designs favoritos. Cada capa é única como você." },
+  { icon: Palette, title: "100% Personalizada", desc: "Produzimos sua capa com a mesma tecnologia usada nas máquinas PrintMyCase presentes em shopping centers." },
   { icon: Shield, title: "Proteção Premium", desc: "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m." },
   { icon: Truck, title: "Envio Rápido", desc: "Frete acessível para a região Sudeste. Produção em até 48h e entrega ágil." },
 ];
 
 const steps = [
-  { icon: Smartphone, title: "Escolha seu modelo", desc: "Selecione o modelo do seu celular" },
+  { icon: Smartphone, title: "Escolha o modelo da sua capa", desc: "Selecione o modelo do seu celular" },
   { icon: Upload, title: "Envie sua imagem", desc: "Faça upload da sua foto ou design" },
-  { icon: Package, title: "Receba em casa", desc: "Produção em 48h e envio rápido" },
+  { icon: Package, title: "Receba sua Case em casa", desc: "Produção em 48h e envio rápido" },
 ];
 
 const Landing = () => {
@@ -47,7 +47,7 @@ const Landing = () => {
                 Sua Case, sua identidade.
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Transforme suas fotos favoritas em capinhas únicas. Proteção premium com acabamento soft-touch e design 100% seu.
+                Crie uma capa personalizada usando a tecnologia PrintMyCase e receba em casa.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <Button size="lg" className="gap-2 text-base" onClick={() => navigate("/catalog")}>
@@ -63,7 +63,7 @@ const Landing = () => {
                     <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <span className="text-sm text-muted-foreground font-medium">Mais de 1.000 cases criadas</span>
+                <span className="text-sm text-muted-foreground font-medium">Mais de 1.000 Cases criadas com tecnologia PrintMyCase</span>
               </div>
             </div>
           </section>
@@ -74,7 +74,7 @@ const Landing = () => {
           <section id="beneficios" className="py-16 px-5">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
-                Por que escolher a ArtisCase?
+                Capas personalizadas com qualidade profissional
               </h2>
               <div className="grid md:grid-cols-3 gap-6">
                 {benefits.map((b) => (
@@ -165,7 +165,7 @@ const Landing = () => {
           {/* Final CTA */}
           <section className="py-20 px-5 bg-primary text-primary-foreground">
             <div className="max-w-2xl mx-auto text-center space-y-6">
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Pronto para criar sua Case?</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Pronto para criar sua Case única?</h2>
               <p className="text-lg opacity-90">Escolha seu modelo, envie sua foto e receba sua capinha exclusiva na sua porta.</p>
               <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold" onClick={() => navigate("/catalog")}>
                 Comece Agora <ArrowRight className="w-4 h-4" />
