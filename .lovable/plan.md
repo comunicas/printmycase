@@ -1,19 +1,42 @@
 
 
-# ProductCard — Formato quadrado + CTA "Customizar"
+# Filtros por Marca + Paginacao no Catalogo
 
-## Mudanças em `src/components/ProductCard.tsx`
+## Contexto
 
-1. **Imagem quadrada**: Trocar `aspect-[3/4]` por `aspect-square` para otimizar espaço no grid
-2. **Botão CTA**: Adicionar um botão "Customizar" abaixo do rating que navega para `/customize/{slug}`, com `e.stopPropagation()` para não conflitar com o click do card (que vai para a página do produto)
+73 produtos ativos. Marcas extraidas do nome: Samsung (33), Apple (26), Xiaomi (7), Motorola (4). Nao existe coluna de marca — sera extraida client-side pelo prefixo do nome.
 
-## Mudanças em `src/pages/Catalog.tsx`
+## Plano
 
-3. **Grid ajustado**: Opcionalmente ajustar gap ou colunas para aproveitar melhor o formato quadrado (grid atual já funciona bem)
+### 1. Logica de filtragem e paginacao — `src/hooks/useProducts.ts`
 
-## Arquivo afetado
+- Adicionar parametros opcionais ao hook: `brand?: string`
+- Extrair marca do nome do produto client-side com funcao utilitaria (`extractBrand`)
+- Nao adicionar coluna ao banco (desnecessario com 73 produtos — tudo cabe em uma query)
+- Retornar todos os produtos e filtrar client-side
+- Adicionar paginacao client-side: `page`, `pageSize` (ex: 12 por pagina), retornar `totalPages`
 
-| Arquivo | Mudança |
+### 2. Barra de filtros — `src/pages/Catalog.tsx`
+
+- Adicionar chips/botoes horizontais: "Todos", "Apple", "Samsung", "Motorola", "Xiaomi"
+- Estado local `selectedBrand` e `currentPage`
+- Filtrar produtos pelo brand selecionado
+- Paginar o resultado filtrado (12 por pagina)
+- Mostrar controles de paginacao (anterior/proximo + indicador de pagina)
+- Atualizar contador: "{n} capas disponíveis"
+
+### 3. Funcao utilitaria — `src/lib/utils.ts`
+
+Adicionar `extractBrand(productName: string)`:
+- "Capa iPhone..." → "Apple"
+- "Capa Galaxy..." → "Samsung"
+- "Capa Moto..." → "Motorola"
+- "Capa Redmi/Poco/Xiaomi..." → "Xiaomi"
+
+## Arquivos afetados
+
+| Arquivo | Mudanca |
 |---------|---------|
-| `src/components/ProductCard.tsx` | aspect-square + botão "Customizar" |
+| `src/lib/utils.ts` | Adicionar `extractBrand()` |
+| `src/pages/Catalog.tsx` | Filtros por marca + paginacao |
 
