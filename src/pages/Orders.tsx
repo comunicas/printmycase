@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
+import { resolveProductInfo } from "@/lib/products";
+import { useAuth } from "@/hooks/useAuth";
 
 type OrderRow = {
   id: string;
@@ -33,6 +35,7 @@ function getStepIndex(status: string) {
 
 const Orders = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [orders, setOrders] = useState<OrderWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,20 +52,8 @@ const Orders = () => {
         return;
       }
 
-      const productIds = [...new Set(ordersData.map((o) => o.product_id))];
-      
-      const [bySlug, byId] = await Promise.all([
-        supabase.from("products").select("id, slug, name, images").in("slug", productIds),
-        supabase.from("products").select("id, slug, name, images").in("id", productIds.filter((id) => id.match(/^[0-9a-f-]{36}$/i))),
-      ]);
-
-      const allProducts = [...(bySlug.data ?? []), ...(byId.data ?? [])];
-      const nameMap = new Map<string, { name: string; image?: string }>();
-      for (const p of allProducts) {
-        const img = (p.images as string[] | null)?.[0];
-        nameMap.set(p.slug, { name: p.name, image: img });
-        nameMap.set(p.id, { name: p.name, image: img });
-      }
+      const productIds = ordersData.map((o) => o.product_id);
+      const nameMap = await resolveProductInfo(productIds);
 
       setOrders(
         ordersData.map((o: any) => ({
@@ -75,19 +66,32 @@ const Orders = () => {
     };
     fetchOrders();
 
-    // Realtime subscription for order status updates
+    // Realtime subscription filtered by current user
+    if (!user?.id) return;
+
     const channel = supabase
       .channel("user-orders")
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "orders" },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload) => {
           setOrders((prev) =>
-            prev.map((o) =>
-              o.id === payload.new.id
-                ? { ...o, ...payload.new as any }
-                : o
-            )
+            prev.map((o) => {
+              if (o.id !== payload.new.id) return o;
+              // Preserve enriched fields that don't exist in the DB payload
+              const { product_name, product_image, ...rest } = o;
+              return {
+                ...rest,
+                ...(payload.new as any),
+                product_name,
+                product_image,
+              };
+            })
           );
         }
       )
@@ -96,7 +100,7 @@ const Orders = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user?.id]);
 
   const breadcrumbs = [{ label: "Meus Pedidos" }];
 

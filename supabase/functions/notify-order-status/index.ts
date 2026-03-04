@@ -1,10 +1,14 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { sendLovableEmail } from "npm:@lovable.dev/email-js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const SENDER_DOMAIN = "notify.studio.artiscase.com";
+const FROM = "ArtisCase <noreply@notify.studio.artiscase.com>";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
@@ -36,8 +40,9 @@ function buildEmailHtml(params: {
   totalCents: number;
   trackingCode?: string | null;
   appUrl: string;
+  logoUrl: string;
 }): string {
-  const { userName, orderId, productName, newStatus, totalCents, trackingCode, appUrl } = params;
+  const { userName, orderId, productName, newStatus, totalCents, trackingCode, appUrl, logoUrl } = params;
   const shortId = orderId.slice(0, 8);
   const statusLabel = statusLabels[newStatus] ?? newStatus;
   const statusColor = statusColors[newStatus] ?? "#8b5cf6";
@@ -60,7 +65,7 @@ function buildEmailHtml(params: {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
     <!-- Logo -->
     <tr><td align="center" style="padding-bottom:32px;">
-      <span style="font-size:24px;font-weight:700;color:hsl(265,83%,57%);letter-spacing:-0.5px;">ArtisCase</span>
+      <img src="${logoUrl}" alt="ArtisCase" height="40" style="height:40px;width:auto;" />
     </td></tr>
     <!-- Greeting -->
     <tr><td>
@@ -104,11 +109,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { order_id, new_status } = await req.json();
-    if (!order_id || !new_status) {
+    // --- Auth: verify caller is admin ---
+    const authHeader = req.headers.get("authorization") ?? "";
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: "order_id and new_status required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Missing authorization token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -116,6 +123,36 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Verify the JWT and get user
+    const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !caller) {
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check admin role
+    const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
+      _user_id: caller.id,
+      _role: "admin",
+    });
+    if (!isAdmin) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: admin role required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // --- Parse body ---
+    const { order_id, new_status } = await req.json();
+    if (!order_id || !new_status) {
+      return new Response(
+        JSON.stringify({ error: "order_id and new_status required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Fetch order
     const { data: order, error: orderError } = await supabaseAdmin
@@ -131,34 +168,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch user email
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(order.user_id);
-    if (userError || !userData?.user?.email) {
+    // Fetch user email + profile in parallel
+    const [userRes, profileRes, productRes] = await Promise.all([
+      supabaseAdmin.auth.admin.getUserById(order.user_id),
+      supabaseAdmin.from("profiles").select("full_name").eq("id", order.user_id).single(),
+      supabaseAdmin
+        .from("products")
+        .select("name")
+        .or(`id.eq.${order.product_id},slug.eq.${order.product_id}`)
+        .limit(1)
+        .single(),
+    ]);
+
+    if (userRes.error || !userRes.data?.user?.email) {
       return new Response(
         JSON.stringify({ error: "User not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Fetch profile for name
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("full_name")
-      .eq("id", order.user_id)
-      .single();
-
-    // Resolve product name
-    let productName = order.product_id;
-    const { data: product } = await supabaseAdmin
-      .from("products")
-      .select("name")
-      .or(`id.eq.${order.product_id},slug.eq.${order.product_id}`)
-      .limit(1)
-      .single();
-    if (product) productName = product.name;
-
-    const userName = profile?.full_name || userData.user.email.split("@")[0];
+    const userName = profileRes.data?.full_name || userRes.data.user.email.split("@")[0];
+    const productName = productRes.data?.name ?? order.product_id;
     const appUrl = Deno.env.get("APP_URL") || "https://artiscase-v2.lovable.app";
+
+    // Logo from public email-assets bucket
+    const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/email-assets/logo-artiscase.png`;
 
     const html = buildEmailHtml({
       userName,
@@ -168,11 +202,12 @@ Deno.serve(async (req) => {
       totalCents: order.total_cents,
       trackingCode: order.tracking_code,
       appUrl,
+      logoUrl,
     });
 
-    // Send email using Lovable email API
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableApiKey) {
+    // --- Send via @lovable.dev/email-js ---
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -182,31 +217,22 @@ Deno.serve(async (req) => {
     const statusLabel = statusLabels[new_status] ?? new_status;
     const shortId = order_id.slice(0, 8);
 
-    const emailRes = await fetch("https://api.lovable.dev/api/v1/email/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableApiKey}`,
-      },
-      body: JSON.stringify({
-        to: userData.user.email,
+    const result = await sendLovableEmail(
+      {
+        to: userRes.data.user.email,
+        from: FROM,
+        sender_domain: SENDER_DOMAIN,
         subject: `Pedido #${shortId} — ${statusLabel}`,
         html,
         purpose: "transactional",
-      }),
-    });
+      },
+      { apiKey }
+    );
 
-    if (!emailRes.ok) {
-      const errBody = await emailRes.text();
-      console.error("Email send failed:", errBody);
-      return new Response(
-        JSON.stringify({ error: "Failed to send email", details: errBody }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    console.log("Email sent successfully", { message_id: result.message_id, order_id });
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, message_id: result.message_id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

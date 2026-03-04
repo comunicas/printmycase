@@ -8,6 +8,7 @@ import AppHeader from "@/components/AppHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
+import { resolveProductInfo } from "@/lib/products";
 import logoArtisCase from "@/assets/logo-artiscase.png";
 
 const CheckoutSuccess = () => {
@@ -34,19 +35,12 @@ const CheckoutSuccess = () => {
 
       if (!order) return;
 
-      const isUuid = /^[0-9a-f-]{36}$/i.test(order.product_id);
-
-      const { data: product } = await supabase
-        .from("products")
-        .select("name, images")
-        .eq(isUuid ? "id" : "slug", order.product_id)
-        .maybeSingle();
-
-      const img = (product?.images as string[] | null)?.[0];
+      const nameMap = await resolveProductInfo([order.product_id]);
+      const info = nameMap.get(order.product_id);
 
       setOrderInfo({
-        productName: product?.name ?? order.product_id,
-        productImage: img,
+        productName: info?.name ?? order.product_id,
+        productImage: info?.image,
         totalCents: order.total_cents,
       });
     };
