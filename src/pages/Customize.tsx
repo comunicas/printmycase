@@ -27,6 +27,7 @@ const Customize = () => {
 
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageResolution, setImageResolution] = useState<{ w: number; h: number } | null>(null);
   const [scale, setScale] = useState(DEFAULTS.scale);
   const [rotation, setRotation] = useState(DEFAULTS.rotation);
   const [brightness, setBrightness] = useState(DEFAULTS.brightness);
@@ -82,7 +83,22 @@ const Customize = () => {
   const handleImageUpload = (file: File) => {
     setImageFile(file);
     const reader = new FileReader();
-    reader.onload = (e) => setImage(e.target?.result as string);
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setImage(dataUrl);
+      const img = new window.Image();
+      img.onload = () => {
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        setImageResolution({ w, h });
+        if (w < 400 || h < 800) {
+          toast({ title: "Resolução muito baixa", description: `Sua imagem tem ${w}×${h}px. Para boa qualidade de impressão, envie no mínimo 827×1772px.`, variant: "destructive" });
+        } else if (w < 800 || h < 1600) {
+          toast({ title: "Resolução pode ser insuficiente", description: `Sua imagem tem ${w}×${h}px. Recomendamos 827×1772px ou superior para melhor qualidade.` });
+        }
+      };
+      img.src = dataUrl;
+    };
     reader.readAsDataURL(file);
   };
 
@@ -133,6 +149,7 @@ const Customize = () => {
             image={image} scale={scale} rotation={rotation} brightness={brightness}
             contrast={contrast} extraFilter={extraFilter} position={position}
             onPositionChange={setPosition} onImageUpload={handleImageUpload} modelName={productName}
+            imageResolution={imageResolution}
           />
         </div>
         <div className="w-full max-w-sm space-y-6">
