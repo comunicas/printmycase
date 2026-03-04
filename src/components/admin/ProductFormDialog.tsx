@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import FormField from "@/components/ui/form-field";
 import SubmitButton from "@/components/forms/SubmitButton";
+import DeviceImageUpload from "@/components/admin/DeviceImageUpload";
 import {
   Dialog,
   DialogContent,
@@ -195,12 +196,11 @@ const ProductFormDialog = ({ open, onOpenChange, product, onSaved }: Props) => {
             />
           </FormField>
 
-          <FormField label="Imagem do Aparelho (URL)" id="pDeviceImage" hint="Foto de referência do celular sem capa">
-            <Input
-              id="pDeviceImage"
+          <FormField label="Imagem do Aparelho" id="pDeviceImage" hint="Foto de referência do celular sem capa">
+            <DeviceImageUpload
+              productId={product?.id ?? null}
               value={deviceImage}
-              onChange={(e) => setDeviceImage(e.target.value)}
-              placeholder="https://..."
+              onChange={setDeviceImage}
             />
           </FormField>
 
