@@ -35,7 +35,7 @@ const Landing = () => {
 
   return (
     <>
-      <SeoHead />
+      <SeoHead products={featuredProducts} />
       <div className="min-h-screen bg-background flex flex-col">
         <AppHeader />
 
