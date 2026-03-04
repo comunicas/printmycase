@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PhonePreview from "@/components/PhonePreview";
 import ControlPanel from "@/components/ControlPanel";
 import FilterPresets, { filters } from "@/components/FilterPresets";
@@ -88,20 +87,13 @@ const Customize = () => {
           />
         </div>
         <div className="w-full max-w-sm space-y-6">
-          <Tabs defaultValue="adjust" className="w-full">
-            <TabsList className="w-full">
-              <TabsTrigger value="adjust" className="flex-1">Ajustes</TabsTrigger>
-              <TabsTrigger value="filters" className="flex-1">Filtros</TabsTrigger>
-            </TabsList>
-            <TabsContent value="adjust">
-              <ControlPanel scale={scale} rotation={rotation} brightness={brightness} contrast={contrast}
-                onScaleChange={setScale} onRotationChange={setRotation}
-                onBrightnessChange={handleBrightnessChange} onContrastChange={handleContrastChange} disabled={!image} />
-            </TabsContent>
-            <TabsContent value="filters">
-              <FilterPresets image={image} activeFilter={activeFilter} onSelectFilter={handleSelectFilter} disabled={!image} />
-            </TabsContent>
-          </Tabs>
+          <h1 className="text-lg font-semibold text-foreground">Customizar</h1>
+
+          <FilterPresets image={image} activeFilter={activeFilter} onSelectFilter={handleSelectFilter} disabled={!image} />
+
+          <ControlPanel scale={scale} rotation={rotation} brightness={brightness} contrast={contrast}
+            onScaleChange={setScale} onRotationChange={setRotation}
+            onBrightnessChange={handleBrightnessChange} onContrastChange={handleContrastChange} disabled={!image} />
 
           <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image}>
             Continuar <ArrowRight className="w-4 h-4" />
