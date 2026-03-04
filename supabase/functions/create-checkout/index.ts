@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
 
     const userId = userData.user.id;
-    const { product_id, customization_data, image_url, shipping_cents, address_id } = await req.json();
+    const { product_id, customization_data, image_url, shipping_cents, address_id, address_inline, save_address } = await req.json();
 
     if (!product_id) {
       return new Response(JSON.stringify({ error: "product_id is required" }), {
@@ -63,9 +63,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch address snapshot if provided
+    // Resolve shipping address
     let shippingAddress = null;
+    let resolvedAddressId = address_id || null;
+
     if (address_id) {
+      // Use saved address
       const { data: addr } = await supabaseAdmin
         .from("addresses")
         .select("*")
@@ -73,15 +76,38 @@ Deno.serve(async (req) => {
         .single();
       if (addr) {
         shippingAddress = {
-          street: addr.street,
-          number: addr.number,
-          complement: addr.complement,
-          neighborhood: addr.neighborhood,
-          city: addr.city,
-          state: addr.state,
-          zip_code: addr.zip_code,
-          label: addr.label,
+          street: addr.street, number: addr.number, complement: addr.complement,
+          neighborhood: addr.neighborhood, city: addr.city, state: addr.state,
+          zip_code: addr.zip_code, label: addr.label,
         };
+      }
+    } else if (address_inline) {
+      // Use inline address from form
+      shippingAddress = {
+        street: address_inline.street, number: address_inline.number,
+        complement: address_inline.complement, neighborhood: address_inline.neighborhood,
+        city: address_inline.city, state: address_inline.state,
+        zip_code: address_inline.zip_code, label: address_inline.label || "Casa",
+      };
+
+      // Save address if requested
+      if (save_address) {
+        const { data: newAddr } = await supabaseAdmin
+          .from("addresses")
+          .insert({
+            user_id: userId,
+            street: address_inline.street,
+            number: address_inline.number,
+            complement: address_inline.complement || null,
+            neighborhood: address_inline.neighborhood,
+            city: address_inline.city,
+            state: address_inline.state,
+            zip_code: address_inline.zip_code,
+            label: address_inline.label || "Casa",
+          })
+          .select("id")
+          .single();
+        if (newAddr) resolvedAddressId = newAddr.id;
       }
     }
 
@@ -94,7 +120,6 @@ Deno.serve(async (req) => {
     params.append("payment_method_types[0]", "card");
     params.append("mode", "payment");
 
-    // Product line item
     if (product.stripe_price_id) {
       params.append("line_items[0][price]", product.stripe_price_id);
     } else {
@@ -105,7 +130,6 @@ Deno.serve(async (req) => {
     }
     params.append("line_items[0][quantity]", "1");
 
-    // Shipping line item
     if (shippingValue > 0) {
       params.append("line_items[1][price_data][currency]", "brl");
       params.append("line_items[1][price_data][unit_amount]", String(shippingValue));
@@ -141,7 +165,7 @@ Deno.serve(async (req) => {
       total_cents: totalCents,
       shipping_cents: shippingValue || null,
       shipping_address: shippingAddress,
-      address_id: address_id || null,
+      address_id: resolvedAddressId,
       stripe_session_id: session.id,
       customization_data: {
         ...customization_data,

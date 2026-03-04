@@ -5,6 +5,7 @@ import Product from "./pages/Product";
 import Catalog from "./pages/Catalog";
 import Landing from "./pages/Landing";
 import Customize from "./pages/Customize";
+import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
@@ -25,6 +26,7 @@ const App = () => (
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/product/:id" element={<Product />} />
         <Route path="/customize/:id" element={<AuthGuard><Customize /></AuthGuard>} />
+        <Route path="/checkout/:id" element={<AuthGuard><Checkout /></AuthGuard>} />
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/orders" element={<AuthGuard><Orders /></AuthGuard>} />
         <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
