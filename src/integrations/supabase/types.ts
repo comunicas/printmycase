@@ -118,6 +118,7 @@ export type Database = {
           colors: Json | null
           created_at: string | null
           description: string | null
+          device_image: string | null
           id: string
           images: string[] | null
           name: string
@@ -135,6 +136,7 @@ export type Database = {
           colors?: Json | null
           created_at?: string | null
           description?: string | null
+          device_image?: string | null
           id?: string
           images?: string[] | null
           name: string
@@ -152,6 +154,7 @@ export type Database = {
           colors?: Json | null
           created_at?: string | null
           description?: string | null
+          device_image?: string | null
           id?: string
           images?: string[] | null
           name?: string
