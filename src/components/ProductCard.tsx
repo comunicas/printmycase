@@ -16,13 +16,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
       className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
       onClick={() => navigate(`/product/${product.slug}`)}
     >
-      <div className="aspect-square overflow-hidden">
-        <img
-          src={product.images[0]}
-          alt={product.name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+      <div className="aspect-square overflow-hidden bg-muted flex items-center justify-center">
+        {(product.device_image || product.images[0]) ? (
+          <img
+            src={product.device_image ?? product.images[0]}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <span className="text-muted-foreground text-xs">Sem imagem</span>
+        )}
       </div>
       <CardContent className="p-3">
         <h3 className="text-sm font-semibold text-foreground line-clamp-2">{product.name}</h3>
