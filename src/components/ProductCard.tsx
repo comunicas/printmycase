@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import StarRating from "@/components/StarRating";
 import { type Product, formatPrice } from "@/lib/types";
 
@@ -15,7 +16,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
       onClick={() => navigate(`/product/${product.slug}`)}
     >
-      <div className="aspect-[3/4] overflow-hidden">
+      <div className="aspect-square overflow-hidden">
         <img
           src={product.images[0]}
           alt={product.name}
@@ -29,6 +30,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="mt-1">
           <StarRating rating={product.rating} reviewCount={product.review_count} />
         </div>
+        <Button
+          size="sm"
+          className="w-full mt-2"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/customize/${product.slug}`);
+          }}
+        >
+          Customizar
+        </Button>
       </CardContent>
     </Card>
   );
