@@ -69,8 +69,8 @@ const ProductsTable = ({ products, loading, onEdit, onToggleActive, selectedIds,
                 />
               </TableCell>
               <TableCell>
-                {p.images?.[0] ? (
-                  <img src={p.images[0]} alt={p.name} className="h-10 w-10 rounded object-cover" />
+              {(p.images?.[0] || p.device_image) ? (
+                  <img src={p.images?.[0] || p.device_image!} alt={p.name} className="h-10 w-10 rounded object-cover" />
                 ) : (
                   <div className="h-10 w-10 rounded bg-muted" />
                 )}
