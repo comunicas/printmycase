@@ -50,7 +50,7 @@ export const EmailChangeEmail = ({
         <Text style={footer}>
           Se você não solicitou esta troca, proteja sua conta imediatamente.
         </Text>
-        <Text style={brand}>ArtisCase — Capas personalizadas</Text>
+        <Text style={brand}>ArtisCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>

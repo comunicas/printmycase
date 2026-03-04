@@ -39,7 +39,7 @@ export const RecoveryEmail = ({
         <Text style={footer}>
           Se você não solicitou a redefinição de senha, pode ignorar este email. Sua senha permanecerá a mesma.
         </Text>
-        <Text style={brand}>ArtisCase — Capas personalizadas</Text>
+        <Text style={brand}>ArtisCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>

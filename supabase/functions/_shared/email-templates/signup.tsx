@@ -47,7 +47,7 @@ export const SignupEmail = ({
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
           </Link>
-          ) e começar a personalizar sua capa.
+          ) e começar a personalizar sua capinha.
         </Text>
         <Button style={button} href={confirmationUrl}>
           Confirmar Email
@@ -55,7 +55,7 @@ export const SignupEmail = ({
         <Text style={footer}>
           Se você não criou uma conta na ArtisCase, pode ignorar este email.
         </Text>
-        <Text style={brand}>ArtisCase — Capas personalizadas</Text>
+        <Text style={brand}>ArtisCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>

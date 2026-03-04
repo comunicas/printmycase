@@ -47,7 +47,7 @@ const Checkout = () => {
   useEffect(() => {
     const raw = sessionStorage.getItem("customization");
     if (!raw) {
-      toast({ title: "Customização não encontrada", description: "Volte e personalize sua capa.", variant: "destructive" });
+      toast({ title: "Customização não encontrada", description: "Volte e personalize sua capinha.", variant: "destructive" });
       navigate(`/customize/${id}`, { replace: true });
       return;
     }

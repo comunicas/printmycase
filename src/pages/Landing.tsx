@@ -12,7 +12,7 @@ import ProductCard from "@/components/ProductCard";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const testimonials = [
-  { name: "Ana C.", text: "Melhor capa que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
+  { name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
   { name: "Lucas M.", text: "Surpreendeu demais. O acabamento soft-touch é muito premium. Já pedi a segunda!", rating: 5 },
   { name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 },
 ];
@@ -44,14 +44,14 @@ const Landing = () => {
           <section className="py-20 md:py-28 px-5">
             <div className="max-w-3xl mx-auto text-center space-y-6">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
-                Sua capa, sua identidade.
+                Sua Case, sua identidade.
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Transforme suas fotos favoritas em capas de celular únicas. Proteção premium com acabamento soft-touch e design 100% seu.
+                Transforme suas fotos favoritas em capinhas únicas. Proteção premium com acabamento soft-touch e design 100% seu.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <Button size="lg" className="gap-2 text-base" onClick={() => navigate("/catalog")}>
-                  Criar Minha Capa <ArrowRight className="w-4 h-4" />
+                  Criar Minha Case <ArrowRight className="w-4 h-4" />
                 </Button>
                 <Button size="lg" variant="outline" className="gap-2 text-base" onClick={() => navigate("/catalog")}>
                   Ver Modelos
@@ -63,7 +63,7 @@ const Landing = () => {
                     <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <span className="text-sm text-muted-foreground font-medium">Mais de 1.000 capas criadas</span>
+                <span className="text-sm text-muted-foreground font-medium">Mais de 1.000 cases criadas</span>
               </div>
             </div>
           </section>
@@ -165,8 +165,8 @@ const Landing = () => {
           {/* Final CTA */}
           <section className="py-20 px-5 bg-primary text-primary-foreground">
             <div className="max-w-2xl mx-auto text-center space-y-6">
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Pronto para criar sua capa única?</h2>
-              <p className="text-lg opacity-90">Escolha seu modelo, envie sua foto e receba uma capa exclusiva na sua porta.</p>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Pronto para criar sua Case?</h2>
+              <p className="text-lg opacity-90">Escolha seu modelo, envie sua foto e receba sua capinha exclusiva na sua porta.</p>
               <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold" onClick={() => navigate("/catalog")}>
                 Comece Agora <ArrowRight className="w-4 h-4" />
               </Button>
