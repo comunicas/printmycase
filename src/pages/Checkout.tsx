@@ -53,6 +53,7 @@ const Checkout = () => {
   // Shipping
   const [shipping, setShipping] = useState<ShippingResult | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [zipLoading, setZipLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   // Load customization from sessionStorage
@@ -88,7 +89,7 @@ const Checkout = () => {
       });
   }, [user]);
 
-  const handleZipChange = (value: string) => {
+  const handleZipChange = async (value: string) => {
     const masked = maskCEP(value);
     setZipInput(masked);
     setSelectedAddressId(null);
@@ -97,6 +98,25 @@ const Checkout = () => {
       setShipping(getShippingByZip(clean));
     } else {
       setShipping(null);
+    }
+
+    if (clean.length === 8) {
+      setZipLoading(true);
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+        const data = await res.json();
+        if (!data.erro) {
+          setStreet(data.logradouro || "");
+          setNeighborhood(data.bairro || "");
+          setCity(data.localidade || "");
+          setState(data.uf || "");
+          if (data.complemento) setComplement(data.complemento);
+        }
+      } catch {
+        // silently fail — user fills manually
+      } finally {
+        setZipLoading(false);
+      }
     }
   };
 
@@ -270,14 +290,19 @@ const Checkout = () => {
         <FormCard title="Endereço de entrega" description="Preencha o endereço completo para envio.">
           <div className="space-y-4">
             <FormField label="CEP" id="zip" required error={submitted ? errors.zip : undefined}>
-              <Input
-                id="zip"
-                placeholder="00000-000"
-                value={zipInput}
-                onChange={(e) => handleZipChange(e.target.value)}
-                maxLength={9}
-                className={`font-mono ${submitted && errors.zip ? "border-destructive" : ""}`}
-              />
+              <div className="relative">
+                <Input
+                  id="zip"
+                  placeholder="00000-000"
+                  value={zipInput}
+                  onChange={(e) => handleZipChange(e.target.value)}
+                  maxLength={9}
+                  className={`font-mono ${submitted && errors.zip ? "border-destructive" : ""}`}
+                />
+                {zipLoading && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
             </FormField>
 
             {shipping && (
