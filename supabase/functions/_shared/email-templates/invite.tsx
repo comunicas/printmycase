@@ -41,7 +41,7 @@ export const InviteEmail = ({
         <Text style={footer}>
           Se você não esperava este convite, pode ignorar este email.
         </Text>
-        <Text style={brand}>ArtisCase — Capas personalizadas</Text>
+        <Text style={brand}>ArtisCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>

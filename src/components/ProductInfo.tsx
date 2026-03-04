@@ -60,7 +60,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           className="w-full gap-2"
           onClick={() => navigate(`/customize/${product.slug}`)}
         >
-          Customizar Minha Capa
+          Customizar Minha Case
           <ArrowRight className="w-4 h-4" />
         </Button>
         <Button size="lg" variant="outline" className="w-full gap-2" onClick={() => navigate("/catalog")}>
