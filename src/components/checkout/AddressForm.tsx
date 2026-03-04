@@ -182,65 +182,81 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
         </div>
       )}
 
-      {/* Address form */}
-      <FormCard title="Endereço de entrega" description="Preencha o endereço completo para envio.">
-        <div className="space-y-4">
-          <FormField label="CEP" id="zip" required error={showError("zip")}>
-            <div className="relative">
-              <Input
-                id="zip"
-                placeholder="00000-000"
-                value={zipInput}
-                onChange={(e) => handleZipChange(e.target.value)}
-                onBlur={() => handleBlur("zip")}
-                maxLength={9}
-                className={`font-mono ${hasError("zip") ? "border-destructive" : ""}`}
-              />
-              {zipLoading && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
-              )}
-            </div>
-          </FormField>
-
-          {shipping && (
-            <p className="text-xs text-muted-foreground -mt-2">
-              {shipping.region} ({shipping.state}) — {formatPrice(shipping.priceCents / 100)}
-            </p>
-          )}
-
-          {shipping && !shipping.allowed && (
-            <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-              No momento, realizamos envios apenas para a região Sudeste (SP, RJ, MG, ES).
-            </div>
-          )}
-
-          <div className="grid grid-cols-3 gap-3">
-            <FormField label="Rua" id="street" required className="col-span-2" error={showError("street")}>
-              <Input id="street" value={street} onChange={(e) => setStreet(e.target.value)} onBlur={() => handleBlur("street")} placeholder="Rua, Av, Travessa..." className={hasError("street") ? "border-destructive" : ""} />
-            </FormField>
-            <FormField label="Número" id="number" required error={showError("number")}>
-              <Input id="number" value={number} onChange={(e) => setNumber(e.target.value)} onBlur={() => handleBlur("number")} placeholder="123" className={hasError("number") ? "border-destructive" : ""} />
-            </FormField>
+      {/* Selected address summary */}
+      {selectedAddressId && (
+        <FormCard title="Endereço de entrega">
+          <div className="text-sm text-foreground space-y-1">
+            <p>{street}, {number}{complement ? ` — ${complement}` : ""}</p>
+            <p>{neighborhood} — {city}/{state}</p>
+            <p className="font-mono text-muted-foreground">{zipInput}</p>
+            {shipping && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {shipping.region} ({shipping.state}) — {formatPrice(shipping.priceCents / 100)}
+              </p>
+            )}
           </div>
+        </FormCard>
+      )}
 
-          <FormField label="Complemento" id="complement">
-            <Input id="complement" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, Bloco..." />
-          </FormField>
-
-          <FormField label="Bairro" id="neighborhood" required error={showError("neighborhood")}>
-            <Input id="neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} onBlur={() => handleBlur("neighborhood")} className={hasError("neighborhood") ? "border-destructive" : ""} />
-          </FormField>
-
-          <div className="grid grid-cols-3 gap-3">
-            <FormField label="Cidade" id="city" required className="col-span-2" error={showError("city")}>
-              <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} onBlur={() => handleBlur("city")} className={hasError("city") ? "border-destructive" : ""} />
+      {/* Address form (only when no saved address selected) */}
+      {!selectedAddressId && (
+        <FormCard title="Endereço de entrega" description="Preencha o endereço completo para envio.">
+          <div className="space-y-4">
+            <FormField label="CEP" id="zip" required error={showError("zip")}>
+              <div className="relative">
+                <Input
+                  id="zip"
+                  placeholder="00000-000"
+                  value={zipInput}
+                  onChange={(e) => handleZipChange(e.target.value)}
+                  onBlur={() => handleBlur("zip")}
+                  maxLength={9}
+                  className={`font-mono ${hasError("zip") ? "border-destructive" : ""}`}
+                />
+                {zipLoading && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
             </FormField>
-            <FormField label="Estado" id="state" required error={showError("state")}>
-              <Input id="state" value={state} onChange={(e) => setState(e.target.value)} onBlur={() => handleBlur("state")} placeholder="SP" maxLength={2} className={`uppercase ${hasError("state") ? "border-destructive" : ""}`} />
-            </FormField>
-          </div>
 
-          {!selectedAddressId && (
+            {shipping && (
+              <p className="text-xs text-muted-foreground -mt-2">
+                {shipping.region} ({shipping.state}) — {formatPrice(shipping.priceCents / 100)}
+              </p>
+            )}
+
+            {shipping && !shipping.allowed && (
+              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
+                No momento, realizamos envios apenas para a região Sudeste (SP, RJ, MG, ES).
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-3">
+              <FormField label="Rua" id="street" required className="col-span-2" error={showError("street")}>
+                <Input id="street" value={street} onChange={(e) => setStreet(e.target.value)} onBlur={() => handleBlur("street")} placeholder="Rua, Av, Travessa..." className={hasError("street") ? "border-destructive" : ""} />
+              </FormField>
+              <FormField label="Número" id="number" required error={showError("number")}>
+                <Input id="number" value={number} onChange={(e) => setNumber(e.target.value)} onBlur={() => handleBlur("number")} placeholder="123" className={hasError("number") ? "border-destructive" : ""} />
+              </FormField>
+            </div>
+
+            <FormField label="Complemento" id="complement">
+              <Input id="complement" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, Bloco..." />
+            </FormField>
+
+            <FormField label="Bairro" id="neighborhood" required error={showError("neighborhood")}>
+              <Input id="neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} onBlur={() => handleBlur("neighborhood")} className={hasError("neighborhood") ? "border-destructive" : ""} />
+            </FormField>
+
+            <div className="grid grid-cols-3 gap-3">
+              <FormField label="Cidade" id="city" required className="col-span-2" error={showError("city")}>
+                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} onBlur={() => handleBlur("city")} className={hasError("city") ? "border-destructive" : ""} />
+              </FormField>
+              <FormField label="Estado" id="state" required error={showError("state")}>
+                <Input id="state" value={state} onChange={(e) => setState(e.target.value)} onBlur={() => handleBlur("state")} placeholder="SP" maxLength={2} className={`uppercase ${hasError("state") ? "border-destructive" : ""}`} />
+              </FormField>
+            </div>
+
             <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
@@ -251,9 +267,9 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
               <Save className="w-3.5 h-3.5" />
               Salvar endereço para próximas compras
             </label>
-          )}
-        </div>
-      </FormCard>
+          </div>
+        </FormCard>
+      )}
     </>
   );
 };
