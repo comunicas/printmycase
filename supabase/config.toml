@@ -11,3 +11,5 @@ project_id = "gfsbsgwxylvhnwbpcodj"
     verify_jwt = false
   [functions.stripe-webhook]
     verify_jwt = false
+  [functions.notify-order-status]
+    verify_jwt = false
