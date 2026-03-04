@@ -23,12 +23,12 @@ export async function resolveProductInfo(
 
   const { data } = await supabase
     .from("products")
-    .select("id, slug, name, images")
+    .select("id, slug, name, images, device_image")
     .or(conditions.join(","));
 
   const map = new Map<string, ProductInfo>();
   for (const p of data ?? []) {
-    const img = (p.images as string[] | null)?.[0];
+    const img = (p as any).device_image ?? (p.images as string[] | null)?.[0];
     const info: ProductInfo = { name: p.name, image: img };
     map.set(p.slug, info);
     map.set(p.id, info);

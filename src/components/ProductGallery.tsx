@@ -8,7 +8,8 @@ interface ProductGalleryProps {
 }
 
 const ProductGallery = ({ images, productName, deviceImage }: ProductGalleryProps) => {
-  const allImages = deviceImage ? [deviceImage, ...images] : images;
+  // Priorizar device_image; ignorar array images (mocado)
+  const allImages = deviceImage ? [deviceImage] : images.length > 0 ? images : [];
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   return (
@@ -20,11 +21,6 @@ const ProductGallery = ({ images, productName, deviceImage }: ProductGalleryProp
           className="w-full h-full object-contain p-6"
           loading="lazy"
         />
-        {deviceImage && selectedIndex === 0 && (
-          <span className="absolute top-2 left-2 text-xs bg-primary/90 text-primary-foreground px-2 py-0.5 rounded-full">
-            Aparelho
-          </span>
-        )}
       </div>
 
       {allImages.length > 1 && (
