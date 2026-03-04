@@ -11,6 +11,29 @@ import { useToast } from "@/hooks/use-toast";
 
 const DEFAULTS = { scale: 100, rotation: 0, brightness: 0, contrast: 0, activeFilter: null as string | null, position: { x: 50, y: 50 } };
 
+function compressImage(dataUrl: string, maxW = 2000, maxH = 4000, quality = 0.85): Promise<{ url: string; compressed: boolean }> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const { naturalWidth: w, naturalHeight: h } = img;
+      if (w <= maxW && h <= maxH) {
+        resolve({ url: dataUrl, compressed: false });
+        return;
+      }
+      const ratio = Math.min(maxW / w, maxH / h);
+      const nw = Math.round(w * ratio);
+      const nh = Math.round(h * ratio);
+      const canvas = document.createElement("canvas");
+      canvas.width = nw;
+      canvas.height = nh;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, nw, nh);
+      resolve({ url: canvas.toDataURL("image/jpeg", quality), compressed: true });
+    };
+    img.src = dataUrl;
+  });
+}
+
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading: productLoading } = useProduct(id);
@@ -83,11 +106,11 @@ const Customize = () => {
   const handleImageUpload = (file: File) => {
     setImageFile(file);
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setImage(dataUrl);
+    reader.onload = async (e) => {
+      const originalDataUrl = e.target?.result as string;
+      // Get original dimensions for quality badge
       const img = new window.Image();
-      img.onload = () => {
+      img.onload = async () => {
         const w = img.naturalWidth;
         const h = img.naturalHeight;
         setImageResolution({ w, h });
@@ -96,8 +119,14 @@ const Customize = () => {
         } else if (w < 800 || h < 1600) {
           toast({ title: "Resolução pode ser insuficiente", description: `Sua imagem tem ${w}×${h}px. Recomendamos 827×1772px ou superior para melhor qualidade.` });
         }
+        // Compress if too large
+        const { url, compressed } = await compressImage(originalDataUrl);
+        setImage(url);
+        if (compressed) {
+          toast({ title: "Imagem otimizada automaticamente", description: "A imagem foi redimensionada para melhor performance." });
+        }
       };
-      img.src = dataUrl;
+      img.src = originalDataUrl;
     };
     reader.readAsDataURL(file);
   };
