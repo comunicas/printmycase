@@ -22,7 +22,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs }, ref)
       <nav className="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
         <div className="flex items-center gap-2 min-w-0">
           <Link to="/" className="flex-shrink-0">
-            <img alt="ArtisCase" className="h-8 w-auto" src="/lovable-uploads/4824363f-6c57-4e39-a449-04a7c58c4a1a.png" />
+            <img alt="ArtisCase" className="h-8 w-auto" src="/lovable-uploads/79379ce7-c6b3-4051-9947-c8dfc449251d.png" />
           </Link>
           {breadcrumbs && breadcrumbs.length > 0 &&
           <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
