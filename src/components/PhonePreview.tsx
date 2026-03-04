@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, forwardRef } from "react";
-import { Upload, Camera, Move } from "lucide-react";
+import { Upload, Camera, Move, Loader2 } from "lucide-react";
 
 interface PhonePreviewProps {
   image: string | null;
@@ -13,9 +13,10 @@ interface PhonePreviewProps {
   onImageUpload: (file: File) => void;
   modelName?: string;
   imageResolution?: { w: number; h: number } | null;
+  isProcessing?: boolean;
 }
 
-const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload, modelName, imageResolution }, ref) => {
+const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload, modelName, imageResolution, isProcessing }, ref) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -136,6 +137,12 @@ const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, sca
           <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
             <span className="text-2xl text-foreground/15 select-none" style={{ fontFamily: 'system-ui' }}></span>
           </div>
+          {isProcessing && (
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2.4rem]">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="text-xs font-medium text-muted-foreground mt-2">Processando imagem...</span>
+            </div>
+          )}
         </div>
         {image && (
           <div className="absolute -bottom-2 -right-2 flex items-center gap-1.5 z-30">
