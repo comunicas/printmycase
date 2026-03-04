@@ -12,9 +12,10 @@ interface PhonePreviewProps {
   onPositionChange: (pos: { x: number; y: number }) => void;
   onImageUpload: (file: File) => void;
   modelName?: string;
+  imageResolution?: { w: number; h: number } | null;
 }
 
-const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload, modelName }, ref) => {
+const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload, modelName, imageResolution }, ref) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -116,7 +117,8 @@ const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, sca
               >
                 <div className="text-center space-y-3">
                   <Upload className="w-10 h-10 mx-auto text-muted-foreground/40 group-hover/upload:text-primary/60 transition-colors" />
-                  <p className="text-xs text-muted-foreground/50 group-hover/upload:text-primary/60">Toque para adicionar sua imagem</p>
+                   <p className="text-xs text-muted-foreground/50 group-hover/upload:text-primary/60">Toque para adicionar sua imagem</p>
+                   <p className="text-[10px] text-muted-foreground/30 mt-1">Recomendado: 827×1772px</p>
                 </div>
               </button>
             )}
@@ -136,12 +138,23 @@ const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, sca
           </div>
         </div>
         {image && (
-          <button
-            onClick={() => inputRef.current?.click()}
-            className="absolute -bottom-2 -right-2 w-9 h-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors z-30"
-          >
-            <Camera className="w-4 h-4" />
-          </button>
+          <div className="absolute -bottom-2 -right-2 flex items-center gap-1.5 z-30">
+            {imageResolution && (() => {
+              const isHD = imageResolution.w >= 800 && imageResolution.h >= 1600;
+              const isLow = imageResolution.w < 400 || imageResolution.h < 800;
+              return (
+                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow ${isLow ? 'bg-destructive text-destructive-foreground' : isHD ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                  {isLow ? 'Baixa' : isHD ? 'HD' : 'Média'}
+                </span>
+              );
+            })()}
+            <button
+              onClick={() => inputRef.current?.click()}
+              className="w-9 h-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
       <input
