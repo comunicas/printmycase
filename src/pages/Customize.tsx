@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, RotateCcw } from "lucide-react";
+import { ArrowRight, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PhonePreview from "@/components/PhonePreview";
 import ControlPanel from "@/components/ControlPanel";
@@ -10,6 +10,8 @@ import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 
 const DEFAULTS = { scale: 100, rotation: 0, brightness: 0, contrast: 0, activeFilter: null as string | null, position: { x: 50, y: 50 } };
+const PHONE_W = 260;
+const PHONE_H = 532;
 
 function compressImage(dataUrl: string, maxW = 2000, maxH = 4000, quality = 0.85): Promise<{ url: string; compressed: boolean }> {
   return new Promise((resolve) => {
@@ -34,6 +36,52 @@ function compressImage(dataUrl: string, maxW = 2000, maxH = 4000, quality = 0.85
   });
 }
 
+function renderSnapshot(
+  imgSrc: string, scale: number, rotation: number,
+  brightness: number, contrast: number, filterCss: string | undefined,
+  position: { x: number; y: number }, quality = 0.85
+): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = PHONE_W;
+      canvas.height = PHONE_H;
+      const ctx = canvas.getContext("2d")!;
+
+      ctx.save();
+      const baseFilter = `brightness(${1 + brightness / 100}) contrast(${1 + contrast / 100})`;
+      ctx.filter = filterCss ? `${baseFilter} ${filterCss}` : baseFilter;
+
+      const oversize = Math.max(150, scale * 1.25);
+      const drawW = (scale / oversize) * PHONE_W * (oversize / 100);
+      const drawH = (scale / oversize) * PHONE_H * (oversize / 100);
+
+      const imgAspect = img.naturalWidth / img.naturalHeight;
+      const cellAspect = PHONE_W / PHONE_H;
+      let srcW: number, srcH: number;
+      if (imgAspect > cellAspect) {
+        srcH = img.naturalHeight;
+        srcW = srcH * cellAspect;
+      } else {
+        srcW = img.naturalWidth;
+        srcH = srcW / cellAspect;
+      }
+      const maxOffX = img.naturalWidth - srcW;
+      const maxOffY = img.naturalHeight - srcH;
+      const srcX = (position.x / 100) * maxOffX;
+      const srcY = (position.y / 100) * maxOffY;
+
+      ctx.translate(PHONE_W / 2, PHONE_H / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.drawImage(img, srcX, srcY, srcW, srcH, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.restore();
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.src = imgSrc;
+  });
+}
+
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading: productLoading } = useProduct(id);
@@ -50,6 +98,8 @@ const Customize = () => {
 
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [isRendering, setIsRendering] = useState(false);
   const [imageResolution, setImageResolution] = useState<{ w: number; h: number } | null>(null);
   const [scale, setScale] = useState(DEFAULTS.scale);
   const [rotation, setRotation] = useState(DEFAULTS.rotation);
@@ -105,10 +155,10 @@ const Customize = () => {
 
   const handleImageUpload = (file: File) => {
     setImageFile(file);
+    setIsCompressing(true);
     const reader = new FileReader();
     reader.onload = async (e) => {
       const originalDataUrl = e.target?.result as string;
-      // Get original dimensions for quality badge
       const img = new window.Image();
       img.onload = async () => {
         const w = img.naturalWidth;
@@ -119,9 +169,9 @@ const Customize = () => {
         } else if (w < 800 || h < 1600) {
           toast({ title: "Resolução pode ser insuficiente", description: `Sua imagem tem ${w}×${h}px. Recomendamos 827×1772px ou superior para melhor qualidade.` });
         }
-        // Compress if too large
         const { url, compressed } = await compressImage(originalDataUrl);
         setImage(url);
+        setIsCompressing(false);
         if (compressed) {
           toast({ title: "Imagem otimizada automaticamente", description: "A imagem foi redimensionada para melhor performance." });
         }
@@ -139,16 +189,25 @@ const Customize = () => {
   const handleBrightnessChange = (v: number) => { setBrightness(v); if (activeFilter) setActiveFilter(null); };
   const handleContrastChange = (v: number) => { setContrast(v); if (activeFilter) setActiveFilter(null); };
 
-  const handleContinue = () => {
-    if (!product) return;
-    const customData = {
-      image,
-      imageFileName: imageFile?.name || null,
-      scale, rotation, brightness, contrast, activeFilter, position,
-    };
-    sessionStorage.setItem("customization", JSON.stringify(customData));
-    if (product.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
-    navigate(`/checkout/${product.slug}`);
+  const handleContinue = async () => {
+    if (!product || !image) return;
+    setIsRendering(true);
+    try {
+      const activeFilterObj = filters.find((f) => f.id === activeFilter);
+      const filterCss = activeFilterObj?.cssFilter ?? undefined;
+      const editedImage = await renderSnapshot(image, scale, rotation, brightness, contrast, filterCss, position);
+      const customData = {
+        image,
+        editedImage,
+        imageFileName: imageFile?.name || null,
+        scale, rotation, brightness, contrast, activeFilter, position,
+      };
+      sessionStorage.setItem("customization", JSON.stringify(customData));
+      if (product.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
+      navigate(`/checkout/${product.slug}`);
+    } finally {
+      setIsRendering(false);
+    }
   };
 
   const activeFilterObj = filters.find((f) => f.id === activeFilter);
@@ -178,7 +237,7 @@ const Customize = () => {
             image={image} scale={scale} rotation={rotation} brightness={brightness}
             contrast={contrast} extraFilter={extraFilter} position={position}
             onPositionChange={setPosition} onImageUpload={handleImageUpload} modelName={productName}
-            imageResolution={imageResolution}
+            imageResolution={imageResolution} isProcessing={isCompressing || isRendering}
           />
         </div>
         <div className="w-full max-w-sm space-y-6">
@@ -197,8 +256,12 @@ const Customize = () => {
             onScaleChange={setScale} onRotationChange={setRotation}
             onBrightnessChange={handleBrightnessChange} onContrastChange={handleContrastChange} disabled={!image} />
 
-          <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image}>
-            Continuar <ArrowRight className="w-4 h-4" />
+          <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image || isCompressing || isRendering}>
+            {isRendering ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Gerando preview...</>
+            ) : (
+              <>Continuar <ArrowRight className="w-4 h-4" /></>
+            )}
           </Button>
         </div>
       </main>

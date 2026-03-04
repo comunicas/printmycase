@@ -14,6 +14,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 
 interface CustomizationData {
   image: string | null;
+  editedImage: string | null;
   imageFileName: string | null;
   scale: number;
   rotation: number;
@@ -67,14 +68,27 @@ const Checkout = () => {
     if (!isAddressValid) return;
     setCheckoutLoading(true);
     try {
-      let imageUrl: string | null = null;
+      let originalImageUrl: string | null = null;
+      let editedImageUrl: string | null = null;
+      const ts = Date.now();
+
+      // Upload original image
       if (customization.image) {
         const blob = await fetch(customization.image).then((r) => r.blob());
         const ext = customization.imageFileName?.split(".").pop() || "png";
-        const path = `${user.id}/${Date.now()}.${ext}`;
+        const path = `${user.id}/original_${ts}.${ext}`;
         const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
-        if (uploadError) throw new Error("Erro ao fazer upload da imagem: " + uploadError.message);
-        imageUrl = path;
+        if (uploadError) throw new Error("Erro ao fazer upload da imagem original: " + uploadError.message);
+        originalImageUrl = path;
+      }
+
+      // Upload edited image (snapshot with edits applied)
+      if (customization.editedImage) {
+        const blob = await fetch(customization.editedImage).then((r) => r.blob());
+        const path = `${user.id}/edited_${ts}.jpg`;
+        const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
+        if (uploadError) throw new Error("Erro ao fazer upload da imagem editada: " + uploadError.message);
+        editedImageUrl = path;
       }
 
       const cleanZip = addressData.zipInput.replace(/\D/g, "");
@@ -91,7 +105,8 @@ const Checkout = () => {
         body: {
           product_id: product.id,
           customization_data: customizationPayload,
-          image_url: imageUrl,
+          original_image_url: originalImageUrl,
+          edited_image_url: editedImageUrl,
           shipping_cents: shipping.priceCents,
           address_id: addressData.selectedAddressId,
           address_inline: addressData.selectedAddressId ? undefined : {
