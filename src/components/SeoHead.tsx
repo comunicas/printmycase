@@ -1,15 +1,20 @@
 import { useEffect } from "react";
 import { useProducts } from "@/hooks/useProducts";
-
+import type { Product } from "@/lib/types";
 
 const SITE_NAME = "ArtisCase";
 const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://artiscase-v2.lovable.app";
-const TITLE = "ArtisCase | Capas Personalizadas para iPhone";
+const TITLE = "ArtisCase | Capas Personalizadas para Celular";
 const DESCRIPTION =
-  "Crie capas de celular personalizadas com suas fotos. Proteção premium, acabamento soft-touch e frete grátis. iPhone 17, 15, 11, SE e mais.";
+  "Crie capas de celular personalizadas com suas fotos. Proteção premium, acabamento soft-touch e frete grátis para diversos modelos de smartphone.";
 
-const SeoHead = () => {
-  const { products } = useProducts(8);
+interface SeoHeadProps {
+  products?: Product[];
+}
+
+const SeoHead = ({ products: productsProp }: SeoHeadProps) => {
+  const { products: fetchedProducts } = useProducts(productsProp ? 0 : 8);
+  const products = productsProp ?? fetchedProducts;
 
   useEffect(() => {
     document.title = TITLE;
@@ -44,10 +49,7 @@ const SeoHead = () => {
       "@context": "https://schema.org",
       "@graph": [
         { "@type": "Organization", name: SITE_NAME, url: SITE_URL, description: DESCRIPTION },
-        {
-          "@type": "WebSite", name: SITE_NAME, url: SITE_URL,
-          potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/catalog?q={search_term_string}`, "query-input": "required name=search_term_string" },
-        },
+        { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
         ...(products.length > 0
           ? [{
               "@type": "ItemList" as const,
