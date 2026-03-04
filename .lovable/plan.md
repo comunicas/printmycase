@@ -1,24 +1,31 @@
 
 
-# Fase 4: Reescrita do ARCHITECTURE.md
+# Melhorias pontuais + Sugestões de próximas fases
 
-Reescrever completamente o `ARCHITECTURE.md` para refletir o estado atual da plataforma após as Fases 1-3. O documento está totalmente desatualizado — ainda diz "Case Studio", "sem backend", lista `data/products.ts` como dados mock, e não menciona Supabase, Stripe, autenticação, admin, pedidos, ou edge functions.
+## 1. Remover toast "Imagem original muito grande"
 
-## Mudanças principais
+Em `src/pages/Customize.tsx` (linha 214), remover o `toast()` no fallback do sessionStorage. O fallback continua funcionando (salva sem a imagem original), apenas sem notificar o usuário.
 
-1. **Nome e descrição**: "ArtisCase" (não "Case Studio"), plataforma com backend completo (não "sem backend")
-2. **Stack**: Adicionar Supabase (DB + Auth + Storage + Edge Functions) e Stripe (pagamentos)
-3. **Rotas**: Atualizar de 5 para 13 rotas, incluindo auth, checkout, admin, orders, profile
-4. **Estrutura de pastas**: Refletir a estrutura real — `contexts/`, `lib/` (types, constants, masks, shipping, products), `components/admin/`, `components/checkout/`, `components/forms/`, `supabase/functions/`
-5. **Modelo de dados**: Interface `Product` atualizada com `slug`, `price_cents`, `stripe_price_id`, `active`, etc. Mencionar tabelas DB: `products`, `orders`, `addresses`, `profiles`, `user_roles`
-6. **Arquitetura**: AuthContext centralizado, lazy loading de rotas, LoadingSpinner compartilhado
-7. **Edge Functions**: Documentar as 7 functions (create-checkout, stripe-webhook, delete-account, notify-order-status, admin-sync-stripe, bulk-sync-stripe, auth-email-hook)
-8. **SEO**: Atualizado — sem SearchAction, sem hardcode "iPhone"
-9. **Segurança**: RLS, RBAC via `user_roles` + `has_role()`, JWT validation em edge functions
+## 2. Esconder formulário quando endereço salvo está selecionado
 
-## Arquivo afetado
+Em `src/components/checkout/AddressForm.tsx`, envolver o `<FormCard>` (linhas 186-256) com uma condição: só exibir quando `!selectedAddressId`. Quando o usuário seleciona um endereço salvo, o formulário fica oculto — mostrando apenas os chips de seleção e um resumo compacto do endereço selecionado (rua, número, cidade/estado).
 
-| Ação | Arquivo |
-|------|---------|
-| Reescrever | `ARCHITECTURE.md` |
+## Arquivos afetados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/pages/Customize.tsx` | Remover toast na linha 214 |
+| `src/components/checkout/AddressForm.tsx` | Esconder form quando endereço selecionado, mostrar resumo |
+
+---
+
+## Sugestões para próxima fase
+
+Após 4 fases de consolidação, o projeto está bem estruturado. Algumas direções possíveis:
+
+1. **Histórico de pedidos com tracking visual** — Timeline de status na página /orders com notificações
+2. **Múltiplas quantidades e carrinho** — Permitir comprar mais de uma capa por checkout
+3. **Cupons de desconto** — Integração com Stripe Coupons na tela de checkout
+4. **Dashboard admin com métricas** — Vendas, receita, pedidos por status (gráficos)
+5. **PWA e notificações push** — Instalar como app, notificar quando pedido mudar de status
 
