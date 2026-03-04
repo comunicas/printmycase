@@ -21,11 +21,12 @@ interface FilterPresetsProps {
   image: string | null;
   activeFilter: string | null;
   onSelectFilter: (filterId: string | null) => void;
+  disabled?: boolean;
 }
 
-const FilterPresets = ({ image, activeFilter, onSelectFilter }: FilterPresetsProps) => {
+const FilterPresets = ({ image, activeFilter, onSelectFilter, disabled }: FilterPresetsProps) => {
   return (
-    <div className="space-y-3">
+    <div className={`space-y-3 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
       <div className="flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-primary" />
         <span className="text-sm font-medium text-foreground">Filtros</span>

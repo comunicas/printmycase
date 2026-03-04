@@ -96,14 +96,14 @@ const Customize = () => {
             <TabsContent value="adjust">
               <ControlPanel scale={scale} rotation={rotation} brightness={brightness} contrast={contrast}
                 onScaleChange={setScale} onRotationChange={setRotation}
-                onBrightnessChange={handleBrightnessChange} onContrastChange={handleContrastChange} />
+                onBrightnessChange={handleBrightnessChange} onContrastChange={handleContrastChange} disabled={!image} />
             </TabsContent>
             <TabsContent value="filters">
-              <FilterPresets image={image} activeFilter={activeFilter} onSelectFilter={handleSelectFilter} />
+              <FilterPresets image={image} activeFilter={activeFilter} onSelectFilter={handleSelectFilter} disabled={!image} />
             </TabsContent>
           </Tabs>
 
-          <Button className="w-full gap-1.5" onClick={handleContinue}>
+          <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image}>
             Continuar <ArrowRight className="w-4 h-4" />
           </Button>
         </div>

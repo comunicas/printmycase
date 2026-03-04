@@ -11,11 +11,13 @@ interface ControlPanelProps {
   onRotationChange: (v: number) => void;
   onBrightnessChange: (v: number) => void;
   onContrastChange: (v: number) => void;
+  disabled?: boolean;
 }
 
 const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
   scale, rotation, brightness, contrast,
   onScaleChange, onRotationChange, onBrightnessChange, onContrastChange,
+  disabled,
 }, ref) => {
   const controls = [
     { label: "Escala", value: scale, onChange: onScaleChange, min: 50, max: 200, defaultVal: 100, unit: "%", icon: Maximize },
@@ -25,7 +27,7 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
   ];
 
   return (
-    <div ref={ref} className="space-y-3">
+    <div ref={ref} className={`space-y-3 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
       <div className="space-y-2.5">
         {controls.map((ctrl) => {
           const Icon = ctrl.icon;
@@ -34,6 +36,7 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
             <div key={ctrl.label} className="flex items-center gap-3">
               <button
                 onClick={() => ctrl.onChange(ctrl.defaultVal)}
+                disabled={disabled}
                 className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                   isDefault ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary hover:bg-primary/20"
                 }`}
@@ -48,6 +51,7 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
                 max={ctrl.max}
                 step={1}
                 className="flex-1"
+                disabled={disabled}
               />
               <span className="flex-shrink-0 w-12 text-right text-xs font-mono text-muted-foreground">
                 {ctrl.value}{ctrl.unit}
