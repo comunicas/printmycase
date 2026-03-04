@@ -15,6 +15,8 @@ type OrderRow = {
   tracking_code?: string | null;
 };
 
+type OrderWithProduct = OrderRow & { product_name?: string; product_image?: string };
+
 const statusFlow = [
   { key: "pending", label: "Aguardando Pagamento", icon: CreditCard },
   { key: "analyzing", label: "Em Análise", icon: Search },
@@ -31,7 +33,7 @@ function getStepIndex(status: string) {
 
 const Orders = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<(OrderRow & { product_name?: string })[]>([]);
+  const [orders, setOrders] = useState<OrderWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,17 +50,26 @@ const Orders = () => {
       }
 
       const productIds = [...new Set(ordersData.map((o) => o.product_id))];
-      const { data: productsData } = await supabase
-        .from("products")
-        .select("slug, name")
-        .in("slug", productIds);
+      
+      // Fetch by slug and by id (UUID) to cover both cases
+      const [bySlug, byId] = await Promise.all([
+        supabase.from("products").select("id, slug, name, images").in("slug", productIds),
+        supabase.from("products").select("id, slug, name, images").in("id", productIds.filter((id) => id.match(/^[0-9a-f-]{36}$/i))),
+      ]);
 
-      const nameMap = new Map((productsData ?? []).map((p) => [p.slug, p.name]));
+      const allProducts = [...(bySlug.data ?? []), ...(byId.data ?? [])];
+      const nameMap = new Map<string, { name: string; image?: string }>();
+      for (const p of allProducts) {
+        const img = (p.images as string[] | null)?.[0];
+        nameMap.set(p.slug, { name: p.name, image: img });
+        nameMap.set(p.id, { name: p.name, image: img });
+      }
 
       setOrders(
         ordersData.map((o: any) => ({
           ...o,
-          product_name: nameMap.get(o.product_id) ?? o.product_id,
+          product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
+          product_image: nameMap.get(o.product_id)?.image,
         }))
       );
       setLoading(false);
@@ -99,10 +110,17 @@ const Orders = () => {
               return (
                 <div key={order.id} className="border rounded-xl p-5 bg-card space-y-4">
                   {/* Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="space-y-0.5">
-                      <p className="font-semibold text-foreground">
-                        Capa Personalizada - {order.product_name}
+                  <div className="flex items-center gap-4">
+                    {order.product_image && (
+                      <img
+                        src={order.product_image}
+                        alt={order.product_name}
+                        className="w-[60px] h-[60px] rounded-lg object-cover flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <p className="font-semibold text-foreground truncate">
+                        {order.product_name}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString("pt-BR", {
@@ -112,7 +130,7 @@ const Orders = () => {
                         })}
                       </p>
                     </div>
-                    <span className="font-semibold text-foreground text-lg">
+                    <span className="font-semibold text-foreground text-lg flex-shrink-0">
                       {formatPrice(order.total_cents / 100)}
                     </span>
                   </div>
