@@ -1,19 +1,15 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2, Truck, MapPin, Save } from "lucide-react";
+import { ArrowRight, Loader2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import FormField from "@/components/ui/form-field";
-import FormCard from "@/components/forms/FormCard";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
-import { getShippingByZip, type ShippingResult } from "@/lib/shipping";
-import { maskCEP } from "@/lib/masks";
+import { type ShippingResult } from "@/lib/shipping";
+import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 
 interface CustomizationData {
   image: string | null;
@@ -34,32 +30,16 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   const [customization, setCustomization] = useState<CustomizationData | null>(null);
-
-  // Address form
-  const [street, setStreet] = useState("");
-  const [number, setNumber] = useState("");
-  const [complement, setComplement] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [zipInput, setZipInput] = useState("");
-  const [addressLabel, setAddressLabel] = useState("Casa");
-  const [saveAddress, setSaveAddress] = useState(false);
-
-  // Saved addresses
-  const [addresses, setAddresses] = useState<any[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-
-  // Shipping
   const [shipping, setShipping] = useState<ShippingResult | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [zipLoading, setZipLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [addressData, setAddressData] = useState<AddressData | null>(null);
+  const [isAddressValid, setIsAddressValid] = useState(false);
 
-  const handleBlur = (field: string) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-  };
+  const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
+    setAddressData(data);
+    setIsAddressValid(valid);
+  }, []);
 
   // Load customization from sessionStorage
   useEffect(() => {
@@ -80,92 +60,12 @@ const Checkout = () => {
     }
   }, [product, productLoading, navigate, toast]);
 
-  // Load saved addresses
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("addresses")
-      .select("*")
-      .order("is_default", { ascending: false })
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setAddresses(data);
-        }
-      });
-  }, [user]);
-
-  const handleZipChange = async (value: string) => {
-    const masked = maskCEP(value);
-    setZipInput(masked);
-    setSelectedAddressId(null);
-    const clean = masked.replace(/\D/g, "");
-    if (clean.length >= 2) {
-      setShipping(getShippingByZip(clean));
-    } else {
-      setShipping(null);
-    }
-
-    if (clean.length === 8) {
-      setZipLoading(true);
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
-        const data = await res.json();
-        if (!data.erro) {
-          setStreet(data.logradouro || "");
-          setNeighborhood(data.bairro || "");
-          setCity(data.localidade || "");
-          setState(data.uf || "");
-          if (data.complemento) setComplement(data.complemento);
-        }
-      } catch {
-        // silently fail — user fills manually
-      } finally {
-        setZipLoading(false);
-      }
-    }
-  };
-
-  const handleSelectAddress = (addr: any) => {
-    setSelectedAddressId(addr.id);
-    setStreet(addr.street);
-    setNumber(addr.number);
-    setComplement(addr.complement || "");
-    setNeighborhood(addr.neighborhood);
-    setCity(addr.city);
-    setState(addr.state);
-    setZipInput(maskCEP(addr.zip_code));
-    setAddressLabel(addr.label);
-    setShipping(getShippingByZip(addr.zip_code));
-    setSaveAddress(false);
-  };
-
-  // Field errors
-  const errors = useMemo(() => {
-    const cleanZip = zipInput.replace(/\D/g, "");
-    return {
-      zip: !cleanZip ? "CEP obrigatório" : cleanZip.length < 8 ? "CEP incompleto" : (shipping && !shipping.allowed ? "Região não atendida" : ""),
-      street: !street.trim() ? "Rua obrigatória" : "",
-      number: !number.trim() ? "Número obrigatório" : "",
-      neighborhood: !neighborhood.trim() ? "Bairro obrigatório" : "",
-      city: !city.trim() ? "Cidade obrigatória" : "",
-      state: !state.trim() ? "Estado obrigatório" : "",
-    };
-  }, [street, number, neighborhood, city, state, zipInput, shipping]);
-
-  const showError = (field: string) => (submitted || touched[field]) ? errors[field as keyof typeof errors] : undefined;
-  const hasError = (field: string) => !!(submitted || touched[field]) && !!errors[field as keyof typeof errors];
-
-  const isFormValid = useMemo(() => {
-    return Object.values(errors).every((e) => !e);
-  }, [errors]);
-
   const handleCheckout = async () => {
-    if (!user || !product || !customization || !shipping) return;
+    if (!user || !product || !customization || !shipping || !addressData) return;
     setSubmitted(true);
-    if (!isFormValid) return;
+    if (!isAddressValid) return;
     setCheckoutLoading(true);
     try {
-      // Upload image if exists
       let imageUrl: string | null = null;
       if (customization.image) {
         const blob = await fetch(customization.image).then((r) => r.blob());
@@ -176,7 +76,7 @@ const Checkout = () => {
         imageUrl = path;
       }
 
-      const cleanZip = zipInput.replace(/\D/g, "");
+      const cleanZip = addressData.zipInput.replace(/\D/g, "");
       const customizationPayload = {
         scale: customization.scale,
         rotation: customization.rotation,
@@ -192,12 +92,18 @@ const Checkout = () => {
           customization_data: customizationPayload,
           image_url: imageUrl,
           shipping_cents: shipping.priceCents,
-          address_id: selectedAddressId,
-          address_inline: selectedAddressId ? undefined : {
-            street, number, complement: complement || null,
-            neighborhood, city, state, zip_code: cleanZip, label: addressLabel,
+          address_id: addressData.selectedAddressId,
+          address_inline: addressData.selectedAddressId ? undefined : {
+            street: addressData.street,
+            number: addressData.number,
+            complement: addressData.complement || null,
+            neighborhood: addressData.neighborhood,
+            city: addressData.city,
+            state: addressData.state,
+            zip_code: cleanZip,
+            label: addressData.addressLabel,
           },
-          save_address: !selectedAddressId && saveAddress,
+          save_address: !addressData.selectedAddressId && addressData.saveAddress,
         },
       });
 
@@ -255,117 +161,12 @@ const Checkout = () => {
           </div>
         )}
 
-        {/* Saved addresses */}
-        {addresses.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
-              <MapPin className="w-4 h-4" /> Endereços salvos
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {addresses.map((addr: any) => (
-                <button
-                  key={addr.id}
-                  onClick={() => handleSelectAddress(addr)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    selectedAddressId === addr.id
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                  }`}
-                >
-                  {addr.label}
-                </button>
-              ))}
-              <button
-                onClick={() => {
-                  setSelectedAddressId(null);
-                  setStreet(""); setNumber(""); setComplement(""); setNeighborhood("");
-                  setCity(""); setState(""); setZipInput(""); setAddressLabel("Casa");
-                  setShipping(null); setSaveAddress(false);
-                }}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  !selectedAddressId
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                }`}
-              >
-                + Novo endereço
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Address form */}
-        <FormCard title="Endereço de entrega" description="Preencha o endereço completo para envio.">
-          <div className="space-y-4">
-            <FormField label="CEP" id="zip" required error={showError("zip")}>
-              <div className="relative">
-                <Input
-                  id="zip"
-                  placeholder="00000-000"
-                  value={zipInput}
-                  onChange={(e) => handleZipChange(e.target.value)}
-                  onBlur={() => handleBlur("zip")}
-                  maxLength={9}
-                  className={`font-mono ${hasError("zip") ? "border-destructive" : ""}`}
-                />
-                {zipLoading && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
-                )}
-              </div>
-            </FormField>
-
-            {shipping && (
-              <p className="text-xs text-muted-foreground -mt-2">
-                {shipping.region} ({shipping.state}) — {formatPrice(shipping.priceCents / 100)}
-              </p>
-            )}
-
-            {shipping && !shipping.allowed && (
-              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-                No momento, realizamos envios apenas para a região Sudeste (SP, RJ, MG, ES).
-              </div>
-            )}
-
-            <div className="grid grid-cols-3 gap-3">
-              <FormField label="Rua" id="street" required className="col-span-2" error={showError("street")}>
-                <Input id="street" value={street} onChange={(e) => setStreet(e.target.value)} onBlur={() => handleBlur("street")} placeholder="Rua, Av, Travessa..." className={hasError("street") ? "border-destructive" : ""} />
-              </FormField>
-              <FormField label="Número" id="number" required error={showError("number")}>
-                <Input id="number" value={number} onChange={(e) => setNumber(e.target.value)} onBlur={() => handleBlur("number")} placeholder="123" className={hasError("number") ? "border-destructive" : ""} />
-              </FormField>
-            </div>
-
-            <FormField label="Complemento" id="complement">
-              <Input id="complement" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, Bloco..." />
-            </FormField>
-
-            <FormField label="Bairro" id="neighborhood" required error={showError("neighborhood")}>
-              <Input id="neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} onBlur={() => handleBlur("neighborhood")} className={hasError("neighborhood") ? "border-destructive" : ""} />
-            </FormField>
-
-            <div className="grid grid-cols-3 gap-3">
-              <FormField label="Cidade" id="city" required className="col-span-2" error={showError("city")}>
-                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} onBlur={() => handleBlur("city")} className={hasError("city") ? "border-destructive" : ""} />
-              </FormField>
-              <FormField label="Estado" id="state" required error={showError("state")}>
-                <Input id="state" value={state} onChange={(e) => setState(e.target.value)} onBlur={() => handleBlur("state")} placeholder="SP" maxLength={2} className={`uppercase ${hasError("state") ? "border-destructive" : ""}`} />
-              </FormField>
-            </div>
-
-            {!selectedAddressId && (
-              <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={saveAddress}
-                  onChange={(e) => setSaveAddress(e.target.checked)}
-                  className="rounded border-border"
-                />
-                <Save className="w-3.5 h-3.5" />
-                Salvar endereço para próximas compras
-              </label>
-            )}
-          </div>
-        </FormCard>
+        <AddressForm
+          shipping={shipping}
+          onShippingChange={setShipping}
+          submitted={submitted}
+          onAddressChange={handleAddressChange}
+        />
 
         {/* Order summary */}
         <div className="border rounded-xl p-4 bg-card space-y-3">
@@ -391,7 +192,7 @@ const Checkout = () => {
         <Button
           className="w-full gap-1.5"
           onClick={handleCheckout}
-          disabled={checkoutLoading || !isFormValid}
+          disabled={checkoutLoading || !isAddressValid}
         >
           {checkoutLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
