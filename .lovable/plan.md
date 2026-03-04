@@ -1,31 +1,30 @@
 
 
-# Upload de Imagens de Aparelho via Painel Admin
+# Usar apenas imagens reais (device_image) nos produtos
 
-Sim! A melhor abordagem é adicionar um campo de upload de arquivo no formulário de produto do admin, usando o bucket de storage já existente.
+## Contexto
+Os produtos têm um array `images` com URLs mocadas/placeholder e um campo `device_image` com a foto real enviada via upload. O objetivo é usar apenas as imagens reais.
 
 ## Plano
 
-### 1. Criar bucket `product-assets` (migração SQL)
-- Bucket público para armazenar imagens dos aparelhos
-- RLS: admins podem fazer upload/delete, qualquer um pode visualizar
+### 1. Atualizar `ProductCard` — usar `device_image` como imagem principal
+- Priorizar `device_image` sobre `images[0]`
+- Fallback para `images[0]` caso `device_image` não exista
+- Mostrar placeholder genérico se nenhuma imagem existir
 
-### 2. Atualizar `ProductFormDialog`
-- Substituir o input de texto `device_image` por um campo de upload de arquivo (input type="file")
-- Ao selecionar uma imagem, fazer upload para `product-assets/{product_id}/device.webp`
-- Gerar a URL pública e salvar no campo `device_image` do produto
-- Mostrar preview da imagem atual se já existir
-- Manter opção de colar URL manualmente como fallback
+### 2. Atualizar `ProductGallery` — mostrar apenas imagens reais
+- Se `device_image` existir, usá-la como imagem principal
+- Não exibir as imagens do array `images` (que são mocadas)
+- Manter a galeria funcional para quando houver múltiplas imagens reais no futuro
 
-### 3. Fluxo do admin
-1. Abrir formulário de edição do produto
-2. Clicar em "Enviar imagem" ou arrastar arquivo
-3. Imagem é enviada ao storage e URL salva automaticamente
+### 3. Migração SQL — limpar array `images` dos produtos
+- `UPDATE products SET images = '{}' WHERE true;` — esvaziar o array de imagens mocadas de todos os produtos
 
 ## Arquivos afetados
 
 | Arquivo | Mudança |
 |---------|---------|
-| Migração SQL | Criar bucket `product-assets` + políticas |
-| `src/components/admin/ProductFormDialog.tsx` | Campo de upload de imagem com preview |
+| `src/components/ProductCard.tsx` | Usar `device_image` como fonte principal |
+| `src/components/ProductGallery.tsx` | Remover dependência do array `images` mocado |
+| Migração SQL | Limpar array `images` |
 
