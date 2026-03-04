@@ -174,7 +174,7 @@ const Admin = () => {
       // Send email notification (fire-and-forget)
       supabase.functions.invoke("notify-order-status", {
         body: { order_id: orderId, new_status: newStatus },
-      }).catch((err) => console.error("Email notification error:", err));
+      }).catch((err) => console.error("Email notification error:", err?.message));
     }
   };
 
@@ -194,7 +194,7 @@ const Admin = () => {
       // Send shipped notification with tracking code
       supabase.functions.invoke("notify-order-status", {
         body: { order_id: orderId, new_status: "shipped" },
-      }).catch((err) => console.error("Email notification error:", err));
+      }).catch((err) => console.error("Email notification error:", err?.message));
     }
   };
 
