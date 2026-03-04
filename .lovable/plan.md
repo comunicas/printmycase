@@ -1,17 +1,23 @@
 
 
-# Animação suave de transição ao trocar filtros
+# Reset Geral + Rascunho Automático
 
-## Problema atual
-Quando o usuário troca de filtro no carrossel, a mudança no preview do celular é instantânea — sem transição visual. Isso causa um "salto" abrupto.
+## 1. Botão de Reset Geral
+Adicionar um botão "Resetar" ao lado do título "Customizar" em `src/pages/Customize.tsx`. Ao clicar, volta todos os ajustes ao padrão:
+- `scale → 100`, `rotation → 0`, `brightness → 0`, `contrast → 0`
+- `activeFilter → null`, `position → { x: 50, y: 50 }`
+- Mantém a imagem (não remove o upload)
+- Botão só aparece/fica ativo quando algum valor difere do padrão
+- Ícone `RotateCcw` do lucide-react
 
-## Solução
+## 2. Rascunho Automático (sessionStorage)
+Salvar estado da customização automaticamente no `sessionStorage` com chave `draft-customize-{slug}`:
+- **Salvar**: via `useEffect` com debounce simples (setTimeout 500ms) sempre que qualquer estado mudar
+- **Restaurar**: no mount, checar se existe rascunho para o produto atual e restaurar todos os valores (incluindo imagem base64)
+- **Limpar**: ao clicar "Continuar" (já salva como `customization` para o checkout) e ao clicar "Resetar"
+- Mostrar toast discreto "Rascunho restaurado" quando um rascunho é carregado
 
-Adicionar `transition: filter 0.3s ease` na camada de imagem do `PhonePreview`, para que ao trocar de filtro (ou ajustar brilho/contraste), a mudança seja suave e animada.
+## Arquivos afetados
 
-### Arquivo afetado
-
-**`src/components/PhonePreview.tsx`** — adicionar `transition: "filter 0.3s ease"` no objeto `imageLayerStyle` (linha ~78), para que a propriedade CSS `filter` anime suavemente entre valores.
-
-Mudança mínima: uma única linha adicionada ao style object.
+- **`src/pages/Customize.tsx`** — adicionar botão reset, lógica de salvar/restaurar rascunho via sessionStorage, useEffect para auto-save
 
