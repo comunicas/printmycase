@@ -61,6 +61,7 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
       .then(({ data }) => {
         if (data && data.length > 0) {
           setAddresses(data);
+          handleSelectAddress(data[0]);
         }
       });
   }, [user]);
