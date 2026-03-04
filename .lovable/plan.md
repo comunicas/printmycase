@@ -1,30 +1,33 @@
 
 
-# Usar apenas imagens reais (device_image) nos produtos
+# Galeria de Imagens do Produto via Upload
 
-## Contexto
-Os produtos têm um array `images` com URLs mocadas/placeholder e um campo `device_image` com a foto real enviada via upload. O objetivo é usar apenas as imagens reais.
+## Objetivo
+Substituir o campo de texto "Imagens (URLs, uma por linha)" por um sistema de upload múltiplo de imagens, similar ao `DeviceImageUpload`, permitindo anexar várias fotos da galeria ao produto.
 
 ## Plano
 
-### 1. Atualizar `ProductCard` — usar `device_image` como imagem principal
-- Priorizar `device_image` sobre `images[0]`
-- Fallback para `images[0]` caso `device_image` não exista
-- Mostrar placeholder genérico se nenhuma imagem existir
+### 1. Criar componente `ProductImagesUpload`
+- Novo componente `src/components/admin/ProductImagesUpload.tsx`
+- Exibe grid de previews das imagens já adicionadas (com botão de remover cada uma)
+- Botão para adicionar mais imagens (input file com `multiple`)
+- Upload para `product-assets/{productId}/gallery-{index}.{ext}`
+- Retorna array de URLs públicas
 
-### 2. Atualizar `ProductGallery` — mostrar apenas imagens reais
-- Se `device_image` existir, usá-la como imagem principal
-- Não exibir as imagens do array `images` (que são mocadas)
-- Manter a galeria funcional para quando houver múltiplas imagens reais no futuro
+### 2. Atualizar `ProductFormDialog`
+- Substituir o `<textarea>` de URLs pelo novo componente `ProductImagesUpload`
+- O state `imagesRaw` (string) passa a ser gerido como array de URLs
+- Ao salvar, o array de URLs é persistido na coluna `images` do produto
 
-### 3. Migração SQL — limpar array `images` dos produtos
-- `UPDATE products SET images = '{}' WHERE true;` — esvaziar o array de imagens mocadas de todos os produtos
+### 3. Atualizar `ProductGallery` (frontend público)
+- Combinar `device_image` + `images[]` na galeria (device_image primeiro, depois as da galeria)
+- Exibir thumbnails navegáveis quando houver mais de uma imagem
 
 ## Arquivos afetados
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/components/ProductCard.tsx` | Usar `device_image` como fonte principal |
-| `src/components/ProductGallery.tsx` | Remover dependência do array `images` mocado |
-| Migração SQL | Limpar array `images` |
+| `src/components/admin/ProductImagesUpload.tsx` | Novo componente de upload múltiplo |
+| `src/components/admin/ProductFormDialog.tsx` | Trocar textarea por novo componente |
+| `src/components/ProductGallery.tsx` | Combinar device_image + images na galeria |
 
