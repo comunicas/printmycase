@@ -1,31 +1,17 @@
 
 
-# Redesign da Página de Customização
+# Animação suave de transição ao trocar filtros
 
-## O que muda
+## Problema atual
+Quando o usuário troca de filtro no carrossel, a mudança no preview do celular é instantânea — sem transição visual. Isso causa um "salto" abrupto.
 
-Substituir o layout atual com **Tabs** (Ajustes / Filtros) por um layout **único e contínuo**, inspirado na referência:
+## Solução
 
-### 1. Seção "Ajustes Básicos" (topo)
-- Carrossel horizontal com os presets de filtro (Original, P&B, Vintage, Quente, etc.)
-- Thumbnails com preview da imagem do usuário + filtro aplicado
-- Setas de navegação `<` `>` nas laterais
-- Adicionar preset "Original" (sem filtro) como primeira opção
+Adicionar `transition: filter 0.3s ease` na camada de imagem do `PhonePreview`, para que ao trocar de filtro (ou ajustar brilho/contraste), a mudança seja suave e animada.
 
-### 2. Seção "Ajustes Filtros" (abaixo)
-- Os 4 sliders (Escala, Rotação, Brilho, Contraste) sempre visíveis
-- Mostrar valor atual em tooltip/badge acima do thumb do slider
-- Layout idêntico ao atual mas sem estar dentro de tab
+### Arquivo afetado
 
-### 3. Título "Customizar"
-- Adicionar heading `h1` acima das seções no painel direito
+**`src/components/PhonePreview.tsx`** — adicionar `transition: "filter 0.3s ease"` no objeto `imageLayerStyle` (linha ~78), para que a propriedade CSS `filter` anime suavemente entre valores.
 
-### 4. Remover Tabs
-- Eliminar `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` do `Customize.tsx`
-
-## Arquivos afetados
-
-- **`src/pages/Customize.tsx`** — remover tabs, layout contínuo com título + carrossel + sliders
-- **`src/components/FilterPresets.tsx`** — transformar grid 4x2 em carrossel horizontal com setas, adicionar preset "Original"
-- **`src/components/ControlPanel.tsx`** — adicionar label de valor sobre o thumb do slider (tooltip/badge)
+Mudança mínima: uma única linha adicionada ao style object.
 
