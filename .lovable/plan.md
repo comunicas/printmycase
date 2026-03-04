@@ -1,31 +1,77 @@
 
 
-# Melhorias pontuais + Sugestões de próximas fases
+# Ajuste de Terminologia: Case / Capa / Capinha
 
-## 1. Remover toast "Imagem original muito grande"
+Aplicar as regras de copy em toda a aplicação:
 
-Em `src/pages/Customize.tsx` (linha 214), remover o `toast()` no fallback do sessionStorage. O fallback continua funcionando (salva sem a imagem original), apenas sem notificar o usuário.
+- **Case** → branding (hero, títulos de marca)
+- **Capa** → produto/descrição (SEO, specs, labels)
+- **Capinha** → comunicação leve/marketing (depoimentos, CTAs informais)
 
-## 2. Esconder formulário quando endereço salvo está selecionado
+## Mudanças por arquivo
 
-Em `src/components/checkout/AddressForm.tsx`, envolver o `<FormCard>` (linhas 186-256) com uma condição: só exibir quando `!selectedAddressId`. Quando o usuário seleciona um endereço salvo, o formulário fica oculto — mostrando apenas os chips de seleção e um resumo compacto do endereço selecionado (rua, número, cidade/estado).
+### Landing.tsx
+| De | Para | Contexto |
+|---|---|---|
+| "Sua capa, sua identidade." | "Sua Case, sua identidade." | Hero (branding) |
+| "capas de celular únicas" | "capinhas únicas" | Subtítulo (marketing leve) |
+| "Criar Minha Capa" | "Criar Minha Case" | CTA principal (branding) |
+| "Mais de 1.000 capas criadas" | "Mais de 1.000 cases criadas" | Social proof (branding) |
+| "Cada capa é única como você" | "Cada capa é única como você" | Benefício (produto) — **manter** |
+| "Pronto para criar sua capa única?" | "Pronto para criar sua Case?" | CTA final (branding) |
+| "receba uma capa exclusiva" | "receba sua capinha exclusiva" | Texto leve (marketing) |
+| Testimonial Ana: "Melhor capa que já tive" | "Melhor capinha que já tive" | Comunicação casual |
+
+### SeoHead.tsx
+| De | Para |
+|---|---|
+| "Capas Personalizadas para Celular" | "Capas Personalizadas para Celular" | **manter** (SEO = "capa") |
+| "Crie capas de celular personalizadas" | **manter** (SEO) |
+| "Capas para Celular" (JSON-LD) | **manter** |
+
+### Catalog.tsx
+| De | Para |
+|---|---|
+| "{n} capas disponíveis" | **manter** (produto/descrição) |
+
+### ProductInfo.tsx
+| De | Para |
+|---|---|
+| "Customizar Minha Capa" | "Customizar Minha Case" | CTA branding |
+
+### Customize.tsx
+| De | Para |
+|---|---|
+| `.replace("Capa ", "")` | **manter** (lógica de parsing) |
+
+### Checkout.tsx
+| De | Para |
+|---|---|
+| "personalize sua capa" | "personalize sua capinha" | Comunicação leve |
+
+### Email templates (6 arquivos)
+| De | Para |
+|---|---|
+| "ArtisCase — Capas personalizadas" | "ArtisCase — Cases personalizadas" | Brand tagline |
+| signup: "personalizar sua capa" | "personalizar sua capinha" | Marketing |
+
+### PhonePreview.tsx
+Sem texto de copy com "capa" — sem mudanças.
+
+### Orders.tsx / CheckoutSuccess.tsx
+Sem ocorrências de "capa" em copy — sem mudanças.
 
 ## Arquivos afetados
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/Customize.tsx` | Remover toast na linha 214 |
-| `src/components/checkout/AddressForm.tsx` | Esconder form quando endereço selecionado, mostrar resumo |
-
----
-
-## Sugestões para próxima fase
-
-Após 4 fases de consolidação, o projeto está bem estruturado. Algumas direções possíveis:
-
-1. **Histórico de pedidos com tracking visual** — Timeline de status na página /orders com notificações
-2. **Múltiplas quantidades e carrinho** — Permitir comprar mais de uma capa por checkout
-3. **Cupons de desconto** — Integração com Stripe Coupons na tela de checkout
-4. **Dashboard admin com métricas** — Vendas, receita, pedidos por status (gráficos)
-5. **PWA e notificações push** — Instalar como app, notificar quando pedido mudar de status
+| Arquivo | Tipo |
+|---|---|
+| `src/pages/Landing.tsx` | Editar |
+| `src/components/ProductInfo.tsx` | Editar |
+| `src/pages/Checkout.tsx` | Editar |
+| `supabase/functions/_shared/email-templates/signup.tsx` | Editar |
+| `supabase/functions/_shared/email-templates/recovery.tsx` | Editar |
+| `supabase/functions/_shared/email-templates/email-change.tsx` | Editar |
+| `supabase/functions/_shared/email-templates/reauthentication.tsx` | Editar |
+| `supabase/functions/_shared/email-templates/invite.tsx` | Editar |
+| `supabase/functions/_shared/email-templates/magic-link.tsx` | Editar |
 
