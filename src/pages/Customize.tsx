@@ -205,18 +205,16 @@ const Customize = () => {
         imageFileName: imageFile?.name || null,
         scale, rotation, brightness, contrast, activeFilter, position,
       };
-      try {
-        sessionStorage.setItem("customization", JSON.stringify(customData));
-      } catch {
-        // Fallback: store without the large original image
         try {
-          sessionStorage.setItem("customization", JSON.stringify({ ...customData, image: null }));
-          toast({ title: "Imagem original muito grande", description: "Apenas o preview editado será usado no checkout." });
+          sessionStorage.setItem("customization", JSON.stringify(customData));
         } catch {
-          toast({ title: "Erro ao salvar customização", variant: "destructive" });
-          return;
+          try {
+            sessionStorage.setItem("customization", JSON.stringify({ ...customData, image: null }));
+          } catch {
+            toast({ title: "Erro ao salvar customização", variant: "destructive" });
+            return;
+          }
         }
-      }
       if (product.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
       navigate(`/checkout/${product.slug}`);
     } finally {
