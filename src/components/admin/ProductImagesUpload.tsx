@@ -82,8 +82,7 @@ const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
     try {
       const newUrls: string[] = [];
       for (const file of imageFiles) {
-        const ext = file.name.split(".").pop() || "png";
-        const path = `${id}/gallery-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+        const path = `${id}/${file.name}`;
 
         const { error } = await supabase.storage
           .from("product-assets")
