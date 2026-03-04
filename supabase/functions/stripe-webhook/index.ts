@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       const session = event.data.object;
       await supabaseAdmin
         .from("orders")
-        .update({ status: "paid" })
+        .update({ status: "analyzing" })
         .eq("stripe_session_id", session.id);
     } else if (event.type === "checkout.session.expired") {
       const session = event.data.object;

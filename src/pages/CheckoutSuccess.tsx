@@ -1,10 +1,13 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle, ShoppingBag, ArrowLeft, LogIn } from "lucide-react";
+import { CheckCircle, ShoppingBag, ArrowLeft, LogIn, Clock, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import AppHeader from "@/components/AppHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { formatPrice } from "@/data/products";
 import logoArtisCase from "@/assets/logo-artiscase.png";
 
 const CheckoutSuccess = () => {
@@ -12,6 +15,38 @@ const CheckoutSuccess = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const { user, loading } = useAuth();
+
+  const [orderInfo, setOrderInfo] = useState<{
+    productName: string;
+    totalCents: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const fetchOrder = async () => {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("product_id, total_cents")
+        .eq("stripe_session_id", sessionId)
+        .maybeSingle();
+
+      if (!order) return;
+
+      const { data: product } = await supabase
+        .from("products")
+        .select("name")
+        .eq("slug", order.product_id)
+        .maybeSingle();
+
+      setOrderInfo({
+        productName: product?.name ?? order.product_id,
+        totalCents: order.total_cents,
+      });
+    };
+
+    fetchOrder();
+  }, [sessionId]);
 
   const breadcrumbs = [{ label: "Pedido Confirmado" }];
 
@@ -36,18 +71,38 @@ const CheckoutSuccess = () => {
                 Seu pagamento foi processado com sucesso. Você receberá um e-mail
                 com os detalhes do pedido.
               </p>
-              <p className="text-sm text-muted-foreground">
-                Acompanhe o status do seu pedido na página <strong>Meus Pedidos</strong>.
-              </p>
             </div>
 
-            {sessionId && (
+            {orderInfo && (
               <>
                 <Separator />
-                <div className="inline-flex items-center gap-2 bg-muted rounded-full px-4 py-1.5 text-xs text-muted-foreground font-mono mx-auto">
-                  Ref: {sessionId.slice(0, 20)}…
+                <div className="space-y-3 text-left">
+                  <div className="flex items-start gap-3">
+                    <Package className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Capa Personalizada - {orderInfo.productName}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatPrice(orderInfo.totalCents / 100)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Prazo estimado</p>
+                      <p className="text-sm text-muted-foreground">5 a 7 dias úteis</p>
+                    </div>
+                  </div>
                 </div>
               </>
+            )}
+
+            {sessionId && (
+              <div className="inline-flex items-center gap-2 bg-muted rounded-full px-4 py-1.5 text-xs text-muted-foreground font-mono mx-auto">
+                Ref: {sessionId.slice(0, 20)}…
+              </div>
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
