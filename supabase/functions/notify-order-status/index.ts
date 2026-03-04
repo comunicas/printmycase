@@ -7,8 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SENDER_DOMAIN = "notify.studio.artiscase.com";
-const FROM = "ArtisCase <noreply@notify.studio.artiscase.com>";
+const SENDER_DOMAIN = "studio.artiscase.com";
+const FROM = "ArtisCase <noreply@studio.artiscase.com>";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
