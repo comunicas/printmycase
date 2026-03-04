@@ -1,39 +1,19 @@
 
 
-# Ajuste de Copy — Landing.tsx
+# ProductCard — Formato quadrado + CTA "Customizar"
 
-Aplicar a nova copy com as três camadas (Case/Capa/Capinha) e a menção à tecnologia PrintMyCase conforme solicitado.
+## Mudanças em `src/components/ProductCard.tsx`
 
-## Mudanças em `src/pages/Landing.tsx`
+1. **Imagem quadrada**: Trocar `aspect-[3/4]` por `aspect-square` para otimizar espaço no grid
+2. **Botão CTA**: Adicionar um botão "Customizar" abaixo do rating que navega para `/customize/{slug}`, com `e.stopPropagation()` para não conflitar com o click do card (que vai para a página do produto)
 
-### Hero (linhas 49-50)
-- **De:** "Transforme suas fotos favoritas em capinhas únicas. Proteção premium com acabamento soft-touch e design 100% seu."
-- **Para:** "Crie uma capa personalizada usando a tecnologia PrintMyCase e receba em casa."
+## Mudanças em `src/pages/Catalog.tsx`
 
-### Social proof (linha 66)
-- **De:** "Mais de 1.000 cases criadas"
-- **Para:** "Mais de 1.000 Cases criadas com tecnologia PrintMyCase"
-
-### Seção Benefits — título (linha 77)
-- **De:** "Por que escolher a ArtisCase?"
-- **Para:** "Capas personalizadas com qualidade profissional"
-
-### Benefits — items (linhas 20-24)
-- Palette desc: **De** "Use suas fotos, artes e designs favoritos. Cada capa é única como você." **Para** "Produzimos sua capa com a mesma tecnologia usada nas máquinas PrintMyCase presentes em shopping centers."
-- Shield/Truck: manter (já descrevem produto corretamente com "capa" implícito)
-
-### Steps — "Como funciona" (linhas 26-30)
-- Step 1: title "Escolha o modelo da sua capa", desc "Selecione o modelo do seu celular"
-- Step 2: manter
-- Step 3: title "Receba sua Case em casa", desc "Produção em 48h e envio rápido"
-
-### CTA final (linha 168)
-- **De:** "Pronto para criar sua Case?"
-- **Para:** "Pronto para criar sua Case única?"
+3. **Grid ajustado**: Opcionalmente ajustar gap ou colunas para aproveitar melhor o formato quadrado (grid atual já funciona bem)
 
 ## Arquivo afetado
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/Landing.tsx` | Ajustes de copy em hero, benefits, steps, social proof e CTA final |
+| `src/components/ProductCard.tsx` | aspect-square + botão "Customizar" |
 
