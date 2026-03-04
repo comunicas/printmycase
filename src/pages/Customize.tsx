@@ -13,7 +13,7 @@ const DEFAULTS = { scale: 100, rotation: 0, brightness: 0, contrast: 0, activeFi
 const PHONE_W = 260;
 const PHONE_H = 532;
 
-function compressImage(dataUrl: string, maxW = 2000, maxH = 4000, quality = 0.85): Promise<{ url: string; compressed: boolean }> {
+function compressImage(dataUrl: string, maxW = 1200, maxH = 2400, quality = 0.75): Promise<{ url: string; compressed: boolean }> {
   return new Promise((resolve) => {
     const img = new window.Image();
     img.onload = () => {
@@ -133,7 +133,9 @@ const Customize = () => {
     if (!product?.slug) return;
     const timeout = setTimeout(() => {
       const key = `draft-customize-${product.slug}`;
-      sessionStorage.setItem(key, JSON.stringify({ image, scale, rotation, brightness, contrast, activeFilter, position }));
+      try {
+        sessionStorage.setItem(key, JSON.stringify({ image, scale, rotation, brightness, contrast, activeFilter, position }));
+      } catch { /* ignore quota errors */ }
     }, 500);
     return () => clearTimeout(timeout);
   }, [product?.slug, image, scale, rotation, brightness, contrast, activeFilter, position]);
@@ -202,7 +204,18 @@ const Customize = () => {
         imageFileName: imageFile?.name || null,
         scale, rotation, brightness, contrast, activeFilter, position,
       };
-      sessionStorage.setItem("customization", JSON.stringify(customData));
+      try {
+        sessionStorage.setItem("customization", JSON.stringify(customData));
+      } catch {
+        // Fallback: store without the large original image
+        try {
+          sessionStorage.setItem("customization", JSON.stringify({ ...customData, image: null }));
+          toast({ title: "Imagem original muito grande", description: "Apenas o preview editado será usado no checkout." });
+        } catch {
+          toast({ title: "Erro ao salvar customização", variant: "destructive" });
+          return;
+        }
+      }
       if (product.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
       navigate(`/checkout/${product.slug}`);
     } finally {
