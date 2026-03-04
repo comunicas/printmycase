@@ -1,29 +1,24 @@
 
 
-# Fase 3: Melhorias de Arquitetura ✅
+# Fase 4: Reescrita do ARCHITECTURE.md
 
-## 1. AuthContext — Centralizar estado de autenticação ✅
-- Criado `src/contexts/AuthContext.tsx` com `AuthProvider` + `useAuthContext`
-- `src/hooks/useAuth.ts` re-exporta o hook do context (compatibilidade mantida)
-- `App.tsx` envolvido com `<AuthProvider>`
+Reescrever completamente o `ARCHITECTURE.md` para refletir o estado atual da plataforma após as Fases 1-3. O documento está totalmente desatualizado — ainda diz "Case Studio", "sem backend", lista `data/products.ts` como dados mock, e não menciona Supabase, Stripe, autenticação, admin, pedidos, ou edge functions.
 
-## 2. Lazy loading de rotas ✅
-- Rotas pesadas (`Admin`, `Catalog`, `Product`, `Customize`, `Checkout`, `Orders`, `Profile`) carregadas via `React.lazy()`
-- `Landing`, `Login`, `Signup`, `ResetPassword`, `NotFound`, `CheckoutSuccess` mantidos estáticos
-- `<Suspense>` com `LoadingSpinner fullPage` como fallback
+## Mudanças principais
 
-## 3. Otimizar SeoHead ✅
-- Prop `products` opcional adicionada ao `SeoHead`
-- `Landing.tsx` passa os produtos já carregados, evitando query duplicada
-- `SearchAction` removida do JSON-LD
-- TITLE/DESCRIPTION atualizados para termos genéricos ("celular/smartphone")
+1. **Nome e descrição**: "ArtisCase" (não "Case Studio"), plataforma com backend completo (não "sem backend")
+2. **Stack**: Adicionar Supabase (DB + Auth + Storage + Edge Functions) e Stripe (pagamentos)
+3. **Rotas**: Atualizar de 5 para 13 rotas, incluindo auth, checkout, admin, orders, profile
+4. **Estrutura de pastas**: Refletir a estrutura real — `contexts/`, `lib/` (types, constants, masks, shipping, products), `components/admin/`, `components/checkout/`, `components/forms/`, `supabase/functions/`
+5. **Modelo de dados**: Interface `Product` atualizada com `slug`, `price_cents`, `stripe_price_id`, `active`, etc. Mencionar tabelas DB: `products`, `orders`, `addresses`, `profiles`, `user_roles`
+6. **Arquitetura**: AuthContext centralizado, lazy loading de rotas, LoadingSpinner compartilhado
+7. **Edge Functions**: Documentar as 7 functions (create-checkout, stripe-webhook, delete-account, notify-order-status, admin-sync-stripe, bulk-sync-stripe, auth-email-hook)
+8. **SEO**: Atualizado — sem SearchAction, sem hardcode "iPhone"
+9. **Segurança**: RLS, RBAC via `user_roles` + `has_role()`, JWT validation em edge functions
 
-## Arquivos afetados
+## Arquivo afetado
 
 | Ação | Arquivo |
 |------|---------|
-| Criar | `src/contexts/AuthContext.tsx` |
-| Editar | `src/hooks/useAuth.ts` — re-exportar do context |
-| Editar | `src/App.tsx` — AuthProvider + lazy imports + Suspense |
-| Editar | `src/components/SeoHead.tsx` — prop products, remover SearchAction |
-| Editar | `src/pages/Landing.tsx` — passar products ao SeoHead |
+| Reescrever | `ARCHITECTURE.md` |
+
