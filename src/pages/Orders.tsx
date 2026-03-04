@@ -51,7 +51,6 @@ const Orders = () => {
 
       const productIds = [...new Set(ordersData.map((o) => o.product_id))];
       
-      // Fetch by slug and by id (UUID) to cover both cases
       const [bySlug, byId] = await Promise.all([
         supabase.from("products").select("id, slug, name, images").in("slug", productIds),
         supabase.from("products").select("id, slug, name, images").in("id", productIds.filter((id) => id.match(/^[0-9a-f-]{36}$/i))),
@@ -75,6 +74,28 @@ const Orders = () => {
       setLoading(false);
     };
     fetchOrders();
+
+    // Realtime subscription for order status updates
+    const channel = supabase
+      .channel("user-orders")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders" },
+        (payload) => {
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.id === payload.new.id
+                ? { ...o, ...payload.new as any }
+                : o
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const breadcrumbs = [{ label: "Meus Pedidos" }];

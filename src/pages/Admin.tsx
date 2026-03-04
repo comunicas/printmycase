@@ -39,6 +39,8 @@ interface DbOrder {
   status: string;
   created_at: string;
   stripe_session_id: string | null;
+  product_name?: string;
+  product_image?: string;
 }
 
 const statusLabels: Record<string, string> = {
@@ -63,6 +65,7 @@ const Admin = () => {
   const [orders, setOrders] = useState<DbOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [trackingInputs, setTrackingInputs] = useState<Record<string, string>>({});
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Bulk price
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -93,15 +96,37 @@ const Admin = () => {
       .order("created_at", { ascending: false });
     if (error) {
       toast({ title: "Erro ao carregar pedidos", description: error.message, variant: "destructive" });
-    } else {
-      setOrders((data as any[]) ?? []);
-      // Pre-fill tracking inputs
-      const inputs: Record<string, string> = {};
-      (data ?? []).forEach((o: any) => {
-        if (o.tracking_code) inputs[o.id] = o.tracking_code;
-      });
-      setTrackingInputs(inputs);
+      setOrdersLoading(false);
+      return;
     }
+    const ordersData = (data as any[]) ?? [];
+
+    // Enrich with product info
+    const productIds = [...new Set(ordersData.map((o) => o.product_id))];
+    const [bySlug, byId] = await Promise.all([
+      supabase.from("products").select("id, slug, name, images").in("slug", productIds),
+      supabase.from("products").select("id, slug, name, images").in("id", productIds.filter((id) => /^[0-9a-f-]{36}$/i.test(id))),
+    ]);
+    const allProducts = [...(bySlug.data ?? []), ...(byId.data ?? [])];
+    const nameMap = new Map<string, { name: string; image?: string }>();
+    for (const p of allProducts) {
+      const img = (p.images as string[] | null)?.[0];
+      nameMap.set(p.slug, { name: p.name, image: img });
+      nameMap.set(p.id, { name: p.name, image: img });
+    }
+
+    const enriched = ordersData.map((o) => ({
+      ...o,
+      product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
+      product_image: nameMap.get(o.product_id)?.image,
+    }));
+
+    setOrders(enriched);
+    const inputs: Record<string, string> = {};
+    ordersData.forEach((o: any) => {
+      if (o.tracking_code) inputs[o.id] = o.tracking_code;
+    });
+    setTrackingInputs(inputs);
     setOrdersLoading(false);
   }, [toast]);
 
@@ -298,7 +323,30 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="orders">
-            <h1 className="text-2xl font-bold mb-6">Pedidos</h1>
+            <h1 className="text-2xl font-bold mb-4">Pedidos</h1>
+
+            {/* Status filter chips */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {[{ key: "all", label: "Todos" }, ...Object.entries(statusLabels).map(([key, label]) => ({ key, label }))].map(
+                ({ key, label }) => {
+                  const count = key === "all" ? orders.length : orders.filter((o) => o.status === key).length;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setStatusFilter(key)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        statusFilter === key
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-card text-muted-foreground border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {label} ({count})
+                    </button>
+                  );
+                }
+              )}
+            </div>
+
             {ordersLoading ? (
               <div className="flex justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -307,14 +355,28 @@ const Admin = () => {
               <p className="text-muted-foreground text-center py-12">Nenhum pedido encontrado.</p>
             ) : (
               <div className="space-y-3">
-                {orders.map((order) => (
+                {orders
+                  .filter((o) => statusFilter === "all" || o.status === statusFilter)
+                  .map((order) => (
                   <div key={order.id} className="border rounded-xl p-4 bg-card space-y-2">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="space-y-0.5">
-                        <p className="text-xs text-muted-foreground font-mono">{order.id.slice(0, 8)}</p>
-                        <p className="text-sm text-foreground">
-                          {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        {order.product_image && (
+                          <img
+                            src={order.product_image}
+                            alt={order.product_name}
+                            className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                          />
+                        )}
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                            {order.product_name ?? order.product_id}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono">{order.id.slice(0, 8)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <select
