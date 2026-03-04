@@ -44,6 +44,9 @@ interface DbOrder {
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
   paid: "Pago",
+  analyzing: "Em Análise",
+  customizing: "Customizando",
+  producing: "Produzindo",
   shipped: "Enviado",
   delivered: "Entregue",
   cancelled: "Cancelado",
@@ -165,6 +168,19 @@ const Admin = () => {
     setDialogOpen(false);
     setEditingProduct(null);
     fetchProducts();
+  };
+
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: newStatus as any })
+      .eq("id", orderId);
+    if (error) {
+      toast({ title: "Erro ao atualizar status", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Status atualizado para "${statusLabels[newStatus]}"` });
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: newStatus } : o));
+    }
   };
 
   const handleSaveTracking = async (orderId: string) => {
@@ -301,9 +317,15 @@ const Admin = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                          {statusLabels[order.status] ?? order.status}
-                        </span>
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                          className="h-8 rounded-md border bg-background px-2 text-xs font-medium"
+                        >
+                          {Object.entries(statusLabels).map(([value, label]) => (
+                            <option key={value} value={value}>{label}</option>
+                          ))}
+                        </select>
                         <span className="font-semibold text-sm">{formatPrice(order.total_cents / 100)}</span>
                         {order.shipping_cents != null && (
                           <span className="text-xs text-muted-foreground">(frete {formatPrice(order.shipping_cents / 100)})</span>
