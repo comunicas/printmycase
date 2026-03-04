@@ -1,13 +1,16 @@
 
 
-# Corrigir nome do arquivo no upload
+# Imagem não aparece na lista de produtos do admin
 
 ## Problema
-Na linha 86, o upload renomeia o arquivo para `gallery-{timestamp}-{random}.{ext}`, perdendo o nome original. O usuário quer manter o nome original do arquivo.
+A coluna "Img" na tabela do admin usa `p.images?.[0]` para exibir a imagem. Porém, muitos produtos têm a imagem em `device_image` e o array `images` está vazio — resultando no quadrado cinza.
 
 ## Correção
 
-### `src/components/admin/ProductImagesUpload.tsx`
-- **Linha 86**: Trocar o path de `${id}/gallery-${Date.now()}-...` para `${id}/${file.name}` (nome original do arquivo)
-- Para evitar colisões de nomes duplicados, usar `upsert: true` (já está configurado) ou adicionar um sufixo curto apenas quando necessário
+### `src/components/admin/ProductsTable.tsx`
+- Alterar a lógica de exibição da imagem para usar **fallback**: `p.images?.[0] || p.device_image`
+- Assim, se não houver imagens na galeria, mostra a imagem do aparelho
+
+### Resultado
+A coluna "Img" mostrará a primeira imagem da galeria ou, na ausência, a imagem do aparelho — eliminando os quadrados cinza.
 
