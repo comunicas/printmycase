@@ -16,15 +16,17 @@ export async function resolveProductInfo(
   const uuids = unique.filter((id) => /^[0-9a-f-]{36}$/i.test(id));
   const slugs = unique.filter((id) => !/^[0-9a-f-]{36}$/i.test(id));
 
-  // Build a single OR filter covering both slugs and UUIDs
-  const conditions: string[] = [];
-  if (slugs.length > 0) conditions.push(`slug.in.(${slugs.join(",")})`);
-  if (uuids.length > 0) conditions.push(`id.in.(${uuids.join(",")})`);
+  // Query slugs and UUIDs separately to avoid filter injection, then merge
+  const [slugResult, uuidResult] = await Promise.all([
+    slugs.length > 0
+      ? supabase.from("products").select("id, slug, name, images, device_image").in("slug", slugs)
+      : Promise.resolve({ data: [] as any[] }),
+    uuids.length > 0
+      ? supabase.from("products").select("id, slug, name, images, device_image").in("id", uuids)
+      : Promise.resolve({ data: [] as any[] }),
+  ]);
 
-  const { data } = await supabase
-    .from("products")
-    .select("id, slug, name, images, device_image")
-    .or(conditions.join(","));
+  const data = [...(slugResult.data ?? []), ...(uuidResult.data ?? [])];
 
   const map = new Map<string, ProductInfo>();
   for (const p of data ?? []) {

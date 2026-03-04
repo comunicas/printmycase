@@ -68,13 +68,20 @@ Deno.serve(async (req) => {
     let resolvedAddressId = address_id || null;
 
     if (address_id) {
-      // Use saved address
+      // Use saved address - verify ownership
       const { data: addr } = await supabaseAdmin
         .from("addresses")
         .select("*")
         .eq("id", address_id)
+        .eq("user_id", userId)
         .single();
-      if (addr) {
+      if (!addr) {
+        return new Response(JSON.stringify({ error: "Address not found or access denied" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      {
         shippingAddress = {
           street: addr.street, number: addr.number, complement: addr.complement,
           neighborhood: addr.neighborhood, city: addr.city, state: addr.state,
@@ -181,7 +188,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("create-checkout error:", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Internal server error" }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
