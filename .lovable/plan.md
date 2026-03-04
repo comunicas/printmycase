@@ -1,23 +1,27 @@
 
 
-# Corrigir domínio de email nas Edge Functions
+# Auto-selecionar endereço salvo no checkout
 
 ## Problema
-O domínio configurado para envio de emails é `studio.artiscase.com`, mas ambas as Edge Functions (`notify-order-status` e `auth-email-hook`) referenciam `notify.studio.artiscase.com` — um subdomínio que não está registrado nem verificado.
+Quando os endereços salvos são carregados no `AddressForm`, o componente apenas armazena a lista mas **nunca seleciona automaticamente** nenhum deles. Como `selectedAddressId` inicia como `null`, o formulário de novo endereço é sempre exibido — mesmo quando o usuário já tem endereços cadastrados.
 
-## Correções
+## Correção
 
-### 1. `supabase/functions/notify-order-status/index.ts`
-- Linha 10: `SENDER_DOMAIN` de `"notify.studio.artiscase.com"` → `"studio.artiscase.com"`
-- Linha 11: `FROM` de `"ArtisCase <noreply@notify.studio.artiscase.com>"` → `"ArtisCase <noreply@studio.artiscase.com>"`
+### Arquivo: `src/components/checkout/AddressForm.tsx`
+No `useEffect` que carrega endereços (linhas 55-66), após `setAddresses(data)`, chamar `handleSelectAddress(data[0])` para auto-selecionar o primeiro endereço (que já vem ordenado por `is_default desc`).
 
-### 2. `supabase/functions/auth-email-hook/index.ts`
-- Linha 38: `SENDER_DOMAIN` de `"notify.studio.artiscase.com"` → `"studio.artiscase.com"`
-- Linha 41: `FROM_DOMAIN` de `"notify.studio.artiscase.com"` → `"studio.artiscase.com"`
+```typescript
+// Antes:
+if (data && data.length > 0) {
+  setAddresses(data);
+}
 
-### 3. Re-deploy ambas as funções
-Após as correções, fazer deploy de `notify-order-status` e `auth-email-hook`.
+// Depois:
+if (data && data.length > 0) {
+  setAddresses(data);
+  handleSelectAddress(data[0]); // auto-seleciona o endereço padrão
+}
+```
 
-### Resultado
-Os emails passarão a usar o domínio correto (`studio.artiscase.com`) que está efetivamente configurado e aguardando verificação DNS.
+Isso garante que, ao entrar no checkout com endereços já cadastrados, o primeiro (padrão) é automaticamente selecionado e o formulário de novo endereço fica oculto.
 
