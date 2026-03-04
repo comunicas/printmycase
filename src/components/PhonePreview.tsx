@@ -66,7 +66,7 @@ const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, sca
   const baseFilter = `brightness(${1 + brightness / 100}) contrast(${1 + contrast / 100})`;
   const combinedFilter = extraFilter ? `${baseFilter} ${extraFilter}` : baseFilter;
 
-  const oversize = 150;
+  const oversize = Math.max(150, scale * 1.25);
   const offset = -(oversize - 100) / 2;
 
   const imageLayerStyle = image
