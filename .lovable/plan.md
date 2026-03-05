@@ -1,49 +1,34 @@
 
 
-## Code Review & Limpeza de Legados — Landing Page
+## Correção dos Warnings de forwardRef
 
-Análise completa do frontend da home (`Landing.tsx` e componentes relacionados).
+Os warnings ocorrem porque componentes funcionais simples estão recebendo refs de componentes pai (Radix UI internamente tenta passar refs). A correção é envolver cada componente afetado com `React.forwardRef`.
 
----
+### Componentes a corrigir
 
-### Checklist de Problemas Encontrados
-
-#### Legados e Código Morto
-
-- [x] **Font conflict**: Alinhado para `Inter` em `tailwind.config.ts` e `index.css`. Removido `Poppins`.
-- [x] **Variáveis CSS de sidebar não usadas**: Removidas 8 variáveis `--sidebar-*` do CSS e cores `sidebar.*` do Tailwind config.
-- [x] **Variáveis `--chart-*` não usadas**: Removidas 5 variáveis de chart do CSS.
-- [x] **Font `serif` e `mono` no config**: Removidas declarações customizadas não utilizadas.
-- [x] **`will-change: transform` no parallax**: Removido de `.parallax-bg`.
-
-#### Qualidade de Código
-
-- [x] **`SeoHead` faz fetch redundante**: Corrigido para não chamar `useProducts` quando props são fornecidas.
-- [x] **Botões Hero duplicados**: "Ver Modelos" agora faz scroll suave para `#destaques`.
-- [x] **`React` import desnecessário**: Substituído por `import { Fragment }`.
-- [x] **Inline styles repetidos**: Extraídos para função utilitária `fadeIn()`.
-- [x] **`as any` casting em hooks**: Substituído por tipos gerados `Tables<"products">`.
-
-#### Performance
-
-- [x] **ScrollReveal cria 1 IntersectionObserver por instância**: Refatorado para singleton compartilhado.
-- [x] **Google Fonts blocking render**: Movido `@import` para `<link rel="stylesheet">` no `index.html`.
-
-#### Acessibilidade
-
-- [x] **Hero section sem landmark**: Adicionado `aria-label="Banner principal"`.
-- [x] **Stars decorativas sem `aria-hidden`**: Adicionado `aria-hidden="true"` nos containers de estrelas.
-
----
-
-### Arquivos Alterados
-
-| Arquivo | Alterações |
+| Componente | Arquivo |
 |---|---|
-| `tailwind.config.ts` | Removido sidebar colors, serif/mono fonts, alinhado font sans para Inter |
-| `src/index.css` | Removidas variáveis sidebar/chart, removido `will-change`, removido `@import` de font |
-| `index.html` | Adicionado `<link rel="stylesheet">` para Google Fonts |
-| `src/pages/Landing.tsx` | Removido import `React`, extraído `fadeIn()`, corrigido botão duplicado, aria attrs |
-| `src/components/SeoHead.tsx` | Evita fetch redundante quando props são fornecidas |
-| `src/hooks/useScrollAnimation.ts` | Refatorado para observer singleton compartilhado |
-| `src/hooks/useProducts.ts` | Removido `as any`, usa tipos gerados do Supabase |
+| `LoadingSpinner` | `src/components/ui/loading-spinner.tsx` |
+| `StarRating` | `src/components/StarRating.tsx` |
+| `ProductInfo` | `src/components/ProductInfo.tsx` |
+| `ProductDetails` | `src/components/ProductDetails.tsx` |
+
+### Alteração em cada arquivo
+
+Envolver o componente com `React.forwardRef`, passando o `ref` para o elemento `<div>` raiz. Exemplo padrão:
+
+```tsx
+// Antes
+const Component = (props: Props) => {
+  return <div>...</div>;
+};
+
+// Depois
+const Component = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
+  return <div ref={ref}>...</div>;
+});
+Component.displayName = "Component";
+```
+
+Nenhuma mudança funcional — apenas suprime os warnings do console.
+
