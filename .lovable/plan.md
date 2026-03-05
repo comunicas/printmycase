@@ -1,30 +1,37 @@
 
 
-## Animações de Entrada ao Scroll com Intersection Observer
+## Refinamento UX: Seções "Benefícios" e "Como Funciona"
 
-### Abordagem
+### Diagnóstico atual
 
-Criar um hook `useScrollAnimation` que usa Intersection Observer para adicionar classes de animação quando os elementos entram no viewport. Aplicar nas 4 seções abaixo do hero: Benefícios, Como Funciona, Destaques e Depoimentos.
+Ambas as seções usam cards simples e planos --- sem hierarquia visual forte, sem interatividade, e sem elementos criativos que reforcem a marca. Os benefit cards são `bg-muted/40` sem borda nem sombra. Os steps do "Como funciona" são ícones soltos sem conexão visual entre si.
 
-### Alterações
+### Alterações propostas
 
-**1. `src/hooks/useScrollAnimation.ts`** (novo) — Hook customizado:
-- Recebe uma ref e opções (threshold, rootMargin)
-- Retorna `isVisible` boolean
-- Usa `IntersectionObserver` com `triggerOnce` (desconecta após primeira interseção)
+**1. Benefits cards --- elevação com hover e accent border**
 
-**2. `src/components/ScrollReveal.tsx`** (novo) — Componente wrapper:
-- Recebe `children`, `delay` (ms), `className`
-- Usa o hook internamente
-- Aplica `opacity-0 translate-y-6` por padrão, transiciona para `opacity-100 translate-y-0` quando visível
-- Usa CSS transitions (não keyframes) para controle mais fino com `transition-delay`
+- Adicionar `group` + hover: `hover:shadow-lg hover:-translate-y-1 transition-all duration-300`
+- Borda sutil com accent na lateral esquerda: `border-l-4 border-l-primary/60` para criar hierarquia
+- Ícone com fundo gradiente em vez de flat: `bg-gradient-to-br from-primary/20 to-primary/5`
+- Ícone escala ao hover do card: `group-hover:scale-110 transition-transform`
+- Manter o layout clean, sem excessos
 
-**3. `src/pages/Landing.tsx`** — Envolver os elementos das seções com `<ScrollReveal>`:
-- Cada card de benefício com delay escalonado (0, 100, 200ms)
-- Cada step do "Como Funciona" com delay escalonado
-- Título de cada seção com delay 0
-- Cards de produtos e depoimentos com delays escalonados
-- O componente `ScrollReveal` por seção para que cada seção anime independentemente ao entrar no viewport
+**2. "Como funciona" --- connector lines entre steps + cards com fundo**
 
-Três arquivos (1 novo hook, 1 novo componente, 1 editado).
+- Envolver cada step em um card com `bg-muted/30 rounded-2xl p-6` para dar corpo
+- Adicionar linhas conectoras (dashed) entre os steps via pseudo-elemento CSS ou um `<div>` decorativo com `border-dashed` entre as colunas (visível apenas em desktop)
+- Número badge com gradiente primary em vez de `bg-foreground` para consistência
+- Hover sutil: `hover:bg-muted/50 transition-colors`
+
+**3. Connector line approach**
+
+Usar um componente separador horizontal com seta entre cada coluna no grid, visível apenas em `md:` breakpoint. Implementado como elementos `hidden md:flex` entre os cards, usando `border-t-2 border-dashed border-primary/30` com um chevron.
+
+Alternativa mais clean: dentro do grid 3-col, adicionar `relative` e usar `after:` pseudo no CSS para desenhar a linha. Vou usar a abordagem inline com `ArrowRight` icons entre os steps para simplicidade.
+
+### Arquivos editados
+
+- **`src/pages/Landing.tsx`** --- refinar classes dos benefit cards e steps cards, adicionar connector arrows
+
+Um único arquivo editado, mudanças puramente de styling e layout.
 
