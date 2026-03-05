@@ -1,22 +1,40 @@
 
 
-## Add Hover Animations to Product Cards and Testimonial Cards
+## Nova Seção: Tecnologia de Impressão (Dark Mode)
 
-### Current State
+Inserir entre "Modelos em Destaque" e "Depoimentos" (após linha 200) uma seção dark-mode sobre a tecnologia Micro Piezo.
 
-- **Benefits cards**: Already have `hover:shadow-lg hover:-translate-y-1 transition-all duration-300` and `group-hover:scale-110` on icon. Working correctly.
-- **"Como Funciona" connectors**: Already implemented with dashed lines and ChevronRight between steps on desktop. Working correctly.
-- **Product cards** (`ProductCard.tsx`): Only have `transition-shadow hover:shadow-md` — no lift or scale effect.
-- **Testimonial cards** (`Landing.tsx` line 211): Plain `border-0 shadow-sm` with no hover effects at all.
+### Layout
 
-### Changes
+- Fundo escuro (`bg-zinc-950 text-white`) quebrando o padrão claro da página
+- Título "Tecnologia de Impressão" + subtítulo mencionando Micro Piezo
+- Grid 2 colunas no desktop: esquerda com os 5 atributos em mini-cards, direita com thumbnail do vídeo YouTube + botão play que abre modal
+- Logos Epson e PrecisionCore exibidos como badges de parceiro abaixo dos atributos
+- Modal (Dialog) com iframe do YouTube embed ao clicar no vídeo
 
-**1. `src/components/ProductCard.tsx`** — Enhance hover:
-- Change card class from `transition-shadow hover:shadow-md` to `group transition-all duration-300 hover:shadow-lg hover:-translate-y-1`
-- Add `group-hover:scale-105 transition-transform duration-300` to the image for a subtle zoom on hover
+### 5 Atributos (ícones Lucide)
 
-**2. `src/pages/Landing.tsx`** (line 211) — Add hover to testimonial cards:
-- Change from `border-0 shadow-sm h-full` to `border-0 shadow-sm h-full hover:shadow-lg hover:-translate-y-1 transition-all duration-300`
+1. Precisão extrema — `Crosshair`
+2. Cores vibrantes — `Palette`
+3. Alta definição — `Eye`
+4. Tecnologia profissional — `Cpu`
+5. Velocidade e qualidade — `Zap`
 
-Two files, minimal class additions only.
+Cada um como um item compacto: ícone + título + descrição curta, com fundo `bg-white/5` e borda `border-white/10`.
+
+### Vídeo
+
+- Thumbnail gerada via `https://img.youtube.com/vi/PMDJZLS7X8w/maxresdefault.jpg`
+- Overlay com ícone Play centralizado
+- Ao clicar abre `Dialog` com iframe `https://www.youtube.com/embed/PMDJZLS7X8w?autoplay=1`
+
+### Logos
+
+- Copiar as imagens Epson e PrecisionCore para `src/assets/`
+- Exibir como `<img>` com `h-8 opacity-70` lado a lado, abaixo dos atributos
+
+### Arquivos
+
+- **`src/pages/Landing.tsx`** — adicionar seção + state para modal de vídeo + imports dos logos
+- Copiar 2 logos para `src/assets/`
 
