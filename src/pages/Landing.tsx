@@ -11,6 +11,7 @@ import AppHeader from "@/components/AppHeader";
 import ProductCard from "@/components/ProductCard";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import heroBg from "@/assets/hero-bg.jpg";
+import ScrollReveal from "@/components/ScrollReveal";
 
 const testimonials = [
   { name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
@@ -109,20 +110,24 @@ const Landing = () => {
           {/* Benefits */}
           <section id="beneficios" className="py-16 px-5">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
-                Capas personalizadas com qualidade profissional
-              </h2>
+              <ScrollReveal>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
+                  Capas personalizadas com qualidade profissional
+                </h2>
+              </ScrollReveal>
               <div className="grid md:grid-cols-3 gap-6">
-                {benefits.map((b) => (
-                  <Card key={b.title} className="text-center border-0 shadow-none bg-muted/40">
-                    <CardContent className="pt-8 pb-6 px-6 space-y-3">
-                      <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <b.icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-foreground">{b.title}</h3>
-                      <p className="text-sm text-muted-foreground">{b.desc}</p>
-                    </CardContent>
-                  </Card>
+                {benefits.map((b, i) => (
+                  <ScrollReveal key={b.title} delay={i * 100}>
+                    <Card className="text-center border-0 shadow-none bg-muted/40 h-full">
+                      <CardContent className="pt-8 pb-6 px-6 space-y-3">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <b.icon className="w-6 h-6 text-primary" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-foreground">{b.title}</h3>
+                        <p className="text-sm text-muted-foreground">{b.desc}</p>
+                      </CardContent>
+                    </Card>
+                  </ScrollReveal>
                 ))}
               </div>
             </div>
@@ -133,19 +138,23 @@ const Landing = () => {
           {/* How it works */}
           <section id="como-funciona" className="py-16 px-5">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Como funciona</h2>
+              <ScrollReveal>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Como funciona</h2>
+              </ScrollReveal>
               <div className="grid md:grid-cols-3 gap-8">
                 {steps.map((s, i) => (
-                  <div key={s.title} className="flex flex-col items-center text-center space-y-3">
-                    <div className="relative w-14 h-14 rounded-full bg-primary flex items-center justify-center">
-                      <s.icon className="w-6 h-6 text-primary-foreground" />
-                      <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-foreground text-background text-xs font-bold flex items-center justify-center">
-                        {i + 1}
-                      </span>
+                  <ScrollReveal key={s.title} delay={i * 100}>
+                    <div className="flex flex-col items-center text-center space-y-3">
+                      <div className="relative w-14 h-14 rounded-full bg-primary flex items-center justify-center">
+                        <s.icon className="w-6 h-6 text-primary-foreground" />
+                        <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-foreground text-background text-xs font-bold flex items-center justify-center">
+                          {i + 1}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-foreground">{s.title}</h3>
+                      <p className="text-sm text-muted-foreground">{s.desc}</p>
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground">{s.title}</h3>
-                    <p className="text-sm text-muted-foreground">{s.desc}</p>
-                  </div>
+                  </ScrollReveal>
                 ))}
               </div>
             </div>
@@ -156,21 +165,27 @@ const Landing = () => {
           {/* Featured Products */}
           <section id="destaques" className="py-16 px-5">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Modelos em Destaque</h2>
+              <ScrollReveal>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Modelos em Destaque</h2>
+              </ScrollReveal>
               {loading ? (
                 <LoadingSpinner />
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {featuredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                  {featuredProducts.map((product, i) => (
+                    <ScrollReveal key={product.id} delay={i * 80}>
+                      <ProductCard product={product} />
+                    </ScrollReveal>
                   ))}
                 </div>
               )}
-              <div className="text-center mt-8">
-                <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
-                  Ver Catálogo Completo <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
+              <ScrollReveal delay={350}>
+                <div className="text-center mt-8">
+                  <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
+                    Ver Catálogo Completo <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </ScrollReveal>
             </div>
           </section>
 
@@ -179,20 +194,24 @@ const Landing = () => {
           {/* Testimonials */}
           <section id="depoimentos" className="py-16 px-5 bg-muted/30">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">O que nossos clientes dizem</h2>
+              <ScrollReveal>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">O que nossos clientes dizem</h2>
+              </ScrollReveal>
               <div className="grid md:grid-cols-3 gap-6">
-                {testimonials.map((t) => (
-                  <Card key={t.name} className="border-0 shadow-sm">
-                    <CardContent className="pt-6 pb-5 px-6 space-y-3">
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: t.rating }).map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
-                      <p className="text-sm text-foreground italic">"{t.text}"</p>
-                      <p className="text-sm font-semibold text-muted-foreground">{t.name}</p>
-                    </CardContent>
-                  </Card>
+                {testimonials.map((t, i) => (
+                  <ScrollReveal key={t.name} delay={i * 100}>
+                    <Card className="border-0 shadow-sm h-full">
+                      <CardContent className="pt-6 pb-5 px-6 space-y-3">
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: t.rating }).map((_, j) => (
+                            <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          ))}
+                        </div>
+                        <p className="text-sm text-foreground italic">"{t.text}"</p>
+                        <p className="text-sm font-semibold text-muted-foreground">{t.name}</p>
+                      </CardContent>
+                    </Card>
+                  </ScrollReveal>
                 ))}
               </div>
             </div>
