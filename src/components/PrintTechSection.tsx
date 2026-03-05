@@ -50,9 +50,9 @@ const PrintTechSection = () => {
 
               {/* Partner logos */}
               <ScrollReveal delay={450}>
-                <div className="flex items-center gap-6 pt-4 pl-1">
-                  <img src={logoEpson} alt="Epson" className="h-7 opacity-60" />
-                  <img src={logoPrecisionCore} alt="PrecisionCore" className="h-8 opacity-60" />
+                <div className="flex items-center gap-8 pt-6 pl-1">
+                  <img src={logoEpson} alt="Epson" className="h-9 opacity-70" />
+                  <img src={logoPrecisionCore} alt="PrecisionCore" className="h-10 opacity-70" />
                 </div>
               </ScrollReveal>
             </div>
