@@ -1,30 +1,24 @@
 
 
-## Bug Fix: Hero Text Invisible — Missing `fade-in` Keyframe
+## Fix: Header Button Contrast on Dark Hero
 
 ### Problem
 
-The hero section text (title, subtitle, CTAs, social proof badge) is completely invisible. All four elements have `opacity-0 animate-fade-in`, but the `fade-in` keyframe and animation are **not defined** in `tailwind.config.ts`. Without the animation running, the elements stay at `opacity: 0` permanently.
-
-The header glassmorphism scroll transition works correctly.
+The "Ver Modelos" and "Entrar" buttons in the transparent header state are barely visible against the dark hero background. The ghost variant buttons don't have enough contrast on dark backgrounds.
 
 ### Fix
 
-**`tailwind.config.ts`** — Add the `fade-in` keyframe and animation to the theme:
+**`src/components/AppHeader.tsx`** — The "Ver Modelos" button already has conditional white styling when `isTransparent && !scrolled`, but it needs stronger contrast. Currently uses `text-white/90` which may be too subtle.
 
-```ts
-keyframes: {
-  // ... existing accordion keyframes
-  'fade-in': {
-    '0%': { opacity: '0', transform: 'translateY(10px)' },
-    '100%': { opacity: '1', transform: 'translateY(0)' },
-  },
-},
-animation: {
-  // ... existing accordion animations
-  'fade-in': 'fade-in 0.6s ease-out',
-},
-```
+**`src/components/UserMenu.tsx`** — The "Entrar" button uses `variant="ghost"` with no conditional styling for transparent headers. It needs to accept a prop to know when it's on a dark background.
 
-Single file change, ~6 lines added. This will make all four hero elements animate in with a staggered fade-in + slide-up effect as originally intended.
+### Approach
+
+1. **`src/components/AppHeader.tsx`**: Pass a prop or apply direct styling to both the "Ver Modelos" button and UserMenu to use white text when in transparent-not-scrolled state.
+
+2. **`src/components/UserMenu.tsx`**: Accept a `transparent` prop and apply `text-white hover:bg-white/10` to the "Entrar" button when true.
+
+3. Both buttons get `text-white` (full opacity, not `/90`) for maximum contrast in the transparent header state.
+
+Two files changed, minimal edits.
 
