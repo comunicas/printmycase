@@ -98,9 +98,7 @@ const Landing = () => {
                   <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   )}
                 </div>
-                <span className="text-sm text-white/80 font-medium">Mais de 10.000 cases personalizadas 
-
-                </span>
+                <span className="text-sm text-white/80 font-medium">Mais de 10.000 Cases criadas com tecnologia PrintMyCase</span>
               </div>
             </div>
           </section>
