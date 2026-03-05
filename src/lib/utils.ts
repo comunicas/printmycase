@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 const BRAND_MAP: [RegExp, string][] = [
   [/\biphone\b/i, "Apple"],
   [/\bgalaxy\b/i, "Samsung"],
-  [/\bmoto\b/i, "Motorola"],
+  [/\b(motorola|moto)\b/i, "Motorola"],
   [/\b(redmi|poco|xiaomi)\b/i, "Xiaomi"],
 ];
 
