@@ -11,14 +11,14 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 
-const UserMenu = () => {
+const UserMenu = ({ transparent = false }: { transparent?: boolean }) => {
   const { user, profile, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
 
   if (!user) {
     return (
-      <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
+      <Button variant="ghost" size="sm" className={transparent ? "text-white hover:text-white hover:bg-white/10" : ""} onClick={() => navigate("/login")}>
         Entrar
       </Button>
     );

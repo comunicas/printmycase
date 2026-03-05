@@ -69,12 +69,12 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
           <Button
             variant="ghost"
             size="sm"
-            className={isTransparent && !scrolled ? "text-white/90 hover:text-white hover:bg-white/10" : ""}
+            className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
             onClick={() => navigate("/catalog")}
           >
             Ver Modelos
           </Button>
-          <UserMenu />
+          <UserMenu transparent={isTransparent && !scrolled} />
         </div>
       </nav>
     </header>
