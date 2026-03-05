@@ -21,9 +21,8 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
         <TabsTrigger value="specs" className="flex-1">
           Especificações
         </TabsTrigger>
-        <TabsTrigger value="reviews" className="flex-1">
-          Avaliações
-        </TabsTrigger>
+
+
       </TabsList>
 
       <TabsContent value="description" className="pt-4">
@@ -49,14 +48,6 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
         </Table>
       </TabsContent>
 
-      <TabsContent value="reviews" className="pt-4">
-        <p className="text-sm text-muted-foreground">
-          {product.review_count} avaliações • Média de {product.rating.toFixed(1)} estrelas
-        </p>
-        <p className="text-sm text-muted-foreground mt-2 italic">
-          Em breve: avaliações de clientes.
-        </p>
-      </TabsContent>
     </Tabs>
   );
 };
