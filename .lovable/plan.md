@@ -1,68 +1,26 @@
 
 
-## Redesign: Header + Hero com Parallax Dark Mode
+## Animações de Entrada no Hero
 
-### Visão Geral
+Adicionar animações escalonadas (staggered) de fade-in + slide-up nos elementos do hero da landing page para criar uma entrada progressiva e elegante.
 
-Transformar o header e hero da landing page em uma experiência visual premium, com fundo escuro (dark), efeito parallax em uma imagem de fundo, e elementos glassmorphism -- transmitindo identidade de startup moderna.
+### Abordagem
 
-### Proposta de Design
+Usar CSS keyframes já disponíveis no projeto (`fade-in`) combinados com classes de delay customizadas via `style={{ animationDelay }}` para criar o efeito staggered. Cada elemento do hero entra sequencialmente:
 
-**Header (apenas na Landing)**
-- Header transparente sobre o hero, tornando-se opaco com blur ao fazer scroll (glassmorphism)
-- Logo branco/claro sobre fundo escuro
-- Links e botões com texto claro, transição suave ao scrollar
-- Usar `IntersectionObserver` ou scroll listener para detectar quando o hero sai da viewport e trocar o estilo do header
+1. **Título** (h1) — 0ms delay
+2. **Subtítulo** (p) — 150ms
+3. **Botões CTA** — 300ms
+4. **Badge social proof** — 450ms
 
-**Hero Section**
-- Fundo escuro com gradiente radial usando as cores da marca (violeta `265 83%` para azul/magenta)
-- Imagem de fundo (capinha/mockup de celular) com efeito parallax via CSS `background-attachment: fixed` ou `transform: translateY()` controlado por scroll
-- Overlay com gradiente escuro para garantir legibilidade do texto
-- Texto em branco com destaque em violeta/primary para palavras-chave
-- Badge social proof com fundo glass (backdrop-blur + borda semitransparente)
-- Botão CTA principal com glow sutil na cor primária
-- Partículas ou formas geométricas sutis animadas em CSS (opcional, sem lib extra)
+Todos começam com `opacity-0` e usam `animate-fade-in` com `animation-fill-mode: forwards`.
 
-### Estrutura Técnica
+### Alterações
 
-```text
-┌─────────────────────────────────────────┐
-│  Header (transparent → glass on scroll) │
-├─────────────────────────────────────────┤
-│                                         │
-│   ░░░ Background Image (parallax) ░░░  │
-│   ▓▓▓ Dark gradient overlay ▓▓▓        │
-│                                         │
-│        Sua Case Customizada             │
-│          em 1 minuto.                   │
-│                                         │
-│   [Criar Minha Case]  [Ver Modelos]     │
-│                                         │
-│   ★★★★★  1.000+ Cases criadas          │
-│                                         │
-└─────────────────────────────────────────┘
-```
+**`src/pages/Landing.tsx`** — Adicionar classes de animação nos 4 elementos do hero content:
+- `opacity-0 animate-fade-in` + `style={{ animationDelay: "Xms", animationFillMode: "forwards" }}`
 
-### Arquivos Alterados
+**`tailwind.config.ts`** — O keyframe `fade-in` já inclui `translateY(10px)→0`, que dá o efeito slide-up naturalmente. Nenhuma alteração necessária no config.
 
-1. **`src/components/AppHeader.tsx`**
-   - Aceitar nova prop `variant?: "transparent" | "default"`
-   - Quando `transparent`: fundo transparente, texto claro, transição para glass on scroll via state + scroll listener
-   - Quando `default`: comportamento atual (usado nas demais páginas)
-
-2. **`src/pages/Landing.tsx`**
-   - Passar `variant="transparent"` ao `AppHeader`
-   - Reescrever a seção Hero com:
-     - Container full-viewport-height com fundo escuro + gradiente radial nas cores da marca
-     - Imagem de fundo com parallax (CSS `background-attachment: fixed`)
-     - Overlay gradient
-     - Texto branco, highlight na palavra "Customizada" em cor primary
-     - Botões com estilos claros (CTA primário com glow, outline com borda clara)
-     - Badge de social proof com glass effect
-
-3. **`src/index.css`**
-   - Adicionar classes utilitárias: `.glass` (backdrop-blur + bg semitransparente), `.glow-primary` (box-shadow com cor primária), `.parallax-bg`
-
-### Sem Dependências Extras
-Tudo implementado com CSS puro (gradientes, backdrop-filter, background-attachment, box-shadow) e React state para o scroll do header. Nenhuma biblioteca adicional necessária.
+Alteração em um único arquivo, sem dependências extras.
 
