@@ -1,26 +1,30 @@
 
 
-## Animações de Entrada no Hero
+## Bug Fix: Hero Text Invisible — Missing `fade-in` Keyframe
 
-Adicionar animações escalonadas (staggered) de fade-in + slide-up nos elementos do hero da landing page para criar uma entrada progressiva e elegante.
+### Problem
 
-### Abordagem
+The hero section text (title, subtitle, CTAs, social proof badge) is completely invisible. All four elements have `opacity-0 animate-fade-in`, but the `fade-in` keyframe and animation are **not defined** in `tailwind.config.ts`. Without the animation running, the elements stay at `opacity: 0` permanently.
 
-Usar CSS keyframes já disponíveis no projeto (`fade-in`) combinados com classes de delay customizadas via `style={{ animationDelay }}` para criar o efeito staggered. Cada elemento do hero entra sequencialmente:
+The header glassmorphism scroll transition works correctly.
 
-1. **Título** (h1) — 0ms delay
-2. **Subtítulo** (p) — 150ms
-3. **Botões CTA** — 300ms
-4. **Badge social proof** — 450ms
+### Fix
 
-Todos começam com `opacity-0` e usam `animate-fade-in` com `animation-fill-mode: forwards`.
+**`tailwind.config.ts`** — Add the `fade-in` keyframe and animation to the theme:
 
-### Alterações
+```ts
+keyframes: {
+  // ... existing accordion keyframes
+  'fade-in': {
+    '0%': { opacity: '0', transform: 'translateY(10px)' },
+    '100%': { opacity: '1', transform: 'translateY(0)' },
+  },
+},
+animation: {
+  // ... existing accordion animations
+  'fade-in': 'fade-in 0.6s ease-out',
+},
+```
 
-**`src/pages/Landing.tsx`** — Adicionar classes de animação nos 4 elementos do hero content:
-- `opacity-0 animate-fade-in` + `style={{ animationDelay: "Xms", animationFillMode: "forwards" }}`
-
-**`tailwind.config.ts`** — O keyframe `fade-in` já inclui `translateY(10px)→0`, que dá o efeito slide-up naturalmente. Nenhuma alteração necessária no config.
-
-Alteração em um único arquivo, sem dependências extras.
+Single file change, ~6 lines added. This will make all four hero elements animate in with a staggered fade-in + slide-up effect as originally intended.
 
