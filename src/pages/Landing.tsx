@@ -237,22 +237,69 @@ const Landing = () => {
           <section className="py-20 px-5 bg-primary text-primary-foreground">
             <div className="max-w-2xl mx-auto text-center space-y-6">
               <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Pronto para criar sua Case única?</h2>
-              <p className="text-lg opacity-90">Escolha seu modelo, envie sua foto e receba sua capinha exclusiva na sua porta.</p>
-              <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold" onClick={() => navigate("/catalog")}>
-                Comece Agora <ArrowRight className="w-4 h-4" />
-              </Button>
+              <p className="text-lg opacity-90">
+                Escolha seu modelo, envie sua foto e receba sua capinha exclusiva na sua porta.
+                <br />
+                <span className="text-sm opacity-75">Não encontrou seu modelo? Solicite e avisaremos!</span>
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold" onClick={() => navigate("/catalog")}>
+                  Comece Agora <ArrowRight className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground bg-transparent"
+                  onClick={() => navigate("/solicitar-modelo")}
+                >
+                  <Smartphone className="w-4 h-4" /> Solicitar Modelo
+                </Button>
+              </div>
             </div>
           </section>
         </main>
 
         {/* Footer */}
-        <footer className="border-t bg-card py-8 px-5">
-          <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">ArtisCase</span>
-            <nav className="flex items-center gap-4">
-              <Link to="/catalog" className="hover:text-foreground transition-colors">Catálogo</Link>
-            </nav>
-            <span>© 2026 ArtisCase</span>
+        <footer className="border-t bg-card py-10 px-5">
+          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
+            {/* Brand */}
+            <div className="space-y-3">
+              <span className="text-lg font-bold text-foreground">ArtisCase</span>
+              <p className="text-muted-foreground leading-relaxed">
+                Capas personalizadas com tecnologia de impressão profissional. Qualidade premium direto na sua porta.
+              </p>
+            </div>
+
+            {/* Links */}
+            <div className="space-y-3">
+              <span className="font-semibold text-foreground">Links Úteis</span>
+              <nav className="flex flex-col gap-2 text-muted-foreground">
+                <Link to="/catalog" className="hover:text-foreground transition-colors w-fit">Catálogo</Link>
+                <Link to="/solicitar-modelo" className="hover:text-foreground transition-colors w-fit">Solicitar Modelo</Link>
+                <a href="#faq" className="hover:text-foreground transition-colors w-fit">Perguntas Frequentes</a>
+              </nav>
+            </div>
+
+            {/* Contact */}
+            <div className="space-y-3">
+              <span className="font-semibold text-foreground">Contato</span>
+              <p className="text-muted-foreground leading-relaxed">
+                Dúvidas ou sugestões? Entre em contato pelo nosso formulário de solicitação.
+              </p>
+              <Link
+                to="/solicitar-modelo"
+                className="inline-block text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                Fale Conosco →
+              </Link>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span>© 2026 ArtisCase. Todos os direitos reservados.</span>
+            <span>Feito com ❤️ no Brasil</span>
           </div>
         </footer>
       </div>
