@@ -1,16 +1,12 @@
 
 
-## Análise
+## Diagnóstico
 
-O `create-checkout` funciona porque usa o padrão: cria client anon com header de Authorization e chama `auth.getUser(token)` passando o token explicitamente. O `notify-order-status` atual chama `auth.getUser()` sem o token, o que pode falhar.
+O problema está na função `extractBrand` em `src/lib/utils.ts`. A regex para Motorola é `\bmoto\b` que exige "moto" como palavra isolada. Os nomes dos produtos usam "Motorola" (ex: "Capa Motorola G54"), onde "moto" não é uma palavra completa -- faz parte de "Motorola". Por isso a regex não encontra correspondência e os produtos são classificados como "Outro" em vez de "Motorola".
 
-## Plano
+## Correção
 
-Ajustar `notify-order-status` para usar o mesmo padrão do `create-checkout`:
+Alterar a regex de `\bmoto\b` para `\b(motorola|moto)\b` no arquivo `src/lib/utils.ts` (linha 10). Isso faz match tanto com "Motorola" quanto com "Moto" (usado em nomes como "Moto G").
 
-1. Criar client com `SUPABASE_ANON_KEY` + header `Authorization`
-2. Chamar `auth.getUser(token)` passando o token explicitamente
-3. Manter o `supabaseAdmin` com service-role para operações admin
-
-Alteração mínima nas linhas 122-135 do arquivo `supabase/functions/notify-order-status/index.ts`.
+Alteração de uma única linha, sem efeitos colaterais.
 
