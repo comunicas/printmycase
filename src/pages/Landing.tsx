@@ -63,16 +63,16 @@ const Landing = () => {
 
             {/* Content */}
             <div className="relative z-10 max-w-3xl mx-auto text-center space-y-7 px-5 pt-20 pb-16">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0ms", animationFillMode: "forwards" }}>
                 Sua Case{" "}
                 <span className="text-primary drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)]">Customizada</span>{" "}
                 em 1 minuto.
               </h1>
-              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={{ animationDelay: "150ms", animationFillMode: "forwards" }}>
                 Crie uma capa personalizada usando a tecnologia PrintMyCase e receba em casa.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={{ animationDelay: "300ms", animationFillMode: "forwards" }}>
                 <Button
                   size="lg"
                   className="gap-2 text-base glow-primary"
@@ -91,7 +91,7 @@ const Landing = () => {
               </div>
 
               {/* Social proof badge */}
-              <div className="inline-flex items-center gap-2.5 glass rounded-full px-5 py-2.5 mx-auto">
+              <div className="inline-flex items-center gap-2.5 glass rounded-full px-5 py-2.5 mx-auto opacity-0 animate-fade-in" style={{ animationDelay: "450ms", animationFillMode: "forwards" }}>
                 <div className="flex">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
