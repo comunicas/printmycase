@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Palette, Shield, Truck, Smartphone, Upload, Package, Star, ArrowRight, ChevronRight } from
@@ -116,9 +117,9 @@ const Landing = () => {
               <div className="grid md:grid-cols-3 gap-6">
                 {benefits.map((b, i) =>
                 <ScrollReveal key={b.title} delay={i * 100}>
-                    <Card className="text-center border-0 shadow-none bg-muted/40 h-full">
+                    <Card className="group text-center border-0 border-l-4 border-l-primary/60 shadow-sm bg-muted/40 h-full hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                       <CardContent className="pt-8 pb-6 px-6 space-y-3">
-                        <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                           <b.icon className="w-6 h-6 text-primary" />
                         </div>
                         <h3 className="text-lg font-semibold text-foreground">{b.title}</h3>
@@ -139,13 +140,14 @@ const Landing = () => {
               <ScrollReveal>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Como funciona</h2>
               </ScrollReveal>
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-5 gap-4 items-center">
                 {steps.map((s, i) =>
-                <ScrollReveal key={s.title} delay={i * 100}>
-                    <div className="flex flex-col items-center text-center space-y-3">
-                      <div className="relative w-14 h-14 rounded-full bg-primary flex items-center justify-center">
+                <React.Fragment key={s.title}>
+                  <ScrollReveal delay={i * 150}>
+                    <div className="flex flex-col items-center text-center space-y-3 bg-muted/30 rounded-2xl p-6 hover:bg-muted/50 transition-colors duration-300">
+                      <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
                         <s.icon className="w-6 h-6 text-primary-foreground" />
-                        <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-foreground text-background text-xs font-bold flex items-center justify-center">
+                        <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs font-bold flex items-center justify-center ring-2 ring-background">
                           {i + 1}
                         </span>
                       </div>
@@ -153,6 +155,14 @@ const Landing = () => {
                       <p className="text-sm text-muted-foreground">{s.desc}</p>
                     </div>
                   </ScrollReveal>
+                  {i < steps.length - 1 && (
+                    <div className="hidden md:flex items-center justify-center">
+                      <div className="w-full border-t-2 border-dashed border-primary/30 relative">
+                        <ChevronRight className="w-5 h-5 text-primary/50 absolute -right-2.5 -top-2.5" />
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
                 )}
               </div>
             </div>
