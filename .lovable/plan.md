@@ -1,14 +1,11 @@
 
 
-## Ajuste dos logos Epson e PrecisionCore
+## Substituir logo Epson por versão com melhor contraste
 
-### Alterações em `src/components/PrintTechSection.tsx` (linhas 51-56)
+### Alteração
 
-- Aumentar altura dos logos: Epson de `h-7` para `h-9`, PrecisionCore de `h-8` para `h-10`
-- Aumentar opacidade de `opacity-60` para `opacity-70`
-- Adicionar mais espaçamento superior: `pt-4` → `pt-6`
-- Adicionar gap maior: `gap-6` → `gap-8`
-- Alinhar verticalmente ao centro com `items-center` (já presente)
+1. Copiar o novo logo `user-uploads://epson-logo_20240821015633.png` para `src/assets/logo-epson.png` (sobrescrever o atual)
+2. Nenhuma alteração de código necessária — o import já referencia `src/assets/logo-epson.png`
 
-Arquivo único, mudança de classes apenas.
+O novo logo é branco, ideal para o fundo escuro (`bg-zinc-950`) da seção.
 
