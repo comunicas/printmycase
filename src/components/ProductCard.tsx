@@ -13,7 +13,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <Card
-      className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
+      className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden"
       onClick={() => navigate(`/product/${product.slug}`)}
     >
       <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
@@ -21,7 +21,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <img
             src={product.device_image ?? product.images[0]}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
         ) : (

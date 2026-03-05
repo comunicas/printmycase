@@ -208,7 +208,7 @@ const Landing = () => {
               <div className="grid md:grid-cols-3 gap-6">
                 {testimonials.map((t, i) =>
                 <ScrollReveal key={t.name} delay={i * 100}>
-                    <Card className="border-0 shadow-sm h-full">
+                    <Card className="border-0 shadow-sm h-full hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                       <CardContent className="pt-6 pb-5 px-6 space-y-3">
                         <div className="flex gap-0.5">
                           {Array.from({ length: t.rating }).map((_, j) =>
