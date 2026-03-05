@@ -1,7 +1,7 @@
 import { useNavigate, Link } from "react-router-dom";
 import {
-  Palette, Shield, Truck, Smartphone, Upload, Package, Star, ArrowRight, ChevronRight,
-} from "lucide-react";
+  Palette, Shield, Truck, Smartphone, Upload, Package, Star, ArrowRight, ChevronRight } from
+"lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -12,22 +12,22 @@ import ProductCard from "@/components/ProductCard";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const testimonials = [
-  { name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
-  { name: "Lucas M.", text: "Surpreendeu demais. O acabamento soft-touch é muito premium. Já pedi a segunda!", rating: 5 },
-  { name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 },
-];
+{ name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
+{ name: "Lucas M.", text: "Surpreendeu demais. O acabamento soft-touch é muito premium. Já pedi a segunda!", rating: 5 },
+{ name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 }];
+
 
 const benefits = [
-  { icon: Palette, title: "100% Personalizada", desc: "Produzimos sua capa com a mesma tecnologia usada nas máquinas PrintMyCase presentes em shopping centers." },
-  { icon: Shield, title: "Proteção Premium", desc: "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m." },
-  { icon: Truck, title: "Envio Rápido", desc: "Frete acessível para a região Sudeste. Produção em até 48h e entrega ágil." },
-];
+{ icon: Palette, title: "100% Personalizada", desc: "Produzimos sua capa com a mesma tecnologia usada nas máquinas PrintMyCase presentes em shopping centers." },
+{ icon: Shield, title: "Proteção Premium", desc: "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m." },
+{ icon: Truck, title: "Envio Rápido", desc: "Frete acessível para a região Sudeste. Produção em até 48h e entrega ágil." }];
+
 
 const steps = [
-  { icon: Smartphone, title: "Escolha o modelo da sua capa", desc: "Selecione o modelo do seu celular" },
-  { icon: Upload, title: "Envie sua imagem", desc: "Faça upload da sua foto ou design" },
-  { icon: Package, title: "Receba sua Case em casa", desc: "Produção em 48h e envio rápido" },
-];
+{ icon: Smartphone, title: "Escolha o modelo da sua capa", desc: "Selecione o modelo do seu celular" },
+{ icon: Upload, title: "Envie sua imagem", desc: "Faça upload da sua foto ou design" },
+{ icon: Package, title: "Receba sua Case em casa", desc: "Produção em 48h e envio rápido" }];
+
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -43,8 +43,8 @@ const Landing = () => {
           {/* Hero */}
           <section className="py-20 md:py-28 px-5">
             <div className="max-w-3xl mx-auto text-center space-y-6">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
-                Sua Case, sua identidade.
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">Sua Case Customizada em 1 minuto.
+
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
                 Crie uma capa personalizada usando a tecnologia PrintMyCase e receba em casa.
@@ -59,9 +59,9 @@ const Landing = () => {
               </div>
               <div className="flex items-center justify-center gap-2 pt-4">
                 <div className="flex">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  ))}
+                  {Array.from({ length: 5 }).map((_, i) =>
+                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  )}
                 </div>
                 <span className="text-sm text-muted-foreground font-medium">Mais de 1.000 Cases criadas com tecnologia PrintMyCase</span>
               </div>
@@ -77,8 +77,8 @@ const Landing = () => {
                 Capas personalizadas com qualidade profissional
               </h2>
               <div className="grid md:grid-cols-3 gap-6">
-                {benefits.map((b) => (
-                  <Card key={b.title} className="text-center border-0 shadow-none bg-muted/40">
+                {benefits.map((b) =>
+                <Card key={b.title} className="text-center border-0 shadow-none bg-muted/40">
                     <CardContent className="pt-8 pb-6 px-6 space-y-3">
                       <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                         <b.icon className="w-6 h-6 text-primary" />
@@ -87,7 +87,7 @@ const Landing = () => {
                       <p className="text-sm text-muted-foreground">{b.desc}</p>
                     </CardContent>
                   </Card>
-                ))}
+                )}
               </div>
             </div>
           </section>
@@ -99,8 +99,8 @@ const Landing = () => {
             <div className="max-w-5xl mx-auto">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Como funciona</h2>
               <div className="grid md:grid-cols-3 gap-8">
-                {steps.map((s, i) => (
-                  <div key={s.title} className="flex flex-col items-center text-center space-y-3">
+                {steps.map((s, i) =>
+                <div key={s.title} className="flex flex-col items-center text-center space-y-3">
                     <div className="relative w-14 h-14 rounded-full bg-primary flex items-center justify-center">
                       <s.icon className="w-6 h-6 text-primary-foreground" />
                       <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-foreground text-background text-xs font-bold flex items-center justify-center">
@@ -110,7 +110,7 @@ const Landing = () => {
                     <h3 className="text-lg font-semibold text-foreground">{s.title}</h3>
                     <p className="text-sm text-muted-foreground">{s.desc}</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </section>
@@ -121,15 +121,15 @@ const Landing = () => {
           <section id="destaques" className="py-16 px-5">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Modelos em Destaque</h2>
-              {loading ? (
-                <LoadingSpinner />
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {featuredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+              {loading ?
+              <LoadingSpinner /> :
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {featuredProducts.map((product) =>
+                <ProductCard key={product.id} product={product} />
+                )}
                 </div>
-              )}
+              }
               <div className="text-center mt-8">
                 <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
                   Ver Catálogo Completo <ChevronRight className="w-4 h-4" />
@@ -145,19 +145,19 @@ const Landing = () => {
             <div className="max-w-5xl mx-auto">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">O que nossos clientes dizem</h2>
               <div className="grid md:grid-cols-3 gap-6">
-                {testimonials.map((t) => (
-                  <Card key={t.name} className="border-0 shadow-sm">
+                {testimonials.map((t) =>
+                <Card key={t.name} className="border-0 shadow-sm">
                     <CardContent className="pt-6 pb-5 px-6 space-y-3">
                       <div className="flex gap-0.5">
-                        {Array.from({ length: t.rating }).map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        ))}
+                        {Array.from({ length: t.rating }).map((_, i) =>
+                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      )}
                       </div>
                       <p className="text-sm text-foreground italic">"{t.text}"</p>
                       <p className="text-sm font-semibold text-muted-foreground">{t.name}</p>
                     </CardContent>
                   </Card>
-                ))}
+                )}
               </div>
             </div>
           </section>
@@ -185,8 +185,8 @@ const Landing = () => {
           </div>
         </footer>
       </div>
-    </>
-  );
+    </>);
+
 };
 
 export default Landing;
