@@ -13,8 +13,8 @@ interface SeoHeadProps {
 }
 
 const SeoHead = ({ products: productsProp }: SeoHeadProps) => {
-  const { products: fetchedProducts } = useProducts(productsProp ? 0 : 8);
-  const products = productsProp ?? fetchedProducts;
+  const { products: fetchedProducts } = useProducts(productsProp && productsProp.length > 0 ? undefined : 8);
+  const products = productsProp && productsProp.length > 0 ? productsProp : fetchedProducts;
 
   useEffect(() => {
     document.title = TITLE;

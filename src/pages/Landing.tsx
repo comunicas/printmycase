@@ -1,4 +1,4 @@
-import React from "react";
+import { Fragment } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Palette, Shield, Truck, Smartphone, Upload, Package, Star, ArrowRight, ChevronRight } from
@@ -21,18 +21,20 @@ const testimonials = [
 { name: "Lucas M.", text: "Surpreendeu demais. O acabamento soft-touch é muito premium. Já pedi a segunda!", rating: 5 },
 { name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 }];
 
-
 const benefits = [
 { icon: Palette, title: "100% Personalizada", desc: "Produzimos sua capa com a mesma tecnologia usada nas máquinas PrintMyCase presentes em shopping centers." },
 { icon: Shield, title: "Proteção Premium", desc: "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m." },
 { icon: Truck, title: "Envio Rápido", desc: "Frete acessível para a região Sudeste. Produção em até 48h e entrega ágil." }];
-
 
 const steps = [
 { icon: Smartphone, title: "Escolha o modelo da sua capa", desc: "Selecione o modelo do seu celular" },
 { icon: Upload, title: "Envie sua imagem", desc: "Faça upload da sua foto ou design" },
 { icon: Package, title: "Receba sua Case em casa", desc: "Produção em 48h e envio rápido" }];
 
+const fadeIn = (delayMs: number): React.CSSProperties => ({
+  animationDelay: `${delayMs}ms`,
+  animationFillMode: "forwards",
+});
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -46,7 +48,7 @@ const Landing = () => {
 
         <main>
           {/* Hero — Dark Parallax */}
-          <section className="relative min-h-[100vh] -mt-[56px] flex items-center justify-center overflow-hidden">
+          <section aria-label="Banner principal" className="relative min-h-[100vh] -mt-[56px] flex items-center justify-center overflow-hidden">
             {/* Parallax BG */}
             <div
               className="absolute inset-0 parallax-bg"
@@ -67,16 +69,16 @@ const Landing = () => {
 
             {/* Content */}
             <div className="relative z-10 max-w-3xl mx-auto text-center space-y-7 px-5 pt-20 pb-16">
-             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0ms", animationFillMode: "forwards" }}>
+             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={fadeIn(0)}>
                 Sua Case{" "}
                 <span className="text-primary drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)]">Customizada</span>{" "}
                 em 1 minuto.
               </h1>
-              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={{ animationDelay: "150ms", animationFillMode: "forwards" }}>
+              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>
                 Crie uma capa personalizada usando a tecnologia PrintMyCase e receba em casa.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={{ animationDelay: "300ms", animationFillMode: "forwards" }}>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={fadeIn(300)}>
                 <Button
                   size="lg"
                   className="gap-2 text-base glow-primary"
@@ -88,15 +90,17 @@ const Landing = () => {
                   size="lg"
                   variant="outline"
                   className="gap-2 text-base border-white/25 text-white hover:bg-white/10 hover:text-white bg-transparent"
-                  onClick={() => navigate("/catalog")}>
+                  onClick={() => {
+                    document.getElementById("destaques")?.scrollIntoView({ behavior: "smooth" });
+                  }}>
                   
                   Ver Modelos
                 </Button>
               </div>
 
               {/* Social proof badge */}
-              <div className="inline-flex items-center gap-2.5 glass rounded-full px-5 py-2.5 mx-auto opacity-0 animate-fade-in" style={{ animationDelay: "450ms", animationFillMode: "forwards" }}>
-                <div className="flex">
+              <div className="inline-flex items-center gap-2.5 glass rounded-full px-5 py-2.5 mx-auto opacity-0 animate-fade-in" style={fadeIn(450)}>
+                <div className="flex" aria-hidden="true">
                   {Array.from({ length: 5 }).map((_, i) =>
                   <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   )}
@@ -144,7 +148,7 @@ const Landing = () => {
               </ScrollReveal>
               <div className="grid md:grid-cols-5 gap-4 items-center">
                 {steps.map((s, i) =>
-                <React.Fragment key={s.title}>
+                <Fragment key={s.title}>
                   <ScrollReveal delay={i * 150}>
                     <div className="flex flex-col items-center text-center space-y-3 bg-muted/30 rounded-2xl p-6 hover:bg-muted/50 transition-colors duration-300">
                       <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
@@ -164,7 +168,7 @@ const Landing = () => {
                       </div>
                     </div>
                   )}
-                </React.Fragment>
+                </Fragment>
                 )}
               </div>
             </div>
@@ -215,7 +219,7 @@ const Landing = () => {
                 <ScrollReveal key={t.name} delay={i * 100}>
                     <Card className="border-0 shadow-sm h-full hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                       <CardContent className="pt-6 pb-5 px-6 space-y-3">
-                        <div className="flex gap-0.5">
+                        <div className="flex gap-0.5" aria-hidden="true">
                           {Array.from({ length: t.rating }).map((_, j) =>
                         <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                         )}

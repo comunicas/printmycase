@@ -47,16 +47,6 @@ export default {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
   			},
-  			sidebar: {
-  				DEFAULT: 'hsl(var(--sidebar-background))',
-  				foreground: 'hsl(var(--sidebar-foreground))',
-  				primary: 'hsl(var(--sidebar-primary))',
-  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-  				accent: 'hsl(var(--sidebar-accent))',
-  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-  				border: 'hsl(var(--sidebar-border))',
-  				ring: 'hsl(var(--sidebar-ring))'
-  			}
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -93,7 +83,7 @@ export default {
   		},
   		fontFamily: {
   			sans: [
-  				'Poppins',
+  				'Inter',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -104,26 +94,6 @@ export default {
   				'Arial',
   				'Noto Sans',
   				'sans-serif'
-  			],
-  			serif: [
-  				'Merriweather',
-  				'ui-serif',
-  				'Georgia',
-  				'Cambria',
-  				'Times New Roman',
-  				'Times',
-  				'serif'
-  			],
-  			mono: [
-  				'JetBrains Mono',
-  				'ui-monospace',
-  				'SFMono-Regular',
-  				'Menlo',
-  				'Monaco',
-  				'Consolas',
-  				'Liberation Mono',
-  				'Courier New',
-  				'monospace'
   			]
   		}
   	}
