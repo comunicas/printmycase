@@ -13,6 +13,7 @@ import ProductCard from "@/components/ProductCard";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import heroBg from "@/assets/hero-bg.jpg";
 import ScrollReveal from "@/components/ScrollReveal";
+import PrintTechSection from "@/components/PrintTechSection";
 
 const testimonials = [
 { name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
@@ -196,6 +197,9 @@ const Landing = () => {
               </ScrollReveal>
             </div>
           </section>
+
+          {/* Print Technology */}
+          <PrintTechSection />
 
           <Separator />
 
