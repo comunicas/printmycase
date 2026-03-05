@@ -1,4 +1,4 @@
-import { useState, useRef, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, useRef, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,12 +31,12 @@ const Profile = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
-  const [lastProfileId, setLastProfileId] = useState<string | null>(null);
-  if (profile && profile.id !== lastProfileId) {
-    setLastProfileId(profile.id);
-    setFullName(profile.full_name);
-    setPhone(profile.phone ? maskPhone(profile.phone) : "");
-  }
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name);
+      setPhone(profile.phone ? maskPhone(profile.phone) : "");
+    }
+  }, [profile?.id]);
 
   const currentAvatar = avatarPreview ?? profile?.avatar_url;
 
@@ -155,11 +155,11 @@ const Profile = () => {
             </div>
 
             <FormField label="Nome completo" id="fullName" required>
-              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Seu nome" required />
+              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Seu nome" autoComplete="name" required />
             </FormField>
 
             <FormField label="Telefone" id="phone">
-              <Input id="phone" value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} placeholder="(11) 99999-9999" />
+              <Input id="phone" value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} placeholder="(11) 99999-9999" autoComplete="tel" />
             </FormField>
 
             <FormField label="E-mail" id="email">
@@ -176,10 +176,10 @@ const Profile = () => {
         <FormCard title="Alterar senha">
           <form onSubmit={handleChangePassword} className="space-y-4">
             <FormField label="Nova senha" id="newPassword" required>
-              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength={6} />
+              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" autoComplete="new-password" required minLength={6} />
             </FormField>
             <FormField label="Confirmar nova senha" id="confirmPassword" required>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a senha" required minLength={6} />
+              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a senha" autoComplete="new-password" required minLength={6} />
             </FormField>
             <SubmitButton loading={savingPassword} variant="secondary" className="w-full">
               Alterar senha

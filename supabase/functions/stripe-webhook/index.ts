@@ -48,7 +48,13 @@ async function verifyStripeSignature(
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  return computed === sig;
+  // Timing-safe comparison
+  if (computed.length !== sig.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < computed.length; i++) {
+    mismatch |= computed.charCodeAt(i) ^ sig.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
 
 Deno.serve(async (req) => {

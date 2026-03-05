@@ -41,7 +41,7 @@ const FaqManager = () => {
     if (error) {
       toast({ title: "Erro ao carregar FAQs", description: error.message, variant: "destructive" });
     } else {
-      setFaqs((data as any[]) ?? []);
+      setFaqs(data ?? []);
     }
     setLoading(false);
   }, [toast]);
@@ -69,7 +69,7 @@ const FaqManager = () => {
     if (editing) {
       const { error } = await supabase
         .from("faqs")
-        .update({ question: question.trim(), answer: answer.trim() } as any)
+        .update({ question: question.trim(), answer: answer.trim() })
         .eq("id", editing.id);
       if (error) {
         toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
@@ -80,7 +80,7 @@ const FaqManager = () => {
       const maxOrder = faqs.length > 0 ? Math.max(...faqs.map((f) => f.sort_order)) : 0;
       const { error } = await supabase
         .from("faqs")
-        .insert({ question: question.trim(), answer: answer.trim(), sort_order: maxOrder + 1 } as any);
+        .insert({ question: question.trim(), answer: answer.trim(), sort_order: maxOrder + 1 });
       if (error) {
         toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       } else {
@@ -96,7 +96,7 @@ const FaqManager = () => {
   const handleToggleActive = async (faq: Faq) => {
     const { error } = await supabase
       .from("faqs")
-      .update({ active: !faq.active } as any)
+      .update({ active: !faq.active })
       .eq("id", faq.id);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -123,8 +123,8 @@ const FaqManager = () => {
 
     const other = faqs[swapIdx];
     await Promise.all([
-      supabase.from("faqs").update({ sort_order: other.sort_order } as any).eq("id", faq.id),
-      supabase.from("faqs").update({ sort_order: faq.sort_order } as any).eq("id", other.id),
+      supabase.from("faqs").update({ sort_order: other.sort_order }).eq("id", faq.id),
+      supabase.from("faqs").update({ sort_order: faq.sort_order }).eq("id", other.id),
     ]);
     fetchFaqs();
   };

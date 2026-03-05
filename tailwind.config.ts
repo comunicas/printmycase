@@ -66,11 +66,16 @@ export default {
 				'0%': { opacity: '0', transform: 'translateY(10px)' },
 				'100%': { opacity: '1', transform: 'translateY(0)' },
 			},
+			'scale-in': {
+				'0%': { opacity: '0', transform: 'scale(0.8)' },
+				'100%': { opacity: '1', transform: 'scale(1)' },
+			},
 		},
 		animation: {
 			'accordion-down': 'accordion-down 0.3s ease-in-out',
 			'accordion-up': 'accordion-up 0.3s ease-in-out',
 			'fade-in': 'fade-in 0.6s ease-out',
+			'scale-in': 'scale-in 0.4s ease-out',
 		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',

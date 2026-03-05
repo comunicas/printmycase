@@ -22,6 +22,7 @@ type OrderWithProduct = OrderRow & { product_name?: string; product_image?: stri
 
 const statusFlow = [
   { key: "pending", label: "Aguardando Pagamento", icon: CreditCard },
+  { key: "paid", label: "Pago", icon: CreditCard },
   { key: "analyzing", label: "Em Análise", icon: Search },
   { key: "customizing", label: "Customizando", icon: Paintbrush },
   { key: "producing", label: "Produzindo", icon: Factory },
@@ -212,7 +213,7 @@ const Orders = () => {
                     Prazo: 5 a 7 dias úteis
                     {order.tracking_code && (
                       <a
-                        href="https://rastreamento.correios.com.br/app/index.php"
+                        href={`https://www.linkcorreios.com.br/?id=${order.tracking_code}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="ml-auto text-primary hover:underline font-medium"

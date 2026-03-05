@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
 
     const userId = userData.user.id;
-    const { product_id, customization_data, original_image_url, edited_image_url, image_url, shipping_cents, address_id, address_inline, save_address } = await req.json();
+    const { product_id, customization_data, original_image_url, edited_image_url, shipping_cents, address_id, address_inline, save_address } = await req.json();
 
     if (!product_id) {
       return new Response(JSON.stringify({ error: "product_id is required" }), {
@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
       .from("products")
       .select("*")
       .eq("id", product_id)
+      .eq("active", true)
       .single();
 
     if (productError || !product) {
@@ -176,7 +177,7 @@ Deno.serve(async (req) => {
       stripe_session_id: session.id,
       customization_data: {
         ...customization_data,
-        original_image_url: original_image_url || image_url || null,
+        original_image_url: original_image_url || null,
         edited_image_url: edited_image_url || null,
       },
       status: "pending",

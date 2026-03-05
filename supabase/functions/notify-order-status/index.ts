@@ -126,8 +126,8 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
 
-    const { data: claimsData, error: authError } = await supabaseUser.auth.getClaims(token);
-    const callerUserId = claimsData?.claims?.sub;
+    const { data: userData, error: authError } = await supabaseUser.auth.getUser(token);
+    const callerUserId = userData?.user?.id;
     if (authError || !callerUserId) {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),

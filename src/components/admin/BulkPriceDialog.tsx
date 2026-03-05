@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@/lib/types";
 
-const fmt = (cents: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+import { formatPrice } from "@/lib/types";
+const fmt = (cents: number) => formatPrice(cents / 100);
 
 interface Props {
   open: boolean;

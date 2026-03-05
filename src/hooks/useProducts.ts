@@ -10,11 +10,6 @@ export function useProducts(limit?: number) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (limit === undefined) {
-      setLoading(false);
-      return;
-    }
-
     let query = supabase
       .from("products")
       .select("*")
