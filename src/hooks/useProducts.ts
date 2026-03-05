@@ -1,12 +1,20 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import type { Product } from "@/lib/types";
+
+type ProductRow = Tables<"products">;
 
 export function useProducts(limit?: number) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (limit === undefined) {
+      setLoading(false);
+      return;
+    }
+
     let query = supabase
       .from("products")
       .select("*")
@@ -16,7 +24,7 @@ export function useProducts(limit?: number) {
     if (limit) query = query.limit(limit);
 
     query.then(({ data }) => {
-      setProducts((data as any[])?.map(mapRow) ?? []);
+      setProducts(data?.map(mapRow) ?? []);
       setLoading(false);
     });
   }, [limit]);
@@ -38,7 +46,7 @@ export function useProduct(slug: string | undefined) {
       .eq("active", true)
       .maybeSingle()
       .then(({ data }) => {
-        setProduct(data ? mapRow(data as any) : null);
+        setProduct(data ? mapRow(data) : null);
         setLoading(false);
       });
   }, [slug]);
@@ -46,7 +54,7 @@ export function useProduct(slug: string | undefined) {
   return { product, loading };
 }
 
-function mapRow(row: any): Product {
+function mapRow(row: ProductRow): Product {
   return {
     id: row.id,
     slug: row.slug,
@@ -54,11 +62,11 @@ function mapRow(row: any): Product {
     description: row.description,
     price_cents: row.price_cents,
     images: row.images ?? [],
-    colors: (row.colors as any[]) ?? [],
-    specs: (row.specs as any[]) ?? [],
+    colors: (row.colors as unknown as Product["colors"]) ?? [],
+    specs: (row.specs as unknown as Product["specs"]) ?? [],
     rating: Number(row.rating) || 0,
     review_count: row.review_count ?? 0,
-    active: row.active,
+    active: row.active ?? true,
     stripe_price_id: row.stripe_price_id,
     stripe_product_id: row.stripe_product_id,
     device_image: row.device_image ?? null,
