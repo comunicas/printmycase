@@ -1,0 +1,66 @@
+import { useEffect, useState } from "react";
+import * as Accordion from "@radix-ui/react-accordion";
+import { ChevronDown } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import ScrollReveal from "@/components/ScrollReveal";
+
+interface Faq {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+const FaqSection = () => {
+  const [faqs, setFaqs] = useState<Faq[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("faqs")
+      .select("id, question, answer")
+      .eq("active", true)
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (data) setFaqs(data);
+      });
+  }, []);
+
+  if (faqs.length === 0) return null;
+
+  return (
+    <section id="faq" className="py-16 px-5 bg-muted/30">
+      <div className="max-w-3xl mx-auto">
+        <ScrollReveal>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
+            Perguntas Frequentes
+          </h2>
+        </ScrollReveal>
+
+        <ScrollReveal delay={100}>
+          <Accordion.Root type="single" collapsible className="space-y-3">
+            {faqs.map((faq) => (
+              <Accordion.Item
+                key={faq.id}
+                value={faq.id}
+                className="rounded-xl border bg-card overflow-hidden"
+              >
+                <Accordion.Header>
+                  <Accordion.Trigger className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-foreground hover:bg-muted/50 transition-colors data-[state=open]:bg-muted/50 group">
+                    {faq.question}
+                    <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 ml-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </Accordion.Trigger>
+                </Accordion.Header>
+                <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">
+                    {faq.answer}
+                  </div>
+                </Accordion.Content>
+              </Accordion.Item>
+            ))}
+          </Accordion.Root>
+        </ScrollReveal>
+      </div>
+    </section>
+  );
+};
+
+export default FaqSection;

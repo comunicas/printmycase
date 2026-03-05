@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, RefreshCw, Package, Truck } from "lucide-react";
+import { Plus, RefreshCw, Package, Truck, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsTable from "@/components/admin/ProductsTable";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import BulkPriceDialog from "@/components/admin/BulkPriceDialog";
+import FaqManager from "@/components/admin/FaqManager";
 import { type Product, formatPrice } from "@/lib/types";
 import { statusLabels } from "@/lib/constants";
 import { resolveProductInfo } from "@/lib/products";
@@ -210,6 +211,9 @@ const Admin = () => {
             <TabsTrigger value="orders" className="gap-1.5">
               <Truck className="w-4 h-4" /> Pedidos
             </TabsTrigger>
+            <TabsTrigger value="faq" className="gap-1.5">
+              <HelpCircle className="w-4 h-4" /> FAQ
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -389,6 +393,9 @@ const Admin = () => {
                 ))}
               </div>
             )}
+          </TabsContent>
+          <TabsContent value="faq">
+            <FaqManager />
           </TabsContent>
         </Tabs>
       </main>

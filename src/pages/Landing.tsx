@@ -14,6 +14,7 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import heroBg from "@/assets/hero-bg.jpg";
 import ScrollReveal from "@/components/ScrollReveal";
 import PrintTechSection from "@/components/PrintTechSection";
+import FaqSection from "@/components/FaqSection";
 
 const testimonials = [
 { name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
@@ -228,6 +229,9 @@ const Landing = () => {
               </div>
             </div>
           </section>
+
+          {/* FAQ */}
+          <FaqSection />
 
           {/* Final CTA */}
           <section className="py-20 px-5 bg-primary text-primary-foreground">
