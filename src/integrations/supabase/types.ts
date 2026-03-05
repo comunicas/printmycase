@@ -89,6 +89,27 @@ export type Database = {
         }
         Relationships: []
       }
+      model_requests: {
+        Row: {
+          created_at: string
+          id: string
+          model_name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_name: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           address_id: string | null
