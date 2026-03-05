@@ -137,3 +137,31 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* Utility: glassmorphism */
+.glass {
+  background: hsl(0 0% 100% / 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(0 0% 100% / 0.12);
+}
+
+/* Utility: primary glow on buttons */
+.glow-primary {
+  box-shadow: 0 0 20px hsl(265 83% 57% / 0.45), 0 0 60px hsl(265 83% 57% / 0.15);
+}
+
+/* Utility: parallax background */
+.parallax-bg {
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  will-change: transform;
+}
+
+@supports (-webkit-touch-callout: none) {
+  /* iOS doesn't support background-attachment: fixed */
+  .parallax-bg {
+    background-attachment: scroll;
+  }
+}

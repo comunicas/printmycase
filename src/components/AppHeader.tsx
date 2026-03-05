@@ -1,9 +1,8 @@
-import { forwardRef } from "react";
+import { forwardRef, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import UserMenu from "@/components/UserMenu";
-import logoArtisCase from "@/assets/logo-artiscase.png";
 
 interface Breadcrumb {
   label: string;
@@ -12,44 +11,74 @@ interface Breadcrumb {
 
 interface AppHeaderProps {
   breadcrumbs?: Breadcrumb[];
+  variant?: "default" | "transparent";
 }
 
-const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs }, ref) => {
+const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, variant = "default" }, ref) => {
   const navigate = useNavigate();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    if (variant !== "transparent") return;
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [variant]);
+
+  const isTransparent = variant === "transparent";
+  const showGlass = isTransparent && scrolled;
 
   return (
-    <header ref={ref} className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header
+      ref={ref}
+      className={`sticky top-0 z-50 transition-all duration-500 ${
+        isTransparent
+          ? showGlass
+            ? "glass border-b border-white/10"
+            : "bg-transparent"
+          : "border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+      }`}
+    >
       <nav className="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
         <div className="flex items-center gap-2 min-w-0">
           <Link to="/" className="flex-shrink-0">
-            <img alt="ArtisCase" className="h-8 w-auto" src="/lovable-uploads/79379ce7-c6b3-4051-9947-c8dfc449251d.png" />
+            <img
+              alt="ArtisCase"
+              className={`h-8 w-auto transition-all duration-300 ${isTransparent && !scrolled ? "brightness-0 invert" : ""}`}
+              src="/lovable-uploads/79379ce7-c6b3-4051-9947-c8dfc449251d.png"
+            />
           </Link>
-          {breadcrumbs && breadcrumbs.length > 0 &&
-          <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-              {breadcrumbs.map((crumb, i) =>
-            <span key={i} className="flex items-center gap-1 min-w-0">
+          {breadcrumbs && breadcrumbs.length > 0 && (
+            <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+              {breadcrumbs.map((crumb, i) => (
+                <span key={i} className="flex items-center gap-1 min-w-0">
                   <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-                  {crumb.to ?
-              <Link to={crumb.to} className="hover:text-foreground transition-colors truncate">
+                  {crumb.to ? (
+                    <Link to={crumb.to} className="hover:text-foreground transition-colors truncate">
                       {crumb.label}
-                    </Link> :
-
-              <span className="text-foreground font-medium truncate">{crumb.label}</span>
-              }
+                    </Link>
+                  ) : (
+                    <span className="text-foreground font-medium truncate">{crumb.label}</span>
+                  )}
                 </span>
-            )}
+              ))}
             </div>
-          }
+          )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/catalog")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={isTransparent && !scrolled ? "text-white/90 hover:text-white hover:bg-white/10" : ""}
+            onClick={() => navigate("/catalog")}
+          >
             Ver Modelos
           </Button>
           <UserMenu />
         </div>
       </nav>
-    </header>);
-
+    </header>
+  );
 });
 
 AppHeader.displayName = "AppHeader";
