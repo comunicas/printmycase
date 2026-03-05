@@ -13,8 +13,8 @@ interface Props {
   onSelectionChange: (ids: Set<string>) => void;
 }
 
-const formatCents = (cents: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+import { formatPrice } from "@/lib/types";
+const formatCents = (cents: number) => formatPrice(cents / 100);
 
 const ProductsTable = ({ products, loading, onEdit, onToggleActive, selectedIds, onSelectionChange }: Props) => {
   if (loading) {

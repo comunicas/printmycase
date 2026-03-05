@@ -14,6 +14,7 @@ import FaqManager from "@/components/admin/FaqManager";
 import ModelRequestsManager from "@/components/admin/ModelRequestsManager";
 import { type Product, formatPrice } from "@/lib/types";
 import { statusLabels } from "@/lib/constants";
+import type { Database } from "@/integrations/supabase/types";
 import { resolveProductInfo } from "@/lib/products";
 
 interface DbOrder {
@@ -60,7 +61,18 @@ const Admin = () => {
     if (error) {
       toast({ title: "Erro ao carregar produtos", description: error.message, variant: "destructive" });
     } else {
-      setProducts((data as any[]) ?? []);
+      setProducts(
+        (data ?? []).map((row) => ({
+          ...row,
+          images: row.images ?? [],
+          colors: (row.colors as unknown as Product["colors"]) ?? [],
+          specs: (row.specs as unknown as Product["specs"]) ?? [],
+          rating: Number(row.rating) || 0,
+          review_count: row.review_count ?? 0,
+          active: row.active ?? true,
+          device_image: row.device_image ?? null,
+        }))
+      );
     }
     setLoading(false);
   }, [toast]);
@@ -76,7 +88,7 @@ const Admin = () => {
       setOrdersLoading(false);
       return;
     }
-    const ordersData = (data as any[]) ?? [];
+    const ordersData = data ?? [];
 
     // Enrich with product info using shared helper
     const productIds = ordersData.map((o) => o.product_id);
@@ -90,7 +102,7 @@ const Admin = () => {
 
     setOrders(enriched);
     const inputs: Record<string, string> = {};
-    ordersData.forEach((o: any) => {
+    ordersData.forEach((o) => {
       if (o.tracking_code) inputs[o.id] = o.tracking_code;
     });
     setTrackingInputs(inputs);
@@ -165,7 +177,7 @@ const Admin = () => {
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     const { error } = await supabase
       .from("orders")
-      .update({ status: newStatus as any })
+      .update({ status: newStatus as Database["public"]["Enums"]["order_status"] })
       .eq("id", orderId);
     if (error) {
       toast({ title: "Erro ao atualizar status", description: error.message, variant: "destructive" });
@@ -185,7 +197,7 @@ const Admin = () => {
     if (!code) return;
     const { error } = await supabase
       .from("orders")
-      .update({ tracking_code: code, status: "shipped" } as any)
+      .update({ tracking_code: code, status: "shipped" as Database["public"]["Enums"]["order_status"] })
       .eq("id", orderId);
     if (error) {
       toast({ title: "Erro ao salvar rastreio", description: error.message, variant: "destructive" });
@@ -240,9 +252,10 @@ const Admin = () => {
               <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border bg-muted/50 p-3">
                 <span className="text-sm font-medium">{selectedIds.size} selecionado{selectedIds.size > 1 ? "s" : ""}</span>
                 <select
-                  value={bulkAdjustType}
-                  onChange={(e) => setBulkAdjustType(e.target.value as "fixed" | "percent")}
-                  className="h-9 rounded-md border bg-background px-2 text-sm"
+                          value={bulkAdjustType}
+                          onChange={(e) => setBulkAdjustType(e.target.value as "fixed" | "percent")}
+                          className="h-9 rounded-md border bg-background px-2 text-sm"
+                          aria-label="Tipo de ajuste de preço"
                 >
                   <option value="percent">Percentual (%)</option>
                   <option value="fixed">Valor fixo (R$)</option>
@@ -364,6 +377,7 @@ const Admin = () => {
                           value={order.status}
                           onChange={(e) => handleStatusChange(order.id, e.target.value)}
                           className="h-8 rounded-md border bg-background px-2 text-xs font-medium"
+                          aria-label="Status do pedido"
                         >
                           {Object.entries(statusLabels).map(([value, label]) => (
                             <option key={value} value={value}>{label}</option>

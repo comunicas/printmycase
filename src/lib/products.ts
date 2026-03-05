@@ -20,17 +20,17 @@ export async function resolveProductInfo(
   const [slugResult, uuidResult] = await Promise.all([
     slugs.length > 0
       ? supabase.from("products").select("id, slug, name, images, device_image").in("slug", slugs)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as { id: string; slug: string; name: string; images: string[] | null; device_image: string | null }[] }),
     uuids.length > 0
       ? supabase.from("products").select("id, slug, name, images, device_image").in("id", uuids)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as { id: string; slug: string; name: string; images: string[] | null; device_image: string | null }[] }),
   ]);
 
   const data = [...(slugResult.data ?? []), ...(uuidResult.data ?? [])];
 
   const map = new Map<string, ProductInfo>();
   for (const p of data ?? []) {
-    const img = (p as any).device_image ?? (p.images as string[] | null)?.[0];
+    const img = p.device_image ?? (p.images as string[] | null)?.[0];
     const info: ProductInfo = { name: p.name, image: img };
     map.set(p.slug, info);
     map.set(p.id, info);

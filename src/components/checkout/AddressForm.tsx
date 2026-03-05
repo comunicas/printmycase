@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getShippingByZip, type ShippingResult } from "@/lib/shipping";
 import { maskCEP } from "@/lib/masks";
 import { formatPrice } from "@/lib/types";
+import type { Tables } from "@/integrations/supabase/types";
 
 export interface AddressData {
   street: string;
@@ -42,7 +43,7 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
   const [addressLabel, setAddressLabel] = useState("Casa");
   const [saveAddress, setSaveAddress] = useState(false);
 
-  const [addresses, setAddresses] = useState<any[]>([]);
+  const [addresses, setAddresses] = useState<Tables<"addresses">[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [zipLoading, setZipLoading] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -126,7 +127,7 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
     }
   };
 
-  const handleSelectAddress = (addr: any) => {
+  const handleSelectAddress = (addr: Tables<"addresses">) => {
     setSelectedAddressId(addr.id);
     setStreet(addr.street);
     setNumber(addr.number);
@@ -156,7 +157,7 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
             <MapPin className="w-4 h-4" /> Endereços salvos
           </p>
           <div className="flex flex-wrap gap-2">
-            {addresses.map((addr: any) => (
+            {addresses.map((addr) => (
               <button
                 key={addr.id}
                 onClick={() => handleSelectAddress(addr)}
@@ -212,6 +213,7 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
                   onChange={(e) => handleZipChange(e.target.value)}
                   onBlur={() => handleBlur("zip")}
                   maxLength={9}
+                  autoComplete="postal-code"
                   className={`font-mono ${hasError("zip") ? "border-destructive" : ""}`}
                 />
                 {zipLoading && (
@@ -234,7 +236,7 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
 
             <div className="grid grid-cols-3 gap-3">
               <FormField label="Rua" id="street" required className="col-span-2" error={showError("street")}>
-                <Input id="street" value={street} onChange={(e) => setStreet(e.target.value)} onBlur={() => handleBlur("street")} placeholder="Rua, Av, Travessa..." className={hasError("street") ? "border-destructive" : ""} />
+                <Input id="street" value={street} onChange={(e) => setStreet(e.target.value)} onBlur={() => handleBlur("street")} placeholder="Rua, Av, Travessa..." autoComplete="street-address" className={hasError("street") ? "border-destructive" : ""} />
               </FormField>
               <FormField label="Número" id="number" required error={showError("number")}>
                 <Input id="number" value={number} onChange={(e) => setNumber(e.target.value)} onBlur={() => handleBlur("number")} placeholder="123" className={hasError("number") ? "border-destructive" : ""} />
