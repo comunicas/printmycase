@@ -1,12 +1,14 @@
 
 
-## Diagnóstico
+## Plan: Remove "Avaliações" tab from Product Details
 
-O problema está na função `extractBrand` em `src/lib/utils.ts`. A regex para Motorola é `\bmoto\b` que exige "moto" como palavra isolada. Os nomes dos produtos usam "Motorola" (ex: "Capa Motorola G54"), onde "moto" não é uma palavra completa -- faz parte de "Motorola". Por isso a regex não encontra correspondência e os produtos são classificados como "Outro" em vez de "Motorola".
+Remove the "Avaliações" (Reviews) tab from the `ProductDetails` component, keeping only "Descrição" and "Especificações".
 
-## Correção
+### Changes
 
-Alterar a regex de `\bmoto\b` para `\b(motorola|moto)\b` no arquivo `src/lib/utils.ts` (linha 10). Isso faz match tanto com "Motorola" quanto com "Moto" (usado em nomes como "Moto G").
+**`src/components/ProductDetails.tsx`**:
+- Remove the `TabsTrigger` for "reviews"
+- Remove the `TabsContent` for "reviews"
 
-Alteração de uma única linha, sem efeitos colaterais.
+Single file, ~10 lines removed.
 
