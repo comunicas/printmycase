@@ -1,51 +1,33 @@
 
 
-## Revisao de Copy + Reorganizacao dos Blocos da Landing
+## Resultado da Verificação da Landing Page
 
-### Ordem atual
-1. Hero
-2. Beneficios (Personalizada / Protecao / Envio)
-3. Como funciona (3 steps)
-4. Modelos em Destaque (produtos)
-5. ArtisCoins + IA
-6. Tecnologia de Impressao
-7. Depoimentos
-8. FAQ
-9. CTA Final
+### Status: Blocos estão na ordem correta no código
 
-### Nova ordem proposta (narrativa mais logica)
-1. **Hero** — sem mudancas
-2. **Como funciona** — move para cima, responde imediatamente "como eu faco?"
-3. **Modelos em Destaque** — logo apos explicar o processo, o usuario ja ve opcoes
-4. **ArtisCoins + IA** — diferencial criativo, mantém posicao apos produtos
-5. **Beneficios / Atributos** — agora focados na qualidade do produto (merge com PrintTech em uma unica secao mais concisa)
-6. **Depoimentos** — prova social reforça os atributos
+Verifiquei o código de `Landing.tsx` e a ordem dos blocos está exatamente como planejado:
+
+1. **Hero** (parallax dark)
+2. **Como funciona** (3 steps com IA)
+3. **Modelos em Destaque** (produtos)
+4. **ArtisCoins + IA** (seção de moedas)
+5. **Por que escolher a ArtisCase?** (benefícios + tech unificados)
+6. **Depoimentos** (prova social)
 7. **FAQ**
 8. **CTA Final**
+9. **Footer**
 
-### Revisao de copy
+### Limitação do teste automatizado
 
-**Como funciona** (steps atualizados para incluir IA):
-1. "Escolha seu modelo" → "Encontre seu celular no catálogo"
-2. "Envie sua imagem" → "Personalize com sua foto ou IA" (desc: "Faça upload e aplique filtros artísticos com ArtisCoins")
-3. "Receba em casa" → sem mudanca
+O navegador automatizado não conseguiu renderizar as seções intermediárias porque o `ScrollReveal` usa `IntersectionObserver` para animar elementos — e o browser automatizado não dispara esses eventos corretamente. Isso faz com que todas as seções fiquem com `opacity-0` no teste automatizado, mas **funcionam normalmente para usuários reais**.
 
-**Beneficios** (copy ajustada, foco no produto final):
-- "Design Único" → "Sua foto ou arte, impressa com tecnologia PrintMyCase — a mesma das máquinas de shopping."
-- "Proteção Real" → "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m com acabamento soft-touch."
-- "Entrega Rápida" → "Produção em até 48h. Frete acessível para todo o Sudeste."
+Seu session replay confirma que você conseguiu rolar e ver o conteúdo da página normalmente.
 
-**Titulo da secao de beneficios**: "Por que escolher a ArtisCase?" (mais direto)
+### Recomendação
 
-**PrintTechSection**: Removida como secao separada. Os atributos tecnologicos (Micro Piezo, Epson, video) sao incorporados dentro da secao de beneficios como um bloco complementar abaixo dos 3 cards, mantendo o video e logos.
+Sugiro que **você mesmo role a página no preview** para confirmar visualmente que:
+- As transições entre seções estão fluidas
+- A ordem narrativa faz sentido
+- O espaçamento entre blocos está adequado
 
-### Arquivos alterados
-
-| Arquivo | Alteracao |
-|---|---|
-| `src/pages/Landing.tsx` | Reordenar secoes, atualizar copy dos steps e benefits, incorporar PrintTechSection dentro da secao de beneficios |
-| `src/components/PrintTechSection.tsx` | Pode ser mantido como componente standalone mas renderizado dentro da secao de beneficios, ou inlined — decisao de implementacao |
-
-### Resultado
-Fluxo narrativo: "veja como funciona" → "escolha seu modelo" → "descubra filtros IA" → "por que somos diferentes" (qualidade + tech + prova social) → FAQ → CTA
+Se quiser, posso fazer um ajuste no `ScrollReveal` para que os elementos apareçam por padrão e só animem como bônus (progressive enhancement), evitando que conteúdo fique invisível caso o observer não dispare.
 
