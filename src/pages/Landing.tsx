@@ -67,7 +67,7 @@ const Landing = () => {
             {/* Content */}
             <div className="relative z-10 max-w-3xl mx-auto text-center space-y-7 px-5 pt-20 pb-16">
              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={fadeIn(0)}>
-                Crie case{" "}
+                Crie sua case{" "}
                 <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">personalizada</span>{" "}
                 em 1 minuto.
               </h1>
