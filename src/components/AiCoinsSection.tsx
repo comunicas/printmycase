@@ -77,20 +77,22 @@ const AiCoinsSection = () => {
 
         {/* Image showcase */}
         <ScrollReveal delay={100}>
-          <div className="flex gap-3 md:gap-4 justify-center overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-            {showcaseImages.map((src, i) => (
-              <div
-                key={i}
-                className="flex-shrink-0 snap-center w-36 sm:w-40 md:w-44 rounded-2xl overflow-hidden ring-1 ring-white/10 hover:ring-primary/50 hover:scale-105 transition-all duration-300 shadow-lg shadow-black/30"
-              >
-                <img
-                  src={src}
-                  alt={`Exemplo de filtro IA ${i + 1}`}
-                  className="w-full h-auto object-cover"
-                  loading="lazy"
-                />
-              </div>
-            ))}
+          <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+            <div className="flex gap-4 w-max animate-marquee hover:[animation-play-state:paused]">
+              {[...showcaseImages, ...showcaseImages].map((src, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-36 sm:w-40 md:w-44 rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-lg shadow-black/30"
+                >
+                  <img
+                    src={src}
+                    alt={`Exemplo de filtro IA ${(i % showcaseImages.length) + 1}`}
+                    className="aspect-square w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </ScrollReveal>
 
