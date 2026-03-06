@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_filters ADD COLUMN model_url text NOT NULL DEFAULT 'fal-ai/flux/dev/image-to-image';
