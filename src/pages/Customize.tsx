@@ -7,9 +7,11 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULTS, type AiFilter } from "@/lib/customize-types";
 import { compressImage, renderSnapshot } from "@/lib/image-utils";
+import { useCoins } from "@/hooks/useCoins";
 import CustomizeHeader from "@/components/customize/CustomizeHeader";
 import ImageControls from "@/components/customize/ImageControls";
 import ContinueBar from "@/components/customize/ContinueBar";
+import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +39,8 @@ const Customize = () => {
   const [position, setPosition] = useState(DEFAULTS.position);
   const [rotation, setRotation] = useState(DEFAULTS.rotation);
   const [filters, setFilters] = useState<AiFilter[]>([]);
+  const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
+  const { balance: coinBalance, refresh: refreshCoins } = useCoins();
 
   // Load AI filters
   useEffect(() => {
@@ -123,18 +127,25 @@ const Customize = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleFilterClick = async (filterId: string) => {
+  const handleFilterClick = (filterId: string) => {
     if (!image || applyingFilterId) return;
+    // Toggle off: no confirmation needed
     if (activeFilterId === filterId) {
       if (originalImage) { setImage(originalImage); setActiveFilterId(null); }
       return;
     }
-    // Validate minimum dimensions before sending to AI
-    const sourceImage = originalImage || image;
     if (imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
       toast({ title: "Imagem muito pequena", description: "Use uma imagem com pelo menos 256×256px para aplicar filtros IA.", variant: "destructive" });
       return;
     }
+    setPendingFilterId(filterId);
+  };
+
+  const handleFilterConfirm = async () => {
+    if (!pendingFilterId || !image) return;
+    const filterId = pendingFilterId;
+    setPendingFilterId(null);
+    const sourceImage = originalImage || image;
     setApplyingFilterId(filterId);
     try {
       const { data, error } = await supabase.functions.invoke("apply-ai-filter", {
@@ -148,14 +159,13 @@ const Customize = () => {
           description: isInsufficientCoins ? "Compre mais moedas para usar filtros IA." : errorMsg,
           variant: "destructive",
         });
-        if (isInsufficientCoins) {
-          navigate("/coins");
-        }
+        if (isInsufficientCoins) navigate("/coins");
         return;
       }
       if (!originalImage) setOriginalImage(image);
       setImage(data.image);
       setActiveFilterId(filterId);
+      refreshCoins();
     } catch {
       toast({ title: "Erro ao aplicar filtro", variant: "destructive" });
     } finally {
@@ -224,6 +234,14 @@ const Customize = () => {
         onContinue={handleContinue}
         disabled={!image || isProcessing}
         isRendering={isRendering}
+      />
+
+      <FilterConfirmDialog
+        filter={filters.find((f) => f.id === pendingFilterId) ?? null}
+        balance={coinBalance}
+        open={!!pendingFilterId}
+        onOpenChange={(open) => { if (!open) setPendingFilterId(null); }}
+        onConfirm={handleFilterConfirm}
       />
     </div>
   );
