@@ -1,29 +1,33 @@
 
 
-## Revisão e Correções do PhonePreview
+## Remover Header e Eliminar Scroll Vertical na Página de Customização
 
-### Problemas identificados
+### Objetivo
+Transformar a página de customização em uma experiência fullscreen imersiva, sem header e sem scroll vertical — todo o conteúdo visível na viewport.
 
-1. **Bug: Conflito pointer events + touch events no mobile** — No mobile, um toque dispara AMBOS `onPointerDown` e `onTouchStart`, causando drag duplo (jitter). O `onPointerDown` precisa ignorar toques, já que touch events tratam mobile.
+### Alterações em `src/pages/Customize.tsx`
 
-2. **Zoom indicator já existe** — O slider em `Customize.tsx` já mostra `{scale}%` ao lado. Não há necessidade de adicionar outro indicador.
+1. **Remover AppHeader**: Eliminar o import e uso do `AppHeader` e a variável `breadcrumbs`
+2. **Adicionar botão de voltar minimal**: Um pequeno botão no canto superior-esquerdo (ícone `ArrowLeft` ou `X`) para navegar de volta ao produto
+3. **Layout fullscreen sem scroll**: Trocar `min-h-screen` por `h-screen` (ou `h-dvh`) e adicionar `overflow-hidden` no container raiz
+4. **Ajustar main**: Usar `flex-1 overflow-hidden` para que o conteúdo se distribua verticalmente sem gerar scroll
+5. **Ajustar padding bottom mobile**: Remover `pb-28` excessivo, pois sem header há mais espaço vertical
 
-3. **Sem outros bugs ou legados** — A implementação de pinch, wheel e drag está consistente. A função `clamp` usa defaults corretos nos contextos onde é chamada.
+### Resultado Visual
 
-### Correção necessária
-
-**src/components/PhonePreview.tsx** — No `onPointerDown`, adicionar guard para ignorar touch:
-
-```typescript
-const onPointerDown = useCallback((e: React.PointerEvent) => {
-  if (!image || e.pointerType === 'touch') return; // skip touch — handled by onTouchStart
-  // ... rest stays the same
-}, [image, position]);
+```text
+┌──────────────────────────┐
+│ ← Voltar     modelo name │  ← mini bar translúcida
+│                          │
+│                          │
+│      [ Phone Mockup ]    │
+│                          │
+│                          │
+│   🔍 Zoom ──────── 156%  │
+│                          │
+│  [Total]    [Continuar →]│  ← desktop inline / mobile sticky
+└──────────────────────────┘
 ```
 
-Isso garante que mouse/pen usam pointer events e touch usa touch events, sem conflito.
-
-### Nenhuma outra mudança necessária
-
-A implementação está limpa e funcional. Não há código legado para remover.
+Nenhuma outra página ou componente é afetado.
 
