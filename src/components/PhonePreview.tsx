@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { Camera, Move, Loader2, ImagePlus } from "lucide-react";
 
 interface PhonePreviewProps {
@@ -101,6 +101,23 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
       setIsDragging(false);
     }
   }, []);
+
+  // Wheel-to-zoom
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !onScaleChange) return;
+    const handler = (e: WheelEvent) => {
+      if (!image) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -5 : 5;
+      onScaleChange(clamp(scaleRef.current + delta, 50, 200));
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, [image, onScaleChange]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
