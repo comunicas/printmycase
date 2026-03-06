@@ -17,6 +17,7 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSnapping, setIsSnapping] = useState(false);
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
 
@@ -26,6 +27,15 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
   const initialPinchScale = useRef(100);
 
   const clamp = (v: number, min = 0, max = 100) => Math.max(min, Math.min(max, v));
+
+  // Snap animation on drag end
+  useEffect(() => {
+    if (!isDragging && image) {
+      setIsSnapping(true);
+      const t = setTimeout(() => setIsSnapping(false), 200);
+      return () => clearTimeout(t);
+    }
+  }, [isDragging, image]);
 
   // --- Pointer events (desktop drag) ---
   const onPointerDown = useCallback((e: React.PointerEvent) => {
@@ -162,9 +172,12 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
       <div className="relative">
         <div className="relative w-[220px] h-[450px] lg:w-[260px] lg:h-[532px] rounded-[2.4rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
           {image && (
-            <div
+          <div
               className="absolute pointer-events-none"
-              style={imageLayerStyle}
+              style={{
+                ...imageLayerStyle,
+                transition: isSnapping ? 'background-position 0.2s ease-out' : 'none',
+              }}
             />
           )}
           <div
