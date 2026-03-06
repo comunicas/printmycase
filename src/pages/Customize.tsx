@@ -1,17 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, RotateCcw, Loader2, Maximize } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCw, RotateCcw, Loader2, Maximize, Wand2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import PhonePreview from "@/components/PhonePreview";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
-import { formatPrice } from "@/lib/types";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { supabase } from "@/integrations/supabase/client";
 
-const DEFAULTS = { scale: 100, position: { x: 50, y: 50 } };
+const DEFAULTS = { scale: 100, position: { x: 50, y: 50 }, rotation: 0 };
 const PHONE_W = 260;
 const PHONE_H = 532;
+
+interface AiFilter {
+  id: string;
+  name: string;
+}
 
 function compressImage(dataUrl: string, maxW = 1200, maxH = 2400, quality = 0.75): Promise<{ url: string; compressed: boolean }> {
   return new Promise((resolve) => {
@@ -34,7 +39,7 @@ function compressImage(dataUrl: string, maxW = 1200, maxH = 2400, quality = 0.75
 
 function renderSnapshot(
   imgSrc: string, scale: number,
-  position: { x: number; y: number }, quality = 0.85
+  position: { x: number; y: number }, rotation: number, quality = 0.85
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new window.Image();
@@ -54,7 +59,15 @@ function renderSnapshot(
       const maxOffY = img.naturalHeight - srcH;
       const srcX = (position.x / 100) * maxOffX;
       const srcY = (position.y / 100) * maxOffY;
+
+      // Apply rotation
+      ctx.save();
+      ctx.translate(PHONE_W / 2, PHONE_H / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.translate(-PHONE_W / 2, -PHONE_H / 2);
       ctx.drawImage(img, srcX, srcY, srcW, srcH, (PHONE_W - drawW) / 2, (PHONE_H - drawH) / 2, drawW, drawH);
+      ctx.restore();
+
       resolve(canvas.toDataURL("image/jpeg", quality));
     };
     img.src = imgSrc;
@@ -76,12 +89,30 @@ const Customize = () => {
   }, [product, productLoading, navigate, toast]);
 
   const [image, setImage] = useState<string | null>(null);
+  const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
   const [imageFileName, setImageFileName] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
+  const [isApplyingFilter, setIsApplyingFilter] = useState(false);
   const [imageResolution, setImageResolution] = useState<{ w: number; h: number } | null>(null);
   const [scale, setScale] = useState(DEFAULTS.scale);
   const [position, setPosition] = useState(DEFAULTS.position);
+  const [rotation, setRotation] = useState(DEFAULTS.rotation);
+
+  // AI Filters
+  const [filters, setFilters] = useState<AiFilter[]>([]);
+
+  useEffect(() => {
+    (supabase as any)
+      .from("ai_filters")
+      .select("id, name")
+      .eq("active", true)
+      .order("sort_order", { ascending: true })
+      .then(({ data }: { data: AiFilter[] | null }) => {
+        if (data) setFilters(data);
+      });
+  }, []);
 
   // Draft restore
   useEffect(() => {
@@ -92,9 +123,10 @@ const Customize = () => {
     if (!raw) return;
     try {
       const d = JSON.parse(raw);
-      if (d.image) setImage(d.image);
+      if (d.image) { setImage(d.image); setOriginalImage(d.image); }
       if (d.scale != null) setScale(d.scale);
       if (d.position) setPosition(d.position);
+      if (d.rotation != null) setRotation(d.rotation);
       toast({ title: "Rascunho restaurado" });
     } catch { /* ignore */ }
   }, [product?.slug, toast]);
@@ -105,24 +137,32 @@ const Customize = () => {
     const timeout = setTimeout(() => {
       const key = `draft-customize-${product.slug}`;
       try {
-        sessionStorage.setItem(key, JSON.stringify({ image, scale, position }));
+        sessionStorage.setItem(key, JSON.stringify({ image: originalImage || image, scale, position, rotation }));
       } catch { /* ignore quota */ }
     }, 500);
     return () => clearTimeout(timeout);
-  }, [product?.slug, image, scale, position]);
+  }, [product?.slug, image, originalImage, scale, position, rotation]);
 
   const isModified = scale !== DEFAULTS.scale ||
-    position.x !== DEFAULTS.position.x || position.y !== DEFAULTS.position.y;
+    position.x !== DEFAULTS.position.x || position.y !== DEFAULTS.position.y ||
+    rotation !== DEFAULTS.rotation;
 
   const handleReset = useCallback(() => {
     setScale(DEFAULTS.scale);
     setPosition(DEFAULTS.position);
+    setRotation(DEFAULTS.rotation);
+    if (originalImage) { setImage(originalImage); setActiveFilterId(null); }
     if (product?.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
-  }, [product?.slug]);
+  }, [product?.slug, originalImage]);
+
+  const handleRotate = useCallback(() => {
+    setRotation((prev) => (prev + 90) % 360);
+  }, []);
 
   const handleImageUpload = (file: File) => {
     setImageFileName(file.name);
     setIsCompressing(true);
+    setActiveFilterId(null);
     const reader = new FileReader();
     reader.onload = async (e) => {
       const originalDataUrl = e.target?.result as string;
@@ -138,6 +178,7 @@ const Customize = () => {
         }
         const { url, compressed } = await compressImage(originalDataUrl);
         setImage(url);
+        setOriginalImage(url);
         setIsCompressing(false);
         if (compressed) {
           toast({ title: "Imagem otimizada automaticamente" });
@@ -148,12 +189,41 @@ const Customize = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleApplyFilter = async (filterId: string) => {
+    if (!image || isApplyingFilter) return;
+    setIsApplyingFilter(true);
+    try {
+      const sourceImage = originalImage || image;
+      const { data, error } = await supabase.functions.invoke("apply-ai-filter", {
+        body: { imageBase64: sourceImage, filterId },
+      });
+      if (error || !data?.image) {
+        toast({ title: "Erro ao aplicar filtro", description: "Tente novamente.", variant: "destructive" });
+        return;
+      }
+      if (!originalImage) setOriginalImage(image);
+      setImage(data.image);
+      setActiveFilterId(filterId);
+    } catch {
+      toast({ title: "Erro ao aplicar filtro", variant: "destructive" });
+    } finally {
+      setIsApplyingFilter(false);
+    }
+  };
+
+  const handleRevertFilter = () => {
+    if (originalImage) {
+      setImage(originalImage);
+      setActiveFilterId(null);
+    }
+  };
+
   const handleContinue = async () => {
     if (!product || !image) return;
     setIsRendering(true);
     try {
-      const editedImage = await renderSnapshot(image, scale, position);
-      const customData = { image, editedImage, imageFileName, scale, position };
+      const editedImage = await renderSnapshot(image, scale, position, rotation);
+      const customData = { image, editedImage, imageFileName, scale, position, rotation };
       try {
         sessionStorage.setItem("customization", JSON.stringify(customData));
       } catch {
@@ -172,7 +242,6 @@ const Customize = () => {
   };
 
   const productName = product?.name?.replace("Capa ", "") ?? "iPhone";
-  const productPrice = product ? formatPrice(product.price_cents / 100) : "";
 
   if (productLoading) return <LoadingSpinner variant="fullPage" />;
 
@@ -184,44 +253,96 @@ const Customize = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <span className="text-sm font-medium text-muted-foreground truncate">{productName}</span>
-        <div className="w-9" /> {/* spacer */}
+        <div className="w-9" />
       </div>
 
       <main className="flex-1 flex flex-col items-center justify-center gap-3 px-4 overflow-hidden">
         <PhonePreview
-          image={image} scale={scale} position={position}
+          image={image} scale={scale} position={position} rotation={rotation}
           onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload} modelName={productName}
-          imageResolution={imageResolution} isProcessing={isCompressing || isRendering}
+          imageResolution={imageResolution} isProcessing={isCompressing || isRendering || isApplyingFilter}
         />
 
-        {/* Zoom slider */}
-        <div className={`w-full max-w-xs space-y-1 ${!image ? "opacity-50 pointer-events-none" : ""}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Maximize className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Zoom</span>
+        {/* Controls */}
+        <div className={`w-full max-w-xs space-y-3 ${!image ? "opacity-50 pointer-events-none" : ""}`}>
+          {/* Zoom slider */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Maximize className="w-3 h-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Zoom</span>
+              </div>
+              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${scale !== 100 ? "text-primary" : "text-muted-foreground/40"}`}>
+                {scale}%
+              </span>
             </div>
-            <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${scale !== 100 ? "text-primary" : "text-muted-foreground/40"}`}>
-              {scale}%
-            </span>
+            <Slider
+              value={[scale]}
+              onValueChange={(v) => setScale(v[0])}
+              min={50}
+              max={200}
+              step={1}
+              disabled={!image}
+            />
           </div>
-          <Slider
-            value={[scale]}
-            onValueChange={(v) => setScale(v[0])}
-            min={50}
-            max={200}
-            step={1}
-            disabled={!image}
-          />
+
+          {/* Rotation button */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={handleRotate}
+              disabled={!image}
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+              <span className="text-xs">Girar 90°</span>
+            </Button>
+            {rotation !== 0 && (
+              <span className="text-[10px] font-mono text-primary">{rotation}°</span>
+            )}
+          </div>
+
+          {/* AI Filters */}
+          {filters.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <Wand2 className="w-3 h-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Filtros IA</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {activeFilterId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs gap-1"
+                    onClick={handleRevertFilter}
+                    disabled={isApplyingFilter}
+                  >
+                    <Undo2 className="w-3 h-3" />
+                    Original
+                  </Button>
+                )}
+                {filters.map((filter) => (
+                  <Button
+                    key={filter.id}
+                    variant={activeFilterId === filter.id ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 px-2.5 text-xs"
+                    onClick={() => handleApplyFilter(filter.id)}
+                    disabled={isApplyingFilter || !image}
+                  >
+                    {isApplyingFilter && activeFilterId !== filter.id ? filter.name : filter.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Desktop continue */}
-        <div className="hidden lg:block w-full max-w-xs space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total</span>
-            <span className="font-semibold text-foreground">{productPrice}</span>
-          </div>
-          <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image || isCompressing || isRendering}>
+        <div className="hidden lg:block w-full max-w-xs">
+          <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image || isCompressing || isRendering || isApplyingFilter}>
             {isRendering ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Gerando preview...</>
             ) : (
@@ -239,10 +360,8 @@ const Customize = () => {
               <RotateCcw className="w-4 h-4" />
             </Button>
           )}
-          <div className="flex-1 min-w-0">
-            <span className="text-sm font-semibold text-foreground">{productPrice}</span>
-          </div>
-          <Button className="gap-1.5 shrink-0" onClick={handleContinue} disabled={!image || isCompressing || isRendering}>
+          <div className="flex-1" />
+          <Button className="gap-1.5 shrink-0" onClick={handleContinue} disabled={!image || isCompressing || isRendering || isApplyingFilter}>
             {isRendering ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
