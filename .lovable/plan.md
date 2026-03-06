@@ -1,20 +1,31 @@
 
 
-## Plano: Adicionar botão de reset na versão desktop
+## Plano: Organizar controles em Tabs (Ajustes + Filtros IA)
 
-### Problema
-O botão de resetar ajustes (RotateCcw) só aparece na barra inferior mobile (`lg:hidden`). Na versão desktop não existe nenhum botão equivalente.
+### Ideia
+Substituir a lista linear de controles (zoom, rotação, filtros) por duas tabs:
+- **Ajustes** — zoom slider + botão de rotação
+- **Filtros IA** — lista horizontal de filtros com thumbnails
 
-### Solução
+Isso economiza espaço vertical (especialmente no mobile), separa claramente as funções e permite expandir cada seção no futuro.
 
-**`src/pages/Customize.tsx`** — Adicionar o botão de reset na seção desktop (linhas 343-352):
+### Alterações
 
-- Envolver o botão "Continuar" desktop em um `flex` com gap
-- Adicionar o botão `RotateCcw` à esquerda do "Continuar", visível apenas quando `isModified` é true
-- Mesma lógica e estilo do mobile: `variant="ghost"`, `size="icon"`, chama `handleReset`
+**`src/pages/Customize.tsx`**
+
+- Importar `Tabs, TabsList, TabsTrigger, TabsContent` de `@/components/ui/tabs`
+- Substituir o bloco de controles (linhas 266-341) por:
+  - `<Tabs defaultValue="ajustes">` envolvendo tudo
+  - `<TabsList>` com dois triggers: "Ajustes" (ícone Maximize) e "Filtros IA" (ícone Wand2)
+  - `<TabsContent value="ajustes">`: zoom slider + botão de rotação
+  - `<TabsContent value="filtros">`: lista horizontal de filtros (conteúdo atual)
+- Remover labels redundantes ("Zoom", "Filtros IA") pois as tabs já indicam a seção
+- Manter `opacity-50 pointer-events-none` quando não há imagem
 
 ### Resultado
-Desktop terá a mesma experiência do mobile: botão de reset aparece quando há modificações (zoom, posição, rotação ou filtro) e desaparece quando não há.
+- Mobile ganha espaço vertical significativo (só mostra uma seção por vez)
+- Desktop também fica mais limpo
+- Fácil adicionar futuras tabs (ex: "Texto", "Molduras")
 
 ### Arquivo alterado
 - `src/pages/Customize.tsx`
