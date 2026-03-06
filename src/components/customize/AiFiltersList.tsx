@@ -30,6 +30,7 @@ const AiFiltersList = ({ filters, activeFilterId, applyingFilterId, disabled, on
             <img src={filter.style_image_url} alt="" className="w-5 h-5 rounded-full object-cover" />
           ) : null}
           {filter.name}
+          <span className="text-[10px] text-muted-foreground">🪙 10</span>
         </Button>
       );
     })}

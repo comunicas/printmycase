@@ -8,10 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const PACKAGES = [
-  { coins: 100, label: "100 moedas" },
-  { coins: 500, label: "500 moedas" },
-  { coins: 1500, label: "1.500 moedas" },
-  { coins: 5000, label: "5.000 moedas" },
+  { coins: 100, label: "100 moedas", price: "R$ 9,90" },
+  { coins: 500, label: "500 moedas", price: "R$ 39,90" },
+  { coins: 1500, label: "1.500 moedas", price: "R$ 99,90" },
+  { coins: 5000, label: "5.000 moedas", price: "R$ 249,90" },
 ];
 
 const typeLabels: Record<string, { label: string; icon: typeof Gift }> = {
@@ -94,8 +94,8 @@ const Coins = () => {
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
-                    <span className="text-lg font-bold">🪙 {pkg.coins}</span>
-                    <span className="text-xs text-muted-foreground">{pkg.label}</span>
+                    <span className="text-lg font-bold">🪙 {pkg.coins.toLocaleString("pt-BR")}</span>
+                    <span className="text-sm font-semibold text-foreground">{pkg.price}</span>
                   </>
                 )}
               </Button>
