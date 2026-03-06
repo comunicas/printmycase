@@ -68,6 +68,7 @@ export type Database = {
           name: string
           prompt: string
           sort_order: number
+          style_image_url: string | null
         }
         Insert: {
           active?: boolean
@@ -77,6 +78,7 @@ export type Database = {
           name: string
           prompt: string
           sort_order?: number
+          style_image_url?: string | null
         }
         Update: {
           active?: boolean
@@ -86,6 +88,7 @@ export type Database = {
           name?: string
           prompt?: string
           sort_order?: number
+          style_image_url?: string | null
         }
         Relationships: []
       }

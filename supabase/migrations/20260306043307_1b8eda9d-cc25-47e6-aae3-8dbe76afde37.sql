@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_filters ADD COLUMN style_image_url text;
