@@ -1,19 +1,30 @@
 
 
-## Simplificar seção ArtisCoins — remover detalhes de custo
+## Melhorar copy dos benefícios — Proteção Premium + Impressão Profissional
 
-### O que muda
+### Conceito
 
-**Remover**: Os 3 info cards (50 moedas grátis, +20 estilos, 10 moedas por filtro) e o botão "Saiba mais sobre ArtisCoins". Toda menção a custo por geração sai.
+Reorganizar os 3 cards de benefícios em 2 pilares principais + 1 resultado, criando uma narrativa clara:
 
-**Simplificar copy**:
-- Badge: "Novidade — IA Artística" (sem mencionar coins)
-- Título: "Transforme qualquer foto em arte com IA" (mantém)
-- Subtítulo: "Aplique filtros artísticos com um clique. Pop art, 3D, cartoon e muito mais. Cadastre-se grátis e comece agora."
-- CTA único: "Cadastre-se Grátis" → `/signup`
+1. **Proteção Premium** — materiais e resistência
+2. **Impressão Profissional** — tecnologia e fidelidade de cores
+3. **Resultado** — qualidade final = proteção com estilo exclusivo
 
-**Resultado**: Seção mais limpa — marquee de imagens + copy curta + 1 CTA. Sem números, sem detalhes de moedas.
+### Mudanças em `src/components/WhyArtisCase.tsx`
 
-### Arquivo alterado
-`src/components/AiCoinsSection.tsx` — remover `infoCards`, simplificar header copy, reduzir CTAs para um único botão.
+**Header copy atualizado:**
+- Título: "Proteção e estilo em cada detalhe"
+- Subtítulo: "Extrema qualidade final. Sua case protege com estilo exclusivo."
+
+**3 cards reescritos:**
+
+| Card | Título | Copy |
+|------|--------|------|
+| Shield | Proteção Premium | Policarbonato rígido + TPU flexível. Absorve impactos de até 1,5m com acabamento soft-touch que não escorrega. |
+| Palette | Impressão Profissional | Tecnologia Micro Piezo da Epson. Cores vibrantes, detalhes nítidos e impressão que não desbota com o tempo. |
+| Truck | Entrega Rápida | Produção em até 48h com embalagem reforçada. Frete acessível para todo o Sudeste. |
+
+**Seção tech (abaixo) mantida** — já detalha a tecnologia Micro Piezo com os 4 atributos + vídeo.
+
+Nenhuma mudança estrutural no layout, apenas copy dos textos.
 
