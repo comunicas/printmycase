@@ -13,7 +13,7 @@ interface PhonePreviewProps {
   isProcessing?: boolean;
 }
 
-const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange, onImageUpload, modelName, imageResolution, isProcessing }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -143,9 +143,6 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
 
   return (
     <div className="flex flex-col items-center gap-2 lg:gap-3">
-      <div className="text-xs font-medium text-muted-foreground">
-        {modelName ?? "iPhone"}
-      </div>
       <div className="relative">
         <div className="relative w-[220px] h-[450px] lg:w-[260px] lg:h-[532px] rounded-[2.4rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
           {image && (
