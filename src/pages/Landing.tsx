@@ -67,11 +67,12 @@ const Landing = () => {
             {/* Content */}
             <div className="relative z-10 max-w-3xl mx-auto text-center space-y-7 px-5 pt-20 pb-16">
              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={fadeIn(0)}>
-                Sua foto vira uma case{" "}
-                <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">ÚNICA</span>.
+                Crie case{" "}
+                <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">EXCLUSIVA</span>{" "}
+                em 1 minuto.
               </h1>
-              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>
-                Envie sua imagem, escolha um estilo e receba uma capinha exclusiva com impressão profissional.
+              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Receba em casa sua capa personalizada com qualidade premium e impressão PrintMyCase.
+
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={fadeIn(300)}>
