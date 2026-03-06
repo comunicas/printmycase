@@ -1,26 +1,32 @@
 
 
-## Remover título redundante do produto
+## Problema: Drag no mobile move a página inteira
 
-### Problema
-O nome do modelo ("Motorola edge 50 pro") aparece duas vezes: na top bar da página e dentro do PhonePreview, acima do mockup.
+### Causa raiz
 
-### Correção
+Dois problemas no `PhonePreview.tsx`:
 
-**src/components/PhonePreview.tsx** — Remover o `<div>` que exibe `modelName` acima do mockup (linhas 145-148):
+1. **`touch-manipulation` permite panning** — A classe `touch-manipulation` do Tailwind aplica `touch-action: manipulation`, que ainda permite scroll/pan do navegador. Para drag dentro do frame, precisamos de `touch-action: none` para bloquear completamente o comportamento padrão do browser.
 
+2. **`e.preventDefault()` ausente no drag de 1 dedo** — No `onTouchMove`, o `preventDefault()` só é chamado no caso de pinch (2 dedos). No drag com 1 dedo, o browser intercepta o toque e faz scroll da página. Precisa chamar `preventDefault()` também no drag.
+
+### Correções
+
+**src/components/PhonePreview.tsx**:
+
+1. Trocar `touch-manipulation` por `touch-none` no container de drag (quando há imagem):
 ```tsx
-// REMOVER:
-<div className="text-xs font-medium text-muted-foreground">
-  {modelName ?? "iPhone"}
-</div>
+className={`absolute inset-0 z-10 ${image ? 'touch-none' : 'touch-manipulation'} group/drag ...`}
 ```
 
-O título já está visível na top bar minimal do `Customize.tsx`. Nenhuma outra alteração necessária.
+2. Adicionar `e.preventDefault()` no `onTouchMove` para drag de 1 dedo:
+```tsx
+} else if (e.touches.length === 1 && isDragging && !isPinching.current) {
+  e.preventDefault(); // ← ADICIONAR: impede scroll da página
+  const rect = ...
+```
 
-### Verificação do layout
-- **Mobile (375×812)**: Layout ocupa viewport inteira, sem scroll. Bottom bar visível.
-- **Desktop (1440×900)**: Layout ocupa viewport inteira, sem scroll. Controles centralizados.
+3. Como `preventDefault()` em touch events passivos não funciona em React, registrar o `touchmove` via `addEventListener` com `{ passive: false }` no `useEffect`, similar ao que já é feito para `wheel`.
 
-Ambos confirmados via teste no browser.
+Isso resolve o problema de o frame não ficar "fixo" no mobile — o toque será capturado exclusivamente pelo drag handler.
 
