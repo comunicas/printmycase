@@ -1,4 +1,4 @@
-import { forwardRef, useState } from "react";
+import { useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Maximize, RotateCw, Sun, Contrast, ChevronDown } from "lucide-react";
 
@@ -14,11 +14,11 @@ interface ControlPanelProps {
   disabled?: boolean;
 }
 
-const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
+const ControlPanel = ({
   scale, rotation, brightness, contrast,
   onScaleChange, onRotationChange, onBrightnessChange, onContrastChange,
   disabled,
-}, ref) => {
+}: ControlPanelProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const controls = [
@@ -31,7 +31,7 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
   const hasChanges = controls.some(c => c.value !== c.defaultVal);
 
   return (
-    <div ref={ref} className={`${disabled ? "opacity-50" : ""}`}>
+    <div className={`${disabled ? "opacity-50" : ""}`}>
       {/* Mobile: collapsible trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -87,8 +87,6 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
       </div>
     </div>
   );
-});
-
-ControlPanel.displayName = "ControlPanel";
+};
 
 export default ControlPanel;

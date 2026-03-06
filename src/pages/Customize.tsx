@@ -85,7 +85,7 @@ const Customize = () => {
   }, [product, productLoading, navigate, toast]);
 
   const [image, setImage] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFileName, setImageFileName] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
   const [imageResolution, setImageResolution] = useState<{ w: number; h: number } | null>(null);
@@ -141,7 +141,7 @@ const Customize = () => {
   }, [product?.slug]);
 
   const handleImageUpload = (file: File) => {
-    setImageFile(file);
+    setImageFileName(file.name);
     setIsCompressing(true);
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -184,7 +184,7 @@ const Customize = () => {
       const filterCss = activeFilterObj?.cssFilter ?? undefined;
       const editedImage = await renderSnapshot(image, scale, rotation, brightness, contrast, filterCss, position);
       const customData = {
-        image, editedImage, imageFileName: imageFile?.name || null,
+        image, editedImage, imageFileName,
         scale, rotation, brightness, contrast, activeFilter, position,
       };
       try {
