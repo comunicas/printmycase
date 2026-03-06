@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
-  Palette, Shield, Truck, Smartphone, Upload, Package, Star, ArrowRight, ChevronRight } from
+  Smartphone, Upload, Package, Star, ArrowRight, ChevronRight } from
 "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,8 +13,8 @@ import ProductCard from "@/components/ProductCard";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import heroBg from "@/assets/hero-bg.jpg";
 import ScrollReveal from "@/components/ScrollReveal";
-import PrintTechSection from "@/components/PrintTechSection";
 import AiCoinsSection from "@/components/AiCoinsSection";
+import WhyArtisCase from "@/components/WhyArtisCase";
 import FaqSection from "@/components/FaqSection";
 import PaymentBadges from "@/components/PaymentBadges";
 
@@ -23,14 +23,9 @@ const testimonials = [
 { name: "Lucas M.", text: "Surpreendeu demais. O acabamento soft-touch é muito premium. Já pedi a segunda!", rating: 5 },
 { name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 }];
 
-const benefits = [
-{ icon: Palette, title: "100% Personalizada", desc: "Produzimos sua capa com a mesma tecnologia usada nas máquinas PrintMyCase presentes em shopping centers." },
-{ icon: Shield, title: "Proteção Premium", desc: "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m." },
-{ icon: Truck, title: "Envio Rápido", desc: "Frete acessível para a região Sudeste. Produção em até 48h e entrega ágil." }];
-
 const steps = [
-{ icon: Smartphone, title: "Escolha o modelo da sua capa", desc: "Selecione o modelo do seu celular" },
-{ icon: Upload, title: "Envie sua imagem", desc: "Faça upload da sua foto ou design" },
+{ icon: Smartphone, title: "Encontre seu celular no catálogo", desc: "Selecione o modelo do seu celular" },
+{ icon: Upload, title: "Personalize com sua foto ou IA", desc: "Faça upload e aplique filtros artísticos com ArtisCoins" },
 { icon: Package, title: "Receba sua Case em casa", desc: "Produção em 48h e envio rápido" }];
 
 const fadeIn = (delayMs: number): React.CSSProperties => ({
@@ -114,34 +109,6 @@ const Landing = () => {
 
           <Separator />
 
-          {/* Benefits */}
-          <section id="beneficios" className="py-16 px-5">
-            <div className="max-w-5xl mx-auto">
-              <ScrollReveal>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
-                  Capas personalizadas com qualidade profissional
-                </h2>
-              </ScrollReveal>
-              <div className="grid md:grid-cols-3 gap-6">
-                {benefits.map((b, i) =>
-                <ScrollReveal key={b.title} delay={i * 100}>
-                    <Card className="group text-center border-0 border-l-4 border-l-primary/60 shadow-sm bg-muted/40 h-full hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                      <CardContent className="pt-8 pb-6 px-6 space-y-3">
-                        <div className="mx-auto w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                          <b.icon className="w-6 h-6 text-primary" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-foreground">{b.title}</h3>
-                        <p className="text-sm text-muted-foreground">{b.desc}</p>
-                      </CardContent>
-                    </Card>
-                  </ScrollReveal>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <Separator />
-
           {/* How it works */}
           <section id="como-funciona" className="py-16 px-5">
             <div className="max-w-5xl mx-auto">
@@ -208,8 +175,8 @@ const Landing = () => {
           {/* AI Coins */}
           <AiCoinsSection />
 
-          {/* Print Technology */}
-          <PrintTechSection />
+          {/* Benefits + Print Tech */}
+          <WhyArtisCase />
 
           <Separator />
 
