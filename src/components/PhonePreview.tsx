@@ -4,10 +4,6 @@ import { Camera, Move, Loader2, ImagePlus } from "lucide-react";
 interface PhonePreviewProps {
   image: string | null;
   scale: number;
-  rotation: number;
-  brightness: number;
-  contrast: number;
-  extraFilter?: string;
   position: { x: number; y: number };
   onPositionChange: (pos: { x: number; y: number }) => void;
   onImageUpload: (file: File) => void;
@@ -16,7 +12,7 @@ interface PhonePreviewProps {
   isProcessing?: boolean;
 }
 
-const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilter, position, onPositionChange, onImageUpload, modelName, imageResolution, isProcessing }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, onPositionChange, onImageUpload, modelName, imageResolution, isProcessing }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -42,17 +38,11 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
     const dx = ((e.clientX - startPos.current.x) / rect.width) * sensitivity;
     const dy = ((e.clientY - startPos.current.y) / rect.height) * sensitivity;
 
-    const rad = (rotation * Math.PI) / 180;
-    const cos = Math.cos(rad);
-    const sin = Math.sin(rad);
-    const rotatedDx = dx * cos + dy * sin;
-    const rotatedDy = -dx * sin + dy * cos;
-
     onPositionChange({
-      x: clamp(startOffset.current.x - rotatedDx),
-      y: clamp(startOffset.current.y - rotatedDy),
+      x: clamp(startOffset.current.x - dx),
+      y: clamp(startOffset.current.y - dy),
     });
-  }, [isDragging, onPositionChange, scale, rotation]);
+  }, [isDragging, onPositionChange, scale]);
 
   const onPointerUp = useCallback(() => {
     setIsDragging(false);
@@ -64,9 +54,6 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
     e.target.value = '';
   };
 
-  const baseFilter = `brightness(${1 + brightness / 100}) contrast(${1 + contrast / 100})`;
-  const combinedFilter = extraFilter ? `${baseFilter} ${extraFilter}` : baseFilter;
-
   const oversize = Math.max(150, scale * 1.25);
   const offset = -(oversize - 100) / 2;
 
@@ -76,9 +63,6 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
         backgroundSize: `${scale * (100 / oversize)}%`,
         backgroundPosition: `${position.x}% ${position.y}%`,
         backgroundRepeat: "no-repeat" as const,
-        transform: `rotate(${rotation}deg)`,
-        filter: combinedFilter,
-        transition: "filter 0.3s ease",
         width: `${oversize}%`,
         height: `${oversize}%`,
         left: `${offset}%`,
@@ -92,7 +76,6 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
         {modelName ?? "iPhone"}
       </div>
       <div className="relative">
-        {/* Responsive phone mockup: smaller on mobile, full on desktop */}
         <div className="relative w-[220px] h-[450px] lg:w-[260px] lg:h-[532px] rounded-[2.4rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
           {image && (
             <div
@@ -144,7 +127,6 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
               </div>
             </div>
           </div>
-          {/* Processing overlay */}
           {isProcessing && (
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -152,7 +134,6 @@ const PhonePreview = ({ image, scale, rotation, brightness, contrast, extraFilte
             </div>
           )}
         </div>
-        {/* Image action buttons */}
         {image && (
           <div className="absolute -bottom-2 -right-2 flex items-center gap-1.5 z-30">
             {imageResolution && (() => {
