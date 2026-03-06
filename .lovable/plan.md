@@ -1,49 +1,31 @@
 
 
-## Plano: Simplificar Customização — Apenas Mockup + Upload + Posição/Zoom
+## Pinch-to-Zoom no PhonePreview
 
 ### O que muda
 
-Remover filtros e ajustes (brilho, contraste, rotação). Manter apenas:
-- Mockup do celular com upload de imagem
-- Posicionamento por drag (mouse/touch)
-- Zoom (escala) via slider simples ou scroll/pinch
-- Barra fixa com preço + "Continuar"
+Adicionar `onScaleChange` prop ao `PhonePreview` e implementar detecção de pinch com touch events nativos. O gesto de dois dedos controla o zoom (escala) diretamente no mockup, sincronizado com o slider externo.
 
-### Arquivos
+### Arquivo: `src/components/PhonePreview.tsx`
 
-| Arquivo | Ação |
-|---|---|
-| `src/pages/Customize.tsx` | Remover imports/estados de filtros, brilho, contraste, rotação, activeFilter. Remover `FilterPresets` e `ControlPanel`. Simplificar `renderSnapshot` (sem filtro/rotação). Adicionar slider de zoom inline simples. Simplificar draft save/restore. |
-| `src/components/PhonePreview.tsx` | Remover props `rotation`, `brightness`, `contrast`, `extraFilter`. Simplificar `imageLayerStyle` (sem rotação/filtro). Remover lógica trigonométrica do drag (sem rotação, drag direto). |
-| `src/components/ControlPanel.tsx` | **Deletar** — não mais utilizado |
-| `src/components/FilterPresets.tsx` | **Deletar** — não mais utilizado |
+1. **Nova prop**: `onScaleChange: (scale: number) => void`
+2. **Refs para pinch**: `initialPinchDist` e `initialPinchScale` para rastrear o gesto
+3. **Touch handlers** no container (substituindo pointer events por touch events para suportar multi-touch):
+   - `onTouchStart`: Se 2 toques, calcula distância inicial entre dedos e salva escala atual. Se 1 toque, inicia drag.
+   - `onTouchMove`: Se 2 toques, calcula nova distância, aplica ratio na escala (clamp 50–200). Se 1 toque, aplica drag.
+   - `onTouchEnd`: Reseta estado de pinch/drag.
+4. **Manter pointer events** para mouse (desktop drag) — touch events tratam mobile.
+5. Remover `touch-none` do container para permitir touch events nativos (adicionar `touch-manipulation` para evitar zoom do browser sem bloquear nossos handlers).
 
-### Layout resultante (mobile)
+### Arquivo: `src/pages/Customize.tsx`
+
+- Passar `onScaleChange={setScale}` para `PhonePreview`.
+
+### Lógica do pinch
 
 ```text
-┌──────────────────────────────┐
-│  AppHeader                   │
-├──────────────────────────────┤
-│                              │
-│   ┌────────────────────┐     │
-│   │   PhonePreview     │     │  ← drag para posicionar
-│   │   (upload + drag)  │     │
-│   └────────────────────┘     │
-│                              │
-│   [──────○──────] Zoom       │  ← slider simples
-│                              │
-├──────────────────────────────┤
-│ ▓▓ R$XX,XX    [Continuar →] │  ← barra fixa
-└──────────────────────────────┘
+dist = √((t1.x - t2.x)² + (t1.y - t2.y)²)
+ratio = currentDist / initialDist
+newScale = clamp(initialScale * ratio, 50, 200)
 ```
-
-### Detalhes técnicos
-
-- `DEFAULTS` reduz para `{ scale: 100, position: { x: 50, y: 50 } }`
-- `renderSnapshot` simplifica: sem filtro CSS, sem rotação, apenas scale + position
-- `PhonePreview` props: `image`, `scale`, `position`, `onPositionChange`, `onImageUpload`, `modelName`, `imageResolution`, `isProcessing`
-- Drag no `PhonePreview`: remove compensação trigonométrica (sem rotação), fica apenas dx/dy direto
-- Slider de zoom fica inline no `Customize.tsx` com o componente `Slider` existente, abaixo do mockup
-- `isModified` simplifica para checar apenas `scale !== 100 || position !== center`
 
