@@ -1,37 +1,30 @@
 
 
-## Plano: Modelo Fal.ai configurável por filtro (Opção B)
+## Plano: Adicionar modelo Style Transfer do Fal.ai
 
-Três alterações coordenadas:
+O modelo `fal-ai/image-apps-v2/style-transfer` tem uma API diferente dos modelos image-to-image. Em vez de receber `prompt` + `strength`, ele recebe `target_style` (um enum com estilos pré-definidos como "impressionist", "anime_character", "cyberpunk_future", etc.). Isso exige adaptações em três pontos.
 
-### 1. Migration — Adicionar coluna `model_url` à tabela `ai_filters`
+### 1. Admin UI — Novo modelo + campo de estilo
 
-```sql
-ALTER TABLE public.ai_filters 
-ADD COLUMN model_url text NOT NULL DEFAULT 'fal-ai/flux/dev/image-to-image';
-```
+Em `AiFiltersManager.tsx`:
+- Adicionar `"fal-ai/image-apps-v2/style-transfer"` ao `MODEL_OPTIONS` com label "Style Transfer"
+- Quando esse modelo for selecionado, trocar o campo "Prompt" por um select de estilos pré-definidos:
+  - impressionist, anime_character, cartoon_3d, hand_drawn_animation, cyberpunk_future, anime_game_style, comic_book_animation, animated_series, cartoon_animation, lofi_aesthetic, cottagecore, dark_academia, y2k, vaporwave
+- O valor selecionado será salvo na coluna `prompt` (reaproveitando a coluna existente)
 
-### 2. Admin UI — Campo "Modelo" no `AiFiltersManager.tsx`
-
-- Adicionar `model_url` à interface `AiFilter` e aos estados do dialog
-- No dialog de criação/edição, adicionar um campo select com opções pré-definidas dos modelos mais comuns do Fal.ai:
-  - `fal-ai/flux/dev/image-to-image` (Flux Dev — padrão)
-  - `fal-ai/flux-pro/v1.1/image-to-image` (Flux Pro)
-  - `fal-ai/stable-diffusion-v35-large/image-to-image` (SD 3.5 Large)
-- Incluir `model_url` no `handleSave` (insert e update)
-- Exibir o modelo selecionado na listagem (texto pequeno abaixo do prompt)
-
-### 3. Edge Function — Usar `model_url` dinâmico
+### 2. Edge Function — Lógica condicional por modelo
 
 Em `apply-ai-filter/index.ts`:
-- Alterar o select para buscar `prompt, model_url`
-- Trocar a URL fixa `https://fal.run/fal-ai/flux/dev/image-to-image` por `https://fal.run/${filter.model_url}`
+- Detectar se `model_url` contém `style-transfer`
+- Se sim, enviar body com `{ image_url, target_style: filter.prompt }` em vez do body padrão com `prompt`, `strength`, etc.
+- Caso contrário, manter o body atual para modelos image-to-image
 
-### Arquivos alterados
+### 3. Arquivos alterados
 
 | Arquivo | Mudança |
 |---------|---------|
-| Migration SQL | `ALTER TABLE` — nova coluna |
-| `src/components/admin/AiFiltersManager.tsx` | Campo select de modelo no dialog |
-| `supabase/functions/apply-ai-filter/index.ts` | URL dinâmica via `filter.model_url` |
+| `src/components/admin/AiFiltersManager.tsx` | Novo modelo + select condicional de estilos |
+| `supabase/functions/apply-ai-filter/index.ts` | Body condicional por tipo de modelo |
+
+Nenhuma migration necessária — o campo `prompt` armazena o estilo selecionado.
 
