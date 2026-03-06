@@ -7,6 +7,7 @@ interface Profile {
   full_name: string;
   avatar_url: string | null;
   phone: string | null;
+  referral_code: string | null;
 }
 
 interface AuthContextValue {
@@ -48,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
     supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, phone")
+      .select("id, full_name, avatar_url, phone, referral_code")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
@@ -62,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url, phone")
+      .select("id, full_name, avatar_url, phone, referral_code")
       .eq("id", user.id)
       .single();
     if (data) setProfile(data);

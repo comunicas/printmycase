@@ -101,10 +101,47 @@ Deno.serve(async (req) => {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      await supabaseAdmin
-        .from("orders")
-        .update({ status: "analyzing" })
-        .eq("stripe_session_id", session.id);
+      const metadata = session.metadata || {};
+
+      if (metadata.type === "coin_purchase" && metadata.user_id && metadata.coin_amount) {
+        // Credit purchased coins (365 days expiry)
+        await supabaseAdmin
+          .from("coin_transactions")
+          .insert({
+            user_id: metadata.user_id,
+            amount: parseInt(metadata.coin_amount),
+            type: "coin_purchase",
+            expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+            description: `Compra de ${metadata.coin_amount} moedas`,
+          });
+        console.log(`Credited ${metadata.coin_amount} coins to ${metadata.user_id}`);
+      } else {
+        // Regular case purchase — update order + credit 100 bonus coins
+        await supabaseAdmin
+          .from("orders")
+          .update({ status: "analyzing" })
+          .eq("stripe_session_id", session.id);
+
+        // Find order to get user_id for bonus
+        const { data: order } = await supabaseAdmin
+          .from("orders")
+          .select("user_id")
+          .eq("stripe_session_id", session.id)
+          .single();
+
+        if (order?.user_id) {
+          await supabaseAdmin
+            .from("coin_transactions")
+            .insert({
+              user_id: order.user_id,
+              amount: 100,
+              type: "purchase_bonus",
+              expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              description: "Bônus por compra de case",
+            });
+          console.log(`Credited 100 bonus coins to ${order.user_id}`);
+        }
+      }
     } else if (event.type === "checkout.session.expired") {
       const session = event.data.object;
       await supabaseAdmin

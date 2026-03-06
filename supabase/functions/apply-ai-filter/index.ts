@@ -28,13 +28,14 @@ Deno.serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const userId = userData.user.id;
 
     const { imageBase64, filterId } = await req.json();
 
@@ -61,6 +62,17 @@ Deno.serve(async (req) => {
     if (filterError || !filter) {
       return new Response(JSON.stringify({ error: "Filter not found" }), {
         status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check coin balance
+    const AI_FILTER_COST = 10;
+    const { data: balanceData } = await serviceClient.rpc("get_coin_balance", { _user_id: userId });
+    const coinBalance = (balanceData as number) ?? 0;
+    if (coinBalance < AI_FILTER_COST) {
+      return new Response(JSON.stringify({ error: "Saldo insuficiente", balance: coinBalance, cost: AI_FILTER_COST }), {
+        status: 402,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -156,7 +168,18 @@ Deno.serve(async (req) => {
     console.log("Fetched image:", JSON.stringify({ bytes: imgBuffer.byteLength, contentType }));
     const resultBase64 = `data:${contentType};base64,${base64}`;
 
-    return new Response(JSON.stringify({ image: resultBase64 }), {
+    // Deduct coins after successful processing
+    await serviceClient
+      .from("coin_transactions")
+      .insert({
+        user_id: userId,
+        amount: -AI_FILTER_COST,
+        type: "ai_usage",
+        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        description: "Filtro IA aplicado",
+      });
+
+    return new Response(JSON.stringify({ image: resultBase64, coinsUsed: AI_FILTER_COST }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

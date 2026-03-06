@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, AlertTriangle } from "lucide-react";
+import { Camera, AlertTriangle, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -171,6 +171,27 @@ const Profile = () => {
             </SubmitButton>
           </form>
         </FormCard>
+
+        {/* Referral */}
+        {profile?.referral_code && (
+          <FormCard title="Convide amigos" description="Ganhe 50 moedas por cada amigo que criar uma conta.">
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg truncate">
+                {`${window.location.origin}/signup?ref=${profile.referral_code}`}
+              </code>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${profile.referral_code}`);
+                  toast({ title: "Link copiado!" });
+                }}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </FormCard>
+        )}
 
         {/* Change password */}
         <FormCard title="Alterar senha">

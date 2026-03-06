@@ -92,6 +92,36 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          expires_at: string
+          id: string
+          type: Database["public"]["Enums"]["coin_transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          expires_at: string
+          id?: string
+          type: Database["public"]["Enums"]["coin_transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          expires_at?: string
+          id?: string
+          type?: Database["public"]["Enums"]["coin_transaction_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       faqs: {
         Row: {
           active: boolean
@@ -260,6 +290,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          referral_code: string | null
           updated_at: string
         }
         Insert: {
@@ -268,6 +299,7 @@ export type Database = {
           full_name?: string
           id: string
           phone?: string | null
+          referral_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -276,7 +308,29 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          referral_code?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referred_id?: string
+          referrer_id?: string
         }
         Relationships: []
       }
@@ -303,6 +357,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_referral_code: { Args: never; Returns: string }
+      get_coin_balance: { Args: { _user_id: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -313,6 +369,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      coin_transaction_type:
+        | "signup_bonus"
+        | "referral_bonus"
+        | "purchase_bonus"
+        | "coin_purchase"
+        | "ai_usage"
+        | "admin_adjustment"
       order_status:
         | "pending"
         | "paid"
@@ -450,6 +513,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      coin_transaction_type: [
+        "signup_bonus",
+        "referral_bonus",
+        "purchase_bonus",
+        "coin_purchase",
+        "ai_usage",
+        "admin_adjustment",
+      ],
       order_status: [
         "pending",
         "paid",

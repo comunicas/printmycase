@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, RefreshCw, Package, Truck, HelpCircle, Smartphone, Wand2 } from "lucide-react";
+import { Plus, RefreshCw, Package, Truck, HelpCircle, Smartphone, Wand2, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,7 @@ import BulkPriceDialog from "@/components/admin/BulkPriceDialog";
 import FaqManager from "@/components/admin/FaqManager";
 import AiFiltersManager from "@/components/admin/AiFiltersManager";
 import ModelRequestsManager from "@/components/admin/ModelRequestsManager";
+import CoinsManager from "@/components/admin/CoinsManager";
 import { type Product, formatPrice } from "@/lib/types";
 import { statusLabels } from "@/lib/constants";
 import type { Database } from "@/integrations/supabase/types";
@@ -234,6 +235,9 @@ const Admin = () => {
             <TabsTrigger value="ai-filters" className="gap-1.5">
               <Wand2 className="w-4 h-4" /> Filtros IA
             </TabsTrigger>
+            <TabsTrigger value="coins" className="gap-1.5">
+              <Coins className="w-4 h-4" /> Moedas
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -424,6 +428,9 @@ const Admin = () => {
           </TabsContent>
           <TabsContent value="ai-filters">
             <AiFiltersManager />
+          </TabsContent>
+          <TabsContent value="coins">
+            <CoinsManager />
           </TabsContent>
         </Tabs>
       </main>
