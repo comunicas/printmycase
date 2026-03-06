@@ -59,6 +59,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_filters: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          prompt: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          prompt: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          prompt?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       faqs: {
         Row: {
           active: boolean
