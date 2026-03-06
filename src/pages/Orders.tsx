@@ -6,6 +6,7 @@ import AppHeader from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
+import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
@@ -89,7 +90,7 @@ const Orders = () => {
               const { product_name, product_image, ...rest } = o;
               return {
                 ...rest,
-                ...(payload.new as any),
+                ...(payload.new as Tables<"orders">),
                 product_name,
                 product_image,
               };
