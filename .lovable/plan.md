@@ -1,38 +1,33 @@
 
 
-## Plano: Corrigir aspecto 9:16 nos filtros IA
+## Plano: Adicionar logging detalhado na edge function
 
-### Problema
-A API do Fal.ai para o modelo `style-transfer` **não aceita** o parâmetro `image_size`. Ela usa `aspect_ratio` com um objeto `{ ratio: "9:16" }`. O parâmetro `image_size` está sendo ignorado, e o modelo retorna a imagem no aspecto padrão (1:1 ou baseado na imagem original).
+### Alterações em `supabase/functions/apply-ai-filter/index.ts`
 
-Para o modelo `fal-ai/image-editing/style-transfer`, o parâmetro correto é `aspect_ratio` com valores enum como `"9:16"`.
+Adicionar 3 pontos de logging:
 
-Para o modelo `fal-ai/image-apps-v2/style-transfer`, o parâmetro correto é `aspect_ratio: { ratio: "9:16" }`.
-
-### Solução
-
-Em `supabase/functions/apply-ai-filter/index.ts`, substituir `image_size` pelo formato correto de cada API:
-
+1. **Antes da chamada ao Fal.ai** (após linha 90): logar modelo, parâmetros enviados (sem a imagem base64)
 ```typescript
-const falBody = isStyleTransfer
-  ? { 
-      image_url: imageBase64, 
-      target_style: filter.prompt, 
-      aspect_ratio: { ratio: "9:16" }
-    }
-  : {
-      image_url: imageBase64,
-      prompt: filter.prompt,
-      strength: 0.75,
-      num_inference_steps: 28,
-      guidance_scale: 7.5,
-      image_size: { width: 720, height: 1280 },
-      aspect_ratio: "9:16",
-    };
+console.log("Fal.ai request:", JSON.stringify({ modelUrl, isStyleTransfer, params: { ...falBody, image_url: "[base64 omitted]" } }));
 ```
 
-### Arquivo alterado
-| Arquivo | Mudanca |
+2. **Após resposta do Fal.ai** (após linha 110): logar estrutura da resposta e dimensões da imagem retornada
+```typescript
+const outputImage = falResult?.images?.[0];
+console.log("Fal.ai response:", JSON.stringify({ 
+  imageCount: falResult?.images?.length, 
+  width: outputImage?.width, 
+  height: outputImage?.height, 
+  content_type: outputImage?.content_type 
+}));
+```
+
+3. **Após fetch da imagem** (após linha 121 aprox): logar tamanho do buffer e content-type
+```typescript
+console.log("Fetched image:", JSON.stringify({ bytes: imgBuffer.byteLength, contentType }));
+```
+
+| Arquivo | Mudança |
 |---------|---------|
-| `supabase/functions/apply-ai-filter/index.ts` | Trocar `image_size` por `aspect_ratio: { ratio: "9:16" }` no body do style-transfer; adicionar `aspect_ratio: "9:16"` no image-to-image |
+| `supabase/functions/apply-ai-filter/index.ts` | 3 `console.log` para rastrear params, resposta e imagem final |
 
