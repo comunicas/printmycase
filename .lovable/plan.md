@@ -1,9 +1,6 @@
 
 
-## Ajustar opacidade do overlay parallax
+## Ajustar overlay para bg-black/75
 
-Reduzir a opacidade do overlay de `bg-black/75` para `bg-black/60` na seção de benefícios, deixando a imagem de fundo mais visível enquanto mantém legibilidade do texto.
-
-### Arquivo
-`src/components/WhyArtisCase.tsx` — linha do overlay, trocar `bg-black/75` por `bg-black/60`.
+Alterar a opacidade do overlay na seção de benefícios de `bg-black/60` para `bg-black/75` em `src/components/WhyArtisCase.tsx` (linha 47).
 
