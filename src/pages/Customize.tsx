@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, RotateCcw, Loader2, Maximize } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCcw, Loader2, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import PhonePreview from "@/components/PhonePreview";
-import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { formatPrice } from "@/lib/types";
@@ -175,19 +174,20 @@ const Customize = () => {
   const productName = product?.name?.replace("Capa ", "") ?? "iPhone";
   const productPrice = product ? formatPrice(product.price_cents / 100) : "";
 
-  const breadcrumbs = [
-    { label: "Catálogo", to: "/catalog" },
-    ...(product ? [{ label: product.name, to: `/product/${product.slug}` }] : []),
-    { label: "Customizar" },
-  ];
-
   if (productLoading) return <LoadingSpinner variant="fullPage" />;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <AppHeader breadcrumbs={breadcrumbs} />
+    <div className="h-dvh w-full bg-background flex flex-col overflow-hidden">
+      {/* Minimal top bar */}
+      <div className="flex items-center justify-between px-3 py-2 flex-shrink-0">
+        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={() => navigate(product ? `/product/${product.slug}` : "/catalog")}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <span className="text-sm font-medium text-muted-foreground truncate">{productName}</span>
+        <div className="w-9" /> {/* spacer */}
+      </div>
 
-      <main className="flex-1 flex flex-col items-center justify-center gap-4 p-4 lg:p-10 pb-28 lg:pb-10">
+      <main className="flex-1 flex flex-col items-center justify-center gap-3 px-4 overflow-hidden">
         <PhonePreview
           image={image} scale={scale} position={position}
           onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload} modelName={productName}
@@ -232,7 +232,7 @@ const Customize = () => {
       </main>
 
       {/* Mobile sticky bottom bar */}
-      <div className="fixed bottom-0 inset-x-0 z-50 lg:hidden border-t border-border bg-background/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+      <div className="flex-shrink-0 lg:hidden border-t border-border bg-background/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center gap-3 px-4 py-3">
           {isModified && (
             <Button variant="ghost" size="icon" onClick={handleReset} className="shrink-0 text-muted-foreground h-10 w-10">
