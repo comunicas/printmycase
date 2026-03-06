@@ -75,7 +75,7 @@ const Landing = () => {
                 <span className="text-primary drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)]">Customizada</span>{" "}
                 em 1 minuto.
               </h1>
-              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Receba em casa sua capa personalizada com qualidade premium e tecnologia PrintMyCase.
+              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Receba em casa sua capa personalizada com qualidade premium e impressão PrintMyCase.
 
               </p>
 
