@@ -14,6 +14,7 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import heroBg from "@/assets/hero-bg.jpg";
 import ScrollReveal from "@/components/ScrollReveal";
 import PrintTechSection from "@/components/PrintTechSection";
+import AiCoinsSection from "@/components/AiCoinsSection";
 import FaqSection from "@/components/FaqSection";
 import PaymentBadges from "@/components/PaymentBadges";
 
@@ -203,6 +204,9 @@ const Landing = () => {
               </ScrollReveal>
             </div>
           </section>
+
+          {/* AI Coins */}
+          <AiCoinsSection />
 
           {/* Print Technology */}
           <PrintTechSection />
