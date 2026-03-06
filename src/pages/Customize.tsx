@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, RotateCw, RotateCcw, Loader2, Maximize, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCw, RotateCcw, Loader2, Maximize, Wand2, SlidersHorizontal } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import PhonePreview from "@/components/PhonePreview";
@@ -263,81 +264,74 @@ const Customize = () => {
         />
 
         {/* Controls */}
-        <div className={`w-full max-w-xs space-y-3 ${!image ? "opacity-50 pointer-events-none" : ""}`}>
-          {/* Zoom slider */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Maximize className="w-3 h-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Zoom</span>
-              </div>
-              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${scale !== 100 ? "text-primary" : "text-muted-foreground/40"}`}>
-                {scale}%
-              </span>
-            </div>
-            <Slider
-              value={[scale]}
-              onValueChange={(v) => setScale(v[0])}
-              min={50}
-              max={200}
-              step={1}
-              disabled={!image}
-            />
-          </div>
+        <div className={`w-full max-w-xs ${!image ? "opacity-50 pointer-events-none" : ""}`}>
+          <Tabs defaultValue="ajustes">
+            <TabsList className="grid w-full grid-cols-2 h-9">
+              <TabsTrigger value="ajustes" className="gap-1.5 text-xs">
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                Ajustes
+              </TabsTrigger>
+              {filters.length > 0 && (
+                <TabsTrigger value="filtros" className="gap-1.5 text-xs">
+                  <Wand2 className="w-3.5 h-3.5" />
+                  Filtros IA
+                </TabsTrigger>
+              )}
+            </TabsList>
 
-          {/* Rotation button */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={handleRotate}
-              disabled={!image}
-            >
-              <RotateCw className="w-3.5 h-3.5" />
-              <span className="text-xs">Girar 90°</span>
-            </Button>
-            {rotation !== 0 && (
-              <span className="text-[10px] font-mono text-primary">{rotation}°</span>
+            <TabsContent value="ajustes" className="space-y-3 mt-3">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Maximize className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Zoom</span>
+                  </div>
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${scale !== 100 ? "text-primary" : "text-muted-foreground/40"}`}>
+                    {scale}%
+                  </span>
+                </div>
+                <Slider value={[scale]} onValueChange={(v) => setScale(v[0])} min={50} max={200} step={1} disabled={!image} />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={handleRotate} disabled={!image}>
+                  <RotateCw className="w-3.5 h-3.5" />
+                  <span className="text-xs">Girar 90°</span>
+                </Button>
+                {rotation !== 0 && (
+                  <span className="text-[10px] font-mono text-primary">{rotation}°</span>
+                )}
+              </div>
+            </TabsContent>
+
+            {filters.length > 0 && (
+              <TabsContent value="filtros" className="mt-3">
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mb-1">
+                  {filters.map((filter) => {
+                    const isActive = activeFilterId === filter.id;
+                    const isProcessing = applyingFilterId === filter.id;
+                    return (
+                      <Button
+                        key={filter.id}
+                        variant={isActive ? "default" : "outline"}
+                        size="sm"
+                        className="h-8 px-3 text-xs gap-1.5 flex-shrink-0"
+                        onClick={() => handleFilterClick(filter.id)}
+                        disabled={!!applyingFilterId || !image}
+                      >
+                        {isProcessing ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : filter.style_image_url ? (
+                          <img src={filter.style_image_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        ) : null}
+                        {filter.name}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </TabsContent>
             )}
-          </div>
-
-          {/* AI Filters */}
-          {filters.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <Wand2 className="w-3 h-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Filtros IA</span>
-              </div>
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mb-1">
-                {filters.map((filter) => {
-                  const isActive = activeFilterId === filter.id;
-                  const isProcessing = applyingFilterId === filter.id;
-                  return (
-                    <Button
-                      key={filter.id}
-                      variant={isActive ? "default" : "outline"}
-                      size="sm"
-                      className="h-8 px-3 text-xs gap-1.5 flex-shrink-0"
-                      onClick={() => handleFilterClick(filter.id)}
-                      disabled={!!applyingFilterId || !image}
-                    >
-                      {isProcessing ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : filter.style_image_url ? (
-                        <img
-                          src={filter.style_image_url}
-                          alt=""
-                          className="w-5 h-5 rounded-full object-cover"
-                        />
-                      ) : null}
-                      {filter.name}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          </Tabs>
         </div>
 
         {/* Desktop continue */}
