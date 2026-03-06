@@ -15,6 +15,7 @@ import heroBg from "@/assets/hero-bg.jpg";
 import ScrollReveal from "@/components/ScrollReveal";
 import PrintTechSection from "@/components/PrintTechSection";
 import FaqSection from "@/components/FaqSection";
+import PaymentBadges from "@/components/PaymentBadges";
 
 const testimonials = [
 { name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
@@ -298,6 +299,10 @@ const Landing = () => {
               </Link>
             </div>
           </div>
+
+          <Separator className="my-6" />
+
+          <PaymentBadges />
 
           <Separator className="my-6" />
 
