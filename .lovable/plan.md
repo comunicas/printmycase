@@ -1,34 +1,33 @@
 
 
-## Plano: Refinar UX dos botões de filtros IA
+## Plano: Transição suave entre filtros + thumbnails de estilo nos botões
 
-### Problemas identificados
+### Alterações
 
-1. **Linha 335** — ternário redundante: ambos os ramos retornam `filter.name` (sem spinner no botão sendo processado)
-2. **Sem feedback visual** — ao clicar num filtro, não há spinner no botão específico que está processando
-3. **Botão "Original"** aparece/desaparece causando layout shift nos chips
-4. **Estado de loading genérico** — `isApplyingFilter` bloqueia todos os botões mas não indica qual está ativo
-5. **Falta de indicação visual** de qual filtro está sendo processado vs qual já foi aplicado
+#### 1. PhonePreview — crossfade na troca de imagem
+- Adicionar CSS `transition: opacity 0.4s ease` na camada de imagem
+- Usar estado `imageTransitioning` para fazer crossfade: manter a imagem anterior com opacity 1, nova imagem entra com opacity 0→1 por cima
+- Alternativamente, mais simples: adicionar `transition: opacity 0.3s ease` diretamente no div da imagem e usar um key para forçar re-render com animação
 
-### Solução
+**Abordagem escolhida**: Usar duas camadas sobrepostas — a imagem anterior (fade out) e a nova (fade in) — controladas por estado no PhonePreview. Quando `image` prop muda, a camada antiga faz fade out enquanto a nova faz fade in (300ms).
 
-**`src/pages/Customize.tsx`**:
+#### 2. Customize — buscar `style_image_url` dos filtros e mostrar thumbnails
+- Expandir a query de `ai_filters` para incluir `style_image_url`
+- Expandir interface `AiFilter` com `style_image_url: string | null`
+- Transformar os botões de filtro em chips com thumbnail circular à esquerda do nome
+- Quando `style_image_url` existe: mostrar imagem 20×20px arredondada antes do nome
+- Layout: scroll horizontal com `overflow-x-auto` e `flex-nowrap` para melhor aproveitamento em mobile
 
-- Trocar `isApplyingFilter: boolean` por `applyingFilterId: string | null` para rastrear qual filtro específico está processando
-- Mostrar `Loader2` spinner apenas no botão do filtro sendo processado
-- Manter os outros botões desabilitados mas sem spinner
-- Botão "Original" sempre visível quando há filtro ativo, com ícone `Undo2` compacto
-- Clicar no filtro já ativo reverte ao original (toggle behavior) — elimina necessidade de botão separado
-- Simplificar o layout removendo o botão "Original" separado
+#### 3. Layout dos filtros
+- Trocar `flex-wrap` por scroll horizontal (`overflow-x-auto flex-nowrap scrollbar-hide`)
+- Cada chip: thumbnail circular (se disponível) + nome do filtro
+- Estilo ativo: borda/fundo primary, demais outline
 
-### Comportamento final
+### Arquivos alterados
 
-| Ação | Resultado |
-|------|-----------|
-| Clicar filtro inativo | Aplica filtro, mostra spinner naquele botão |
-| Clicar filtro já ativo | Reverte ao original (toggle) |
-| Durante processamento | Spinner no botão clicado, demais desabilitados |
-
-### Arquivo alterado
-- `src/pages/Customize.tsx`
+| Arquivo | Mudança |
+|---------|---------|
+| `src/components/PhonePreview.tsx` | Crossfade entre imagens com duas camadas |
+| `src/pages/Customize.tsx` | Query com `style_image_url`, thumbnails nos botões, scroll horizontal |
+| `src/index.css` | Classe utilitária `scrollbar-hide` (se não existir) |
 
