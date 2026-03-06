@@ -306,7 +306,7 @@ const Customize = () => {
 
             {filters.length > 0 && (
               <TabsContent value="filtros" className="mt-3">
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mb-1" style={{ touchAction: "pan-x", overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}>
+                <div className="flex flex-wrap gap-2 pb-1 -mb-1">
                   {filters.map((filter) => {
                     const isActive = activeFilterId === filter.id;
                     const isProcessing = applyingFilterId === filter.id;
