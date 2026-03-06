@@ -172,9 +172,9 @@ const Customize = () => {
         const h = img.naturalHeight;
         setImageResolution({ w, h });
         if (w < 400 || h < 800) {
-          toast({ title: "Resolução muito baixa", description: `Sua imagem tem ${w}×${h}px. Para boa qualidade, envie no mínimo 827×1772px.`, variant: "destructive" });
+          toast({ title: "Resolução baixa", description: `${w}×${h}px — recomendado 827×1772px.` });
         } else if (w < 800 || h < 1600) {
-          toast({ title: "Resolução pode ser insuficiente", description: `Sua imagem tem ${w}×${h}px. Recomendamos 827×1772px ou superior.` });
+          toast({ title: "Resolução baixa", description: `${w}×${h}px — recomendado 827×1772px.` });
         }
         const { url, compressed } = await compressImage(originalDataUrl);
         setImage(url);
