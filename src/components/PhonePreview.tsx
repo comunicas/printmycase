@@ -14,6 +14,8 @@ interface PhonePreviewProps {
   isProcessing?: boolean;
 }
 
+const CROSSFADE_MS = 350;
+
 const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -21,6 +23,26 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
   const [isSnapping, setIsSnapping] = useState(false);
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
+
+  // Crossfade state
+  const [displayImage, setDisplayImage] = useState<string | null>(image);
+  const [prevImage, setPrevImage] = useState<string | null>(null);
+  const [fadeIn, setFadeIn] = useState(false);
+
+  useEffect(() => {
+    if (image === displayImage) return;
+    // Start crossfade
+    setPrevImage(displayImage);
+    setDisplayImage(image);
+    setFadeIn(false);
+    // Trigger fade-in on next frame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setFadeIn(true));
+    });
+    // Clean up prev image after transition
+    const t = setTimeout(() => setPrevImage(null), CROSSFADE_MS + 50);
+    return () => clearTimeout(t);
+  }, [image]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pinch refs
   const isPinching = useRef(false);
@@ -155,32 +177,44 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
   const oversize = Math.max(150, scale * 1.25);
   const offset = -(oversize - 100) / 2;
 
-  const imageLayerStyle = image
-    ? {
-        backgroundImage: `url(${image})`,
-        backgroundSize: `${scale * (100 / oversize)}%`,
-        backgroundPosition: `${position.x}% ${position.y}%`,
-        backgroundRepeat: "no-repeat" as const,
-        width: `${oversize}%`,
-        height: `${oversize}%`,
-        left: `${offset}%`,
-        top: `${offset}%`,
-      }
-    : {};
+  const buildImageStyle = (src: string) => ({
+    backgroundImage: `url(${src})`,
+    backgroundSize: `${scale * (100 / oversize)}%`,
+    backgroundPosition: `${position.x}% ${position.y}%`,
+    backgroundRepeat: "no-repeat" as const,
+    width: `${oversize}%`,
+    height: `${oversize}%`,
+    left: `${offset}%`,
+    top: `${offset}%`,
+  });
 
   return (
     <div className="flex flex-col items-center gap-2 lg:gap-3">
       <div className="relative">
         <div className="relative w-[220px] h-[450px] lg:w-[260px] lg:h-[532px] rounded-[2.4rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
-          {image && (
-          <div
+          {/* Previous image layer (fading out) */}
+          {prevImage && (
+            <div
               className="absolute pointer-events-none"
               style={{
-                ...imageLayerStyle,
+                ...buildImageStyle(prevImage),
                 transform: `rotate(${rotation}deg)`,
+                opacity: fadeIn ? 0 : 1,
+                transition: `opacity ${CROSSFADE_MS}ms ease-out, transform 0.3s ease`,
+              }}
+            />
+          )}
+          {/* Current image layer (fading in) */}
+          {displayImage && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                ...buildImageStyle(displayImage),
+                transform: `rotate(${rotation}deg)`,
+                opacity: prevImage ? (fadeIn ? 1 : 0) : 1,
                 transition: isSnapping
-                  ? 'background-position 0.2s ease-out, transform 0.3s ease'
-                  : 'transform 0.3s ease',
+                  ? `background-position 0.2s ease-out, transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in`
+                  : `transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in`,
               }}
             />
           )}
