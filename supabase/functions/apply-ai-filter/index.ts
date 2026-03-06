@@ -77,10 +77,16 @@ Deno.serve(async (req) => {
     const modelUrl = filter.model_url || "fal-ai/flux/dev/image-to-image";
     const isStyleTransfer = modelUrl.includes("style-transfer");
     const isPhotographyEffects = modelUrl.includes("photography-effects");
+    const isLightingRestoration = modelUrl.includes("lighting-restoration");
 
     let falBody: Record<string, unknown>;
 
-    if (isPhotographyEffects) {
+    if (isLightingRestoration) {
+      falBody = {
+        image_urls: [imageBase64],
+        image_size: { width: 720, height: 1280 },
+      };
+    } else if (isPhotographyEffects) {
       falBody = {
         image_url: imageBase64,
         effect_type: filter.prompt,

@@ -30,6 +30,7 @@ const MODEL_OPTIONS = [
   { value: "fal-ai/stable-diffusion-v35-large/image-to-image", label: "SD 3.5 Large" },
   { value: "fal-ai/image-apps-v2/style-transfer", label: "Style Transfer" },
   { value: "fal-ai/image-apps-v2/photography-effects", label: "Photography Effects" },
+  { value: "fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration", label: "Lighting Restoration" },
 ];
 
 const STYLE_OPTIONS = [
@@ -151,6 +152,8 @@ const AiFiltersManager = () => {
 
   const isStyleTransfer = modelUrl === "fal-ai/image-apps-v2/style-transfer";
   const isPhotographyEffects = modelUrl === "fal-ai/image-apps-v2/photography-effects";
+  const isLightingRestoration = modelUrl === "fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration";
+  const noPromptNeeded = isLightingRestoration;
 
   const openNew = () => {
     setEditing(null);
@@ -171,13 +174,13 @@ const AiFiltersManager = () => {
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !prompt.trim()) return;
+    if (!name.trim() || (!noPromptNeeded && !prompt.trim())) return;
     setSaving(true);
 
     if (editing) {
       const { error } = await (supabase as any)
         .from("ai_filters")
-        .update({ name: name.trim(), prompt: prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null })
+        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null })
         .eq("id", editing.id);
       if (error) {
         toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
@@ -188,7 +191,7 @@ const AiFiltersManager = () => {
       const maxOrder = filters.length > 0 ? Math.max(...filters.map((f) => f.sort_order)) : 0;
       const { error } = await (supabase as any)
         .from("ai_filters")
-        .insert({ name: name.trim(), prompt: prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, sort_order: maxOrder + 1 });
+        .insert({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, sort_order: maxOrder + 1 });
       if (error) {
         toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       } else {
@@ -325,7 +328,9 @@ const AiFiltersManager = () => {
                 ))}
               </select>
             </FormField>
-            {isStyleTransfer ? (
+            {noPromptNeeded ? (
+              <p className="text-sm text-muted-foreground rounded-md bg-muted p-3">Este modelo usa prompt fixo interno — nenhuma configuração adicional necessária.</p>
+            ) : isStyleTransfer ? (
               <FormField label="Estilo" id="filter-style" required>
                 <select
                   id="filter-style"
@@ -371,7 +376,7 @@ const AiFiltersManager = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving || !name.trim() || !prompt.trim()}>
+            <Button onClick={handleSave} disabled={saving || !name.trim() || (!noPromptNeeded && !prompt.trim())}>
               {saving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
