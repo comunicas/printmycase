@@ -1,32 +1,22 @@
 
 
-## Checklist — Sistema de Gamificação (Estado Atual)
+## Plano: Ativar créditos para usuários existentes
 
-### Banco de Dados — Implementado ✅
-- [x] Tabela `coin_transactions` com colunas corretas
-- [x] Tabela `referrals` (referrer_id, referred_id unique)
-- [x] Coluna `referral_code` na tabela `profiles`
-- [x] Função `get_coin_balance(_user_id)` — Security Definer
-- [x] Função `generate_referral_code()` — gera código de 6 caracteres
-- [x] Trigger `trigger_referral_code` — BEFORE INSERT ON profiles
-- [x] Trigger `trigger_signup_bonus` — AFTER INSERT ON profiles
-- [x] Trigger `trigger_referral_bonus` — AFTER INSERT ON referrals
-- [x] Referral processado no `handle_new_user`
-- [x] RLS configurado em coin_transactions e referrals
-- [x] Referral codes gerados para usuários existentes
+### Estado Atual
+- 2 usuários cadastrados (Rafael Bruno e rafacbruno)
+- Ambos já possuem `referral_code` gerado
+- Nenhum possui bônus de cadastro (0 moedas)
+- Triggers continuam ausentes no banco
 
-### Edge Functions — Implementado ✅
-- [x] `create-coin-checkout` — registrado no config.toml
-- [x] `apply-ai-filter` — verifica saldo (10 moedas), debita após sucesso
-- [x] `stripe-webhook` — credita moedas compradas e bônus de compra
+### Ações
 
-### Frontend — Implementado ✅
-- [x] Hook `useCoins` (balance + transactions)
-- [x] Componente `CoinBalance` no header
-- [x] Página `/coins` com preços em R$ visíveis
-- [x] Indicador 🪙 10 nos botões de filtro IA
-- [x] Rota `/coins` com `AuthGuard`
-- [x] Referral link na página de perfil
-- [x] Signup captura `?ref=` e envia no metadata
-- [x] Customize.tsx verifica erro 402
-- [x] Admin tab "Moedas" com CoinsManager
+**1. Creditar 50 moedas (signup_bonus) para cada usuário existente**
+- INSERT em `coin_transactions` com `type = 'signup_bonus'`, validade 30 dias, para ambos os user IDs
+
+**2. Recriar os 3 triggers no banco (migração)**
+- `trigger_referral_code` BEFORE INSERT ON `profiles`
+- `trigger_signup_bonus` AFTER INSERT ON `profiles`
+- `trigger_referral_bonus` AFTER INSERT ON `referrals`
+
+Isso garante que os usuários atuais recebam suas moedas e que novos cadastros funcionem automaticamente.
+
