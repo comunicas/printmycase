@@ -78,14 +78,14 @@ Deno.serve(async (req) => {
     const isStyleTransfer = modelUrl.includes("style-transfer");
 
     const falBody = isStyleTransfer
-      ? { image_url: imageBase64, target_style: filter.prompt }
+      ? { image_url: imageBase64, target_style: filter.prompt, image_size: { width: 720, height: 1280 } }
       : {
           image_url: imageBase64,
           prompt: filter.prompt,
           strength: 0.75,
           num_inference_steps: 28,
           guidance_scale: 7.5,
-          image_size: { width: 512, height: 1024 },
+          image_size: { width: 720, height: 1280 },
         };
 
     const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
