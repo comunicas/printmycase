@@ -8,6 +8,7 @@ import FilterPresets, { filters } from "@/components/FilterPresets";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
+import { formatPrice } from "@/lib/types";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const DEFAULTS = { scale: 100, rotation: 0, brightness: 0, contrast: 0, activeFilter: null as string | null, position: { x: 50, y: 50 } };
@@ -19,16 +20,12 @@ function compressImage(dataUrl: string, maxW = 1200, maxH = 2400, quality = 0.75
     const img = new window.Image();
     img.onload = () => {
       const { naturalWidth: w, naturalHeight: h } = img;
-      if (w <= maxW && h <= maxH) {
-        resolve({ url: dataUrl, compressed: false });
-        return;
-      }
+      if (w <= maxW && h <= maxH) { resolve({ url: dataUrl, compressed: false }); return; }
       const ratio = Math.min(maxW / w, maxH / h);
       const nw = Math.round(w * ratio);
       const nh = Math.round(h * ratio);
       const canvas = document.createElement("canvas");
-      canvas.width = nw;
-      canvas.height = nh;
+      canvas.width = nw; canvas.height = nh;
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0, nw, nh);
       resolve({ url: canvas.toDataURL("image/jpeg", quality), compressed: true });
@@ -46,33 +43,23 @@ function renderSnapshot(
     const img = new window.Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = PHONE_W;
-      canvas.height = PHONE_H;
+      canvas.width = PHONE_W; canvas.height = PHONE_H;
       const ctx = canvas.getContext("2d")!;
-
       ctx.save();
       const baseFilter = `brightness(${1 + brightness / 100}) contrast(${1 + contrast / 100})`;
       ctx.filter = filterCss ? `${baseFilter} ${filterCss}` : baseFilter;
-
       const oversize = Math.max(150, scale * 1.25);
       const drawW = (scale / oversize) * PHONE_W * (oversize / 100);
       const drawH = (scale / oversize) * PHONE_H * (oversize / 100);
-
       const imgAspect = img.naturalWidth / img.naturalHeight;
       const cellAspect = PHONE_W / PHONE_H;
       let srcW: number, srcH: number;
-      if (imgAspect > cellAspect) {
-        srcH = img.naturalHeight;
-        srcW = srcH * cellAspect;
-      } else {
-        srcW = img.naturalWidth;
-        srcH = srcW / cellAspect;
-      }
+      if (imgAspect > cellAspect) { srcH = img.naturalHeight; srcW = srcH * cellAspect; }
+      else { srcW = img.naturalWidth; srcH = srcW / cellAspect; }
       const maxOffX = img.naturalWidth - srcW;
       const maxOffY = img.naturalHeight - srcH;
       const srcX = (position.x / 100) * maxOffX;
       const srcY = (position.y / 100) * maxOffY;
-
       ctx.translate(PHONE_W / 2, PHONE_H / 2);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.drawImage(img, srcX, srcY, srcW, srcH, -drawW / 2, -drawH / 2, drawW, drawH);
@@ -147,12 +134,9 @@ const Customize = () => {
     position.x !== DEFAULTS.position.x || position.y !== DEFAULTS.position.y;
 
   const handleReset = useCallback(() => {
-    setScale(DEFAULTS.scale);
-    setRotation(DEFAULTS.rotation);
-    setBrightness(DEFAULTS.brightness);
-    setContrast(DEFAULTS.contrast);
-    setActiveFilter(DEFAULTS.activeFilter);
-    setPosition(DEFAULTS.position);
+    setScale(DEFAULTS.scale); setRotation(DEFAULTS.rotation);
+    setBrightness(DEFAULTS.brightness); setContrast(DEFAULTS.contrast);
+    setActiveFilter(DEFAULTS.activeFilter); setPosition(DEFAULTS.position);
     if (product?.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
   }, [product?.slug]);
 
@@ -200,21 +184,19 @@ const Customize = () => {
       const filterCss = activeFilterObj?.cssFilter ?? undefined;
       const editedImage = await renderSnapshot(image, scale, rotation, brightness, contrast, filterCss, position);
       const customData = {
-        image,
-        editedImage,
-        imageFileName: imageFile?.name || null,
+        image, editedImage, imageFileName: imageFile?.name || null,
         scale, rotation, brightness, contrast, activeFilter, position,
       };
+      try {
+        sessionStorage.setItem("customization", JSON.stringify(customData));
+      } catch {
         try {
-          sessionStorage.setItem("customization", JSON.stringify(customData));
+          sessionStorage.setItem("customization", JSON.stringify({ ...customData, image: null }));
         } catch {
-          try {
-            sessionStorage.setItem("customization", JSON.stringify({ ...customData, image: null }));
-          } catch {
-            toast({ title: "Erro ao salvar customização", variant: "destructive" });
-            return;
-          }
+          toast({ title: "Erro ao salvar customização", variant: "destructive" });
+          return;
         }
+      }
       if (product.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
       navigate(`/checkout/${product.slug}`);
     } finally {
@@ -225,6 +207,7 @@ const Customize = () => {
   const activeFilterObj = filters.find((f) => f.id === activeFilter);
   const extraFilter = activeFilterObj?.cssFilter ?? undefined;
   const productName = product?.name?.replace("Capa ", "") ?? "iPhone";
+  const productPrice = product ? formatPrice(product.price_cents / 100) : "";
 
   const breadcrumbs = [
     { label: "Catálogo", to: "/catalog" },
@@ -232,14 +215,14 @@ const Customize = () => {
     { label: "Customizar" },
   ];
 
-  if (productLoading) {
-    return <LoadingSpinner variant="fullPage" />;
-  }
+  if (productLoading) return <LoadingSpinner variant="fullPage" />;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader breadcrumbs={breadcrumbs} />
-      <main className="flex-1 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-8 p-5 lg:p-10">
+
+      <main className="flex-1 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-4 lg:gap-8 p-4 lg:p-10 pb-28 lg:pb-10">
+        {/* Phone Preview — responsive sizing */}
         <div className="flex-shrink-0">
           <PhonePreview
             image={image} scale={scale} rotation={rotation} brightness={brightness}
@@ -248,8 +231,11 @@ const Customize = () => {
             imageResolution={imageResolution} isProcessing={isCompressing || isRendering}
           />
         </div>
-        <div className="w-full max-w-sm space-y-6">
-          <div className="flex items-center justify-between">
+
+        {/* Controls panel */}
+        <div className="w-full max-w-sm space-y-4 lg:space-y-6">
+          {/* Header — visible only on desktop */}
+          <div className="hidden lg:flex items-center justify-between">
             <h1 className="text-lg font-semibold text-foreground">Customizar</h1>
             {isModified && (
               <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1 text-muted-foreground">
@@ -258,21 +244,54 @@ const Customize = () => {
             )}
           </div>
 
+          {/* Filters — always visible */}
           <FilterPresets image={image} activeFilter={activeFilter} onSelectFilter={handleSelectFilter} disabled={!image} />
 
-          <ControlPanel scale={scale} rotation={rotation} brightness={brightness} contrast={contrast}
+          {/* Adjustments — collapsible on mobile */}
+          <ControlPanel
+            scale={scale} rotation={rotation} brightness={brightness} contrast={contrast}
             onScaleChange={setScale} onRotationChange={setRotation}
-            onBrightnessChange={handleBrightnessChange} onContrastChange={handleContrastChange} disabled={!image} />
+            onBrightnessChange={handleBrightnessChange} onContrastChange={handleContrastChange}
+            disabled={!image}
+          />
 
-          <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image || isCompressing || isRendering}>
+          {/* Desktop-only continue button */}
+          <div className="hidden lg:block space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total</span>
+              <span className="font-semibold text-foreground">{productPrice}</span>
+            </div>
+            <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image || isCompressing || isRendering}>
+              {isRendering ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Gerando preview...</>
+              ) : (
+                <>Continuar <ArrowRight className="w-4 h-4" /></>
+              )}
+            </Button>
+          </div>
+        </div>
+      </main>
+
+      {/* Mobile sticky bottom bar */}
+      <div className="fixed bottom-0 inset-x-0 z-50 lg:hidden border-t border-border bg-background/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center gap-3 px-4 py-3">
+          {isModified && (
+            <Button variant="ghost" size="icon" onClick={handleReset} className="shrink-0 text-muted-foreground h-10 w-10">
+              <RotateCcw className="w-4 h-4" />
+            </Button>
+          )}
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-semibold text-foreground">{productPrice}</span>
+          </div>
+          <Button className="gap-1.5 shrink-0" onClick={handleContinue} disabled={!image || isCompressing || isRendering}>
             {isRendering ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Gerando preview...</>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>Continuar <ArrowRight className="w-4 h-4" /></>
             )}
           </Button>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

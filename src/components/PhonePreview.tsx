@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, forwardRef } from "react";
-import { Upload, Camera, Move, Loader2 } from "lucide-react";
+import { Camera, Move, Loader2, ImagePlus } from "lucide-react";
 
 interface PhonePreviewProps {
   image: string | null;
@@ -87,12 +87,13 @@ const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, sca
     : {};
 
   return (
-    <div ref={ref} className="flex flex-col items-center gap-3">
+    <div ref={ref} className="flex flex-col items-center gap-2 lg:gap-3">
       <div className="text-xs font-medium text-muted-foreground">
         {modelName ?? "iPhone"}
       </div>
       <div className="relative">
-        <div className="relative w-[260px] h-[532px] rounded-[2.8rem] border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
+        {/* Responsive phone mockup: smaller on mobile, full on desktop */}
+        <div className="relative w-[220px] h-[450px] lg:w-[260px] lg:h-[532px] rounded-[2.4rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
           {image && (
             <div
               className="absolute pointer-events-none"
@@ -116,34 +117,42 @@ const PhonePreview = forwardRef<HTMLDivElement, PhonePreviewProps>(({ image, sca
                 onClick={() => inputRef.current?.click()}
                 className="flex items-center justify-center h-full w-full hover:bg-primary/5 transition-colors group/upload"
               >
-                <div className="text-center space-y-3">
-                  <Upload className="w-10 h-10 mx-auto text-muted-foreground/40 group-hover/upload:text-primary/60 transition-colors" />
-                   <p className="text-xs text-muted-foreground/50 group-hover/upload:text-primary/60">Toque para adicionar sua imagem</p>
-                   <p className="text-[10px] text-muted-foreground/30 mt-1">Recomendado: 827×1772px</p>
+                <div className="text-center space-y-3 px-6">
+                  <div className="w-14 h-14 lg:w-16 lg:h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center group-hover/upload:bg-primary/20 transition-colors">
+                    <ImagePlus className="w-7 h-7 lg:w-8 lg:h-8 text-primary/60 group-hover/upload:text-primary transition-colors" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground group-hover/upload:text-primary/80 transition-colors">
+                      Envie sua foto
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/40">
+                      827×1772px recomendado
+                    </p>
+                  </div>
                 </div>
               </button>
             )}
           </div>
-          <div className="absolute top-5 left-5 z-20 pointer-events-none">
-            <div className="w-[72px] h-[72px] rounded-2xl border border-foreground/20 bg-foreground/10 backdrop-blur-sm flex flex-wrap items-center justify-center gap-1 p-2">
-              <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
-              <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
-              <div className="w-[22px] h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
-              <div className="w-[22px] h-[22px] flex items-center justify-center">
-                <div className="w-[10px] h-[10px] rounded-full bg-yellow-300/60 border border-yellow-400/40" />
+          {/* Camera module overlay */}
+          <div className="absolute top-4 left-4 lg:top-5 lg:left-5 z-20 pointer-events-none">
+            <div className="w-[60px] h-[60px] lg:w-[72px] lg:h-[72px] rounded-2xl border border-foreground/20 bg-foreground/10 backdrop-blur-sm flex flex-wrap items-center justify-center gap-1 p-1.5 lg:p-2">
+              <div className="w-[18px] h-[18px] lg:w-[22px] lg:h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
+              <div className="w-[18px] h-[18px] lg:w-[22px] lg:h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
+              <div className="w-[18px] h-[18px] lg:w-[22px] lg:h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
+              <div className="w-[18px] h-[18px] lg:w-[22px] lg:h-[22px] flex items-center justify-center">
+                <div className="w-[8px] h-[8px] lg:w-[10px] lg:h-[10px] rounded-full bg-yellow-300/60 border border-yellow-400/40" />
               </div>
             </div>
           </div>
-          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-            <span className="text-2xl text-foreground/15 select-none" style={{ fontFamily: 'system-ui' }}></span>
-          </div>
+          {/* Processing overlay */}
           {isProcessing && (
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2.4rem]">
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <span className="text-xs font-medium text-muted-foreground mt-2">Processando imagem...</span>
+              <span className="text-xs font-medium text-muted-foreground mt-2">Processando...</span>
             </div>
           )}
         </div>
+        {/* Image action buttons */}
         {image && (
           <div className="absolute -bottom-2 -right-2 flex items-center gap-1.5 z-30">
             {imageResolution && (() => {
