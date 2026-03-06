@@ -79,10 +79,12 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
         const t1 = e.touches[0], t2 = e.touches[1];
         initialPinchDist.current = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
         initialPinchScale.current = scaleRef.current;
+        navigator.vibrate?.(10);
       } else if (e.touches.length === 1 && !isPinching.current) {
         setIsDragging(true);
         startPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         startOffset.current = { x: positionRef.current.x, y: positionRef.current.y };
+        navigator.vibrate?.(10);
       }
     };
 
