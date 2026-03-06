@@ -1,37 +1,21 @@
 
 
-## Plano: Revisão e Refatoração da implementação + Documentação
+## Plano: Adicionar botão de reset na versão desktop
 
-### Problemas identificados
+### Problema
+O botão de resetar ajustes (RotateCcw) só aparece na barra inferior mobile (`lg:hidden`). Na versão desktop não existe nenhum botão equivalente.
 
-1. **Prop `modelName` não utilizada** — passada ao `PhonePreview` mas nunca consumida (removida da destructuring na linha 19)
-2. **Toast de resolução duplicado** — `Customize.tsx` linhas 175-179: ambos os blocos `if` e `else if` mostram a mesma mensagem; o primeiro deveria ter mensagem mais urgente
-3. **`(supabase as any)` em todos os acessos a `ai_filters`** — types.ts é auto-gerado e não inclui a tabela; não pode ser editado, mas os casts são inevitáveis. Nenhuma ação necessária.
-4. **ARCHITECTURE.md desatualizado** — falta documentar: tabela `ai_filters`, `model_requests`, bucket `product-assets`, edge function `apply-ai-filter`, e a feature de filtros IA com crossfade
+### Solução
 
-### Alterações
+**`src/pages/Customize.tsx`** — Adicionar o botão de reset na seção desktop (linhas 343-352):
 
-#### 1. `src/components/PhonePreview.tsx`
-- Remover `modelName` da interface e destructuring (prop não utilizada)
+- Envolver o botão "Continuar" desktop em um `flex` com gap
+- Adicionar o botão `RotateCcw` à esquerda do "Continuar", visível apenas quando `isModified` é true
+- Mesma lógica e estilo do mobile: `variant="ghost"`, `size="icon"`, chama `handleReset`
 
-#### 2. `src/pages/Customize.tsx`
-- Remover prop `modelName` da chamada ao `PhonePreview`
-- Diferenciar mensagens de toast de resolução:
-  - `< 400×800`: "Resolução muito baixa" (mais urgente)
-  - `< 800×1600`: "Resolução baixa" (aviso suave)
+### Resultado
+Desktop terá a mesma experiência do mobile: botão de reset aparece quando há modificações (zoom, posição, rotação ou filtro) e desaparece quando não há.
 
-#### 3. `ARCHITECTURE.md`
-- Adicionar tabela `ai_filters` e `model_requests` à seção de Modelo de Dados
-- Adicionar bucket `product-assets` à tabela de Storage
-- Adicionar edge function `apply-ai-filter` à tabela de Edge Functions
-- Adicionar seção "Filtros IA" descrevendo a feature (crossfade, thumbnails, toggle, Fal.ai)
-- Atualizar estrutura de pastas com `AiFiltersManager`, `ModelRequestsManager`
-
-### Arquivos alterados
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/components/PhonePreview.tsx` | Remover prop `modelName` não utilizada |
-| `src/pages/Customize.tsx` | Remover `modelName`, diferenciar toasts de resolução |
-| `ARCHITECTURE.md` | Documentar ai_filters, model_requests, product-assets, apply-ai-filter, feature de filtros IA |
+### Arquivo alterado
+- `src/pages/Customize.tsx`
 
