@@ -27,9 +27,6 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
 
   const clamp = (v: number, min = 0, max = 100) => Math.max(min, Math.min(max, v));
 
-  const getTouchDist = (t1: React.Touch, t2: React.Touch) =>
-    Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-
   // --- Pointer events (desktop drag) ---
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     if (!image || e.pointerType === 'touch') return;
@@ -57,67 +54,84 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
     setIsDragging(false);
   }, []);
 
-  // --- Touch events (mobile drag + pinch) ---
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!image) return;
-    if (e.touches.length === 2) {
-      isPinching.current = true;
-      setIsDragging(false);
-      initialPinchDist.current = getTouchDist(e.touches[0], e.touches[1]);
-      initialPinchScale.current = scale;
-    } else if (e.touches.length === 1 && !isPinching.current) {
-      setIsDragging(true);
-      startPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      startOffset.current = { x: position.x, y: position.y };
-    }
-  }, [image, position, scale]);
-
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!image || !containerRef.current) return;
-    if (e.touches.length === 2 && isPinching.current && onScaleChange) {
-      e.preventDefault();
-      const dist = getTouchDist(e.touches[0], e.touches[1]);
-      const ratio = dist / initialPinchDist.current;
-      const newScale = Math.round(clamp(initialPinchScale.current * ratio, 50, 200));
-      onScaleChange(newScale);
-    } else if (e.touches.length === 1 && isDragging && !isPinching.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const scaleFactor = scale / 100;
-      const sensitivity = 100 / scaleFactor;
-      const dx = ((e.touches[0].clientX - startPos.current.x) / rect.width) * sensitivity;
-      const dy = ((e.touches[0].clientY - startPos.current.y) / rect.height) * sensitivity;
-      onPositionChange({
-        x: clamp(startOffset.current.x - dx),
-        y: clamp(startOffset.current.y - dy),
-      });
-    }
-  }, [image, isDragging, onPositionChange, onScaleChange, scale]);
-
-  const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length < 2) {
-      isPinching.current = false;
-    }
-    if (e.touches.length === 0) {
-      setIsDragging(false);
-    }
-  }, []);
-
-  // Wheel-to-zoom
+  // Refs for touch handler access to latest state
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
+  const isDraggingRef = useRef(isDragging);
+  isDraggingRef.current = isDragging;
+  const positionRef = useRef(position);
+  positionRef.current = position;
+  const onPositionChangeRef = useRef(onPositionChange);
+  onPositionChangeRef.current = onPositionChange;
+  const onScaleChangeRef = useRef(onScaleChange);
+  onScaleChangeRef.current = onScaleChange;
 
+  // --- Native touch + wheel events (passive: false for preventDefault) ---
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || !onScaleChange) return;
-    const handler = (e: WheelEvent) => {
+    if (!el) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
       if (!image) return;
+      if (e.touches.length === 2) {
+        isPinching.current = true;
+        setIsDragging(false);
+        const t1 = e.touches[0], t2 = e.touches[1];
+        initialPinchDist.current = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        initialPinchScale.current = scaleRef.current;
+      } else if (e.touches.length === 1 && !isPinching.current) {
+        setIsDragging(true);
+        startPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        startOffset.current = { x: positionRef.current.x, y: positionRef.current.y };
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!image || !containerRef.current) return;
+      if (e.touches.length === 2 && isPinching.current && onScaleChangeRef.current) {
+        e.preventDefault();
+        const t1 = e.touches[0], t2 = e.touches[1];
+        const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        const ratio = dist / initialPinchDist.current;
+        const newScale = Math.round(clamp(initialPinchScale.current * ratio, 50, 200));
+        onScaleChangeRef.current(newScale);
+      } else if (e.touches.length === 1 && isDraggingRef.current && !isPinching.current) {
+        e.preventDefault();
+        const rect = containerRef.current.getBoundingClientRect();
+        const scaleFactor = scaleRef.current / 100;
+        const sensitivity = 100 / scaleFactor;
+        const dx = ((e.touches[0].clientX - startPos.current.x) / rect.width) * sensitivity;
+        const dy = ((e.touches[0].clientY - startPos.current.y) / rect.height) * sensitivity;
+        onPositionChangeRef.current({
+          x: clamp(startOffset.current.x - dx),
+          y: clamp(startOffset.current.y - dy),
+        });
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) isPinching.current = false;
+      if (e.touches.length === 0) setIsDragging(false);
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      if (!image || !onScaleChangeRef.current) return;
       e.preventDefault();
       const delta = e.deltaY > 0 ? -5 : 5;
-      onScaleChange(clamp(scaleRef.current + delta, 50, 200));
+      onScaleChangeRef.current(clamp(scaleRef.current + delta, 50, 200));
     };
-    el.addEventListener("wheel", handler, { passive: false });
-    return () => el.removeEventListener("wheel", handler);
-  }, [image, onScaleChange]);
+
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
+      el.removeEventListener("wheel", handleWheel);
+    };
+  }, [image]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -153,13 +167,10 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
           )}
           <div
             ref={containerRef}
-            className={`absolute inset-0 z-10 touch-manipulation group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+            className={`absolute inset-0 z-10 ${image ? 'touch-none' : 'touch-manipulation'} group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
           >
             {image && !isDragging && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
