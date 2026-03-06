@@ -5,6 +5,7 @@ interface PhonePreviewProps {
   image: string | null;
   scale: number;
   position: { x: number; y: number };
+  rotation?: number;
   onPositionChange: (pos: { x: number; y: number }) => void;
   onScaleChange?: (scale: number) => void;
   onImageUpload: (file: File) => void;
@@ -13,7 +14,7 @@ interface PhonePreviewProps {
   isProcessing?: boolean;
 }
 
-const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -176,7 +177,10 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
               className="absolute pointer-events-none"
               style={{
                 ...imageLayerStyle,
-                transition: isSnapping ? 'background-position 0.2s ease-out' : 'none',
+                transform: `rotate(${rotation}deg)`,
+                transition: isSnapping
+                  ? 'background-position 0.2s ease-out, transform 0.3s ease'
+                  : 'transform 0.3s ease',
               }}
             />
           )}

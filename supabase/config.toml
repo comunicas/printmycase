@@ -13,3 +13,5 @@ project_id = "gfsbsgwxylvhnwbpcodj"
     verify_jwt = false
   [functions.notify-order-status]
     verify_jwt = false
+  [functions.apply-ai-filter]
+    verify_jwt = false

@@ -11,6 +11,7 @@ import ProductsTable from "@/components/admin/ProductsTable";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import BulkPriceDialog from "@/components/admin/BulkPriceDialog";
 import FaqManager from "@/components/admin/FaqManager";
+import AiFiltersManager from "@/components/admin/AiFiltersManager";
 import ModelRequestsManager from "@/components/admin/ModelRequestsManager";
 import { type Product, formatPrice } from "@/lib/types";
 import { statusLabels } from "@/lib/constants";
@@ -230,6 +231,9 @@ const Admin = () => {
             <TabsTrigger value="requests" className="gap-1.5">
               <Smartphone className="w-4 h-4" /> Solicitações
             </TabsTrigger>
+            <TabsTrigger value="ai-filters" className="gap-1.5">
+              <Wand2 className="w-4 h-4" /> Filtros IA
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -417,6 +421,9 @@ const Admin = () => {
           </TabsContent>
           <TabsContent value="requests">
             <ModelRequestsManager />
+          </TabsContent>
+          <TabsContent value="ai-filters">
+            <AiFiltersManager />
           </TabsContent>
         </Tabs>
       </main>
