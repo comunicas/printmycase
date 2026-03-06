@@ -1,22 +1,19 @@
 
 
-## Plano: Corrigir scroll horizontal dos filtros IA no mobile
+## Plano: Corrigir acesso a todos os filtros IA no desktop
 
 ### Problema
-O container dos filtros (`overflow-x-auto scrollbar-hide`) não responde ao arraste touch no mobile. Provável causa: falta de `touch-action: pan-x` no container, fazendo o browser interpretar o gesto como navegação da página em vez de scroll horizontal do elemento.
+No desktop, o container dos filtros usa `scrollbar-hide` e não há drag-to-scroll com mouse. O usuário não consegue acessar filtros que ficam fora da área visível.
 
 ### Solução
 
-**`src/pages/Customize.tsx`** — linha 309:
+**`src/pages/Customize.tsx`** — Mudar o layout dos filtros para `flex-wrap` em vez de scroll horizontal:
 
-Adicionar `touch-action: pan-x` inline e `overscroll-behavior-x: contain` no container dos filtros para garantir que o gesto de arraste horizontal seja capturado pelo scroll do container:
+- Trocar `overflow-x-auto scrollbar-hide` por `flex-wrap`
+- Remover os estilos inline de touch-action (desnecessários com wrap)
+- Os filtros vão quebrar linha naturalmente, mostrando todos visíveis sem necessidade de scroll
 
-```tsx
-<div 
-  className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mb-1"
-  style={{ touchAction: "pan-x", overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
->
-```
+Isso funciona bem porque os botões são pequenos e poucos, cabem em 2-3 linhas facilmente.
 
 ### Arquivo alterado
 - `src/pages/Customize.tsx` (1 linha)
