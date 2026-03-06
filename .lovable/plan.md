@@ -1,6 +1,12 @@
 
 
-## Ajustar overlay para bg-black/75
+## Trocar imagem do parallax na seção de benefícios
 
-Alterar a opacidade do overlay na seção de benefícios de `bg-black/60` para `bg-black/75` em `src/components/WhyArtisCase.tsx` (linha 47).
+Substituir a imagem de fundo parallax atual (`src/assets/printmycase-hero.png`) pela nova imagem enviada pelo usuário.
+
+### Mudanças
+
+1. Copiar `user-uploads://image_1.png` → `src/assets/printmycase-hero.png` (sobrescreve a atual)
+
+Nenhuma alteração de código necessária — o componente já importa esse arquivo.
 
