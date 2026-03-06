@@ -73,22 +73,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Call Fal.ai image-to-image API
+    // Call Fal.ai API
     const modelUrl = filter.model_url || "fal-ai/flux/dev/image-to-image";
+    const isStyleTransfer = modelUrl.includes("style-transfer");
+
+    const falBody = isStyleTransfer
+      ? { image_url: imageBase64, target_style: filter.prompt }
+      : {
+          image_url: imageBase64,
+          prompt: filter.prompt,
+          strength: 0.75,
+          num_inference_steps: 28,
+          guidance_scale: 7.5,
+          image_size: { width: 512, height: 1024 },
+        };
+
     const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
       method: "POST",
       headers: {
         Authorization: `Key ${falApiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        image_url: imageBase64,
-        prompt: filter.prompt,
-        strength: 0.75,
-        num_inference_steps: 28,
-        guidance_scale: 7.5,
-        image_size: { width: 512, height: 1024 },
-      }),
+      body: JSON.stringify(falBody),
     });
 
     if (!falResponse.ok) {

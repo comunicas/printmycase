@@ -27,6 +27,24 @@ const MODEL_OPTIONS = [
   { value: "fal-ai/flux/dev/image-to-image", label: "Flux Dev (padrão)" },
   { value: "fal-ai/flux-pro/kontext", label: "Flux Pro Kontext" },
   { value: "fal-ai/stable-diffusion-v35-large/image-to-image", label: "SD 3.5 Large" },
+  { value: "fal-ai/image-apps-v2/style-transfer", label: "Style Transfer" },
+];
+
+const STYLE_OPTIONS = [
+  { value: "impressionist", label: "Impressionista" },
+  { value: "anime_character", label: "Anime Character" },
+  { value: "cartoon_3d", label: "Cartoon 3D" },
+  { value: "hand_drawn_animation", label: "Hand Drawn Animation" },
+  { value: "cyberpunk_future", label: "Cyberpunk Future" },
+  { value: "anime_game_style", label: "Anime Game Style" },
+  { value: "comic_book_animation", label: "Comic Book Animation" },
+  { value: "animated_series", label: "Animated Series" },
+  { value: "cartoon_animation", label: "Cartoon Animation" },
+  { value: "lofi_aesthetic", label: "Lo-Fi Aesthetic" },
+  { value: "cottagecore", label: "Cottagecore" },
+  { value: "dark_academia", label: "Dark Academia" },
+  { value: "y2k", label: "Y2K" },
+  { value: "vaporwave", label: "Vaporwave" },
 ];
 
 const AiFiltersManager = () => {
@@ -55,6 +73,8 @@ const AiFiltersManager = () => {
   }, [toast]);
 
   useEffect(() => { fetchFilters(); }, [fetchFilters]);
+
+  const isStyleTransfer = modelUrl === "fal-ai/image-apps-v2/style-transfer";
 
   const openNew = () => {
     setEditing(null);
@@ -224,16 +244,32 @@ const AiFiltersManager = () => {
                 ))}
               </select>
             </FormField>
-            <FormField label="Prompt (enviado à IA)" id="filter-prompt" required>
-              <textarea
-                id="filter-prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Descreva o efeito desejado para a IA..."
-                rows={4}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-            </FormField>
+            {isStyleTransfer ? (
+              <FormField label="Estilo" id="filter-style" required>
+                <select
+                  id="filter-style"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Selecione um estilo...</option>
+                  {STYLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </FormField>
+            ) : (
+              <FormField label="Prompt (enviado à IA)" id="filter-prompt" required>
+                <textarea
+                  id="filter-prompt"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Descreva o efeito desejado para a IA..."
+                  rows={4}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </FormField>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
