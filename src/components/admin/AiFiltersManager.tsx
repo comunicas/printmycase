@@ -25,7 +25,7 @@ interface AiFilter {
 
 const MODEL_OPTIONS = [
   { value: "fal-ai/flux/dev/image-to-image", label: "Flux Dev (padrão)" },
-  { value: "fal-ai/flux-pro/v1.1/image-to-image", label: "Flux Pro" },
+  { value: "fal-ai/flux-pro/kontext", label: "Flux Pro Kontext" },
   { value: "fal-ai/stable-diffusion-v35-large/image-to-image", label: "SD 3.5 Large" },
 ];
 

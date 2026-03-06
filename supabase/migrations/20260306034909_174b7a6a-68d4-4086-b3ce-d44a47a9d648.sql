@@ -1,0 +1,1 @@
+UPDATE public.ai_filters SET model_url = 'fal-ai/flux/dev/image-to-image' WHERE model_url = 'fal-ai/flux-pro/v1.1/image-to-image';
