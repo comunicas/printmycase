@@ -32,7 +32,7 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange,
 
   // --- Pointer events (desktop drag) ---
   const onPointerDown = useCallback((e: React.PointerEvent) => {
-    if (!image) return;
+    if (!image || e.pointerType === 'touch') return;
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     setIsDragging(true);
