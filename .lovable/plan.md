@@ -1,33 +1,28 @@
 
 
-## Resultado da Verificação da Landing Page
+## Marquee automático + imagens 1:1 na seção ArtisCoins
 
-### Status: Blocos estão na ordem correta no código
+### Alterações
 
-Verifiquei o código de `Landing.tsx` e a ordem dos blocos está exatamente como planejado:
+**`src/components/AiCoinsSection.tsx`**
+- Substituir o grid estático de imagens por um marquee infinito (CSS-only, sem biblioteca)
+- Duplicar o array de imagens para criar loop contínuo seamless
+- Forçar aspect-ratio 1:1 nas imagens com `aspect-square` + `object-cover`
+- Pausar animação no hover para o usuário poder ver os detalhes
 
-1. **Hero** (parallax dark)
-2. **Como funciona** (3 steps com IA)
-3. **Modelos em Destaque** (produtos)
-4. **ArtisCoins + IA** (seção de moedas)
-5. **Por que escolher a ArtisCase?** (benefícios + tech unificados)
-6. **Depoimentos** (prova social)
-7. **FAQ**
-8. **CTA Final**
-9. **Footer**
+**`src/index.css`**
+- Adicionar keyframe `marquee` para translação horizontal contínua
+- Classe `.animate-marquee` com duração ~20s linear infinite
 
-### Limitação do teste automatizado
+### Layout do marquee
 
-O navegador automatizado não conseguiu renderizar as seções intermediárias porque o `ScrollReveal` usa `IntersectionObserver` para animar elementos — e o browser automatizado não dispara esses eventos corretamente. Isso faz com que todas as seções fiquem com `opacity-0` no teste automatizado, mas **funcionam normalmente para usuários reais**.
+```text
+┌──────────────── viewport ─────────────────┐
+│  [img1] [img2] [img3] [img4] [img5] [img1] [img2] [img3] [img4] [img5]  → scroll contínuo
+└───────────────────────────────────────────┘
+```
 
-Seu session replay confirma que você conseguiu rolar e ver o conteúdo da página normalmente.
-
-### Recomendação
-
-Sugiro que **você mesmo role a página no preview** para confirmar visualmente que:
-- As transições entre seções estão fluidas
-- A ordem narrativa faz sentido
-- O espaçamento entre blocos está adequado
-
-Se quiser, posso fazer um ajuste no `ScrollReveal` para que os elementos apareçam por padrão e só animem como bônus (progressive enhancement), evitando que conteúdo fique invisível caso o observer não dispare.
+- Imagens: `w-36 sm:w-40 md:w-44` com `aspect-square rounded-2xl`
+- Container com `overflow-hidden` e inner flex animado
+- Hover no container pausa a animação (`hover:pause`)
 
