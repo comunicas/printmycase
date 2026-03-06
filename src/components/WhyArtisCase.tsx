@@ -8,19 +8,19 @@ import logoPrecisionCore from "@/assets/logo-precisioncore.png";
 
 const benefits = [
   {
-    icon: Palette,
-    title: "Design Único",
-    desc: "Sua foto ou arte, impressa com tecnologia PrintMyCase — a mesma das máquinas de shopping.",
+    icon: Shield,
+    title: "Proteção Premium",
+    desc: "Policarbonato rígido + TPU flexível. Absorve impactos de até 1,5m com acabamento soft-touch que não escorrega.",
   },
   {
-    icon: Shield,
-    title: "Proteção Real",
-    desc: "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m com acabamento soft-touch.",
+    icon: Palette,
+    title: "Impressão Profissional",
+    desc: "Tecnologia Micro Piezo da Epson. Cores vibrantes, detalhes nítidos e impressão que não desbota com o tempo.",
   },
   {
     icon: Truck,
     title: "Entrega Rápida",
-    desc: "Produção em até 48h. Frete acessível para todo o Sudeste.",
+    desc: "Produção em até 48h com embalagem reforçada. Frete acessível para todo o Sudeste.",
   },
 ];
 
@@ -43,10 +43,10 @@ const WhyArtisCase = () => {
           {/* Title */}
           <ScrollReveal>
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">
-              Por que escolher a ArtisCase?
+              Proteção e estilo em cada detalhe
             </h2>
             <p className="text-center text-white/60 max-w-xl mx-auto mb-12">
-              Qualidade profissional, materiais premium e tecnologia de impressão que faz diferença.
+              Extrema qualidade final. Sua case protege com estilo exclusivo.
             </p>
           </ScrollReveal>
 
