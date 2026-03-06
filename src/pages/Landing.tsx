@@ -34,7 +34,7 @@ const steps = [
 
 const fadeIn = (delayMs: number): React.CSSProperties => ({
   animationDelay: `${delayMs}ms`,
-  animationFillMode: "forwards",
+  animationFillMode: "forwards"
 });
 
 const Landing = () => {
@@ -75,8 +75,8 @@ const Landing = () => {
                 <span className="text-primary drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)]">Customizada</span>{" "}
                 em 1 minuto.
               </h1>
-              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>
-                Crie uma capa personalizada usando a tecnologia PrintMyCase e receba em casa.
+              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Crie sua capa personalizada em segundos e com qualidade premium com tecnologia PrintMyCase e receba em casa.
+
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={fadeIn(300)}>
@@ -162,13 +162,13 @@ const Landing = () => {
                       <p className="text-sm text-muted-foreground">{s.desc}</p>
                     </div>
                   </ScrollReveal>
-                  {i < steps.length - 1 && (
-                    <div className="hidden md:flex items-center justify-center">
+                  {i < steps.length - 1 &&
+                  <div className="hidden md:flex items-center justify-center">
                       <div className="w-full border-t-2 border-dashed border-primary/30 relative">
                         <ChevronRight className="w-5 h-5 text-primary/50 absolute -right-2.5 -top-2.5" />
                       </div>
                     </div>
-                  )}
+                  }
                 </Fragment>
                 )}
               </div>
@@ -255,8 +255,8 @@ const Landing = () => {
                   size="lg"
                   variant="outline"
                   className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground bg-transparent"
-                  onClick={() => navigate("/solicitar-modelo")}
-                >
+                  onClick={() => navigate("/solicitar-modelo")}>
+                  
                   <Smartphone className="w-4 h-4" /> Solicitar Modelo
                 </Button>
               </div>
@@ -293,8 +293,8 @@ const Landing = () => {
               </p>
               <Link
                 to="/solicitar-modelo"
-                className="inline-block text-primary hover:text-primary/80 font-medium transition-colors"
-              >
+                className="inline-block text-primary hover:text-primary/80 font-medium transition-colors">
+                
                 Fale Conosco →
               </Link>
             </div>
