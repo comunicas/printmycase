@@ -1,33 +1,26 @@
 
 
-## Remover Header e Eliminar Scroll Vertical na Página de Customização
+## Remover título redundante do produto
 
-### Objetivo
-Transformar a página de customização em uma experiência fullscreen imersiva, sem header e sem scroll vertical — todo o conteúdo visível na viewport.
+### Problema
+O nome do modelo ("Motorola edge 50 pro") aparece duas vezes: na top bar da página e dentro do PhonePreview, acima do mockup.
 
-### Alterações em `src/pages/Customize.tsx`
+### Correção
 
-1. **Remover AppHeader**: Eliminar o import e uso do `AppHeader` e a variável `breadcrumbs`
-2. **Adicionar botão de voltar minimal**: Um pequeno botão no canto superior-esquerdo (ícone `ArrowLeft` ou `X`) para navegar de volta ao produto
-3. **Layout fullscreen sem scroll**: Trocar `min-h-screen` por `h-screen` (ou `h-dvh`) e adicionar `overflow-hidden` no container raiz
-4. **Ajustar main**: Usar `flex-1 overflow-hidden` para que o conteúdo se distribua verticalmente sem gerar scroll
-5. **Ajustar padding bottom mobile**: Remover `pb-28` excessivo, pois sem header há mais espaço vertical
+**src/components/PhonePreview.tsx** — Remover o `<div>` que exibe `modelName` acima do mockup (linhas 145-148):
 
-### Resultado Visual
-
-```text
-┌──────────────────────────┐
-│ ← Voltar     modelo name │  ← mini bar translúcida
-│                          │
-│                          │
-│      [ Phone Mockup ]    │
-│                          │
-│                          │
-│   🔍 Zoom ──────── 156%  │
-│                          │
-│  [Total]    [Continuar →]│  ← desktop inline / mobile sticky
-└──────────────────────────┘
+```tsx
+// REMOVER:
+<div className="text-xs font-medium text-muted-foreground">
+  {modelName ?? "iPhone"}
+</div>
 ```
 
-Nenhuma outra página ou componente é afetado.
+O título já está visível na top bar minimal do `Customize.tsx`. Nenhuma outra alteração necessária.
+
+### Verificação do layout
+- **Mobile (375×812)**: Layout ocupa viewport inteira, sem scroll. Bottom bar visível.
+- **Desktop (1440×900)**: Layout ocupa viewport inteira, sem scroll. Controles centralizados.
+
+Ambos confirmados via teste no browser.
 
