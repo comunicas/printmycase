@@ -1,58 +1,51 @@
 
 
-## Novo modulo "ArtisCoins + IA" na Landing Page
+## Revisao de Copy + Reorganizacao dos Blocos da Landing
 
-### Objetivo
-Criar uma seção visualmente impactante na home que explique o sistema de moedas (ArtisCoins) para customizar cases com filtros de IA, usando as imagens de referencia como showcase e um CTA forte para cadastro gratuito.
+### Ordem atual
+1. Hero
+2. Beneficios (Personalizada / Protecao / Envio)
+3. Como funciona (3 steps)
+4. Modelos em Destaque (produtos)
+5. ArtisCoins + IA
+6. Tecnologia de Impressao
+7. Depoimentos
+8. FAQ
+9. CTA Final
 
-### Posicionamento
-Inserir entre "Modelos em Destaque" e "Print Technology" — momento ideal pois o usuario ja viu os produtos e agora descobre o diferencial IA.
+### Nova ordem proposta (narrativa mais logica)
+1. **Hero** — sem mudancas
+2. **Como funciona** — move para cima, responde imediatamente "como eu faco?"
+3. **Modelos em Destaque** — logo apos explicar o processo, o usuario ja ve opcoes
+4. **ArtisCoins + IA** — diferencial criativo, mantém posicao apos produtos
+5. **Beneficios / Atributos** — agora focados na qualidade do produto (merge com PrintTech em uma unica secao mais concisa)
+6. **Depoimentos** — prova social reforça os atributos
+7. **FAQ**
+8. **CTA Final**
 
-### Layout e Design
+### Revisao de copy
 
-```text
-┌─────────────────────────────────────────────────┐
-│  bg-gradient (dark/primary)                     │
-│                                                 │
-│  ✨ Transforme sua foto com IA                  │
-│  "Aplique filtros artísticos incríveis..."      │
-│                                                 │
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐     │
-│  │ img │ │ img │ │ img │ │ img │ │ img │      │
-│  │ case│ │ case│ │ case│ │ case│ │ case│      │
-│  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘     │
-│  (carousel/grid das 5 imagens de referência)    │
-│                                                 │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐     │
-│  │🪙 50     │  │🎨 +20    │  │⚡ 10/    │     │
-│  │ grátis   │  │ filtros  │  │ filtro   │     │
-│  │ cadastro │  │ artístic.│  │          │     │
-│  └──────────┘  └──────────┘  └──────────┘     │
-│                                                 │
-│  [ Cadastre-se Grátis e Ganhe 50 🪙 ]          │
-│                                                 │
-└─────────────────────────────────────────────────┘
-```
+**Como funciona** (steps atualizados para incluir IA):
+1. "Escolha seu modelo" → "Encontre seu celular no catálogo"
+2. "Envie sua imagem" → "Personalize com sua foto ou IA" (desc: "Faça upload e aplique filtros artísticos com ArtisCoins")
+3. "Receba em casa" → sem mudanca
 
-### Implementacao
+**Beneficios** (copy ajustada, foco no produto final):
+- "Design Único" → "Sua foto ou arte, impressa com tecnologia PrintMyCase — a mesma das máquinas de shopping."
+- "Proteção Real" → "Policarbonato rígido + TPU flexível. Protege contra quedas de até 1,5m com acabamento soft-touch."
+- "Entrega Rápida" → "Produção em até 48h. Frete acessível para todo o Sudeste."
 
-**Novo componente**: `src/components/AiCoinsSection.tsx`
-- Seção com fundo gradiente escuro (consistente com hero dark aesthetic)
-- Titulo: "Transforme qualquer foto em arte com IA"
-- Subtitulo: copy sobre filtros artisticos e moedas
-- Grid/carousel horizontal com as 5 imagens de cases uploadadas (copiar para `public/lovable-uploads/`)
-- 3 cards informativos em linha: "50 moedas gratis no cadastro", "+20 filtros artisticos", "10 moedas por filtro"
-- CTA principal: "Cadastre-se Gratis e Ganhe 50 🪙" → navega para `/signup`
-- CTA secundario: "Saiba mais sobre ArtisCoins" → navega para `/coins`
-- Usa `ScrollReveal` para animacoes consistentes
+**Titulo da secao de beneficios**: "Por que escolher a ArtisCase?" (mais direto)
 
-**Editar**: `src/pages/Landing.tsx`
-- Importar `AiCoinsSection`
-- Inserir entre Featured Products e PrintTechSection (linha ~207)
+**PrintTechSection**: Removida como secao separada. Os atributos tecnologicos (Micro Piezo, Epson, video) sao incorporados dentro da secao de beneficios como um bloco complementar abaixo dos 3 cards, mantendo o video e logos.
 
-### Copy proposta
-- Titulo: **"Transforme qualquer foto em arte com IA"**
-- Sub: "Use filtros artísticos inteligentes para criar cases únicas. Pop art, 3D, cartoon e muito mais — tudo com um clique."
-- Cards: "50 moedas grátis" / "+20 estilos artísticos" / "10 moedas por filtro"
-- CTA: "Cadastre-se Grátis e Ganhe 50 🪙"
+### Arquivos alterados
+
+| Arquivo | Alteracao |
+|---|---|
+| `src/pages/Landing.tsx` | Reordenar secoes, atualizar copy dos steps e benefits, incorporar PrintTechSection dentro da secao de beneficios |
+| `src/components/PrintTechSection.tsx` | Pode ser mantido como componente standalone mas renderizado dentro da secao de beneficios, ou inlined — decisao de implementacao |
+
+### Resultado
+Fluxo narrativo: "veja como funciona" → "escolha seu modelo" → "descubra filtros IA" → "por que somos diferentes" (qualidade + tech + prova social) → FAQ → CTA
 
