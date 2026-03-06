@@ -1,28 +1,19 @@
 
 
-## Marquee automático + imagens 1:1 na seção ArtisCoins
+## Simplificar seção ArtisCoins — remover detalhes de custo
 
-### Alterações
+### O que muda
 
-**`src/components/AiCoinsSection.tsx`**
-- Substituir o grid estático de imagens por um marquee infinito (CSS-only, sem biblioteca)
-- Duplicar o array de imagens para criar loop contínuo seamless
-- Forçar aspect-ratio 1:1 nas imagens com `aspect-square` + `object-cover`
-- Pausar animação no hover para o usuário poder ver os detalhes
+**Remover**: Os 3 info cards (50 moedas grátis, +20 estilos, 10 moedas por filtro) e o botão "Saiba mais sobre ArtisCoins". Toda menção a custo por geração sai.
 
-**`src/index.css`**
-- Adicionar keyframe `marquee` para translação horizontal contínua
-- Classe `.animate-marquee` com duração ~20s linear infinite
+**Simplificar copy**:
+- Badge: "Novidade — IA Artística" (sem mencionar coins)
+- Título: "Transforme qualquer foto em arte com IA" (mantém)
+- Subtítulo: "Aplique filtros artísticos com um clique. Pop art, 3D, cartoon e muito mais. Cadastre-se grátis e comece agora."
+- CTA único: "Cadastre-se Grátis" → `/signup`
 
-### Layout do marquee
+**Resultado**: Seção mais limpa — marquee de imagens + copy curta + 1 CTA. Sem números, sem detalhes de moedas.
 
-```text
-┌──────────────── viewport ─────────────────┐
-│  [img1] [img2] [img3] [img4] [img5] [img1] [img2] [img3] [img4] [img5]  → scroll contínuo
-└───────────────────────────────────────────┘
-```
-
-- Imagens: `w-36 sm:w-40 md:w-44` com `aspect-square rounded-2xl`
-- Container com `overflow-hidden` e inner flex animado
-- Hover no container pausa a animação (`hover:pause`)
+### Arquivo alterado
+`src/components/AiCoinsSection.tsx` — remover `infoCards`, simplificar header copy, reduzir CTAs para um único botão.
 
