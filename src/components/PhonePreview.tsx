@@ -9,7 +9,7 @@ interface PhonePreviewProps {
   onPositionChange: (pos: { x: number; y: number }) => void;
   onScaleChange?: (scale: number) => void;
   onImageUpload: (file: File) => void;
-  modelName?: string;
+  
   imageResolution?: { w: number; h: number } | null;
   isProcessing?: boolean;
 }

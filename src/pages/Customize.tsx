@@ -173,9 +173,9 @@ const Customize = () => {
         const h = img.naturalHeight;
         setImageResolution({ w, h });
         if (w < 400 || h < 800) {
-          toast({ title: "Resolução baixa", description: `${w}×${h}px — recomendado 827×1772px.` });
+          toast({ title: "Resolução muito baixa", description: `${w}×${h}px — a impressão pode ficar pixelada. Recomendado: 827×1772px.`, variant: "destructive" });
         } else if (w < 800 || h < 1600) {
-          toast({ title: "Resolução baixa", description: `${w}×${h}px — recomendado 827×1772px.` });
+          toast({ title: "Resolução baixa", description: `${w}×${h}px — recomendado 827×1772px para melhor qualidade.` });
         }
         const { url, compressed } = await compressImage(originalDataUrl);
         setImage(url);
@@ -258,7 +258,7 @@ const Customize = () => {
       <main className="flex-1 flex flex-col items-center justify-center gap-3 px-4 overflow-hidden">
         <PhonePreview
           image={image} scale={scale} position={position} rotation={rotation}
-          onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload} modelName={productName}
+          onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload}
           imageResolution={imageResolution} isProcessing={isCompressing || isRendering || !!applyingFilterId}
         />
 
