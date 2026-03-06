@@ -5,7 +5,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ScrollReveal from "@/components/ScrollReveal";
 import logoEpson from "@/assets/logo-epson.png";
 import logoPrecisionCore from "@/assets/logo-precisioncore.png";
-
+import parallaxBg from "@/assets/printmycase-hero.png";
 const benefits = [
   {
     icon: Shield,
@@ -38,8 +38,14 @@ const WhyArtisCase = () => {
 
   return (
     <>
-      <section id="beneficios" className="py-20 px-5 bg-zinc-950 text-white overflow-hidden">
-        <div className="max-w-5xl mx-auto">
+      <section
+        id="beneficios"
+        className="relative py-20 px-5 text-white overflow-hidden parallax-bg"
+        style={{ backgroundImage: `url(${parallaxBg})` }}
+      >
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/75" />
+        <div className="relative z-10 max-w-5xl mx-auto">
           {/* Title */}
           <ScrollReveal>
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">
