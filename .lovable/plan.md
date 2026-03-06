@@ -1,32 +1,30 @@
 
 
-## Problema: Drag no mobile move a página inteira
+## Verificação Mobile + Feedback Háptico
 
-### Causa raiz
+### Verificação do layout
+Testei a página `/customize/motorola-edge-50-pro` em viewport 375×812 (iPhone X). O layout está correto: sem scroll vertical, todo o conteúdo (mockup, zoom slider, bottom bar) visível na viewport. A limitação do browser de teste impede simular drag com touch real, mas o código já tem `touch-none` e `preventDefault()` no touchmove — a correção está aplicada.
 
-Dois problemas no `PhonePreview.tsx`:
+### Adicionar feedback háptico
 
-1. **`touch-manipulation` permite panning** — A classe `touch-manipulation` do Tailwind aplica `touch-action: manipulation`, que ainda permite scroll/pan do navegador. Para drag dentro do frame, precisamos de `touch-action: none` para bloquear completamente o comportamento padrão do browser.
+**src/components/PhonePreview.tsx** — Adicionar vibração ao iniciar drag e pinch no mobile:
 
-2. **`e.preventDefault()` ausente no drag de 1 dedo** — No `onTouchMove`, o `preventDefault()` só é chamado no caso de pinch (2 dedos). No drag com 1 dedo, o browser intercepta o toque e faz scroll da página. Precisa chamar `preventDefault()` também no drag.
+1. No `handleTouchStart`, após detectar início de drag (1 dedo) ou pinch (2 dedos), chamar `navigator.vibrate(10)` para um pulso curto de 10ms:
 
-### Correções
-
-**src/components/PhonePreview.tsx**:
-
-1. Trocar `touch-manipulation` por `touch-none` no container de drag (quando há imagem):
-```tsx
-className={`absolute inset-0 z-10 ${image ? 'touch-none' : 'touch-manipulation'} group/drag ...`}
+```typescript
+const handleTouchStart = (e: TouchEvent) => {
+  if (!image) return;
+  if (e.touches.length === 2) {
+    isPinching.current = true;
+    // ... existing pinch setup
+    navigator.vibrate?.(10); // haptic pulse
+  } else if (e.touches.length === 1 && !isPinching.current) {
+    setIsDragging(true);
+    // ... existing drag setup
+    navigator.vibrate?.(10); // haptic pulse
+  }
+};
 ```
 
-2. Adicionar `e.preventDefault()` no `onTouchMove` para drag de 1 dedo:
-```tsx
-} else if (e.touches.length === 1 && isDragging && !isPinching.current) {
-  e.preventDefault(); // ← ADICIONAR: impede scroll da página
-  const rect = ...
-```
-
-3. Como `preventDefault()` em touch events passivos não funciona em React, registrar o `touchmove` via `addEventListener` com `{ passive: false }` no `useEffect`, similar ao que já é feito para `wheel`.
-
-Isso resolve o problema de o frame não ficar "fixo" no mobile — o toque será capturado exclusivamente pelo drag handler.
+Usa optional chaining (`vibrate?.()`) para não quebrar em browsers que não suportam (Safari/iOS não suporta, mas não lança erro). Funciona nativamente em Android Chrome sem nenhuma dependência extra.
 
