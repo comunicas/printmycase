@@ -1,40 +1,58 @@
 
 
-## Plano: Custo simplificado + Confirmação antes de aplicar filtro IA
+## Novo modulo "ArtisCoins + IA" na Landing Page
 
-### Problema
-- O custo "🪙 10" está repetido em cada botão de filtro, poluindo visualmente
-- Não há confirmação antes de consumir moedas — o usuário pode clicar sem querer e perder 10 moedas
+### Objetivo
+Criar uma seção visualmente impactante na home que explique o sistema de moedas (ArtisCoins) para customizar cases com filtros de IA, usando as imagens de referencia como showcase e um CTA forte para cadastro gratuito.
 
-### Solução
+### Posicionamento
+Inserir entre "Modelos em Destaque" e "Print Technology" — momento ideal pois o usuario ja viu os produtos e agora descobre o diferencial IA.
 
-**1. Simplificar exibição de custo**
-- Remover o "🪙 10" de cada botão individual
-- Adicionar uma linha informativa única acima da lista de filtros: `"Cada filtro consome 🪙 10 moedas"` com texto pequeno e discreto (`text-xs text-muted-foreground`)
-- Botões ficam mais limpos, só com ícone/thumbnail + nome
+### Layout e Design
 
-**2. Dialog de confirmação ao clicar em filtro**
-- Ao clicar num filtro (exceto para desativar), abrir um `AlertDialog` mostrando:
-  - Nome do filtro selecionado
-  - Custo: 🪙 10 moedas
-  - Saldo atual do usuário (usar `useCoins` hook)
-  - Saldo após aplicação
-  - Botões "Cancelar" / "Aplicar filtro"
-- Só após confirmar, chamar a edge function
-- Se saldo insuficiente, mostrar no próprio dialog com link para comprar moedas
+```text
+┌─────────────────────────────────────────────────┐
+│  bg-gradient (dark/primary)                     │
+│                                                 │
+│  ✨ Transforme sua foto com IA                  │
+│  "Aplique filtros artísticos incríveis..."      │
+│                                                 │
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐     │
+│  │ img │ │ img │ │ img │ │ img │ │ img │      │
+│  │ case│ │ case│ │ case│ │ case│ │ case│      │
+│  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘     │
+│  (carousel/grid das 5 imagens de referência)    │
+│                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐     │
+│  │🪙 50     │  │🎨 +20    │  │⚡ 10/    │     │
+│  │ grátis   │  │ filtros  │  │ filtro   │     │
+│  │ cadastro │  │ artístic.│  │          │     │
+│  └──────────┘  └──────────┘  └──────────┘     │
+│                                                 │
+│  [ Cadastre-se Grátis e Ganhe 50 🪙 ]          │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
 
-### Arquivos alterados
+### Implementacao
 
-| Arquivo | Alteração |
-|---|---|
-| `src/components/customize/AiFiltersList.tsx` | Remover "🪙 10" dos botões, adicionar texto informativo acima da lista |
-| `src/components/customize/ImageControls.tsx` | Passar `coinBalance` como prop |
-| `src/pages/Customize.tsx` | Importar `useCoins`, adicionar estado para dialog de confirmação, separar seleção do filtro da execução |
-| Novo: `src/components/customize/FilterConfirmDialog.tsx` | Dialog de confirmação com detalhes do filtro, custo e saldo |
+**Novo componente**: `src/components/AiCoinsSection.tsx`
+- Seção com fundo gradiente escuro (consistente com hero dark aesthetic)
+- Titulo: "Transforme qualquer foto em arte com IA"
+- Subtitulo: copy sobre filtros artisticos e moedas
+- Grid/carousel horizontal com as 5 imagens de cases uploadadas (copiar para `public/lovable-uploads/`)
+- 3 cards informativos em linha: "50 moedas gratis no cadastro", "+20 filtros artisticos", "10 moedas por filtro"
+- CTA principal: "Cadastre-se Gratis e Ganhe 50 🪙" → navega para `/signup`
+- CTA secundario: "Saiba mais sobre ArtisCoins" → navega para `/coins`
+- Usa `ScrollReveal` para animacoes consistentes
 
-### Fluxo revisado
-1. Usuário clica no filtro → abre dialog de confirmação
-2. Dialog mostra: filtro, custo (10), saldo atual, saldo restante
-3. Usuário confirma → executa `apply-ai-filter`
-4. Usuário cancela → nada acontece
+**Editar**: `src/pages/Landing.tsx`
+- Importar `AiCoinsSection`
+- Inserir entre Featured Products e PrintTechSection (linha ~207)
+
+### Copy proposta
+- Titulo: **"Transforme qualquer foto em arte com IA"**
+- Sub: "Use filtros artísticos inteligentes para criar cases únicas. Pop art, 3D, cartoon e muito mais — tudo com um clique."
+- Cards: "50 moedas grátis" / "+20 estilos artísticos" / "10 moedas por filtro"
+- CTA: "Cadastre-se Grátis e Ganhe 50 🪙"
 
