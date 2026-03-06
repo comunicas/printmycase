@@ -48,9 +48,7 @@ const PaymentBadges = () => (
     <div className="flex items-center gap-2 text-muted-foreground/50">
       <div className="w-10 border-t border-muted-foreground/20" />
       <span className="text-xs font-medium tracking-wide">Powered by</span>
-      <svg viewBox="0 0 60 25" className="h-5 w-auto" fill="currentColor" aria-label="Stripe" opacity="0.5">
-        <path d="M5 10.2c0-.7.6-1 1.5-1 1.4 0 3.1.4 4.5 1.2V6.3C9.4 5.7 7.8 5.4 6.5 5.4 2.6 5.4 0 7.4 0 10.5c0 4.8 6.6 4 6.6 6.1 0 .8-.7 1.1-1.7 1.1-1.5 0-3.4-.6-4.9-1.4v4.2c1.7.7 3.3 1 4.9 1 4 0 6.8-2 6.8-5.1C11.7 11.9 5 12.9 5 10.2zm13.5-2.7l-.2-2h-4V20.5h4.6V10c1.1-1.4 2.9-1.1 3.5-.9V5.5c-.6-.2-2.8-.6-3.9 2zm9.3-5L23.2 3.8l-.1 13.4c0 2.5 1.9 4.3 4.3 4.3 1.4 0 2.4-.3 2.9-.5v-3.7c-.5.2-3.2.9-3.2-1.4V9.2h3.2V5.5h-3.2l.7-3zm8.2 5.3l-.3-1.3h-4.4V20.5h4.6v-10c1.1-1.4 2.9-1.2 3.5-1V5.5c-.6-.2-2.9-.6-3.4 2.3zM42 5.5l4.6 0V1.6L42 2.9v2.6zm0 15h4.6V5.5H42v15zm9.5-16.4c0-1.5-1.2-2.7-2.7-2.7-1.5 0-2.7 1.2-2.7 2.7s1.2 2.7 2.7 2.7c1.5 0 2.7-1.2 2.7-2.7zM60 14c0-5-2.4-8.6-7.1-8.6-4.7 0-7.5 3.6-7.5 8.5 0 5.6 3.3 8.4 8.1 8.4 2.3 0 4.1-.5 5.4-1.3v-3.5c-1.3.7-2.9 1.1-4.8 1.1-1.9 0-3.6-.7-3.8-3h9.6c0-.3.1-1.2.1-1.6zm-9.7-1.8c0-2.2 1.4-3.1 2.6-3.1 1.2 0 2.5.9 2.5 3.1h-5.1z" />
-      </svg>
+      <img src="/lovable-uploads/stripe-logo.png" alt="Stripe" className="h-5 w-auto opacity-50" />
       <div className="w-10 border-t border-muted-foreground/20" />
     </div>
   </div>
