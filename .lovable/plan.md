@@ -1,18 +1,76 @@
 
 
-## Estado Atual — Problemas Residuais
+## Plano: Refatorar Customizacao — Mobile-First com UX Otimizada
 
-Após a revisão completa feita anteriormente, a aplicação está bem limpa. Restam apenas **2 itens menores**:
+### Problema Atual
 
-### 1. `as any` residual em `Orders.tsx` (linha 92)
-O `payload.new as any` no handler de realtime é o único `as any` restante no frontend. O tipo correto seria `Tables<"orders">`.
+No mobile, a pagina de customizacao exibe o mockup do celular + controles em coluna, forçando scroll extenso. O botao "Continuar" fica escondido abaixo da dobra. Nao ha barra fixa de acoes, e o upload inicial nao e destacado como passo claro.
 
-### 2. `statusColors` removido do frontend mas ainda existe no edge function
-Isso é **correto** — o `statusColors` no `notify-order-status` é usado lá (linha 48) para gerar emails com cores. Não é código morto.
+### Nova Estrutura de Layout
 
-### Conclusão
+```text
+┌──────────────────────────────┐
+│  AppHeader (sticky)          │
+├──────────────────────────────┤
+│                              │
+│   ┌────────────────────┐     │  ← Mockup centralizado
+│   │   PhonePreview     │     │    (escala responsiva)
+│   │   (touch-drag)     │     │
+│   └────────────────────┘     │
+│                              │
+│   [Filtros] carrossel horiz  │  ← Sempre visivel
+│   [Ajustes] colapsavel       │  ← Accordion, fecha por padrao
+│                              │
+├──────────────────────────────┤
+│ ▓▓ Barra fixa bottom ▓▓▓▓▓▓ │  ← Preco + "Continuar" + Reset
+│ ▓▓ R$XX,XX    [Continuar →] │
+└──────────────────────────────┘
 
-**Não há bugs críticos, conflitos ou código legado significativo.** A única melhoria possível é substituir o `as any` na linha 92 de `Orders.tsx` pelo tipo correto da tabela `orders`. É uma mudança cosmética de type-safety.
+Desktop (lg+): lado a lado como hoje, mas botao fixo no bottom do painel
+```
 
-Fora isso, a aplicação está consistente: sem imports quebrados, sem código morto relevante, sem conflitos entre frontend e edge functions.
+### Alteracoes Planejadas
+
+#### 1. `Customize.tsx` — Layout mobile-first
+
+- Mockup ocupa area principal com escala responsiva (menor em telas pequenas)
+- Filtros logo abaixo do mockup, sempre visiveis
+- ControlPanel envolto em Accordion (colapsado por padrao no mobile, expandido no desktop)
+- Barra fixa no bottom do viewport (mobile): mostra preco do produto + botao "Continuar" + botao reset
+- No desktop: manter layout side-by-side, botao "Continuar" fixo no bottom do painel direito
+- Mostrar preco do produto na tela (buscar de `product.price`)
+
+#### 2. `PhonePreview.tsx` — Upload simplificado
+
+- Estado vazio (sem imagem): area de upload maior e mais clara, com CTA "Enviar sua foto" proeminente
+- Reduzir tamanho do mockup no mobile (de 260x532 para ~220x450) via classes responsivas
+- Manter tamanho original no desktop
+
+#### 3. `ControlPanel.tsx` — Accordion no mobile
+
+- Envolver em `Accordion` do Radix (ja instalado)
+- Titulo "Ajustes" funciona como trigger
+- Aberto por padrao no desktop (`defaultValue` condicional)
+
+#### 4. Barra fixa de acao (novo componente ou inline)
+
+- `fixed bottom-0` no mobile, com `safe-area-inset-bottom`
+- Background com blur (`backdrop-blur`)
+- Contem: preco formatado | botao "Continuar" (com icone) | botao reset (se modificado)
+- Desaparece no desktop (controles ja visiveis no painel lateral)
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---|---|
+| `src/pages/Customize.tsx` | Layout responsivo, barra fixa, preco, accordion wrapper |
+| `src/components/PhonePreview.tsx` | Classes responsivas de tamanho, upload CTA melhorado |
+| `src/components/ControlPanel.tsx` | Envolver em Accordion para mobile |
+
+### Detalhes Tecnicos
+
+- Usar `@radix-ui/react-accordion` (ja instalado) para colapsar ajustes
+- Barra fixa usa `pb-[env(safe-area-inset-bottom)]` para iPhones com barra de gestos
+- Preco vem de `product.price` (ja disponivel no hook `useProduct`)
+- Sem novas dependencias necessarias
 
