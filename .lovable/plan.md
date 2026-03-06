@@ -1,30 +1,42 @@
 
 
-## Verificação Mobile + Feedback Háptico
+## Animação de snap ao soltar o dedo
 
-### Verificação do layout
-Testei a página `/customize/motorola-edge-50-pro` em viewport 375×812 (iPhone X). O layout está correto: sem scroll vertical, todo o conteúdo (mockup, zoom slider, bottom bar) visível na viewport. A limitação do browser de teste impede simular drag com touch real, mas o código já tem `touch-none` e `preventDefault()` no touchmove — a correção está aplicada.
+### O que muda
 
-### Adicionar feedback háptico
+Quando o usuário solta o dedo após arrastar a imagem, a camada de imagem faz uma transição suave (ease-out) em vez de parar abruptamente. Isso dá uma sensação de "snap" polida.
 
-**src/components/PhonePreview.tsx** — Adicionar vibração ao iniciar drag e pinch no mobile:
+### Implementação
 
-1. No `handleTouchStart`, após detectar início de drag (1 dedo) ou pinch (2 dedos), chamar `navigator.vibrate(10)` para um pulso curto de 10ms:
+**src/components/PhonePreview.tsx**:
 
-```typescript
-const handleTouchStart = (e: TouchEvent) => {
-  if (!image) return;
-  if (e.touches.length === 2) {
-    isPinching.current = true;
-    // ... existing pinch setup
-    navigator.vibrate?.(10); // haptic pulse
-  } else if (e.touches.length === 1 && !isPinching.current) {
-    setIsDragging(true);
-    // ... existing drag setup
-    navigator.vibrate?.(10); // haptic pulse
+1. Adicionar estado `isSnapping` (boolean) — controla se a transição CSS está ativa na camada da imagem.
+
+2. Quando `isDragging` muda de `true` para `false` (soltar o dedo):
+   - Setar `isSnapping = true`
+   - Após 200ms (duração da transição), setar `isSnapping = false`
+
+3. Na `div` da imagem (linha 165-168), adicionar `transition: background-position 0.2s ease-out` condicionalmente quando `isSnapping` é `true`. Importante: **não** aplicar durante o drag, senão o movimento fica com lag.
+
+```tsx
+// Estado
+const [isSnapping, setIsSnapping] = useState(false);
+
+// Detectar fim do drag
+useEffect(() => {
+  if (!isDragging && image) {
+    setIsSnapping(true);
+    const t = setTimeout(() => setIsSnapping(false), 200);
+    return () => clearTimeout(t);
   }
-};
+}, [isDragging, image]);
+
+// Na div da imagem, adicionar ao style:
+style={{
+  ...imageLayerStyle,
+  transition: isSnapping ? 'background-position 0.2s ease-out' : 'none',
+}}
 ```
 
-Usa optional chaining (`vibrate?.()`) para não quebrar em browsers que não suportam (Safari/iOS não suporta, mas não lança erro). Funciona nativamente em Android Chrome sem nenhuma dependência extra.
+Isso cria um efeito sutil de desaceleração natural ao soltar, sem afetar a responsividade durante o arraste.
 
