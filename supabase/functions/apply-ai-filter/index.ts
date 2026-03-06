@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
 
     const { data: filter, error: filterError } = await serviceClient
       .from("ai_filters")
-      .select("prompt")
+      .select("prompt, model_url")
       .eq("id", filterId)
       .eq("active", true)
       .single();
@@ -74,7 +74,8 @@ Deno.serve(async (req) => {
     }
 
     // Call Fal.ai image-to-image API
-    const falResponse = await fetch("https://fal.run/fal-ai/flux/dev/image-to-image", {
+    const modelUrl = filter.model_url || "fal-ai/flux/dev/image-to-image";
+    const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
       method: "POST",
       headers: {
         Authorization: `Key ${falApiKey}`,

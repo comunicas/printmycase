@@ -18,9 +18,16 @@ interface AiFilter {
   id: string;
   name: string;
   prompt: string;
+  model_url: string;
   sort_order: number;
   active: boolean;
 }
+
+const MODEL_OPTIONS = [
+  { value: "fal-ai/flux/dev/image-to-image", label: "Flux Dev (padrão)" },
+  { value: "fal-ai/flux-pro/v1.1/image-to-image", label: "Flux Pro" },
+  { value: "fal-ai/stable-diffusion-v35-large/image-to-image", label: "SD 3.5 Large" },
+];
 
 const AiFiltersManager = () => {
   const [filters, setFilters] = useState<AiFilter[]>([]);
@@ -29,6 +36,7 @@ const AiFiltersManager = () => {
   const [editing, setEditing] = useState<AiFilter | null>(null);
   const [name, setName] = useState("");
   const [prompt, setPrompt] = useState("");
+  const [modelUrl, setModelUrl] = useState(MODEL_OPTIONS[0].value);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
@@ -52,6 +60,7 @@ const AiFiltersManager = () => {
     setEditing(null);
     setName("");
     setPrompt("");
+    setModelUrl(MODEL_OPTIONS[0].value);
     setDialogOpen(true);
   };
 
@@ -59,6 +68,7 @@ const AiFiltersManager = () => {
     setEditing(filter);
     setName(filter.name);
     setPrompt(filter.prompt);
+    setModelUrl(filter.model_url || MODEL_OPTIONS[0].value);
     setDialogOpen(true);
   };
 
@@ -69,7 +79,7 @@ const AiFiltersManager = () => {
     if (editing) {
       const { error } = await (supabase as any)
         .from("ai_filters")
-        .update({ name: name.trim(), prompt: prompt.trim() })
+        .update({ name: name.trim(), prompt: prompt.trim(), model_url: modelUrl })
         .eq("id", editing.id);
       if (error) {
         toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
@@ -80,7 +90,7 @@ const AiFiltersManager = () => {
       const maxOrder = filters.length > 0 ? Math.max(...filters.map((f) => f.sort_order)) : 0;
       const { error } = await (supabase as any)
         .from("ai_filters")
-        .insert({ name: name.trim(), prompt: prompt.trim(), sort_order: maxOrder + 1 });
+        .insert({ name: name.trim(), prompt: prompt.trim(), model_url: modelUrl, sort_order: maxOrder + 1 });
       if (error) {
         toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       } else {
@@ -169,6 +179,7 @@ const AiFiltersManager = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{filter.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{filter.prompt}</p>
+                <p className="text-[10px] text-muted-foreground/60 truncate">{MODEL_OPTIONS.find(m => m.value === filter.model_url)?.label || filter.model_url}</p>
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
@@ -200,6 +211,18 @@ const AiFiltersManager = () => {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Aquarela, Cartoon..."
               />
+            </FormField>
+            <FormField label="Modelo Fal.ai" id="filter-model" required>
+              <select
+                id="filter-model"
+                value={modelUrl}
+                onChange={(e) => setModelUrl(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {MODEL_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </FormField>
             <FormField label="Prompt (enviado à IA)" id="filter-prompt" required>
               <textarea

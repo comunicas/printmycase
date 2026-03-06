@@ -64,6 +64,7 @@ export type Database = {
           active: boolean
           created_at: string
           id: string
+          model_url: string
           name: string
           prompt: string
           sort_order: number
@@ -72,6 +73,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          model_url?: string
           name: string
           prompt: string
           sort_order?: number
@@ -80,6 +82,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          model_url?: string
           name?: string
           prompt?: string
           sort_order?: number
