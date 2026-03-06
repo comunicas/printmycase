@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
 
     const { data: filter, error: filterError } = await serviceClient
       .from("ai_filters")
-      .select("prompt, model_url")
+      .select("prompt, model_url, style_image_url")
       .eq("id", filterId)
       .eq("active", true)
       .single();
@@ -77,8 +77,12 @@ Deno.serve(async (req) => {
     const modelUrl = filter.model_url || "fal-ai/flux/dev/image-to-image";
     const isStyleTransfer = modelUrl.includes("style-transfer");
 
+    const styleTransferBody = filter.style_image_url
+      ? { image_url: imageBase64, style_reference_image_url: filter.style_image_url, aspect_ratio: { ratio: "9:16" } }
+      : { image_url: imageBase64, target_style: filter.prompt, aspect_ratio: { ratio: "9:16" } };
+
     const falBody = isStyleTransfer
-      ? { image_url: imageBase64, target_style: filter.prompt, aspect_ratio: { ratio: "9:16" } }
+      ? styleTransferBody
       : {
           image_url: imageBase64,
           prompt: filter.prompt,

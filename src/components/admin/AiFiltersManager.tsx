@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, X, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ interface AiFilter {
   model_url: string;
   sort_order: number;
   active: boolean;
+  style_image_url: string | null;
 }
 
 const MODEL_OPTIONS = [
@@ -47,6 +48,47 @@ const STYLE_OPTIONS = [
   { value: "vaporwave", label: "Vaporwave" },
 ];
 
+const StyleImageUpload = ({ value, onChange }: { value: string; onChange: (url: string) => void }) => {
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const ext = file.name.split(".").pop() || "png";
+    const path = `ai-filters/${crypto.randomUUID()}/style.${ext}`;
+    setUploading(true);
+    try {
+      const { error } = await supabase.storage.from("product-assets").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("product-assets").getPublicUrl(path);
+      onChange(data.publicUrl);
+    } catch (err: any) {
+      toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {value ? (
+        <div className="relative inline-block">
+          <img src={value} alt="Referência" className="h-24 w-auto rounded-md border border-border object-contain" />
+          <button type="button" onClick={() => onChange("")} className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow-sm hover:opacity-80">
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ) : (
+        <div onClick={() => fileRef.current?.click()} className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/30 p-4 text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground">
+          {uploading ? <p className="text-sm">Enviando...</p> : <><ImageIcon className="h-5 w-5" /><p className="text-xs">Clique para enviar imagem de referência</p></>}
+        </div>
+      )}
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+    </div>
+  );
+};
+
 const AiFiltersManager = () => {
   const [filters, setFilters] = useState<AiFilter[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +97,7 @@ const AiFiltersManager = () => {
   const [name, setName] = useState("");
   const [prompt, setPrompt] = useState("");
   const [modelUrl, setModelUrl] = useState(MODEL_OPTIONS[0].value);
+  const [styleImageUrl, setStyleImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
@@ -81,6 +124,7 @@ const AiFiltersManager = () => {
     setName("");
     setPrompt("");
     setModelUrl(MODEL_OPTIONS[0].value);
+    setStyleImageUrl("");
     setDialogOpen(true);
   };
 
@@ -89,6 +133,7 @@ const AiFiltersManager = () => {
     setName(filter.name);
     setPrompt(filter.prompt);
     setModelUrl(filter.model_url || MODEL_OPTIONS[0].value);
+    setStyleImageUrl(filter.style_image_url || "");
     setDialogOpen(true);
   };
 
@@ -99,7 +144,7 @@ const AiFiltersManager = () => {
     if (editing) {
       const { error } = await (supabase as any)
         .from("ai_filters")
-        .update({ name: name.trim(), prompt: prompt.trim(), model_url: modelUrl })
+        .update({ name: name.trim(), prompt: prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null })
         .eq("id", editing.id);
       if (error) {
         toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
@@ -110,7 +155,7 @@ const AiFiltersManager = () => {
       const maxOrder = filters.length > 0 ? Math.max(...filters.map((f) => f.sort_order)) : 0;
       const { error } = await (supabase as any)
         .from("ai_filters")
-        .insert({ name: name.trim(), prompt: prompt.trim(), model_url: modelUrl, sort_order: maxOrder + 1 });
+        .insert({ name: name.trim(), prompt: prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, sort_order: maxOrder + 1 });
       if (error) {
         toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       } else {
@@ -196,6 +241,9 @@ const AiFiltersManager = () => {
                 </button>
               </div>
 
+              {filter.style_image_url && (
+                <img src={filter.style_image_url} alt="Ref" className="h-12 w-12 rounded-md border border-border object-cover shrink-0" />
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{filter.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{filter.prompt}</p>
@@ -270,6 +318,9 @@ const AiFiltersManager = () => {
                 />
               </FormField>
             )}
+            <FormField label="Imagem de referência de estilo (opcional)" id="filter-style-image">
+              <StyleImageUpload value={styleImageUrl} onChange={setStyleImageUrl} />
+            </FormField>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
