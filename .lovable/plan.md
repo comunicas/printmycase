@@ -1,30 +1,32 @@
 
 
-## Melhorar copy dos benefícios — Proteção Premium + Impressão Profissional
+## Adicionar imagem em parallax na seção WhyArtisCase
 
-### Conceito
+A copy ja foi aplicada no ultimo edit. Agora vou adicionar a imagem da PrintMyCase como fundo parallax na seção de beneficios.
 
-Reorganizar os 3 cards de benefícios em 2 pilares principais + 1 resultado, criando uma narrativa clara:
+### Mudancas
 
-1. **Proteção Premium** — materiais e resistência
-2. **Impressão Profissional** — tecnologia e fidelidade de cores
-3. **Resultado** — qualidade final = proteção com estilo exclusivo
+**Copiar imagem para o projeto:**
+- `user-uploads://image-43.png` → `src/assets/printmycase-hero.png`
 
-### Mudanças em `src/components/WhyArtisCase.tsx`
+**`src/components/WhyArtisCase.tsx`:**
+- Importar a imagem
+- Adicionar como background da section com efeito parallax CSS (`background-attachment: fixed`, `background-size: cover`, `background-position: center`)
+- Aplicar overlay escuro (`bg-black/70` ou similar) sobre a imagem para manter legibilidade do texto branco
+- Estrutura: section com `relative` + imagem absolute com `fixed` attachment + overlay div + conteudo por cima
 
-**Header copy atualizado:**
-- Título: "Proteção e estilo em cada detalhe"
-- Subtítulo: "Extrema qualidade final. Sua case protege com estilo exclusivo."
+### Layout
 
-**3 cards reescritos:**
+```text
+┌─────────────────────────────────────────────┐
+│  [imagem parallax - fixed background]       │
+│  ┌─ overlay bg-black/70 ──────────────────┐ │
+│  │  Proteção e estilo em cada detalhe     │ │
+│  │  [3 cards benefícios]                  │ │
+│  │  [tech attributes + video]             │ │
+│  └────────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
+```
 
-| Card | Título | Copy |
-|------|--------|------|
-| Shield | Proteção Premium | Policarbonato rígido + TPU flexível. Absorve impactos de até 1,5m com acabamento soft-touch que não escorrega. |
-| Palette | Impressão Profissional | Tecnologia Micro Piezo da Epson. Cores vibrantes, detalhes nítidos e impressão que não desbota com o tempo. |
-| Truck | Entrega Rápida | Produção em até 48h com embalagem reforçada. Frete acessível para todo o Sudeste. |
-
-**Seção tech (abaixo) mantida** — já detalha a tecnologia Micro Piezo com os 4 atributos + vídeo.
-
-Nenhuma mudança estrutural no layout, apenas copy dos textos.
+A imagem rola em velocidade diferente do conteudo, criando profundidade visual. O overlay garante contraste para leitura.
 
