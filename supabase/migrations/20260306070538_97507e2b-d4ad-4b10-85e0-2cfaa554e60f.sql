@@ -1,0 +1,10 @@
+
+-- Fix search_path on generate_referral_code
+CREATE OR REPLACE FUNCTION public.generate_referral_code()
+RETURNS text
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+  SELECT upper(substr(md5(random()::text), 1, 6))
+$$;

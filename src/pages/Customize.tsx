@@ -136,7 +136,15 @@ const Customize = () => {
         body: { imageBase64: sourceImage, filterId },
       });
       if (error || !data?.image) {
-        toast({ title: "Erro ao aplicar filtro", description: "Tente novamente.", variant: "destructive" });
+        const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
+        toast({
+          title: isInsufficientCoins ? "Moedas insuficientes" : "Erro ao aplicar filtro",
+          description: isInsufficientCoins ? "Compre mais moedas para usar filtros IA." : "Tente novamente.",
+          variant: "destructive",
+        });
+        if (isInsufficientCoins) {
+          navigate("/coins");
+        }
         return;
       }
       if (!originalImage) setOriginalImage(image);

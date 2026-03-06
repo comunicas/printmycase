@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import logoArtisCase from "@/assets/logo-artiscase.png";
 import GoogleIcon from "@/components/GoogleIcon";
 
 const Signup = () => {
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get("ref");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +28,7 @@ const Signup = () => {
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, referral_code: refCode || undefined },
         emailRedirectTo: window.location.origin,
       },
     });

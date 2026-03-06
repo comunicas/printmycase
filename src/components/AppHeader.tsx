@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import UserMenu from "@/components/UserMenu";
+import CoinBalance from "@/components/CoinBalance";
 
 interface Breadcrumb {
   label: string;
@@ -74,6 +75,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
           >
             Ver Modelos
           </Button>
+          <CoinBalance transparent={isTransparent && !scrolled} />
           <UserMenu transparent={isTransparent && !scrolled} />
         </div>
       </nav>
