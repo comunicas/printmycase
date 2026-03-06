@@ -1,6 +1,6 @@
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import { Slider } from "@/components/ui/slider";
-import { Maximize, RotateCw, Sun, Contrast } from "lucide-react";
+import { Maximize, RotateCw, Sun, Contrast, ChevronDown } from "lucide-react";
 
 interface ControlPanelProps {
   scale: number;
@@ -19,6 +19,8 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
   onScaleChange, onRotationChange, onBrightnessChange, onContrastChange,
   disabled,
 }, ref) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const controls = [
     { label: "Escala", value: scale, onChange: onScaleChange, min: 50, max: 200, defaultVal: 100, unit: "%", icon: Maximize },
     { label: "Rotação", value: rotation, onChange: onRotationChange, min: -180, max: 180, defaultVal: 0, unit: "°", icon: RotateCw },
@@ -26,10 +28,27 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
     { label: "Contraste", value: contrast, onChange: onContrastChange, min: -100, max: 100, defaultVal: 0, unit: "", icon: Contrast },
   ];
 
+  const hasChanges = controls.some(c => c.value !== c.defaultVal);
+
   return (
-    <div ref={ref} className={`space-y-2 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ajustes</span>
-      <div className="space-y-3">
+    <div ref={ref} className={`${disabled ? "opacity-50 pointer-events-none" : ""}`}>
+      {/* Mobile: collapsible trigger */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="lg:hidden flex items-center justify-between w-full py-2"
+      >
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+          Ajustes
+          {hasChanges && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {/* Desktop: always-visible label */}
+      <span className="hidden lg:block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Ajustes</span>
+
+      {/* Controls — always visible on desktop, toggle on mobile */}
+      <div className={`space-y-3 overflow-hidden transition-all duration-200 ${isOpen ? "max-h-[500px] opacity-100 mt-2" : "max-h-0 opacity-0 lg:max-h-[500px] lg:opacity-100 lg:mt-0"}`}>
         {controls.map((ctrl) => {
           const Icon = ctrl.icon;
           const isDefault = ctrl.value === ctrl.defaultVal;
@@ -53,17 +72,15 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
                   {ctrl.value}{ctrl.unit}
                 </button>
               </div>
-              <div className="relative">
-                <Slider
-                  value={[ctrl.value]}
-                  onValueChange={(v) => ctrl.onChange(v[0])}
-                  min={ctrl.min}
-                  max={ctrl.max}
-                  step={1}
-                  className="flex-1"
-                  disabled={disabled}
-                />
-              </div>
+              <Slider
+                value={[ctrl.value]}
+                onValueChange={(v) => ctrl.onChange(v[0])}
+                min={ctrl.min}
+                max={ctrl.max}
+                step={1}
+                className="flex-1"
+                disabled={disabled}
+              />
             </div>
           );
         })}
