@@ -129,17 +129,23 @@ const Customize = () => {
       if (originalImage) { setImage(originalImage); setActiveFilterId(null); }
       return;
     }
+    // Validate minimum dimensions before sending to AI
+    const sourceImage = originalImage || image;
+    if (imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
+      toast({ title: "Imagem muito pequena", description: "Use uma imagem com pelo menos 256×256px para aplicar filtros IA.", variant: "destructive" });
+      return;
+    }
     setApplyingFilterId(filterId);
     try {
-      const sourceImage = originalImage || image;
       const { data, error } = await supabase.functions.invoke("apply-ai-filter", {
         body: { imageBase64: sourceImage, filterId },
       });
       if (error || !data?.image) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
+        const errorMsg = data?.error || "Tente novamente.";
         toast({
           title: isInsufficientCoins ? "Moedas insuficientes" : "Erro ao aplicar filtro",
-          description: isInsufficientCoins ? "Compre mais moedas para usar filtros IA." : "Tente novamente.",
+          description: isInsufficientCoins ? "Compre mais moedas para usar filtros IA." : errorMsg,
           variant: "destructive",
         });
         if (isInsufficientCoins) {
