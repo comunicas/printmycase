@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, RotateCw, RotateCcw, Loader2, Maximize, Wand2, Undo2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCw, RotateCcw, Loader2, Maximize, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import PhonePreview from "@/components/PhonePreview";
@@ -94,7 +94,7 @@ const Customize = () => {
   const [imageFileName, setImageFileName] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
-  const [isApplyingFilter, setIsApplyingFilter] = useState(false);
+  const [applyingFilterId, setApplyingFilterId] = useState<string | null>(null);
   const [imageResolution, setImageResolution] = useState<{ w: number; h: number } | null>(null);
   const [scale, setScale] = useState(DEFAULTS.scale);
   const [position, setPosition] = useState(DEFAULTS.position);
@@ -189,9 +189,14 @@ const Customize = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleApplyFilter = async (filterId: string) => {
-    if (!image || isApplyingFilter) return;
-    setIsApplyingFilter(true);
+  const handleFilterClick = async (filterId: string) => {
+    if (!image || applyingFilterId) return;
+    // Toggle: clicking active filter reverts to original
+    if (activeFilterId === filterId) {
+      if (originalImage) { setImage(originalImage); setActiveFilterId(null); }
+      return;
+    }
+    setApplyingFilterId(filterId);
     try {
       const sourceImage = originalImage || image;
       const { data, error } = await supabase.functions.invoke("apply-ai-filter", {
@@ -207,14 +212,7 @@ const Customize = () => {
     } catch {
       toast({ title: "Erro ao aplicar filtro", variant: "destructive" });
     } finally {
-      setIsApplyingFilter(false);
-    }
-  };
-
-  const handleRevertFilter = () => {
-    if (originalImage) {
-      setImage(originalImage);
-      setActiveFilterId(null);
+      setApplyingFilterId(null);
     }
   };
 
@@ -260,7 +258,7 @@ const Customize = () => {
         <PhonePreview
           image={image} scale={scale} position={position} rotation={rotation}
           onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload} modelName={productName}
-          imageResolution={imageResolution} isProcessing={isCompressing || isRendering || isApplyingFilter}
+          imageResolution={imageResolution} isProcessing={isCompressing || isRendering || !!applyingFilterId}
         />
 
         {/* Controls */}
@@ -311,30 +309,23 @@ const Customize = () => {
                 <span className="text-xs text-muted-foreground">Filtros IA</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {activeFilterId && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2.5 text-xs gap-1"
-                    onClick={handleRevertFilter}
-                    disabled={isApplyingFilter}
-                  >
-                    <Undo2 className="w-3 h-3" />
-                    Original
-                  </Button>
-                )}
-                {filters.map((filter) => (
-                  <Button
-                    key={filter.id}
-                    variant={activeFilterId === filter.id ? "default" : "outline"}
-                    size="sm"
-                    className="h-7 px-2.5 text-xs"
-                    onClick={() => handleApplyFilter(filter.id)}
-                    disabled={isApplyingFilter || !image}
-                  >
-                    {isApplyingFilter && activeFilterId !== filter.id ? filter.name : filter.name}
-                  </Button>
-                ))}
+                {filters.map((filter) => {
+                  const isActive = activeFilterId === filter.id;
+                  const isProcessing = applyingFilterId === filter.id;
+                  return (
+                    <Button
+                      key={filter.id}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 px-2.5 text-xs gap-1"
+                      onClick={() => handleFilterClick(filter.id)}
+                      disabled={!!applyingFilterId || !image}
+                    >
+                      {isProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
+                      {filter.name}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -342,7 +333,7 @@ const Customize = () => {
 
         {/* Desktop continue */}
         <div className="hidden lg:block w-full max-w-xs">
-          <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image || isCompressing || isRendering || isApplyingFilter}>
+          <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image || isCompressing || isRendering || !!applyingFilterId}>
             {isRendering ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Gerando preview...</>
             ) : (
@@ -361,7 +352,7 @@ const Customize = () => {
             </Button>
           )}
           <div className="flex-1" />
-          <Button className="gap-1.5 shrink-0" onClick={handleContinue} disabled={!image || isCompressing || isRendering || isApplyingFilter}>
+          <Button className="gap-1.5 shrink-0" onClick={handleContinue} disabled={!image || isCompressing || isRendering || !!applyingFilterId}>
             {isRendering ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
