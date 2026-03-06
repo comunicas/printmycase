@@ -76,22 +76,31 @@ Deno.serve(async (req) => {
     // Call Fal.ai API
     const modelUrl = filter.model_url || "fal-ai/flux/dev/image-to-image";
     const isStyleTransfer = modelUrl.includes("style-transfer");
+    const isPhotographyEffects = modelUrl.includes("photography-effects");
 
-    const styleTransferBody = filter.style_image_url
-      ? { image_url: imageBase64, style_reference_image_url: filter.style_image_url, aspect_ratio: { ratio: "9:16" } }
-      : { image_url: imageBase64, target_style: filter.prompt, aspect_ratio: { ratio: "9:16" } };
+    let falBody: Record<string, unknown>;
 
-    const falBody = isStyleTransfer
-      ? styleTransferBody
-      : {
-          image_url: imageBase64,
-          prompt: filter.prompt,
-          strength: 0.75,
-          num_inference_steps: 28,
-          guidance_scale: 7.5,
-          image_size: { width: 720, height: 1280 },
-          aspect_ratio: "9:16",
-        };
+    if (isPhotographyEffects) {
+      falBody = {
+        image_url: imageBase64,
+        effect_type: filter.prompt,
+        aspect_ratio: { ratio: "9:16" },
+      };
+    } else if (isStyleTransfer) {
+      falBody = filter.style_image_url
+        ? { image_url: imageBase64, style_reference_image_url: filter.style_image_url, aspect_ratio: { ratio: "9:16" } }
+        : { image_url: imageBase64, target_style: filter.prompt, aspect_ratio: { ratio: "9:16" } };
+    } else {
+      falBody = {
+        image_url: imageBase64,
+        prompt: filter.prompt,
+        strength: 0.75,
+        num_inference_steps: 28,
+        guidance_scale: 7.5,
+        image_size: { width: 720, height: 1280 },
+        aspect_ratio: "9:16",
+      };
+    }
 
     console.log("Fal.ai request:", JSON.stringify({ modelUrl, isStyleTransfer, params: { ...falBody, image_url: "[base64 omitted]" } }));
 

@@ -29,6 +29,7 @@ const MODEL_OPTIONS = [
   { value: "fal-ai/flux-pro/kontext", label: "Flux Pro Kontext" },
   { value: "fal-ai/stable-diffusion-v35-large/image-to-image", label: "SD 3.5 Large" },
   { value: "fal-ai/image-apps-v2/style-transfer", label: "Style Transfer" },
+  { value: "fal-ai/image-apps-v2/photography-effects", label: "Photography Effects" },
 ];
 
 const STYLE_OPTIONS = [
@@ -46,6 +47,37 @@ const STYLE_OPTIONS = [
   { value: "dark_academia", label: "Dark Academia" },
   { value: "y2k", label: "Y2K" },
   { value: "vaporwave", label: "Vaporwave" },
+  { value: "liminal_space", label: "Liminal Space" },
+  { value: "weirdcore", label: "Weirdcore" },
+  { value: "dreamcore", label: "Dreamcore" },
+  { value: "synthwave", label: "Synthwave" },
+  { value: "outrun", label: "Outrun" },
+  { value: "photorealistic", label: "Photorealistic" },
+  { value: "hyperrealistic", label: "Hyperrealistic" },
+  { value: "digital_art", label: "Digital Art" },
+  { value: "concept_art", label: "Concept Art" },
+  { value: "anime", label: "Anime" },
+  { value: "pixel_art", label: "Pixel Art" },
+  { value: "claymation", label: "Claymation" },
+];
+
+const EFFECT_OPTIONS = [
+  { value: "film", label: "Film" },
+  { value: "vintage_film", label: "Vintage Film" },
+  { value: "portrait_photography", label: "Portrait Photography" },
+  { value: "fashion_photography", label: "Fashion Photography" },
+  { value: "street_photography", label: "Street Photography" },
+  { value: "sepia_tone", label: "Sepia Tone" },
+  { value: "film_grain", label: "Film Grain" },
+  { value: "light_leaks", label: "Light Leaks" },
+  { value: "vignette_effect", label: "Vignette Effect" },
+  { value: "instant_camera", label: "Instant Camera" },
+  { value: "golden_hour", label: "Golden Hour" },
+  { value: "dramatic_lighting", label: "Dramatic Lighting" },
+  { value: "soft_focus", label: "Soft Focus" },
+  { value: "bokeh_effect", label: "Bokeh Effect" },
+  { value: "high_contrast", label: "High Contrast" },
+  { value: "double_exposure", label: "Double Exposure" },
 ];
 
 const StyleImageUpload = ({ value, onChange }: { value: string; onChange: (url: string) => void }) => {
@@ -118,6 +150,7 @@ const AiFiltersManager = () => {
   useEffect(() => { fetchFilters(); }, [fetchFilters]);
 
   const isStyleTransfer = modelUrl === "fal-ai/image-apps-v2/style-transfer";
+  const isPhotographyEffects = modelUrl === "fal-ai/image-apps-v2/photography-effects";
 
   const openNew = () => {
     setEditing(null);
@@ -302,6 +335,20 @@ const AiFiltersManager = () => {
                 >
                   <option value="">Selecione um estilo...</option>
                   {STYLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </FormField>
+            ) : isPhotographyEffects ? (
+              <FormField label="Efeito fotográfico" id="filter-effect" required>
+                <select
+                  id="filter-effect"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Selecione um efeito...</option>
+                  {EFFECT_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
