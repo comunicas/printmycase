@@ -52,10 +52,10 @@ const Landing = () => {
               style={{ backgroundImage: `url(${heroBg})` }} />
             
             {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75" />
             {/* Radial glow */}
             <div className="absolute inset-0 opacity-60" style={{
-              background: "radial-gradient(ellipse 80% 60% at 50% 40%, hsl(265 83% 57% / 0.35), transparent 70%)"
+              background: "radial-gradient(ellipse 80% 60% at 50% 40%, hsl(265 83% 57% / 0.40), transparent 70%)"
             }} />
 
             {/* Floating shapes */}
