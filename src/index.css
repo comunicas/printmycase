@@ -133,3 +133,16 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ScrollReveal: progressive enhancement — visible by default, hidden only when JS observer is active */
+.scroll-reveal.sr-hidden {
+  opacity: 0;
+  transform: translateY(1.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal.sr-hidden {
+    opacity: 1;
+    transform: none;
+  }
+}
