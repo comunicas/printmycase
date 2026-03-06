@@ -1,76 +1,38 @@
 
 
-## Plano: Refatorar Customizacao — Mobile-First com UX Otimizada
+## Resultado do Teste — Customização Mobile e Desktop
 
-### Problema Atual
+### Desktop (1280x800) ✅
+- Layout side-by-side funcionando corretamente (mockup à esquerda, controles à direita)
+- Título "Customizar" visível no painel direito
+- Filtros em carrossel horizontal com seta de scroll
+- 4 sliders de ajustes sempre visíveis
+- Preço "R$ 99,90" e botão "Continuar" no final do painel
+- Barra fixa de mobile corretamente oculta
 
-No mobile, a pagina de customizacao exibe o mockup do celular + controles em coluna, forçando scroll extenso. O botao "Continuar" fica escondido abaixo da dobra. Nao ha barra fixa de acoes, e o upload inicial nao e destacado como passo claro.
+### Mobile (390x844 — iPhone) ✅
+- Mockup centralizado com tamanho responsivo (menor que no desktop)
+- CTA "Envie sua foto" claro e proeminente
+- Filtros em carrossel horizontal abaixo do mockup
+- **Accordion "AJUSTES"** visível com chevron — colapsado por padrão ✅
+- **Barra fixa no bottom** com preço "R$ 99,90" e botão "Continuar →" ✅
+- `backdrop-blur` e `safe-area-inset-bottom` aplicados corretamente
 
-### Nova Estrutura de Layout
+### Comportamento do Accordion
+O accordion não expandiu ao clicar porque os controles estão **corretamente desabilitados** (`pointer-events-none`) quando nenhuma imagem foi enviada. Isso é o comportamento esperado — os ajustes só devem ser interativos após o upload.
 
-```text
-┌──────────────────────────────┐
-│  AppHeader (sticky)          │
-├──────────────────────────────┤
-│                              │
-│   ┌────────────────────┐     │  ← Mockup centralizado
-│   │   PhonePreview     │     │    (escala responsiva)
-│   │   (touch-drag)     │     │
-│   └────────────────────┘     │
-│                              │
-│   [Filtros] carrossel horiz  │  ← Sempre visivel
-│   [Ajustes] colapsavel       │  ← Accordion, fecha por padrao
-│                              │
-├──────────────────────────────┤
-│ ▓▓ Barra fixa bottom ▓▓▓▓▓▓ │  ← Preco + "Continuar" + Reset
-│ ▓▓ R$XX,XX    [Continuar →] │
-└──────────────────────────────┘
+### Problema Identificado: Accordion não clicável mesmo desabilitado
+O botão do accordion herda o `pointer-events-none` do wrapper `disabled`, o que impede até mesmo a abertura/fechamento do accordion. Embora os sliders devam ficar desabilitados sem imagem, o **trigger do accordion deveria continuar clicável** para que o usuário possa explorar os controles antes de fazer upload.
 
-Desktop (lg+): lado a lado como hoje, mas botao fixo no bottom do painel
-```
+### Correção Proposta
 
-### Alteracoes Planejadas
+**Arquivo:** `src/components/ControlPanel.tsx`
 
-#### 1. `Customize.tsx` — Layout mobile-first
+Mover o `pointer-events-none` do wrapper para apenas os sliders individuais, permitindo que o botão do accordion funcione independentemente:
 
-- Mockup ocupa area principal com escala responsiva (menor em telas pequenas)
-- Filtros logo abaixo do mockup, sempre visiveis
-- ControlPanel envolto em Accordion (colapsado por padrao no mobile, expandido no desktop)
-- Barra fixa no bottom do viewport (mobile): mostra preco do produto + botao "Continuar" + botao reset
-- No desktop: manter layout side-by-side, botao "Continuar" fixo no bottom do painel direito
-- Mostrar preco do produto na tela (buscar de `product.price`)
+- Remover `pointer-events-none` do wrapper principal
+- Manter `opacity-50` no wrapper para feedback visual
+- Adicionar `pointer-events-none` apenas no container dos sliders quando `disabled`
 
-#### 2. `PhonePreview.tsx` — Upload simplificado
-
-- Estado vazio (sem imagem): area de upload maior e mais clara, com CTA "Enviar sua foto" proeminente
-- Reduzir tamanho do mockup no mobile (de 260x532 para ~220x450) via classes responsivas
-- Manter tamanho original no desktop
-
-#### 3. `ControlPanel.tsx` — Accordion no mobile
-
-- Envolver em `Accordion` do Radix (ja instalado)
-- Titulo "Ajustes" funciona como trigger
-- Aberto por padrao no desktop (`defaultValue` condicional)
-
-#### 4. Barra fixa de acao (novo componente ou inline)
-
-- `fixed bottom-0` no mobile, com `safe-area-inset-bottom`
-- Background com blur (`backdrop-blur`)
-- Contem: preco formatado | botao "Continuar" (com icone) | botao reset (se modificado)
-- Desaparece no desktop (controles ja visiveis no painel lateral)
-
-### Arquivos Modificados
-
-| Arquivo | Mudanca |
-|---|---|
-| `src/pages/Customize.tsx` | Layout responsivo, barra fixa, preco, accordion wrapper |
-| `src/components/PhonePreview.tsx` | Classes responsivas de tamanho, upload CTA melhorado |
-| `src/components/ControlPanel.tsx` | Envolver em Accordion para mobile |
-
-### Detalhes Tecnicos
-
-- Usar `@radix-ui/react-accordion` (ja instalado) para colapsar ajustes
-- Barra fixa usa `pb-[env(safe-area-inset-bottom)]` para iPhones com barra de gestos
-- Preco vem de `product.price` (ja disponivel no hook `useProduct`)
-- Sem novas dependencias necessarias
+Isso é uma correção pequena de 2 linhas.
 
