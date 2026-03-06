@@ -29,7 +29,7 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering }:
   return (
     <>
       {/* Desktop */}
-      <div className="hidden lg:flex items-center gap-2 w-full max-w-xs">
+      <div className="hidden lg:flex items-center gap-2 w-full max-w-xs mx-auto py-3">
         {resetButton}
         <Button className="flex-1 gap-1.5" onClick={onContinue} disabled={disabled}>
           {isRendering ? (
