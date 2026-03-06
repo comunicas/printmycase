@@ -1,22 +1,15 @@
 
 
-## Plano: Ativar créditos para usuários existentes
+## Correção: Botão "Continuar" quebrado no desktop
 
-### Estado Atual
-- 2 usuários cadastrados (Rafael Bruno e rafacbruno)
-- Ambos já possuem `referral_code` gerado
-- Nenhum possui bônus de cadastro (0 moedas)
-- Triggers continuam ausentes no banco
+### Problema
+No desktop (`lg:`), o `ContinueBar` renderiza um `div` com `max-w-xs` sem centralização, ficando colado na esquerda da tela. Ele é filho direto do container flex-col raiz, mas não tem `self-center` nem margem automática.
 
-### Ações
+### Solução
+Unificar o layout do `ContinueBar` para que no desktop o botão fique centralizado abaixo dos controles, consistente com o restante da interface:
 
-**1. Creditar 50 moedas (signup_bonus) para cada usuário existente**
-- INSERT em `coin_transactions` com `type = 'signup_bonus'`, validade 30 dias, para ambos os user IDs
+- Adicionar `mx-auto` ou `self-center` ao wrapper desktop para centralizar horizontalmente
+- Adicionar padding vertical (`py-3`) ao wrapper desktop para espaçamento consistente com mobile
 
-**2. Recriar os 3 triggers no banco (migração)**
-- `trigger_referral_code` BEFORE INSERT ON `profiles`
-- `trigger_signup_bonus` AFTER INSERT ON `profiles`
-- `trigger_referral_bonus` AFTER INSERT ON `referrals`
-
-Isso garante que os usuários atuais recebam suas moedas e que novos cadastros funcionem automaticamente.
+Edição em um único arquivo: `src/components/customize/ContinueBar.tsx`, linha 32 — adicionar classes de centralização ao div desktop.
 
