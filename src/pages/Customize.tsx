@@ -190,7 +190,7 @@ const Customize = () => {
       <main className="flex-1 flex flex-col items-center justify-center gap-4 p-4 lg:p-10 pb-28 lg:pb-10">
         <PhonePreview
           image={image} scale={scale} position={position}
-          onPositionChange={setPosition} onImageUpload={handleImageUpload} modelName={productName}
+          onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload} modelName={productName}
           imageResolution={imageResolution} isProcessing={isCompressing || isRendering}
         />
 

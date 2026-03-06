@@ -6,21 +6,31 @@ interface PhonePreviewProps {
   scale: number;
   position: { x: number; y: number };
   onPositionChange: (pos: { x: number; y: number }) => void;
+  onScaleChange?: (scale: number) => void;
   onImageUpload: (file: File) => void;
   modelName?: string;
   imageResolution?: { w: number; h: number } | null;
   isProcessing?: boolean;
 }
 
-const PhonePreview = ({ image, scale, position, onPositionChange, onImageUpload, modelName, imageResolution, isProcessing }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, onPositionChange, onScaleChange, onImageUpload, modelName, imageResolution, isProcessing }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
 
-  const clamp = (v: number) => Math.max(0, Math.min(100, v));
+  // Pinch refs
+  const isPinching = useRef(false);
+  const initialPinchDist = useRef(0);
+  const initialPinchScale = useRef(100);
 
+  const clamp = (v: number, min = 0, max = 100) => Math.max(min, Math.min(max, v));
+
+  const getTouchDist = (t1: React.Touch, t2: React.Touch) =>
+    Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+
+  // --- Pointer events (desktop drag) ---
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     if (!image) return;
     e.preventDefault();
@@ -37,7 +47,6 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onImageUpload,
     const sensitivity = 100 / scaleFactor;
     const dx = ((e.clientX - startPos.current.x) / rect.width) * sensitivity;
     const dy = ((e.clientY - startPos.current.y) / rect.height) * sensitivity;
-
     onPositionChange({
       x: clamp(startOffset.current.x - dx),
       y: clamp(startOffset.current.y - dy),
@@ -46,6 +55,51 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onImageUpload,
 
   const onPointerUp = useCallback(() => {
     setIsDragging(false);
+  }, []);
+
+  // --- Touch events (mobile drag + pinch) ---
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!image) return;
+    if (e.touches.length === 2) {
+      isPinching.current = true;
+      setIsDragging(false);
+      initialPinchDist.current = getTouchDist(e.touches[0], e.touches[1]);
+      initialPinchScale.current = scale;
+    } else if (e.touches.length === 1 && !isPinching.current) {
+      setIsDragging(true);
+      startPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      startOffset.current = { x: position.x, y: position.y };
+    }
+  }, [image, position, scale]);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!image || !containerRef.current) return;
+    if (e.touches.length === 2 && isPinching.current && onScaleChange) {
+      e.preventDefault();
+      const dist = getTouchDist(e.touches[0], e.touches[1]);
+      const ratio = dist / initialPinchDist.current;
+      const newScale = Math.round(clamp(initialPinchScale.current * ratio, 50, 200));
+      onScaleChange(newScale);
+    } else if (e.touches.length === 1 && isDragging && !isPinching.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const scaleFactor = scale / 100;
+      const sensitivity = 100 / scaleFactor;
+      const dx = ((e.touches[0].clientX - startPos.current.x) / rect.width) * sensitivity;
+      const dy = ((e.touches[0].clientY - startPos.current.y) / rect.height) * sensitivity;
+      onPositionChange({
+        x: clamp(startOffset.current.x - dx),
+        y: clamp(startOffset.current.y - dy),
+      });
+    }
+  }, [image, isDragging, onPositionChange, onScaleChange, scale]);
+
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length < 2) {
+      isPinching.current = false;
+    }
+    if (e.touches.length === 0) {
+      setIsDragging(false);
+    }
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,10 +139,13 @@ const PhonePreview = ({ image, scale, position, onPositionChange, onImageUpload,
           )}
           <div
             ref={containerRef}
-            className={`absolute inset-0 z-10 touch-none group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+            className={`absolute inset-0 z-10 touch-manipulation group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
           >
             {image && !isDragging && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
