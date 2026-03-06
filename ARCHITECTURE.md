@@ -48,15 +48,14 @@ Landing → Catálogo → Produto → Customizar → Checkout → Pedidos
 src/
 ├── components/
 │   ├── ui/              # Componentes base shadcn/ui
-│   ├── admin/           # ProductsTable, ProductFormDialog, BulkPriceDialog
+│   ├── admin/           # ProductsTable, ProductFormDialog, BulkPriceDialog,
+│   │                    # AiFiltersManager, ModelRequestsManager, DeviceImageUpload
 │   ├── checkout/        # AddressForm, OrderSummary
 │   ├── forms/           # FormCard, SubmitButton
 │   ├── AppHeader.tsx
 │   ├── AuthGuard.tsx
 │   ├── AdminGuard.tsx
-│   ├── ControlPanel.tsx
-│   ├── FilterPresets.tsx
-│   ├── PhonePreview.tsx
+│   ├── PhonePreview.tsx   # Preview do celular com crossfade entre imagens
 │   ├── ProductCard.tsx
 │   ├── ProductDetails.tsx
 │   ├── ProductGallery.tsx
@@ -89,6 +88,7 @@ supabase/
 └── functions/
     ├── _shared/          # Templates de email (signup, recovery, etc.)
     ├── admin-sync-stripe/    # Sincroniza produto individual com Stripe
+    ├── apply-ai-filter/      # Aplica filtro IA via Fal.ai (style transfer)
     ├── auth-email-hook/      # Hook de email customizado (templates React)
     ├── bulk-sync-stripe/     # Sincroniza todos os produtos com Stripe
     ├── create-checkout/      # Cria Stripe Checkout Session
@@ -130,6 +130,9 @@ interface Product {
 | `addresses` | Endereços de entrega dos usuários |
 | `profiles` | Dados adicionais do usuário (nome, avatar, telefone) |
 | `user_roles` | RBAC — roles `admin` e `user` |
+| `ai_filters` | Filtros IA configuráveis (modelo Fal.ai, prompt, imagem de estilo) |
+| `model_requests` | Solicitações de modelos de celular não disponíveis |
+| `faqs` | Perguntas frequentes gerenciáveis pelo admin |
 
 ### Enums
 
@@ -143,6 +146,7 @@ interface Product {
 | `customizations` | Privado | Imagens de customização dos pedidos |
 | `avatars` | Público | Fotos de perfil |
 | `email-assets` | Público | Assets dos templates de email |
+| `product-assets` | Público | Imagens de produtos e dispositivos |
 
 ## Arquitetura
 
@@ -158,6 +162,23 @@ Páginas pesadas usam `React.lazy()` com `Suspense` + `LoadingSpinner`:
 - **Lazy**: `Admin`, `Catalog`, `Product`, `Customize`, `Checkout`, `Orders`, `Profile`
 - **Estáticas**: `Landing`, `Login`, `Signup`, `ResetPassword`, `CheckoutSuccess`, `NotFound`
 
+### Filtros IA
+
+O sistema de filtros IA permite aplicar estilos artísticos (style transfer) às imagens do usuário antes da impressão.
+
+**Fluxo:**
+1. Admin cadastra filtros na tabela `ai_filters` com modelo Fal.ai, prompt e imagem de estilo opcional
+2. Usuário na tela de customização vê os filtros ativos como chips com thumbnail circular
+3. Ao clicar, a edge function `apply-ai-filter` envia a imagem para o Fal.ai
+4. A imagem filtrada retorna e é exibida com **crossfade de 350ms** (duas camadas sobrepostas)
+5. Clicar no filtro ativo reverte para a imagem original (toggle)
+
+**Componentes envolvidos:**
+- `PhonePreview.tsx` — crossfade entre imagens via duas camadas com opacity transition
+- `Customize.tsx` — UI dos filtros (chips com thumbnails, scroll horizontal)
+- `AiFiltersManager.tsx` — CRUD de filtros no painel admin
+- `apply-ai-filter/` — edge function que processa via Fal.ai (aspecto 9:16, 720×1280px)
+
 ### Edge Functions
 
 | Function | JWT | Descrição |
@@ -169,6 +190,7 @@ Páginas pesadas usam `React.lazy()` com `Suspense` + `LoadingSpinner`:
 | `bulk-sync-stripe` | — | Sincroniza todos os produtos com Stripe |
 | `notify-order-status` | — | Envia email ao atualizar status do pedido |
 | `auth-email-hook` | Não | Hook de email customizado com templates React |
+| `apply-ai-filter` | Não | Aplica filtro IA via Fal.ai (style transfer / image-to-image) |
 
 \* Validação de JWT feita manualmente dentro da function.
 
@@ -187,7 +209,7 @@ Páginas pesadas usam `React.lazy()` com `Suspense` + `LoadingSpinner`:
 - **RBAC**: Roles gerenciadas via tabela `user_roles` + função `has_role()` (SECURITY DEFINER)
 - **Admin**: Validação dupla — RLS no banco + verificação server-side nas edge functions
 - **Auth**: Email + senha com confirmação de email obrigatória
-- **Storage**: Bucket `customizations` privado; `avatars` e `email-assets` públicos
+- **Storage**: Bucket `customizations` privado; `avatars`, `email-assets` e `product-assets` públicos
 
 ## Convenções de Código
 
