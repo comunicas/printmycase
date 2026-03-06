@@ -1,15 +1,29 @@
 
 
-## Adicionar Wheel-to-Zoom no PhonePreview
+## Revisão e Correções do PhonePreview
 
-Adicionar handler `onWheel` no container do mockup para ajustar o zoom via scroll do mouse.
+### Problemas identificados
 
-### Arquivo: `src/components/PhonePreview.tsx`
+1. **Bug: Conflito pointer events + touch events no mobile** — No mobile, um toque dispara AMBOS `onPointerDown` e `onTouchStart`, causando drag duplo (jitter). O `onPointerDown` precisa ignorar toques, já que touch events tratam mobile.
 
-- Adicionar `onWheel` handler no `containerRef` div
-- `e.preventDefault()` para evitar scroll da página
-- `deltaY` negativo = zoom in, positivo = zoom out
-- Step de ~5 por tick, clamp 50–200
-- Requer `onScaleChange` prop (já existe)
-- Usar `useEffect` com `addEventListener('wheel', ..., { passive: false })` no containerRef para poder chamar `preventDefault` (React synthetic onWheel é passive por padrão)
+2. **Zoom indicator já existe** — O slider em `Customize.tsx` já mostra `{scale}%` ao lado. Não há necessidade de adicionar outro indicador.
+
+3. **Sem outros bugs ou legados** — A implementação de pinch, wheel e drag está consistente. A função `clamp` usa defaults corretos nos contextos onde é chamada.
+
+### Correção necessária
+
+**src/components/PhonePreview.tsx** — No `onPointerDown`, adicionar guard para ignorar touch:
+
+```typescript
+const onPointerDown = useCallback((e: React.PointerEvent) => {
+  if (!image || e.pointerType === 'touch') return; // skip touch — handled by onTouchStart
+  // ... rest stays the same
+}, [image, position]);
+```
+
+Isso garante que mouse/pen usam pointer events e touch usa touch events, sem conflito.
+
+### Nenhuma outra mudança necessária
+
+A implementação está limpa e funcional. Não há código legado para remover.
 
