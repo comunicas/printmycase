@@ -44,7 +44,7 @@ const WhyArtisCase = () => {
         style={{ backgroundImage: `url(${parallaxBg})` }}
       >
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/75" />
+        <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 max-w-5xl mx-auto">
           {/* Title */}
           <ScrollReveal>
