@@ -89,6 +89,8 @@ Deno.serve(async (req) => {
           aspect_ratio: "9:16",
         };
 
+    console.log("Fal.ai request:", JSON.stringify({ modelUrl, isStyleTransfer, params: { ...falBody, image_url: "[base64 omitted]" } }));
+
     const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
       method: "POST",
       headers: {
@@ -109,8 +111,11 @@ Deno.serve(async (req) => {
 
     const falResult = await falResponse.json();
 
+    const outputImage = falResult?.images?.[0];
+    console.log("Fal.ai response:", JSON.stringify({ imageCount: falResult?.images?.length, width: outputImage?.width, height: outputImage?.height, content_type: outputImage?.content_type }));
+
     // Fal.ai returns { images: [{ url, content_type }] }
-    const outputUrl = falResult?.images?.[0]?.url;
+    const outputUrl = outputImage?.url;
     if (!outputUrl) {
       return new Response(JSON.stringify({ error: "No image returned from AI" }), {
         status: 502,
@@ -129,6 +134,7 @@ Deno.serve(async (req) => {
     }
     const base64 = btoa(binary);
     const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
+    console.log("Fetched image:", JSON.stringify({ bytes: imgBuffer.byteLength, contentType }));
     const resultBase64 = `data:${contentType};base64,${base64}`;
 
     return new Response(JSON.stringify({ image: resultBase64 }), {
