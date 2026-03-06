@@ -114,7 +114,13 @@ Deno.serve(async (req) => {
     // Fetch the image and convert to base64
     const imgResponse = await fetch(outputUrl);
     const imgBuffer = await imgResponse.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
+    const bytes = new Uint8Array(imgBuffer);
+    let binary = "";
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    const base64 = btoa(binary);
     const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
     const resultBase64 = `data:${contentType};base64,${base64}`;
 
