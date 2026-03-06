@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, RefreshCw, Package, Truck, HelpCircle, Smartphone } from "lucide-react";
+import { Plus, RefreshCw, Package, Truck, HelpCircle, Smartphone, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
