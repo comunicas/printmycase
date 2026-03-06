@@ -16,6 +16,7 @@ const PHONE_H = 532;
 interface AiFilter {
   id: string;
   name: string;
+  style_image_url: string | null;
 }
 
 function compressImage(dataUrl: string, maxW = 1200, maxH = 2400, quality = 0.75): Promise<{ url: string; compressed: boolean }> {
@@ -106,7 +107,7 @@ const Customize = () => {
   useEffect(() => {
     (supabase as any)
       .from("ai_filters")
-      .select("id, name")
+      .select("id, name, style_image_url")
       .eq("active", true)
       .order("sort_order", { ascending: true })
       .then(({ data }: { data: AiFilter[] | null }) => {
@@ -308,7 +309,7 @@ const Customize = () => {
                 <Wand2 className="w-3 h-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">Filtros IA</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mb-1">
                 {filters.map((filter) => {
                   const isActive = activeFilterId === filter.id;
                   const isProcessing = applyingFilterId === filter.id;
@@ -317,11 +318,19 @@ const Customize = () => {
                       key={filter.id}
                       variant={isActive ? "default" : "outline"}
                       size="sm"
-                      className="h-7 px-2.5 text-xs gap-1"
+                      className="h-8 px-3 text-xs gap-1.5 flex-shrink-0"
                       onClick={() => handleFilterClick(filter.id)}
                       disabled={!!applyingFilterId || !image}
                     >
-                      {isProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
+                      {isProcessing ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : filter.style_image_url ? (
+                        <img
+                          src={filter.style_image_url}
+                          alt=""
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : null}
                       {filter.name}
                     </Button>
                   );
