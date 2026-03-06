@@ -1,33 +1,37 @@
 
 
-## Plano: Transição suave entre filtros + thumbnails de estilo nos botões
+## Plano: Revisão e Refatoração da implementação + Documentação
+
+### Problemas identificados
+
+1. **Prop `modelName` não utilizada** — passada ao `PhonePreview` mas nunca consumida (removida da destructuring na linha 19)
+2. **Toast de resolução duplicado** — `Customize.tsx` linhas 175-179: ambos os blocos `if` e `else if` mostram a mesma mensagem; o primeiro deveria ter mensagem mais urgente
+3. **`(supabase as any)` em todos os acessos a `ai_filters`** — types.ts é auto-gerado e não inclui a tabela; não pode ser editado, mas os casts são inevitáveis. Nenhuma ação necessária.
+4. **ARCHITECTURE.md desatualizado** — falta documentar: tabela `ai_filters`, `model_requests`, bucket `product-assets`, edge function `apply-ai-filter`, e a feature de filtros IA com crossfade
 
 ### Alterações
 
-#### 1. PhonePreview — crossfade na troca de imagem
-- Adicionar CSS `transition: opacity 0.4s ease` na camada de imagem
-- Usar estado `imageTransitioning` para fazer crossfade: manter a imagem anterior com opacity 1, nova imagem entra com opacity 0→1 por cima
-- Alternativamente, mais simples: adicionar `transition: opacity 0.3s ease` diretamente no div da imagem e usar um key para forçar re-render com animação
+#### 1. `src/components/PhonePreview.tsx`
+- Remover `modelName` da interface e destructuring (prop não utilizada)
 
-**Abordagem escolhida**: Usar duas camadas sobrepostas — a imagem anterior (fade out) e a nova (fade in) — controladas por estado no PhonePreview. Quando `image` prop muda, a camada antiga faz fade out enquanto a nova faz fade in (300ms).
+#### 2. `src/pages/Customize.tsx`
+- Remover prop `modelName` da chamada ao `PhonePreview`
+- Diferenciar mensagens de toast de resolução:
+  - `< 400×800`: "Resolução muito baixa" (mais urgente)
+  - `< 800×1600`: "Resolução baixa" (aviso suave)
 
-#### 2. Customize — buscar `style_image_url` dos filtros e mostrar thumbnails
-- Expandir a query de `ai_filters` para incluir `style_image_url`
-- Expandir interface `AiFilter` com `style_image_url: string | null`
-- Transformar os botões de filtro em chips com thumbnail circular à esquerda do nome
-- Quando `style_image_url` existe: mostrar imagem 20×20px arredondada antes do nome
-- Layout: scroll horizontal com `overflow-x-auto` e `flex-nowrap` para melhor aproveitamento em mobile
-
-#### 3. Layout dos filtros
-- Trocar `flex-wrap` por scroll horizontal (`overflow-x-auto flex-nowrap scrollbar-hide`)
-- Cada chip: thumbnail circular (se disponível) + nome do filtro
-- Estilo ativo: borda/fundo primary, demais outline
+#### 3. `ARCHITECTURE.md`
+- Adicionar tabela `ai_filters` e `model_requests` à seção de Modelo de Dados
+- Adicionar bucket `product-assets` à tabela de Storage
+- Adicionar edge function `apply-ai-filter` à tabela de Edge Functions
+- Adicionar seção "Filtros IA" descrevendo a feature (crossfade, thumbnails, toggle, Fal.ai)
+- Atualizar estrutura de pastas com `AiFiltersManager`, `ModelRequestsManager`
 
 ### Arquivos alterados
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/components/PhonePreview.tsx` | Crossfade entre imagens com duas camadas |
-| `src/pages/Customize.tsx` | Query com `style_image_url`, thumbnails nos botões, scroll horizontal |
-| `src/index.css` | Classe utilitária `scrollbar-hide` (se não existir) |
+| `src/components/PhonePreview.tsx` | Remover prop `modelName` não utilizada |
+| `src/pages/Customize.tsx` | Remover `modelName`, diferenciar toasts de resolução |
+| `ARCHITECTURE.md` | Documentar ai_filters, model_requests, product-assets, apply-ai-filter, feature de filtros IA |
 
