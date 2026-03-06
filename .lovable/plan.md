@@ -1,23 +1,39 @@
 
 
-## Status: Implementação está funcional
+## Plano: Imagens AI em 9:16 fullscreen
 
-Após análise completa do código, banco de dados e logs:
+### Problema
+O modelo Style Transfer (`fal-ai/image-apps-v2/style-transfer`) não recebe parâmetros de tamanho no body atual, então retorna a imagem no tamanho/aspecto padrão — que não preenche o preview do celular (9:16).
 
-### O que está funcionando
-- **3 filtros Style Transfer ativos** no banco: Personagem (anime_character), Cyberpubk (cyberpunk_future), Comico (comic_book_animation)
-- **Admin UI**: Dropdown de estilos funciona corretamente ao selecionar modelo Style Transfer
-- **Edge Function**: Lógica condicional para `style-transfer` envia `{ image_url, target_style }` corretamente
-- **Customize page**: Busca filtros ativos e exibe botões para aplicá-los
+Para o modelo image-to-image padrão, o tamanho está fixo em `512x1024` (1:2), que também não é exatamente 9:16.
 
-### Único problema encontrado
-- **Warning no console** (não-crítico): `FormField` não usa `forwardRef`, causando warning do React quando usado com `<select>` nativo. Corrigível mas não afeta funcionalidade.
+### Solução
 
-### Possível causa de falhas anteriores
-Os erros 502 anteriores foram causados pelo modelo inválido `fal-ai/flux-pro/v1.1/image-to-image` que já foi corrigido. Filtros que ainda usavam esse modelo antigo já foram migrados via SQL.
+Em `supabase/functions/apply-ai-filter/index.ts`:
 
-### Ação recomendada
-Para testar de fato, acesse `/customize/{slug-de-produto}`, faça upload de uma imagem e clique em um dos filtros (Personagem, Cyberpubk, Comico). Se receber erro 502, o problema será da API Key do Fal.ai ou do próprio serviço — não do código.
+1. **Style Transfer**: adicionar `image_size: { width: 720, height: 1280 }` ao body — 720×1280 é exatamente 9:16 e oferece boa qualidade sem ser pesado demais
 
-Se quiser, posso **melhorar o tratamento de erros** na edge function para logar a resposta exata do Fal.ai e retorná-la ao frontend para diagnóstico mais fácil.
+2. **Image-to-image padrão**: alterar de `512x1024` para `720x1280` (9:16)
+
+```typescript
+const falBody = isStyleTransfer
+  ? { 
+      image_url: imageBase64, 
+      target_style: filter.prompt,
+      image_size: { width: 720, height: 1280 }
+    }
+  : {
+      image_url: imageBase64,
+      prompt: filter.prompt,
+      strength: 0.75,
+      num_inference_steps: 28,
+      guidance_scale: 7.5,
+      image_size: { width: 720, height: 1280 },
+    };
+```
+
+### Arquivo alterado
+| Arquivo | Mudança |
+|---------|---------|
+| `supabase/functions/apply-ai-filter/index.ts` | Adicionar `image_size: 720x1280` em ambos os bodies |
 
