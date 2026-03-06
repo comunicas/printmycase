@@ -341,8 +341,13 @@ const Customize = () => {
         </div>
 
         {/* Desktop continue */}
-        <div className="hidden lg:block w-full max-w-xs">
-          <Button className="w-full gap-1.5" onClick={handleContinue} disabled={!image || isCompressing || isRendering || !!applyingFilterId}>
+        <div className="hidden lg:flex items-center gap-2 w-full max-w-xs">
+          {isModified && (
+            <Button variant="ghost" size="icon" onClick={handleReset} className="shrink-0 text-muted-foreground h-10 w-10">
+              <RotateCcw className="w-4 h-4" />
+            </Button>
+          )}
+          <Button className="flex-1 gap-1.5" onClick={handleContinue} disabled={!image || isCompressing || isRendering || !!applyingFilterId}>
             {isRendering ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Gerando preview...</>
             ) : (
