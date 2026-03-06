@@ -31,7 +31,7 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
   const hasChanges = controls.some(c => c.value !== c.defaultVal);
 
   return (
-    <div ref={ref} className={`${disabled ? "opacity-50 pointer-events-none" : ""}`}>
+    <div ref={ref} className={`${disabled ? "opacity-50" : ""}`}>
       {/* Mobile: collapsible trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -48,7 +48,7 @@ const ControlPanel = forwardRef<HTMLDivElement, ControlPanelProps>(({
       <span className="hidden lg:block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Ajustes</span>
 
       {/* Controls — always visible on desktop, toggle on mobile */}
-      <div className={`space-y-3 overflow-hidden transition-all duration-200 ${isOpen ? "max-h-[500px] opacity-100 mt-2" : "max-h-0 opacity-0 lg:max-h-[500px] lg:opacity-100 lg:mt-0"}`}>
+      <div className={`space-y-3 overflow-hidden transition-all duration-200 ${isOpen ? "max-h-[500px] opacity-100 mt-2" : "max-h-0 opacity-0 lg:max-h-[500px] lg:opacity-100 lg:mt-0"} ${disabled ? "pointer-events-none" : ""}`}>
         {controls.map((ctrl) => {
           const Icon = ctrl.icon;
           const isDefault = ctrl.value === ctrl.defaultVal;
