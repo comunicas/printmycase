@@ -134,7 +134,16 @@ Deno.serve(async (req) => {
     if (!falResponse.ok) {
       const errText = await falResponse.text();
       console.error("Fal.ai error:", errText);
-      return new Response(JSON.stringify({ error: "AI processing failed" }), {
+      // Parse Fal.ai error for user-friendly messages
+      let userError = "Erro no processamento de IA";
+      try {
+        const parsed = JSON.parse(errText);
+        const detail = parsed?.detail?.[0];
+        if (detail?.type === "image_too_small") {
+          userError = `Imagem muito pequena. Dimensões mínimas: ${detail.ctx?.min_width || 256}x${detail.ctx?.min_height || 256}px.`;
+        }
+      } catch { /* ignore parse errors */ }
+      return new Response(JSON.stringify({ error: userError }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
