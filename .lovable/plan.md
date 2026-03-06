@@ -1,38 +1,37 @@
 
 
-## Resultado do Teste — Customização Mobile e Desktop
+## Code Review — Limpeza de Legado na Customização
 
-### Desktop (1280x800) ✅
-- Layout side-by-side funcionando corretamente (mockup à esquerda, controles à direita)
-- Título "Customizar" visível no painel direito
-- Filtros em carrossel horizontal com seta de scroll
-- 4 sliders de ajustes sempre visíveis
-- Preço "R$ 99,90" e botão "Continuar" no final do painel
-- Barra fixa de mobile corretamente oculta
+Após análise dos 4 arquivos principais, o código está bem limpo. Encontrei **3 itens de limpeza**:
 
-### Mobile (390x844 — iPhone) ✅
-- Mockup centralizado com tamanho responsivo (menor que no desktop)
-- CTA "Envie sua foto" claro e proeminente
-- Filtros em carrossel horizontal abaixo do mockup
-- **Accordion "AJUSTES"** visível com chevron — colapsado por padrão ✅
-- **Barra fixa no bottom** com preço "R$ 99,90" e botão "Continuar →" ✅
-- `backdrop-blur` e `safe-area-inset-bottom` aplicados corretamente
+### 1. `forwardRef` não utilizado — `ControlPanel.tsx` e `PhonePreview.tsx`
 
-### Comportamento do Accordion
-O accordion não expandiu ao clicar porque os controles estão **corretamente desabilitados** (`pointer-events-none`) quando nenhuma imagem foi enviada. Isso é o comportamento esperado — os ajustes só devem ser interativos após o upload.
+Ambos os componentes usam `forwardRef`, mas nenhum pai passa `ref` para eles. O `ControlPanel` recebe `ref` e aplica no wrapper, mas `Customize.tsx` nunca usa. O `PhonePreview` recebe `ref` mas também nunca é referenciado pelo pai.
 
-### Problema Identificado: Accordion não clicável mesmo desabilitado
-O botão do accordion herda o `pointer-events-none` do wrapper `disabled`, o que impede até mesmo a abertura/fechamento do accordion. Embora os sliders devam ficar desabilitados sem imagem, o **trigger do accordion deveria continuar clicável** para que o usuário possa explorar os controles antes de fazer upload.
+**Ação:** Remover `forwardRef` de ambos, converter para componentes funcionais simples. Remove import de `forwardRef` e a linha `displayName`.
 
-### Correção Proposta
+### 2. Estado `imageFile` desnecessário — `Customize.tsx`
 
-**Arquivo:** `src/components/ControlPanel.tsx`
+O estado `imageFile` (linha 88) armazena o `File` inteiro, mas é usado **apenas** para `imageFile?.name` (linha 187). Armazenar o objeto `File` completo na memória é desperdício.
 
-Mover o `pointer-events-none` do wrapper para apenas os sliders individuais, permitindo que o botão do accordion funcione independentemente:
+**Ação:** Substituir `imageFile: File | null` por `imageFileName: string | null`. Setar `setImageFileName(file.name)` no handler de upload e usar diretamente no `customData`.
 
-- Remover `pointer-events-none` do wrapper principal
-- Manter `opacity-50` no wrapper para feedback visual
-- Adicionar `pointer-events-none` apenas no container dos sliders quando `disabled`
+### 3. `.lovable/plan.md` com conteúdo obsoleto
 
-Isso é uma correção pequena de 2 linhas.
+Contém o resultado do teste anterior (accordion fix). Não é código de produção, mas é ruído.
+
+**Ação:** Limpar o conteúdo do plan.md.
+
+---
+
+### Arquivos Modificados
+
+| Arquivo | Mudança |
+|---|---|
+| `src/components/ControlPanel.tsx` | Remover `forwardRef`, `displayName`, simplificar para função normal |
+| `src/components/PhonePreview.tsx` | Remover `forwardRef`, `displayName`, simplificar para função normal |
+| `src/pages/Customize.tsx` | Trocar `imageFile: File` por `imageFileName: string` |
+| `.lovable/plan.md` | Limpar conteúdo obsoleto |
+
+Todas são mudanças seguras sem impacto funcional.
 
