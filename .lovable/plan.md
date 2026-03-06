@@ -1,23 +1,23 @@
 
 
-## Análise: Código do Style Transfer está correto
+## Status: Implementação está funcional
 
-Revisei o código completo e a documentação da API do Fal.ai. A implementação já está pronta e correta:
+Após análise completa do código, banco de dados e logs:
 
-### O que já funciona
+### O que está funcionando
+- **3 filtros Style Transfer ativos** no banco: Personagem (anime_character), Cyberpubk (cyberpunk_future), Comico (comic_book_animation)
+- **Admin UI**: Dropdown de estilos funciona corretamente ao selecionar modelo Style Transfer
+- **Edge Function**: Lógica condicional para `style-transfer` envia `{ image_url, target_style }` corretamente
+- **Customize page**: Busca filtros ativos e exibe botões para aplicá-los
 
-1. **Admin UI** (`AiFiltersManager.tsx`): O modelo "Style Transfer" aparece no select, e ao selecioná-lo, o campo de prompt é substituído por um select de estilos pré-definidos (impressionist, anime_character, cyberpunk_future, etc.)
+### Único problema encontrado
+- **Warning no console** (não-crítico): `FormField` não usa `forwardRef`, causando warning do React quando usado com `<select>` nativo. Corrigível mas não afeta funcionalidade.
 
-2. **Edge Function** (`apply-ai-filter/index.ts`): Detecta `style-transfer` no `model_url` e envia `{ image_url, target_style }` em vez do body padrão — exatamente o formato que a API do Fal.ai espera
+### Possível causa de falhas anteriores
+Os erros 502 anteriores foram causados pelo modelo inválido `fal-ai/flux-pro/v1.1/image-to-image` que já foi corrigido. Filtros que ainda usavam esse modelo antigo já foram migrados via SQL.
 
-3. **Resposta da API**: O modelo retorna `{ images: [{ url }] }`, que é o mesmo formato dos outros modelos — o parsing existente funciona sem alteração
+### Ação recomendada
+Para testar de fato, acesse `/customize/{slug-de-produto}`, faça upload de uma imagem e clique em um dos filtros (Personagem, Cyberpubk, Comico). Se receber erro 502, o problema será da API Key do Fal.ai ou do próprio serviço — não do código.
 
-### Nenhuma mudança necessária
-
-O código está implementado corretamente. Para testar:
-1. Acesse `/admin` → aba "Filtros IA"
-2. Clique "Novo Filtro", selecione modelo "Style Transfer", escolha um estilo (ex: "Anime Character")
-3. Salve e vá para `/customize/{produto}`, faça upload de imagem e aplique o filtro
-
-Não há bugs no código — se houver erro 502 ao aplicar, será problema de API key ou do próprio Fal.ai, não do código.
+Se quiser, posso **melhorar o tratamento de erros** na edge function para logar a resposta exata do Fal.ai e retorná-la ao frontend para diagnóstico mais fácil.
 
