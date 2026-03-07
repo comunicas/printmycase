@@ -227,6 +227,7 @@ const Customize = () => {
           filters={filters}
           activeFilterId={activeFilterId}
           applyingFilterId={applyingFilterId}
+          filterCost={aiFilterCost}
           onFilterClick={handleFilterClick}
         />
       </main>
@@ -242,6 +243,7 @@ const Customize = () => {
       <FilterConfirmDialog
         filter={filters.find((f) => f.id === pendingFilterId) ?? null}
         balance={coinBalance}
+        cost={aiFilterCost}
         open={!!pendingFilterId}
         onOpenChange={(open) => { if (!open) setPendingFilterId(null); }}
         onConfirm={handleFilterConfirm}
