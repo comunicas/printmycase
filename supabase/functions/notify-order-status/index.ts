@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
 
     const userName = profileRes.data?.full_name || userRes.data.user.email.split("@")[0];
     const productName = productRes.data?.name ?? order.product_id;
-    const appUrl = Deno.env.get("APP_URL") || "https://artiscase-v2.lovable.app";
+    const appUrl = Deno.env.get("APP_URL") || "https://studio.artiscase.com";
 
     // Logo from public email-assets bucket
     const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/email-assets/logo-artiscase.png`;

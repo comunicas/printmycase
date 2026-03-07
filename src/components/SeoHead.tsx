@@ -3,7 +3,7 @@ import { useProducts } from "@/hooks/useProducts";
 import type { Product } from "@/lib/types";
 
 const SITE_NAME = "ArtisCase";
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://artiscase-v2.lovable.app";
+const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.artiscase.com";
 const TITLE = "ArtisCase | Capas Personalizadas para Celular";
 const DESCRIPTION =
   "Crie capas de celular personalizadas com suas fotos. Proteção premium, acabamento soft-touch e frete grátis para diversos modelos de smartphone.";
