@@ -45,14 +45,14 @@ const Landing = () => {
 
         <main>
           {/* Hero — Dark Parallax */}
-          <section aria-label="Banner principal" className="relative min-h-[100vh] -mt-[56px] flex items-center justify-center overflow-hidden">
+          <section aria-label="Banner principal" className="relative min-h-[100svh] -mt-[56px] flex items-center justify-center overflow-hidden">
             {/* Parallax BG */}
             <div
               className="absolute inset-0 parallax-bg"
               style={{ backgroundImage: `url(${heroBg})` }} />
             
             {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-purple-950/50 to-black/80" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-purple-950/55 to-black/80" />
             {/* Radial glow */}
             <div className="absolute inset-0 opacity-40" style={{
               background: "radial-gradient(ellipse 80% 60% at 50% 20%, hsl(265 83% 57% / 0.45), transparent 70%)"
@@ -65,8 +65,8 @@ const Landing = () => {
             </div>
 
             {/* Content */}
-            <div className="relative z-10 max-w-3xl mx-auto text-center space-y-7 px-5 pt-20 pb-16">
-             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={fadeIn(0)}>
+            <div className="relative z-10 max-w-3xl mx-auto text-center space-y-5 sm:space-y-7 px-5 pt-20 pb-16">
+             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={{ ...fadeIn(0), textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
                 Crie sua case{" "}
                 <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">personalizada</span>{" "}
                 em 1 minuto.

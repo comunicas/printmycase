@@ -40,12 +40,12 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
           : "border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80"
       }`}
     >
-      <nav className="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
+      <nav className="max-w-6xl mx-auto flex items-center justify-between px-3 py-2 sm:px-5 sm:py-3">
         <div className="flex items-center gap-2 min-w-0">
           <Link to="/" className="flex-shrink-0">
             <img
               alt="ArtisCase"
-              className={`h-8 w-auto transition-all duration-300 ${isTransparent && !scrolled ? "brightness-0 invert" : ""}`}
+              className={`h-7 sm:h-8 w-auto transition-all duration-300 ${isTransparent && !scrolled ? "brightness-0 invert" : ""}`}
               src="/lovable-uploads/79379ce7-c6b3-4051-9947-c8dfc449251d.png"
             />
           </Link>
@@ -66,11 +66,11 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <Button
             variant="ghost"
             size="sm"
-            className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
+            className={`hidden sm:inline-flex ${isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}`}
             onClick={() => navigate("/catalog")}
           >
             Ver Modelos

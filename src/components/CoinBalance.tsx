@@ -15,7 +15,7 @@ const CoinBalance = ({ transparent }: CoinBalanceProps) => {
   return (
     <Link
       to="/coins"
-      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+      className={`flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-xs font-semibold transition-colors ${
         transparent
           ? "text-white/90 hover:bg-white/10"
           : "text-foreground bg-accent hover:bg-accent/80"
