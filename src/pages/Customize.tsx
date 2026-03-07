@@ -31,6 +31,7 @@ const Customize = () => {
 
   const [image, setImage] = useState<string | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [filteredImage, setFilteredImage] = useState<string | null>(null);
   const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
   const [imageFileName, setImageFileName] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -100,9 +101,21 @@ const Customize = () => {
     setScale(DEFAULTS.scale);
     setPosition(DEFAULTS.position);
     setRotation(DEFAULTS.rotation);
-    if (originalImage) { setImage(originalImage); setActiveFilterId(null); }
+    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
     if (product?.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
   }, [product?.slug, originalImage]);
+
+  const handleCompareStart = useCallback(() => {
+    if (originalImage && activeFilterId) setImage(originalImage);
+  }, [originalImage, activeFilterId]);
+
+  const handleCompareEnd = useCallback(() => {
+    if (filteredImage && activeFilterId) setImage(filteredImage);
+  }, [filteredImage, activeFilterId]);
+
+  const handleRemoveFilter = useCallback(() => {
+    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
+  }, [originalImage]);
 
   const handleRotate = useCallback(() => {
     setRotation((prev) => (prev + 90) % 360);
@@ -154,7 +167,7 @@ const Customize = () => {
   const handleFilterClick = (filterId: string) => {
     if (!image || applyingFilterId) return;
     if (activeFilterId === filterId) {
-      if (originalImage) { setImage(originalImage); setActiveFilterId(null); }
+      if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
       return;
     }
     if (imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
@@ -187,6 +200,7 @@ const Customize = () => {
       }
       if (!originalImage) setOriginalImage(image);
       setImage(data.image);
+      setFilteredImage(data.image);
       setActiveFilterId(filterId);
       refreshCoins();
     } catch {
@@ -294,6 +308,9 @@ const Customize = () => {
           applyingFilterId={applyingFilterId}
           filterCost={aiFilterCost}
           onFilterClick={handleFilterClick}
+          onCompareStart={handleCompareStart}
+          onCompareEnd={handleCompareEnd}
+          onRemoveFilter={handleRemoveFilter}
         />
       </main>
 

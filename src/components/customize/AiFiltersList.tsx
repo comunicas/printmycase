@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AiFilter } from "@/lib/customize-types";
 
@@ -9,11 +9,43 @@ interface AiFiltersListProps {
   disabled: boolean;
   filterCost: number;
   onFilterClick: (filterId: string) => void;
+  onCompareStart: () => void;
+  onCompareEnd: () => void;
+  onRemoveFilter: () => void;
 }
 
-const AiFiltersList = ({ filters, activeFilterId, applyingFilterId, disabled, filterCost, onFilterClick }: AiFiltersListProps) => (
+const AiFiltersList = ({
+  filters, activeFilterId, applyingFilterId, disabled, filterCost,
+  onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter,
+}: AiFiltersListProps) => (
   <div className="space-y-2">
     <p className="text-xs text-muted-foreground">Cada filtro consome 🪙 {filterCost} moedas</p>
+
+    {activeFilterId && (
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 text-xs gap-1.5"
+          onPointerDown={onCompareStart}
+          onPointerUp={onCompareEnd}
+          onPointerLeave={onCompareEnd}
+        >
+          <Eye className="w-3.5 h-3.5" />
+          Segurar p/ comparar
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 text-xs gap-1.5 text-destructive hover:text-destructive"
+          onClick={onRemoveFilter}
+        >
+          <X className="w-3.5 h-3.5" />
+          Remover filtro
+        </Button>
+      </div>
+    )}
+
     <div className="flex flex-wrap gap-2 pb-1 -mb-1">
       {filters.map((filter) => {
         const isActive = activeFilterId === filter.id;

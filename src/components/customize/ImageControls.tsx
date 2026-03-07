@@ -20,12 +20,16 @@ interface ImageControlsProps {
   applyingFilterId: string | null;
   filterCost: number;
   onFilterClick: (filterId: string) => void;
+  onCompareStart: () => void;
+  onCompareEnd: () => void;
+  onRemoveFilter: () => void;
 }
 
 const ImageControls = ({
   hasImage, scale, rotation, onScaleChange, onRotate, onExpand, onUpscale,
   isHD, upscaleCost, isUpscaling,
   filters, activeFilterId, applyingFilterId, filterCost, onFilterClick,
+  onCompareStart, onCompareEnd, onRemoveFilter,
 }: ImageControlsProps) => (
   <div className={`w-full max-w-xs ${!hasImage ? "opacity-50 pointer-events-none" : ""}`}>
     <Tabs defaultValue="ajustes">
@@ -66,6 +70,9 @@ const ImageControls = ({
             disabled={!hasImage}
             filterCost={filterCost}
             onFilterClick={onFilterClick}
+            onCompareStart={onCompareStart}
+            onCompareEnd={onCompareEnd}
+            onRemoveFilter={onRemoveFilter}
           />
         </TabsContent>
       )}
