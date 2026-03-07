@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, Move, Loader2, ImagePlus } from "lucide-react";
+import { Camera, Move, Loader2, ImagePlus, Sparkles } from "lucide-react";
 
 interface PhonePreviewProps {
   image: string | null;
@@ -12,11 +12,12 @@ interface PhonePreviewProps {
   
   imageResolution?: { w: number; h: number } | null;
   isProcessing?: boolean;
+  onUpscaleClick?: () => void;
 }
 
 const CROSSFADE_MS = 200;
 
-const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, onUpscaleClick }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -274,10 +275,15 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             {imageResolution && (() => {
               const isHD = imageResolution.w >= 800 && imageResolution.h >= 1600;
               const isLow = imageResolution.w < 400 || imageResolution.h < 800;
-              return (
-                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow ${isLow ? 'bg-destructive text-destructive-foreground' : isHD ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                  {isLow ? 'Baixa' : isHD ? 'HD' : 'Média'}
-                </span>
+              const canUpscale = !isHD && onUpscaleClick;
+              const badge = isLow ? 'Baixa' : isHD ? 'HD' : 'Média';
+              const badgeClass = `text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow ${isLow ? 'bg-destructive text-destructive-foreground' : isHD ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`;
+              return canUpscale ? (
+                <button onClick={onUpscaleClick} className={`${badgeClass} flex items-center gap-0.5 animate-pulse hover:animate-none cursor-pointer`}>
+                  {badge} <Sparkles className="w-2.5 h-2.5" />
+                </button>
+              ) : (
+                <span className={badgeClass}>{badge}</span>
               );
             })()}
             <button
