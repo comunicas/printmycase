@@ -16,6 +16,7 @@ import ModelRequestsManager from "@/components/admin/ModelRequestsManager";
 import CoinsManager from "@/components/admin/CoinsManager";
 import { type Product, formatPrice } from "@/lib/types";
 import { statusLabels } from "@/lib/constants";
+import OrderImagesPreviewer from "@/components/admin/OrderImagesPreviewer";
 import type { Database } from "@/integrations/supabase/types";
 import { resolveProductInfo } from "@/lib/products";
 
@@ -29,6 +30,7 @@ interface DbOrder {
   status: string;
   created_at: string;
   stripe_session_id: string | null;
+  customization_data?: Record<string, any> | null;
   product_name?: string;
   product_image?: string;
 }
@@ -397,6 +399,9 @@ const Admin = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* Customization images */}
+                    <OrderImagesPreviewer customizationData={order.customization_data ?? null} />
 
                     {/* Tracking code input */}
                     <div className="flex items-center gap-2">
