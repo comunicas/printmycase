@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,12 @@ interface Transaction {
   description: string | null;
 }
 
+interface CoinSetting {
+  key: string;
+  value: number;
+  description: string | null;
+}
+
 const typeLabels: Record<string, string> = {
   signup_bonus: "Cadastro",
   referral_bonus: "Indicação",
@@ -24,17 +30,44 @@ const typeLabels: Record<string, string> = {
   admin_adjustment: "Ajuste manual",
 };
 
+const settingLabels: Record<string, string> = {
+  signup_bonus_amount: "Bônus cadastro (moedas)",
+  signup_bonus_days: "Validade bônus cadastro (dias)",
+  referral_bonus_amount: "Bônus indicação (moedas)",
+  referral_bonus_days: "Validade bônus indicação (dias)",
+  purchase_bonus_amount: "Bônus compra (moedas)",
+  purchase_bonus_days: "Validade bônus compra (dias)",
+  ai_filter_cost: "Custo filtro IA (moedas)",
+};
+
 const CoinsManager = () => {
   const { toast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("all");
 
+  // Settings
+  const [settings, setSettings] = useState<CoinSetting[]>([]);
+  const [editedSettings, setEditedSettings] = useState<Record<string, number>>({});
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [savingSettings, setSavingSettings] = useState(false);
+
   // Manual adjustment
   const [adjUserId, setAdjUserId] = useState("");
   const [adjAmount, setAdjAmount] = useState("");
   const [adjDescription, setAdjDescription] = useState("");
   const [adjSaving, setAdjSaving] = useState(false);
+
+  const fetchSettings = useCallback(async () => {
+    setSettingsLoading(true);
+    const { data } = await (supabase as any).from("coin_settings").select("*").order("key");
+    const items = (data ?? []) as CoinSetting[];
+    setSettings(items);
+    const edited: Record<string, number> = {};
+    items.forEach((s) => { edited[s.key] = s.value; });
+    setEditedSettings(edited);
+    setSettingsLoading(false);
+  }, []);
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -53,7 +86,29 @@ const CoinsManager = () => {
     setLoading(false);
   }, [typeFilter, toast]);
 
+  useEffect(() => { fetchSettings(); }, [fetchSettings]);
   useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      const updates = settings
+        .filter((s) => editedSettings[s.key] !== s.value)
+        .map((s) => (supabase as any).from("coin_settings").update({ value: editedSettings[s.key] }).eq("key", s.key));
+      if (updates.length === 0) {
+        toast({ title: "Nenhuma alteração" });
+        setSavingSettings(false);
+        return;
+      }
+      await Promise.all(updates);
+      toast({ title: "Configurações salvas!" });
+      fetchSettings();
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   const handleAdjust = async () => {
     if (!adjUserId.trim() || !adjAmount) return;
@@ -81,9 +136,39 @@ const CoinsManager = () => {
     }
   };
 
+  const hasSettingChanges = settings.some((s) => editedSettings[s.key] !== s.value);
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Moedas</h1>
+
+      {/* Settings */}
+      <div className="border rounded-xl p-4 bg-card space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-sm">Configurações de valores</h2>
+          <Button size="sm" onClick={handleSaveSettings} disabled={savingSettings || !hasSettingChanges}>
+            {savingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+            Salvar
+          </Button>
+        </div>
+        {settingsLoading ? (
+          <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {settings.map((s) => (
+              <div key={s.key} className="space-y-1">
+                <label className="text-xs text-muted-foreground">{settingLabels[s.key] || s.key}</label>
+                <Input
+                  type="number"
+                  value={editedSettings[s.key] ?? s.value}
+                  onChange={(e) => setEditedSettings((prev) => ({ ...prev, [s.key]: parseInt(e.target.value) || 0 }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Manual adjustment */}
       <div className="border rounded-xl p-4 bg-card space-y-3">
