@@ -316,8 +316,8 @@ const Customize = () => {
             originalPath,
             editedPath,
           );
-        } catch (e) {
-          console.warn("Failed to persist pending checkout:", e);
+        } catch {
+          // silently ignore persistence failures
         }
       }
 

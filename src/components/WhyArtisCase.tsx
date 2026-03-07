@@ -47,7 +47,7 @@ const WhyArtisCase = () => {
           {features.map((f, i) => (
             <ScrollReveal key={f.title} delay={i * 100}>
               <Card className="group text-center border-0 border-l-4 border-l-primary/60 shadow-sm bg-white/5 h-full hover:bg-white/[0.08] transition-all duration-300">
-                <CardContent className="pt-8 pb-6 px-6 space-y-3">
+                <CardContent className="pt-6 pb-4 px-4 sm:pt-8 sm:pb-6 sm:px-6 space-y-3">
                   <div className="mx-auto w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <f.icon className="w-6 h-6 text-primary" />
                   </div>
@@ -62,8 +62,8 @@ const WhyArtisCase = () => {
         <ScrollReveal delay={350}>
           <div className="flex flex-col items-center gap-6">
             <div className="flex items-center gap-8">
-              <img src={logoEpson} alt="Epson" className="h-9 opacity-70" />
-              <img src={logoPrecisionCore} alt="PrecisionCore" className="h-10 opacity-70" />
+              <img src={logoEpson} alt="Epson" className="h-7 sm:h-9 opacity-70" />
+              <img src={logoPrecisionCore} alt="PrecisionCore" className="h-8 sm:h-10 opacity-70" />
             </div>
             <Button asChild size="lg" className="rounded-full px-8">
               <Link to="/catalog">Crie sua Case →</Link>
