@@ -1,23 +1,40 @@
 
 
-## Ajustar overlay gradient do hero
+## Refatoração: Seção "Por que ArtisCase" — Copy Unificada + CTA
 
-A imagem atual já tem tons roxos que combinam com a marca. O overlay pode ser refinado para realçar a imagem enquanto mantém a legibilidade.
+### Mudanças
 
-### Mudanças em `src/pages/Landing.tsx` (linha 55)
+**1. Reescrever copy do `WhyArtisCase.tsx`**
 
-**De:**
-```
-bg-gradient-to-b from-black/70 via-black/50 to-black/80
-```
+Unificar proteção + impressão em 2 cards (em vez de 3 separados) + manter Entrega Rápida. Remover toda a subsection de "Tecnologia de Impressão" com os 4 tech attributes e o video/modal do YouTube.
 
-**Para:**
-```
-bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75
-```
+**Novos cards (2 principais + 1 entrega):**
 
-Isso reduz levemente a opacidade no topo, adiciona um tom roxo sutil no meio (harmonizando com o fundo roxo da imagem), e mantém a base escura para contraste com a próxima seção.
+| Card | Titulo | Copy |
+|------|--------|------|
+| Shield | Proteção Real | Policarbonato rígido absorve impactos. TPU flexível protege contra quedas e arranhões. Acabamento soft-touch que não escorrega. |
+| Palette | Impressão UV Epson | Tecnologia Micro Piezo sem aquecimento: cores vibrantes e detalhes nítidos que não desbotam. Sua arte ganha vida exatamente como você imaginou. |
+| Truck | Entrega Rápida | Produção em até 48h com embalagem reforçada. Frete acessível para todo o Sudeste. |
 
-Também ajustar o radial glow (linha 57-59) para aumentar levemente a intensidade:
-- Opacidade de `0.35` → `0.40`
+**Subtítulo da seção**: "Materiais premium e impressão profissional em cada case."
+
+**2. Remover do componente:**
+- `useState`, `Dialog`, `DialogContent`, `Play` imports
+- `techAttributes` array
+- `YOUTUBE_ID` constant
+- Grid md:grid-cols-2 com tech list + video thumbnail
+- Video modal Dialog inteiro
+- Manter logos Epson + PrecisionCore abaixo dos cards
+
+**3. Adicionar CTA abaixo dos logos:**
+Botão "Crie sua Case →" que linka para `/catalog`, posicionado centralmente após os logos.
+
+**4. Deletar `PrintTechSection.tsx`** (componente legado, não usado em nenhuma rota).
+
+### Arquivos
+
+| Arquivo | Ação |
+|---------|------|
+| `src/components/WhyArtisCase.tsx` | Reescrever — copy unificada, remover video/tech, adicionar CTA |
+| `src/components/PrintTechSection.tsx` | Deletar — legado não usado |
 
