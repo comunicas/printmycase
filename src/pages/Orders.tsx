@@ -121,11 +121,6 @@ const Orders = () => {
         </div>
 
         <PendingCheckoutCards />
-          <h1 className="text-2xl font-bold text-foreground">Meus Pedidos</h1>
-          <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/catalog")}>
-            <ArrowLeft className="w-4 h-4" /> Catálogo
-          </Button>
-        </div>
 
         {loading ? (
           <LoadingSpinner />
