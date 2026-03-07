@@ -1,37 +1,24 @@
 
 
-## Verificação do Webhook Stripe Live
+## Resultado da Verificação
 
-### O que o código espera
+A página carregou corretamente. O session replay confirma elementos interativos funcionando (drag, loading spinner, interações com formulários).
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### Warnings restantes no console
 
-### Como verificar (manual no Stripe Dashboard)
+Os 3 warnings são todos do tipo **"Function components cannot be given refs"** e afetam:
+- `ScrollReveal` (usado em FaqSection e Landing)
+- `ProductCard` (usado em Landing)
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+**Causa**: O plugin `lovable-tagger` (usado apenas em desenvolvimento) tenta anexar refs a componentes para tooling. Como `ScrollReveal` e `ProductCard` são function components sem `forwardRef`, o React emite warnings.
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+### Plano para eliminar os warnings
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+Adicionar `React.forwardRef` a dois componentes:
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+1. **`src/components/ScrollReveal.tsx`** — Envolver com `forwardRef`, fazer merge do ref externo com o ref interno do `useScrollAnimation` (usando um callback ref simples).
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+2. **`src/components/ProductCard.tsx`** — Envolver com `forwardRef` e passar o ref ao `<Card>` raiz.
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+Ambas são mudanças mínimas (3-5 linhas cada) e eliminam todos os warnings visíveis no console.
 
