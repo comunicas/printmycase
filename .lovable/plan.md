@@ -1,51 +1,23 @@
 
 
-## Melhorar UX e animações dos toasts
+## Ajustar overlay gradient do hero
 
-O projeto **não usa framer-motion** atualmente, e adicioná-lo só para toasts seria peso desnecessário (~30KB). Em vez disso, usaremos **CSS keyframes customizados** no Tailwind — que já é o padrão do projeto para animações (accordion, fade-in, scale-in, etc).
+A imagem atual já tem tons roxos que combinam com a marca. O overlay pode ser refinado para realçar a imagem enquanto mantém a legibilidade.
 
-### Mudanças
+### Mudanças em `src/pages/Landing.tsx` (linha 55)
 
-#### 1. Adicionar keyframes `toast-slide-down` e `toast-fade-out-up` no `tailwind.config.ts`
-
-```js
-"toast-slide-down": {
-  "0%": { opacity: "0", transform: "translateY(-100%) scale(0.95)" },
-  "100%": { opacity: "1", transform: "translateY(0) scale(1)" }
-},
-"toast-fade-out-up": {
-  "0%": { opacity: "1", transform: "translateY(0) scale(1)" },
-  "100%": { opacity: "0", transform: "translateY(-100%) scale(0.95)" }
-}
+**De:**
+```
+bg-gradient-to-b from-black/70 via-black/50 to-black/80
 ```
 
-E as animações correspondentes:
-```js
-"toast-in": "toast-slide-down 0.35s cubic-bezier(0.16,1,0.3,1)",
-"toast-out": "toast-fade-out-up 0.25s ease-in forwards"
+**Para:**
+```
+bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75
 ```
 
-#### 2. Atualizar `toast.tsx` — variantes de animação
+Isso reduz levemente a opacidade no topo, adiciona um tom roxo sutil no meio (harmonizando com o fundo roxo da imagem), e mantém a base escura para contraste com a próxima seção.
 
-Substituir as classes de animação do Radix (`animate-in/out`, `slide-in-from-top-full`, etc.) por nossas keyframes customizadas:
-
-```
-data-[state=open]:animate-toast-in data-[state=closed]:animate-toast-out
-```
-
-Também melhorar o visual: border mais suave com `rounded-xl`, sombra elevada `shadow-xl`, e padding mais compacto `p-4 pr-8`.
-
-#### 3. Melhorar `toaster.tsx` — auto-dismiss e ícone visual
-
-- Adicionar `duration={4000}` no `ToastProvider` para auto-dismiss de 4 segundos
-- Adicionar ícone contextual: `CheckCircle2` para sucesso (default) e `AlertCircle` para erros (destructive)
-- Progress bar sutil na base do toast para indicar tempo restante
-
-### Arquivos alterados
-
-| Arquivo | O quê |
-|---------|-------|
-| `tailwind.config.ts` | Novos keyframes e animações |
-| `src/components/ui/toast.tsx` | Novas classes de animação e visual |
-| `src/components/ui/toaster.tsx` | Auto-dismiss, ícones, progress bar |
+Também ajustar o radial glow (linha 57-59) para aumentar levemente a intensidade:
+- Opacidade de `0.35` → `0.40`
 

@@ -162,3 +162,9 @@
     animation: none;
   }
 }
+
+/* Toast progress bar */
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
