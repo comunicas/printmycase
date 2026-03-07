@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter } from "@/lib/customize-types";
-import { compressImage, renderSnapshot } from "@/lib/image-utils";
+import { compressImage, compressForAI, urlToDataUrl, renderSnapshot } from "@/lib/image-utils";
 import { useCoins } from "@/hooks/useCoins";
 import { useCoinSettings } from "@/hooks/useCoinSettings";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";

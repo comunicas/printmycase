@@ -84,6 +84,7 @@ export function renderSnapshot(
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new window.Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = PHONE_W;
