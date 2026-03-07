@@ -1,88 +1,23 @@
 
 
-## Refinamento de UX: Checkout + Página de Sucesso
+## Ajustar overlay gradient do hero
 
-### Contexto
-O usuário quer melhorar a experiência visual e informacional do rodapé do checkout (abaixo do botão "Finalizar Pedido"), a página de sucesso pós-pagamento, e exibir o consumo de coins quando filtros IA foram aplicados.
+A imagem atual já tem tons roxos que combinam com a marca. O overlay pode ser refinado para realçar a imagem enquanto mantém a legibilidade.
 
-### 1. Checkout — Rodapé com PaymentBadges e info de coins
+### Mudanças em `src/pages/Landing.tsx` (linha 55)
 
-**`src/pages/Checkout.tsx`**:
-- Adicionar abaixo do botão "Finalizar Pedido" o componente `PaymentBadges` (selos Stripe, bandeiras, Pix, cadeado)
-- Mostrar uma linha informativa no `OrderSummary` quando `customization.activeFilter` está presente, indicando que coins foram consumidos na geração (ex: "🪙 Filtro IA aplicado — coins já debitados")
-
-**`src/components/checkout/OrderSummary.tsx`**:
-- Receber prop opcional `aiFilterApplied: boolean`
-- Se true, exibir uma linha sutil com ícone de moeda: "Filtro IA aplicado (coins debitados)"
-- Manter o layout existente, apenas adicionar a linha antes do total
-
-### 2. Página de Sucesso — Enriquecer com data, prazo e selo Stripe
-
-**`src/pages/CheckoutSuccess.tsx`**:
-- Buscar também `created_at`, `shipping_cents`, `status` da order além de `product_id` e `total_cents`
-- Exibir **data do pedido** formatada (ex: "7 de março de 2026")
-- Separar **produto** e **frete** no resumo (como no OrderSummary do checkout)
-- Manter o prazo estimado "5 a 7 dias úteis" com ícone de relógio
-- Adicionar `PaymentBadges` no rodapé do card (abaixo dos botões), reforçando a confiança pós-compra
-- Se `customization_data.activeFilter` existir, mostrar a linha de coins consumidos
-
-### 3. Arquivos alterados
-
-| Arquivo | Mudança |
-|---|---|
-| `src/components/checkout/OrderSummary.tsx` | Prop `aiFilterApplied`, linha de coins |
-| `src/pages/Checkout.tsx` | Passar `aiFilterApplied`, adicionar `PaymentBadges` abaixo do botão |
-| `src/pages/CheckoutSuccess.tsx` | Buscar mais campos, exibir data, frete separado, PaymentBadges, coin info |
-
-### Fluxo Visual (Checkout)
-
-```text
-┌─────────────────────────────┐
-│  📦 Mini preview   [Editar] │
-├─────────────────────────────┤
-│  📍 Endereço de entrega     │
-├─────────────────────────────┤
-│  🚛 Resumo do pedido        │
-│  Produto         R$ 99,90   │
-│  Frete           R$ 12,90   │
-│  🪙 Filtro IA (debitado)    │ ← novo, condicional
-│  ─────────────────────────  │
-│  Total          R$ 112,80   │
-├─────────────────────────────┤
-│  [   Finalizar Pedido →   ] │
-│                             │
-│  🔒 Pagamento 100% seguro   │ ← PaymentBadges
-│  Visa MC Elo Amex Pix       │
-│  ── Powered by Stripe ──    │
-└─────────────────────────────┘
+**De:**
+```
+bg-gradient-to-b from-black/70 via-black/50 to-black/80
 ```
 
-### Fluxo Visual (Sucesso)
-
-```text
-┌─────────────────────────────┐
-│       [Logo ArtisCase]      │
-│          ✅                  │
-│    Pedido Confirmado!       │
-│  Pagamento processado...    │
-├─────────────────────────────┤
-│  [img] Capa Motorola edge   │
-│         R$ 99,90            │
-│  ─────────────────────────  │
-│  Produto         R$ 99,90   │
-│  Frete           R$ 12,90   │
-│  Total          R$ 112,80   │
-│  🪙 Filtro IA aplicado      │ ← condicional
-│  ─────────────────────────  │
-│  📅 7 de março de 2026      │
-│  ⏱ Prazo: 5-7 dias úteis   │
-│  Ref: cs_live_abc...        │
-├─────────────────────────────┤
-│ [Meus Pedidos] [Catálogo]   │
-│                             │
-│  🔒 Pagamento 100% seguro   │
-│  Visa MC Elo Amex Pix       │
-│  ── Powered by Stripe ──    │
-└─────────────────────────────┘
+**Para:**
 ```
+bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75
+```
+
+Isso reduz levemente a opacidade no topo, adiciona um tom roxo sutil no meio (harmonizando com o fundo roxo da imagem), e mantém a base escura para contraste com a próxima seção.
+
+Também ajustar o radial glow (linha 57-59) para aumentar levemente a intensidade:
+- Opacidade de `0.35` → `0.40`
 

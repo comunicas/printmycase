@@ -12,6 +12,7 @@ import { type ShippingResult } from "@/lib/shipping";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
+import PaymentBadges from "@/components/PaymentBadges";
 
 interface CustomizationData {
   image: string | null;
@@ -243,6 +244,7 @@ const Checkout = () => {
           productPriceCents={productPriceCents}
           shippingCents={shippingCents}
           hasShipping={!!shipping}
+          aiFilterApplied={!!customization?.activeFilter}
         />
 
         <Button
@@ -256,6 +258,8 @@ const Checkout = () => {
             <>Finalizar Pedido <ArrowRight className="w-4 h-4" /></>
           )}
         </Button>
+
+        <PaymentBadges />
       </main>
     </div>
   );
