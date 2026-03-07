@@ -119,7 +119,8 @@ Deno.serve(async (req) => {
       };
     }
 
-    console.log("Fal.ai request:", JSON.stringify({ modelUrl, isStyleTransfer, params: { ...falBody, image_url: "[base64 omitted]" } }));
+    // Sanitized log — never log base64 payloads
+    console.log("Fal.ai request:", JSON.stringify({ modelUrl, isStyleTransfer, isPhotographyEffects, isLightingRestoration }));
 
     const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
       method: "POST",
@@ -129,7 +130,9 @@ Deno.serve(async (req) => {
 
     if (!falResponse.ok) {
       const errText = await falResponse.text();
-      console.error("Fal.ai error:", errText);
+      // Sanitize error log — truncate base64 from error response
+      const sanitizedErr = errText.length > 500 ? errText.substring(0, 500) + "...[truncated]" : errText;
+      console.error("Fal.ai error:", sanitizedErr);
       let userError = "Erro no processamento de IA";
       try {
         const parsed = JSON.parse(errText);
@@ -154,19 +157,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch image and convert to base64
-    const imgResponse = await fetch(outputUrl);
-    const imgBuffer = await imgResponse.arrayBuffer();
-    const bytes = new Uint8Array(imgBuffer);
-    let binary = "";
-    const chunkSize = 8192;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-    }
-    const base64 = btoa(binary);
-    const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
-    const resultBase64 = `data:${contentType};base64,${base64}`;
-
     // Deduct coins
     await serviceClient
       .from("coin_transactions")
@@ -178,11 +168,12 @@ Deno.serve(async (req) => {
         description: "Filtro IA aplicado",
       });
 
-    return new Response(JSON.stringify({ image: resultBase64, coinsUsed: AI_FILTER_COST }), {
+    // Return URL directly instead of downloading + converting to base64
+    return new Response(JSON.stringify({ imageUrl: outputUrl, coinsUsed: AI_FILTER_COST }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("apply-ai-filter error:", err);
+    console.error("apply-ai-filter error:", err?.message || "unknown");
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
