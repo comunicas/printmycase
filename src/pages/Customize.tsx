@@ -50,6 +50,7 @@ const Customize = () => {
   const [filters, setFilters] = useState<AiFilter[]>([]);
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
+  const [processingMsg, setProcessingMsg] = useState<string | null>(null);
   const { balance: coinBalance, refresh: refreshCoins } = useCoins();
   const { getSetting } = useCoinSettings();
   const aiFilterCost = getSetting("ai_filter_cost", 10);
