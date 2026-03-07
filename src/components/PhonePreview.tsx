@@ -14,7 +14,7 @@ interface PhonePreviewProps {
   isProcessing?: boolean;
 }
 
-const CROSSFADE_MS = 350;
+const CROSSFADE_MS = 200;
 
 const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
