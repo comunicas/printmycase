@@ -200,7 +200,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
                 ...buildImageStyle(prevImage),
                 transform: `rotate(${rotation}deg)`,
                 opacity: fadeIn ? 0 : 1,
-                transition: `opacity ${CROSSFADE_MS}ms ease-out, transform 0.3s ease`,
+                transition: `opacity ${CROSSFADE_MS}ms ease-in-out, transform 0.3s ease`,
               }}
             />
           )}
@@ -213,8 +213,8 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
                 transform: `rotate(${rotation}deg)`,
                 opacity: prevImage ? (fadeIn ? 1 : 0) : 1,
                 transition: isSnapping
-                  ? `background-position 0.2s ease-out, transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in`
-                  : `transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in`,
+                  ? `background-position 0.2s ease-out, transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out`
+                  : `transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out`,
               }}
             />
           )}
