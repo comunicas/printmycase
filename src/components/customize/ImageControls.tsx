@@ -46,7 +46,7 @@ const ImageControls = ({
         )}
       </TabsList>
 
-      <TabsContent value="ajustes" className="space-y-3 mt-3">
+      <TabsContent value="ajustes" className="space-y-3 mt-2">
         <AdjustmentsPanel
           scale={scale}
           rotation={rotation}
@@ -62,7 +62,7 @@ const ImageControls = ({
       </TabsContent>
 
       {filters.length > 0 && (
-        <TabsContent value="filtros" className="mt-3">
+        <TabsContent value="filtros" className="mt-2">
           <AiFiltersList
             filters={filters}
             activeFilterId={activeFilterId}
