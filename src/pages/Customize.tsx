@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DEFAULTS, type AiFilter } from "@/lib/customize-types";
 import { compressImage, renderSnapshot } from "@/lib/image-utils";
 import { useCoins } from "@/hooks/useCoins";
+import { useCoinSettings } from "@/hooks/useCoinSettings";
 import CustomizeHeader from "@/components/customize/CustomizeHeader";
 import ImageControls from "@/components/customize/ImageControls";
 import ContinueBar from "@/components/customize/ContinueBar";
@@ -41,6 +42,8 @@ const Customize = () => {
   const [filters, setFilters] = useState<AiFilter[]>([]);
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const { balance: coinBalance, refresh: refreshCoins } = useCoins();
+  const { getSetting } = useCoinSettings();
+  const aiFilterCost = getSetting("ai_filter_cost", 10);
 
   // Load AI filters
   useEffect(() => {
