@@ -10,6 +10,11 @@ interface ImageControlsProps {
   rotation: number;
   onScaleChange: (v: number) => void;
   onRotate: () => void;
+  onExpand: () => void;
+  onUpscale: () => void;
+  isHD: boolean;
+  upscaleCost: number;
+  isUpscaling: boolean;
   filters: AiFilter[];
   activeFilterId: string | null;
   applyingFilterId: string | null;
@@ -18,7 +23,8 @@ interface ImageControlsProps {
 }
 
 const ImageControls = ({
-  hasImage, scale, rotation, onScaleChange, onRotate,
+  hasImage, scale, rotation, onScaleChange, onRotate, onExpand, onUpscale,
+  isHD, upscaleCost, isUpscaling,
   filters, activeFilterId, applyingFilterId, filterCost, onFilterClick,
 }: ImageControlsProps) => (
   <div className={`w-full max-w-xs ${!hasImage ? "opacity-50 pointer-events-none" : ""}`}>
@@ -42,7 +48,12 @@ const ImageControls = ({
           rotation={rotation}
           onScaleChange={onScaleChange}
           onRotate={onRotate}
+          onExpand={onExpand}
+          onUpscale={onUpscale}
           disabled={!hasImage}
+          isHD={isHD}
+          upscaleCost={upscaleCost}
+          isUpscaling={isUpscaling}
         />
       </TabsContent>
 

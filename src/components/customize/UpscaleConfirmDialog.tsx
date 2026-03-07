@@ -1,0 +1,85 @@
+import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+interface UpscaleConfirmDialogProps {
+  balance: number;
+  cost: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+}
+
+const UpscaleConfirmDialog = ({
+  balance,
+  cost,
+  open,
+  onOpenChange,
+  onConfirm,
+}: UpscaleConfirmDialogProps) => {
+  const hasEnough = balance >= cost;
+  const remaining = balance - cost;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xs rounded-xl">
+        <DialogHeader className="items-center text-center">
+          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
+            ✨
+          </div>
+          <DialogTitle className="text-base">Upscale IA</DialogTitle>
+          <DialogDescription className="text-sm">
+            Aumentar resolução em 4x usando inteligência artificial
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2 text-sm px-1">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Custo</span>
+            <span className="font-medium">🪙 {cost}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Seu saldo</span>
+            <span className="font-medium">🪙 {balance}</span>
+          </div>
+          {hasEnough && (
+            <div className="flex justify-between border-t pt-2">
+              <span className="text-muted-foreground">Saldo após</span>
+              <span className="font-medium">🪙 {remaining}</span>
+            </div>
+          )}
+        </div>
+
+        {!hasEnough ? (
+          <div className="text-center space-y-2">
+            <p className="text-sm text-destructive font-medium">Saldo insuficiente</p>
+            <Button asChild size="sm" className="w-full">
+              <Link to="/coins">Comprar moedas</Link>
+            </Button>
+          </div>
+        ) : (
+          <DialogFooter className="flex-row gap-2 sm:flex-row">
+            <DialogClose asChild>
+              <Button variant="outline" size="sm" className="flex-1">
+                Cancelar
+              </Button>
+            </DialogClose>
+            <Button size="sm" className="flex-1" onClick={onConfirm}>
+              Aplicar upscale
+            </Button>
+          </DialogFooter>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default UpscaleConfirmDialog;
