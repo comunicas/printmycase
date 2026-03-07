@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const origin = req.headers.get("origin") || req.headers.get("referer") || "https://artiscase.com.br";
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "https://studio.artiscase.com";
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
     const shippingValue = shipping_cents ? Number(shipping_cents) : 0;
     const totalCents = product.price_cents + shippingValue;
