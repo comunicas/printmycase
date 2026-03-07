@@ -1,13 +1,14 @@
-import { Truck } from "lucide-react";
+import { Truck, Coins } from "lucide-react";
 import { formatPrice } from "@/lib/types";
 
 interface OrderSummaryProps {
   productPriceCents: number;
   shippingCents: number;
   hasShipping: boolean;
+  aiFilterApplied?: boolean;
 }
 
-const OrderSummary = ({ productPriceCents, shippingCents, hasShipping }: OrderSummaryProps) => {
+const OrderSummary = ({ productPriceCents, shippingCents, hasShipping, aiFilterApplied }: OrderSummaryProps) => {
   const totalCents = productPriceCents + shippingCents;
 
   return (
@@ -24,6 +25,12 @@ const OrderSummary = ({ productPriceCents, shippingCents, hasShipping }: OrderSu
           <span className="text-muted-foreground">Frete</span>
           <span>{hasShipping ? formatPrice(shippingCents / 100) : "—"}</span>
         </div>
+        {aiFilterApplied && (
+          <div className="flex items-center gap-1.5 text-muted-foreground pt-1">
+            <Coins className="w-3.5 h-3.5 text-amber-500" />
+            <span className="text-xs">Filtro IA aplicado (coins debitados)</span>
+          </div>
+        )}
         <div className="flex justify-between font-semibold text-foreground border-t pt-1">
           <span>Total</span>
           <span>{hasShipping ? formatPrice(totalCents / 100) : "—"}</span>
