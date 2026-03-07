@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter } from "@/lib/customize-types";
-import { compressImage, renderSnapshot } from "@/lib/image-utils";
+import { compressImage, compressForAI, urlToDataUrl, renderSnapshot } from "@/lib/image-utils";
 import { useCoins } from "@/hooks/useCoins";
 import { useCoinSettings } from "@/hooks/useCoinSettings";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";
@@ -50,6 +50,7 @@ const Customize = () => {
   const [filters, setFilters] = useState<AiFilter[]>([]);
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
+  const [processingMsg, setProcessingMsg] = useState<string | null>(null);
   const { balance: coinBalance, refresh: refreshCoins } = useCoins();
   const { getSetting } = useCoinSettings();
   const aiFilterCost = getSetting("ai_filter_cost", 10);
@@ -221,11 +222,14 @@ const Customize = () => {
     setPendingFilterId(null);
     const sourceImage = originalImage || image;
     setApplyingFilterId(filterId);
+    setProcessingMsg("Enviando imagem...");
     try {
+      const compressedSource = await compressForAI(sourceImage);
+      setProcessingMsg("Aplicando filtro IA...");
       const { data, error } = await supabase.functions.invoke("apply-ai-filter", {
-        body: { imageBase64: sourceImage, filterId },
+        body: { imageBase64: compressedSource, filterId },
       });
-      if (error || !data?.image) {
+      if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
         const errorMsg = data?.error || "Tente novamente.";
         toast({
@@ -236,15 +240,29 @@ const Customize = () => {
         if (isInsufficientCoins) navigate("/coins");
         return;
       }
+      setProcessingMsg("Finalizando...");
+      // Prefer URL response, fallback to base64 for backward compat
+      let resultImage: string;
+      if (data.imageUrl) {
+        try {
+          resultImage = await urlToDataUrl(data.imageUrl);
+        } catch {
+          // Fallback: use URL directly
+          resultImage = data.imageUrl;
+        }
+      } else {
+        resultImage = data.image;
+      }
       if (!originalImage) setOriginalImage(image);
-      setImage(data.image);
-      setFilteredImage(data.image);
+      setImage(resultImage);
+      setFilteredImage(resultImage);
       setActiveFilterId(filterId);
       refreshCoins();
     } catch {
       toast({ title: "Erro ao aplicar filtro", variant: "destructive" });
     } finally {
       setApplyingFilterId(null);
+      setProcessingMsg(null);
     }
   };
 
@@ -257,12 +275,15 @@ const Customize = () => {
     if (!image) return;
     setShowUpscaleDialog(false);
     setIsUpscaling(true);
+    setProcessingMsg("Enviando imagem...");
     try {
       const sourceImage = originalImage || image;
+      const compressedSource = await compressForAI(sourceImage);
+      setProcessingMsg("Melhorando resolução...");
       const { data, error } = await supabase.functions.invoke("upscale-image", {
-        body: { imageBase64: sourceImage },
+        body: { imageBase64: compressedSource },
       });
-      if (error || !data?.image) {
+      if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
         const errorMsg = data?.error || "Tente novamente.";
         toast({
@@ -273,8 +294,20 @@ const Customize = () => {
         if (isInsufficientCoins) navigate("/coins");
         return;
       }
-      setImage(data.image);
-      setOriginalImage(data.image);
+      setProcessingMsg("Finalizando...");
+      // Prefer URL response, fallback to base64
+      let resultImage: string;
+      if (data.imageUrl) {
+        try {
+          resultImage = await urlToDataUrl(data.imageUrl);
+        } catch {
+          resultImage = data.imageUrl;
+        }
+      } else {
+        resultImage = data.image;
+      }
+      setImage(resultImage);
+      setOriginalImage(resultImage);
       if (data.width && data.height) {
         setImageResolution({ w: data.width, h: data.height });
       }
@@ -285,6 +318,7 @@ const Customize = () => {
       toast({ title: "Erro no upscale", variant: "destructive" });
     } finally {
       setIsUpscaling(false);
+      setProcessingMsg(null);
     }
   };
 
@@ -359,7 +393,7 @@ const Customize = () => {
         <PhonePreview
           image={image} scale={scale} position={position} rotation={rotation}
           onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload}
-          imageResolution={imageResolution} isProcessing={isProcessing}
+          imageResolution={imageResolution} isProcessing={isProcessing} processingMessage={processingMsg || undefined}
           onUpscaleClick={!isHD && image ? handleUpscaleClick : undefined}
         />
 

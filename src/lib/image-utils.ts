@@ -28,6 +28,53 @@ export function compressImage(
   });
 }
 
+/** Compress image with smaller limits optimized for AI processing (filters/upscale) */
+export function compressForAI(
+  dataUrl: string,
+  maxW = 800,
+  maxH = 1600,
+  quality = 0.80
+): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const { naturalWidth: w, naturalHeight: h } = img;
+      if (w <= maxW && h <= maxH) {
+        resolve(dataUrl);
+        return;
+      }
+      const ratio = Math.min(maxW / w, maxH / h);
+      const nw = Math.round(w * ratio);
+      const nh = Math.round(h * ratio);
+      const canvas = document.createElement("canvas");
+      canvas.width = nw;
+      canvas.height = nh;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, nw, nh);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
+/** Load an image URL and return as a data URL (for Fal.ai temporary URLs) */
+export function urlToDataUrl(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/jpeg", 0.92));
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = url;
+  });
+}
+
 export function renderSnapshot(
   imgSrc: string,
   scale: number,
@@ -37,6 +84,7 @@ export function renderSnapshot(
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new window.Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = PHONE_W;

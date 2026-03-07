@@ -92,7 +92,8 @@ Deno.serve(async (req) => {
 
     if (!falResponse.ok) {
       const errText = await falResponse.text();
-      console.error("Fal.ai upscale error:", errText);
+      const sanitizedErr = errText.length > 500 ? errText.substring(0, 500) + "...[truncated]" : errText;
+      console.error("Fal.ai upscale error:", sanitizedErr);
       return new Response(JSON.stringify({ error: "Erro no upscale de IA" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -112,19 +113,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch image and convert to base64
-    const imgResponse = await fetch(outputUrl);
-    const imgBuffer = await imgResponse.arrayBuffer();
-    const bytes = new Uint8Array(imgBuffer);
-    let binary = "";
-    const chunkSize = 8192;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-    }
-    const base64 = btoa(binary);
-    const contentType = imgResponse.headers.get("content-type") || "image/png";
-    const resultBase64 = `data:${contentType};base64,${base64}`;
-
     // Deduct coins
     await serviceClient
       .from("coin_transactions")
@@ -136,8 +124,9 @@ Deno.serve(async (req) => {
         description: "Upscale IA aplicado",
       });
 
+    // Return URL directly instead of downloading + converting to base64
     return new Response(JSON.stringify({
-      image: resultBase64,
+      imageUrl: outputUrl,
       width: outputWidth,
       height: outputHeight,
       coinsUsed: UPSCALE_COST,
@@ -145,7 +134,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("upscale-image error:", err);
+    console.error("upscale-image error:", err?.message || "unknown");
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
