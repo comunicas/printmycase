@@ -1,23 +1,35 @@
 
 
-## Ajustar overlay gradient do hero
+## Comparar com original e reverter filtro
 
-A imagem atual já tem tons roxos que combinam com a marca. O overlay pode ser refinado para realçar a imagem enquanto mantém a legibilidade.
+Quando o usuário aplica um filtro IA, adicionar duas funcionalidades:
 
-### Mudanças em `src/pages/Landing.tsx` (linha 55)
+### 1. Botão "Segurar para comparar" (press-and-hold)
 
-**De:**
+Um botão que aparece **somente quando há um filtro ativo** (`activeFilterId !== null`). Enquanto o usuário **pressiona e segura**, o `PhonePreview` mostra a `originalImage`. Ao soltar, volta para a imagem filtrada.
+
+- Ícone: `Eye` do lucide-react
+- Posição: na barra de filtros (`AiFiltersList`), ao lado do texto de custo
+- Implementação: `onPointerDown` → `setImage(originalImage)`, `onPointerUp/onPointerLeave` → `setImage(filteredImage)`
+
+### 2. Botão "Remover filtro" (já existe parcialmente)
+
+Clicar no filtro ativo já reverte para o original (linha existente em `handleFilterClick`). Mas isso não é óbvio. Vamos adicionar um **botão explícito "Remover filtro"** com ícone `X` que aparece quando `activeFilterId !== null`.
+
+### Mudanças por arquivo
+
+| Arquivo | Mudança |
+|---------|---------|
+| `Customize.tsx` | Novo state `previewImage` para alternar entre original/filtrado no hold; funções `handleCompareStart`/`handleCompareEnd` |
+| `AiFiltersList.tsx` | Botão "Comparar" (press-hold) + botão "Remover" quando filtro ativo |
+| `ImageControls.tsx` | Passar props `onCompareStart`, `onCompareEnd`, `onRemoveFilter`, `hasActiveFilter` |
+
+### UX
+
+Quando filtro IA ativo:
 ```
-bg-gradient-to-b from-black/70 via-black/50 to-black/80
+[👁 Segurar p/ comparar]  [✕ Remover filtro]
 ```
 
-**Para:**
-```
-bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75
-```
-
-Isso reduz levemente a opacidade no topo, adiciona um tom roxo sutil no meio (harmonizando com o fundo roxo da imagem), e mantém a base escura para contraste com a próxima seção.
-
-Também ajustar o radial glow (linha 57-59) para aumentar levemente a intensidade:
-- Opacidade de `0.35` → `0.40`
+O hold funciona tanto em touch (mobile) quanto mouse (desktop) via `onPointerDown`/`onPointerUp`.
 
