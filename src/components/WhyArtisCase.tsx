@@ -21,7 +21,7 @@ const features = [
   {
     icon: Truck,
     title: "Entrega Rápida",
-    desc: "Produção em até 48h com embalagem reforçada. Frete acessível para todo o Sudeste.",
+    desc: "Produção em até 48h com embalagem reforçada.",
   },
 ];
 
