@@ -340,7 +340,7 @@ const Customize = () => {
         onBack={() => navigate(product ? `/product/${product.slug}` : "/catalog")}
       />
 
-      <main className="flex-1 flex flex-col items-center justify-center gap-3 px-4 overflow-hidden">
+      <main className="flex-1 flex flex-col items-center justify-center gap-2 lg:gap-3 px-4 overflow-hidden">
         <PhonePreview
           image={image} scale={scale} position={position} rotation={rotation}
           onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload}
