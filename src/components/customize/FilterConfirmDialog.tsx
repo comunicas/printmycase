@@ -14,18 +14,16 @@ import type { AiFilter } from "@/lib/customize-types";
 interface FilterConfirmDialogProps {
   filter: AiFilter | null;
   balance: number;
-  cost?: number;
+  cost: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 }
 
-const FILTER_COST = 10;
-
 const FilterConfirmDialog = ({
   filter,
   balance,
-  cost = FILTER_COST,
+  cost,
   open,
   onOpenChange,
   onConfirm,

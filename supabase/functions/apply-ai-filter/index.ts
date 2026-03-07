@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -46,12 +45,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch filter prompt using service role
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Fetch filter
     const { data: filter, error: filterError } = await serviceClient
       .from("ai_filters")
       .select("prompt, model_url, style_image_url")
@@ -66,8 +65,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Fetch ai_filter_cost from coin_settings
+    const { data: costSetting } = await serviceClient
+      .from("coin_settings")
+      .select("value")
+      .eq("key", "ai_filter_cost")
+      .single();
+    const AI_FILTER_COST = costSetting?.value ?? 10;
+
     // Check coin balance
-    const AI_FILTER_COST = 10;
     const { data: balanceData } = await serviceClient.rpc("get_coin_balance", { _user_id: userId });
     const coinBalance = (balanceData as number) ?? 0;
     if (coinBalance < AI_FILTER_COST) {
@@ -85,7 +91,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Call Fal.ai API
+    // Build Fal.ai request body
     const modelUrl = filter.model_url || "fal-ai/flux/dev/image-to-image";
     const isStyleTransfer = modelUrl.includes("style-transfer");
     const isPhotographyEffects = modelUrl.includes("photography-effects");
@@ -94,16 +100,9 @@ Deno.serve(async (req) => {
     let falBody: Record<string, unknown>;
 
     if (isLightingRestoration) {
-      falBody = {
-        image_urls: [imageBase64],
-        image_size: { width: 720, height: 1280 },
-      };
+      falBody = { image_urls: [imageBase64], image_size: { width: 720, height: 1280 } };
     } else if (isPhotographyEffects) {
-      falBody = {
-        image_url: imageBase64,
-        effect_type: filter.prompt,
-        aspect_ratio: { ratio: "9:16" },
-      };
+      falBody = { image_url: imageBase64, effect_type: filter.prompt, aspect_ratio: { ratio: "9:16" } };
     } else if (isStyleTransfer) {
       falBody = filter.style_image_url
         ? { image_url: imageBase64, style_reference_image_url: filter.style_image_url, aspect_ratio: { ratio: "9:16" } }
@@ -124,17 +123,13 @@ Deno.serve(async (req) => {
 
     const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
       method: "POST",
-      headers: {
-        Authorization: `Key ${falApiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify(falBody),
     });
 
     if (!falResponse.ok) {
       const errText = await falResponse.text();
       console.error("Fal.ai error:", errText);
-      // Parse Fal.ai error for user-friendly messages
       let userError = "Erro no processamento de IA";
       try {
         const parsed = JSON.parse(errText);
@@ -142,7 +137,7 @@ Deno.serve(async (req) => {
         if (detail?.type === "image_too_small") {
           userError = `Imagem muito pequena. Dimensões mínimas: ${detail.ctx?.min_width || 256}x${detail.ctx?.min_height || 256}px.`;
         }
-      } catch { /* ignore parse errors */ }
+      } catch { /* ignore */ }
       return new Response(JSON.stringify({ error: userError }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -150,11 +145,7 @@ Deno.serve(async (req) => {
     }
 
     const falResult = await falResponse.json();
-
     const outputImage = falResult?.images?.[0];
-    console.log("Fal.ai response:", JSON.stringify({ imageCount: falResult?.images?.length, width: outputImage?.width, height: outputImage?.height, content_type: outputImage?.content_type }));
-
-    // Fal.ai returns { images: [{ url, content_type }] }
     const outputUrl = outputImage?.url;
     if (!outputUrl) {
       return new Response(JSON.stringify({ error: "No image returned from AI" }), {
@@ -163,7 +154,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch the image and convert to base64
+    // Fetch image and convert to base64
     const imgResponse = await fetch(outputUrl);
     const imgBuffer = await imgResponse.arrayBuffer();
     const bytes = new Uint8Array(imgBuffer);
@@ -174,10 +165,9 @@ Deno.serve(async (req) => {
     }
     const base64 = btoa(binary);
     const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
-    console.log("Fetched image:", JSON.stringify({ bytes: imgBuffer.byteLength, contentType }));
     const resultBase64 = `data:${contentType};base64,${base64}`;
 
-    // Deduct coins after successful processing
+    // Deduct coins
     await serviceClient
       .from("coin_transactions")
       .insert({
