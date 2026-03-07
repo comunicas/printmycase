@@ -1,37 +1,35 @@
 
 
-## Verificação do Webhook Stripe Live
+## Diagnóstico: Seções afetadas pelo `bg-black`
 
-### O que o código espera
+A mudança de `bg-background` para `bg-black` no wrapper da Landing corrigiu a linha branca do header, mas afetou seções que **não definem seu próprio background** e dependiam do fundo claro herdado do pai. Aqui está o mapa completo:
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### Seções que **JÁ TÊM** background próprio (não afetadas):
+- **Hero** — gradientes escuros próprios
+- **AiCoinsSection** — `bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950`
+- **WhyArtisCase** — parallax bg com overlay `bg-black/75`
+- **CTA final** — `bg-primary`
 
-### Como verificar (manual no Stripe Dashboard)
+### Seções **AFETADAS** (herdavam `bg-background` claro, agora herdam `bg-black`):
+1. **"Como funciona"** (linha 113) — `py-16 px-5` sem bg → texto e cards escuros sobre fundo preto
+2. **"Modelos em Destaque"** (linha 149) — `py-16 px-5` sem bg → idem
+3. **"Depoimentos"** (linha 184) — `bg-muted/30` → transparência sobre preto em vez de sobre branco
+4. **FAQ** — `bg-muted/30` → idem
+5. **Footer** — `bg-card` → cor do card pode estar ok, mas `border-t` pode parecer diferente
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+### Correção proposta
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+Em vez de `bg-black` no wrapper inteiro, a solução correta é manter `bg-background` no wrapper e aplicar `bg-black` apenas na área do hero. Isso restaura todas as seções claras sem reintroduzir a linha branca:
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+**`src/pages/Landing.tsx`**:
+1. Reverter wrapper para `bg-background`
+2. Na section do hero, adicionar um `<div className="bg-black">` envolvendo apenas o hero + header, ou adicionar `bg-black` diretamente na section do hero (que já tem `min-h-[100svh] -mt-[56px]`)
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+Concretamente:
+- Linha 43: voltar para `className="min-h-screen bg-background flex flex-col"`
+- O hero (linha 47) já cobre 100svh com overlays escuros, e o header com `-mt-[56px]` fica dentro dele. A linha branca aparecia porque o header sticky ficava **fora** do hero. A solução é adicionar um wrapper `bg-black` apenas ao redor do header + hero, não na página inteira.
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+Abordagem final:
+- Wrapper da página: `bg-background`
+- Envolver `<AppHeader>` + hero section num `<div className="bg-black">` para que o header transparente tenha fundo preto atrás dele, sem afetar o resto da página.
 
