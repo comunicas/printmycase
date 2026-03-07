@@ -30,7 +30,7 @@ interface DbOrder {
   status: string;
   created_at: string;
   stripe_session_id: string | null;
-  customization_data?: Record<string, any> | null;
+  customization_data?: any | null;
   product_name?: string;
   product_image?: string;
 }
