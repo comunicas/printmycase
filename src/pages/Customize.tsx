@@ -16,6 +16,7 @@ import ImageControls from "@/components/customize/ImageControls";
 import ContinueBar from "@/components/customize/ContinueBar";
 import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
 import UpscaleConfirmDialog from "@/components/customize/UpscaleConfirmDialog";
+import { ToastAction } from "@/components/ui/toast";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -172,9 +173,18 @@ const Customize = () => {
         const h = img.naturalHeight;
         setImageResolution({ w, h });
         if (w < 400 || h < 800) {
-          toast({ title: "Resolução muito baixa", description: `${w}×${h}px — a impressão pode ficar pixelada. Recomendado: 827×1772px.`, variant: "destructive" });
+          toast({
+            title: "Qualidade baixa para impressão",
+            description: `${w}×${h}px — use o Upscale IA para melhorar.`,
+            variant: "destructive",
+            action: <ToastAction altText="Upscale IA" onClick={() => setShowUpscaleDialog(true)}>✨ Upscale IA</ToastAction>,
+          });
         } else if (w < 800 || h < 1600) {
-          toast({ title: "Resolução baixa", description: `${w}×${h}px — recomendado 827×1772px para melhor qualidade.` });
+          toast({
+            title: "Qualidade pode melhorar",
+            description: `${w}×${h}px — use o Upscale IA para qualidade de impressão ideal.`,
+            action: <ToastAction altText="Upscale IA" onClick={() => setShowUpscaleDialog(true)}>✨ Upscale IA</ToastAction>,
+          });
         }
         const { url, compressed } = await compressImage(originalDataUrl);
         setImage(url);
@@ -194,7 +204,12 @@ const Customize = () => {
       return;
     }
     if (imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
-      toast({ title: "Imagem muito pequena", description: "Use uma imagem com pelo menos 256×256px para aplicar filtros IA.", variant: "destructive" });
+      toast({
+        title: "Imagem pequena demais para filtros",
+        description: "Mín. 256×256px. Use o Upscale IA primeiro para aumentar a resolução.",
+        variant: "destructive",
+        action: <ToastAction altText="Upscale IA" onClick={() => setShowUpscaleDialog(true)}>✨ Upscale IA</ToastAction>,
+      });
       return;
     }
     setPendingFilterId(filterId);
@@ -345,6 +360,7 @@ const Customize = () => {
           image={image} scale={scale} position={position} rotation={rotation}
           onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload}
           imageResolution={imageResolution} isProcessing={isProcessing}
+          onUpscaleClick={!isHD && image ? handleUpscaleClick : undefined}
         />
 
         <ImageControls
