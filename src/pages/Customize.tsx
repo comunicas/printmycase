@@ -113,14 +113,9 @@ const Customize = () => {
     const phoneRatio = PHONE_W / PHONE_H; // ~0.489
     const imgRatio = imageResolution.w / imageResolution.h;
     // Calculate minimum scale to fill the frame
-    let newScale: number;
-    if (imgRatio > phoneRatio) {
-      // Image is wider than phone — height is the constraint
-      newScale = Math.ceil((phoneRatio / imgRatio) * 100);
-    } else {
-      // Image is taller or same — width is the constraint
-      newScale = 100;
-    }
+    let newScale: number = imgRatio > phoneRatio
+      ? Math.ceil((imgRatio / phoneRatio) * 100)
+      : 100;
     newScale = Math.max(50, Math.min(200, newScale));
     setScale(newScale);
     setPosition({ x: 50, y: 50 });
