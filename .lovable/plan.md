@@ -1,23 +1,45 @@
 
 
-## Ajustar overlay gradient do hero
+## Plano: Badge de Pedidos Pendentes + Limpeza Automática de Rascunhos
 
-A imagem atual já tem tons roxos que combinam com a marca. O overlay pode ser refinado para realçar a imagem enquanto mantém a legibilidade.
+### 1. Badge no UserMenu
 
-### Mudanças em `src/pages/Landing.tsx` (linha 55)
+Adicionar um hook `usePendingCount` que faz uma query leve (`select count`) na tabela `pending_checkouts` para o usuário logado. No `UserMenu.tsx`:
 
-**De:**
+- Importar o hook e obter a contagem
+- Exibir um badge (bolinha vermelha com número) sobre o avatar do usuário e ao lado do item "Meus Pedidos" no dropdown
+- Badge só aparece quando count > 0
+- Posição: absoluta sobre o botão trigger (canto superior direito do avatar)
+
+**Novo hook** `src/hooks/usePendingCount.ts`:
+```typescript
+// SELECT count(*) from pending_checkouts where user_id = auth.uid()
+// Retorna { count: number, loading: boolean }
 ```
-bg-gradient-to-b from-black/70 via-black/50 to-black/80
-```
 
-**Para:**
-```
-bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75
-```
+**UserMenu.tsx changes**:
+- Wrapper `relative` no trigger button
+- Badge `absolute -top-1 -right-1` com count
+- Badge ao lado de "Meus Pedidos" no dropdown
 
-Isso reduz levemente a opacidade no topo, adiciona um tom roxo sutil no meio (harmonizando com o fundo roxo da imagem), e mantém a base escura para contraste com a próxima seção.
+### 2. Scheduled Function para Limpeza (30 dias)
 
-Também ajustar o radial glow (linha 57-59) para aumentar levemente a intensidade:
-- Opacidade de `0.35` → `0.40`
+**Nova Edge Function** `supabase/functions/cleanup-pending-checkouts/index.ts`:
+- Usa `supabaseAdmin` (service role) para deletar registros com `updated_at < now() - interval '30 days'`
+- Também remove os arquivos do bucket `customizations` associados (original_image_path e edited_image_path)
+- `verify_jwt = false` no config.toml
+
+**Cron job** via `pg_cron` + `pg_net`:
+- Schedule diário (`0 3 * * *` — 3h da manhã)
+- Chama a edge function via `net.http_post`
+
+### Arquivos alterados/criados
+
+| Arquivo | Ação |
+|---|---|
+| `src/hooks/usePendingCount.ts` | Criar — hook de contagem |
+| `src/components/UserMenu.tsx` | Editar — adicionar badge |
+| `supabase/functions/cleanup-pending-checkouts/index.ts` | Criar — edge function de limpeza |
+| `supabase/config.toml` | Editar — adicionar entry da nova function |
+| SQL (insert tool) | Criar cron job via pg_cron |
 
