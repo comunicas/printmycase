@@ -40,8 +40,10 @@ const Landing = () => {
   return (
     <>
       <SeoHead products={featuredProducts} />
-      <div className="min-h-screen bg-black flex flex-col">
-        <AppHeader variant="transparent" />
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="bg-black">
+          <AppHeader variant="transparent" />
+        </div>
 
         <main>
           {/* Hero — Dark Parallax */}
