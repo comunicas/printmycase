@@ -1,22 +1,37 @@
 
 
-## Linha branca no topo do header
+## Verificação do Webhook Stripe Live
 
-### Causa
+### O que o código espera
 
-Na `Landing.tsx` (linha 43), o container principal tem a classe `bg-background`:
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-```
-<div className="min-h-screen bg-background flex flex-col">
-```
+### Como verificar (manual no Stripe Dashboard)
 
-O valor de `--background` no tema claro é `240 4% 95%` (cinza claro). Como o header usa `variant="transparent"` (sem fundo), essa cor de fundo do container aparece como uma linha/faixa clara atrás do header transparente, antes do hero escuro cobrir a área.
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Correção
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-Trocar `bg-background` por `bg-black` no wrapper da Landing, já que toda a página começa com o hero escuro. Isso elimina o contraste visível no topo. As seções abaixo do hero já definem seus próprios backgrounds, então não serão afetadas.
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-**Arquivo**: `src/pages/Landing.tsx` linha 43
-- De: `className="min-h-screen bg-background flex flex-col"`
-- Para: `className="min-h-screen bg-black flex flex-col"`
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
