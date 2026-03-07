@@ -1,36 +1,37 @@
 
 
-## Configurar Cron Job para Limpeza de Rascunhos Abandonados
+## Verificação do Webhook Stripe Live
 
-### Passos de implementação
+### O que o código espera
 
-1. **Habilitar extensões `pg_cron` e `pg_net`** — migration SQL:
-   ```sql
-   CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA extensions;
-   CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
+
+### Como verificar (manual no Stripe Dashboard)
+
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
    ```
-
-2. **Criar o cron job** — SQL direto (não migration, contém anon key):
-   ```sql
-   SELECT cron.schedule(
-     'cleanup-pending-checkouts-hourly',
-     '0 * * * *',
-     $$
-     SELECT net.http_post(
-       url := 'https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/cleanup-pending-checkouts',
-       headers := '{"Content-Type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmc2JzZ3d4eWx2aG53YnBjb2RqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NTg2NzQsImV4cCI6MjA4ODAzNDY3NH0.7iMjARkQzBSND95EPGnnoYWfGqwcchswUbT5TZyu3nk"}'::jsonb,
-       body := '{}'::jsonb
-     ) AS request_id;
-     $$
-   );
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
    ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-3. **Adicionar `cleanup-pending-checkouts` ao `config.toml`** com `verify_jwt = false`
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-### Detalhes técnicos
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-- A edge function `cleanup-pending-checkouts/index.ts` já existe e funciona (deleta registros > 30 dias + arquivos do bucket `customizations`)
-- O cron roda a cada hora inteira (minuto 0)
-- Extensões são criadas no schema `extensions` (padrão Supabase)
-- Nenhuma alteração frontend necessária
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
