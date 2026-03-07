@@ -1,23 +1,22 @@
 
 
-## Ajustar overlay gradient do hero
+## Atualizar referências de domínio antigo no código
 
-A imagem atual já tem tons roxos que combinam com a marca. O overlay pode ser refinado para realçar a imagem enquanto mantém a legibilidade.
+Encontrei referências ao domínio antigo `artiscase-v2.lovable.app` que precisam apontar para `studio.artiscase.com`. As referências a `studio.artiscase.com` já estão corretas.
 
-### Mudanças em `src/pages/Landing.tsx` (linha 55)
+### Arquivos que precisam de alteração
 
-**De:**
-```
-bg-gradient-to-b from-black/70 via-black/50 to-black/80
-```
+| Arquivo | Linha | Atual | Novo |
+|---------|-------|-------|------|
+| `src/components/SeoHead.tsx` | 6 | fallback `artiscase-v2.lovable.app` | `studio.artiscase.com` |
+| `supabase/functions/notify-order-status/index.ts` | 200 | fallback `artiscase-v2.lovable.app` | `studio.artiscase.com` |
+| `supabase/functions/auth-email-hook/index.ts` | 38, 48 | `SITE_NAME = "artiscase-v2"`, `SAMPLE_PROJECT_URL = artiscase-v2.lovable.app` | `"ArtisCase"`, `https://studio.artiscase.com` |
 
-**Para:**
-```
-bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75
-```
+### Arquivos já corretos (sem alteração necessária)
+- `create-checkout/index.ts` — já usa `studio.artiscase.com`
+- `notify-order-status/index.ts` — `SENDER_DOMAIN` e `FROM` já usam `studio.artiscase.com`
+- `auth-email-hook/index.ts` — `SENDER_DOMAIN`, `ROOT_DOMAIN`, `FROM_DOMAIN` já corretos
 
-Isso reduz levemente a opacidade no topo, adiciona um tom roxo sutil no meio (harmonizando com o fundo roxo da imagem), e mantém a base escura para contraste com a próxima seção.
-
-Também ajustar o radial glow (linha 57-59) para aumentar levemente a intensidade:
-- Opacidade de `0.35` → `0.40`
+### Resumo
+3 arquivos, 4 linhas a alterar — apenas substituição de fallbacks com o domínio antigo do Lovable.
 
