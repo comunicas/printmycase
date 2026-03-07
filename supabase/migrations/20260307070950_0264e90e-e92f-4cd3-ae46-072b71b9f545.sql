@@ -1,0 +1,1 @@
+UPDATE public.products SET stripe_product_id = NULL, stripe_price_id = NULL WHERE stripe_product_id IS NOT NULL;
