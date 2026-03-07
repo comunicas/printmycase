@@ -244,6 +244,39 @@ export type Database = {
           },
         ]
       }
+      pending_checkouts: {
+        Row: {
+          created_at: string
+          customization_data: Json
+          edited_image_path: string | null
+          id: string
+          original_image_path: string | null
+          product_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customization_data: Json
+          edited_image_path?: string | null
+          id?: string
+          original_image_path?: string | null
+          product_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customization_data?: Json
+          edited_image_path?: string | null
+          id?: string
+          original_image_path?: string | null
+          product_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean | null
