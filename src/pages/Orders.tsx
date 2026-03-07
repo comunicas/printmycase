@@ -9,6 +9,7 @@ import { resolveProductInfo } from "@/lib/products";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import PendingCheckoutCards from "@/components/PendingCheckoutCards";
 
 type OrderRow = {
   id: string;
@@ -113,6 +114,13 @@ const Orders = () => {
 
       <main className="flex-1 max-w-3xl mx-auto w-full p-5 space-y-6">
         <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">Meus Pedidos</h1>
+          <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/catalog")}>
+            <ArrowLeft className="w-4 h-4" /> Catálogo
+          </Button>
+        </div>
+
+        <PendingCheckoutCards />
           <h1 className="text-2xl font-bold text-foreground">Meus Pedidos</h1>
           <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/catalog")}>
             <ArrowLeft className="w-4 h-4" /> Catálogo
