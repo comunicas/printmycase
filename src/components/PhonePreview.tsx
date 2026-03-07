@@ -12,12 +12,13 @@ interface PhonePreviewProps {
   
   imageResolution?: { w: number; h: number } | null;
   isProcessing?: boolean;
+  processingMessage?: string;
   onUpscaleClick?: () => void;
 }
 
 const CROSSFADE_MS = 200;
 
-const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, onUpscaleClick }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -266,7 +267,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
           {isProcessing && (
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <span className="text-xs font-medium text-muted-foreground mt-2">Processando...</span>
+              <span className="text-xs font-medium text-muted-foreground mt-2">{processingMessage || "Processando..."}</span>
             </div>
           )}
         </div>
