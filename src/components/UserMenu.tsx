@@ -10,10 +10,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { usePendingCount } from "@/hooks/usePendingCount";
 
 const UserMenu = ({ transparent = false }: { transparent?: boolean }) => {
   const { user, profile, signOut } = useAuth();
   const { isAdmin } = useAdmin();
+  const pendingCount = usePendingCount();
   const navigate = useNavigate();
 
   if (!user) {
@@ -30,7 +32,7 @@ const UserMenu = ({ transparent = false }: { transparent?: boolean }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full">
+        <Button variant="ghost" size="icon" className="rounded-full relative">
           {profile?.avatar_url ? (
             <img
               src={profile.avatar_url}
@@ -40,6 +42,11 @@ const UserMenu = ({ transparent = false }: { transparent?: boolean }) => {
           ) : (
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
               {initials}
+            </span>
+          )}
+          {pendingCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+              {pendingCount}
             </span>
           )}
         </Button>
@@ -57,6 +64,11 @@ const UserMenu = ({ transparent = false }: { transparent?: boolean }) => {
         <DropdownMenuItem onClick={() => navigate("/orders")}>
           <ShoppingBag className="mr-2 h-4 w-4" />
           Meus Pedidos
+          {pendingCount > 0 && (
+            <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+              {pendingCount}
+            </span>
+          )}
         </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem onClick={() => navigate("/admin")}>
