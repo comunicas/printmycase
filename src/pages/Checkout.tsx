@@ -244,6 +244,7 @@ const Checkout = () => {
           productPriceCents={productPriceCents}
           shippingCents={shippingCents}
           hasShipping={!!shipping}
+          aiFilterApplied={!!customization?.activeFilter}
         />
 
         <Button
@@ -257,6 +258,8 @@ const Checkout = () => {
             <>Finalizar Pedido <ArrowRight className="w-4 h-4" /></>
           )}
         </Button>
+
+        <PaymentBadges />
       </main>
     </div>
   );

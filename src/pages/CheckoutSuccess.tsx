@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle, ShoppingBag, ArrowLeft, LogIn, Clock, Package } from "lucide-react";
+import { CheckCircle, ShoppingBag, ArrowLeft, LogIn, Clock, Package, CalendarDays, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import AppHeader from "@/components/AppHeader";
+import PaymentBadges from "@/components/PaymentBadges";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
 import logoArtisCase from "@/assets/logo-artiscase.png";
+
+const formatDate = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
+};
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
@@ -21,6 +27,10 @@ const CheckoutSuccess = () => {
     productName: string;
     productImage?: string;
     totalCents: number;
+    productCents: number;
+    shippingCents: number;
+    createdAt: string;
+    aiFilterApplied: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -29,7 +39,7 @@ const CheckoutSuccess = () => {
     const fetchOrder = async () => {
       const { data: order } = await supabase
         .from("orders")
-        .select("product_id, total_cents")
+        .select("product_id, total_cents, shipping_cents, created_at, customization_data")
         .eq("stripe_session_id", sessionId)
         .maybeSingle();
 
@@ -37,11 +47,17 @@ const CheckoutSuccess = () => {
 
       const nameMap = await resolveProductInfo([order.product_id]);
       const info = nameMap.get(order.product_id);
+      const cd = order.customization_data as any;
+      const shippingCents = order.shipping_cents ?? 0;
 
       setOrderInfo({
         productName: info?.name ?? order.product_id,
         productImage: info?.image,
         totalCents: order.total_cents,
+        productCents: order.total_cents - shippingCents,
+        shippingCents,
+        createdAt: order.created_at,
+        aiFilterApplied: !!cd?.activeFilter,
       });
     };
 
@@ -77,7 +93,8 @@ const CheckoutSuccess = () => {
               <>
                 <Separator />
                 <div className="space-y-3 text-left">
-                <div className="flex items-start gap-3">
+                  {/* Product */}
+                  <div className="flex items-start gap-3">
                     {orderInfo.productImage ? (
                       <img
                         src={orderInfo.productImage}
@@ -92,8 +109,44 @@ const CheckoutSuccess = () => {
                         {orderInfo.productName}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {formatPrice(orderInfo.totalCents / 100)}
+                        {formatPrice(orderInfo.productCents / 100)}
                       </p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Price breakdown */}
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Produto</span>
+                      <span>{formatPrice(orderInfo.productCents / 100)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Frete</span>
+                      <span>{orderInfo.shippingCents > 0 ? formatPrice(orderInfo.shippingCents / 100) : "—"}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-foreground border-t pt-1">
+                      <span>Total</span>
+                      <span>{formatPrice(orderInfo.totalCents / 100)}</span>
+                    </div>
+                  </div>
+
+                  {orderInfo.aiFilterApplied && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Coins className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="text-xs">Filtro IA aplicado (coins debitados)</span>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  {/* Date & delivery */}
+                  <div className="flex items-start gap-3">
+                    <CalendarDays className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Data do pedido</p>
+                      <p className="text-sm text-muted-foreground">{formatDate(orderInfo.createdAt)}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -136,6 +189,8 @@ const CheckoutSuccess = () => {
                 Voltar ao Catálogo
               </Button>
             </div>
+
+            <PaymentBadges />
           </CardContent>
         </Card>
       </main>
