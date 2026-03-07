@@ -5,7 +5,7 @@ import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULTS, type AiFilter } from "@/lib/customize-types";
+import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter } from "@/lib/customize-types";
 import { compressImage, renderSnapshot } from "@/lib/image-utils";
 import { useCoins } from "@/hooks/useCoins";
 import { useCoinSettings } from "@/hooks/useCoinSettings";
@@ -13,6 +13,7 @@ import CustomizeHeader from "@/components/customize/CustomizeHeader";
 import ImageControls from "@/components/customize/ImageControls";
 import ContinueBar from "@/components/customize/ContinueBar";
 import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
+import UpscaleConfirmDialog from "@/components/customize/UpscaleConfirmDialog";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,15 +36,20 @@ const Customize = () => {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
   const [applyingFilterId, setApplyingFilterId] = useState<string | null>(null);
+  const [isUpscaling, setIsUpscaling] = useState(false);
   const [imageResolution, setImageResolution] = useState<{ w: number; h: number } | null>(null);
   const [scale, setScale] = useState(DEFAULTS.scale);
   const [position, setPosition] = useState(DEFAULTS.position);
   const [rotation, setRotation] = useState(DEFAULTS.rotation);
   const [filters, setFilters] = useState<AiFilter[]>([]);
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
+  const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
   const { balance: coinBalance, refresh: refreshCoins } = useCoins();
   const { getSetting } = useCoinSettings();
   const aiFilterCost = getSetting("ai_filter_cost", 10);
+  const aiUpscaleCost = getSetting("ai_upscale_cost", 5);
+
+  const isHD = !!(imageResolution && imageResolution.w >= 800 && imageResolution.h >= 1600);
 
   // Load AI filters
   useEffect(() => {
@@ -102,6 +108,26 @@ const Customize = () => {
     setRotation((prev) => (prev + 90) % 360);
   }, []);
 
+  const handleExpand = useCallback(() => {
+    if (!imageResolution) return;
+    const phoneRatio = PHONE_W / PHONE_H; // ~0.489
+    const imgRatio = imageResolution.w / imageResolution.h;
+    // Calculate minimum scale to fill the frame
+    let newScale: number;
+    if (imgRatio > phoneRatio) {
+      // Image is wider than phone — height is the constraint
+      newScale = Math.ceil((phoneRatio / imgRatio) * 100);
+    } else {
+      // Image is taller or same — width is the constraint
+      newScale = 100;
+    }
+    newScale = Math.max(50, Math.min(200, newScale));
+    setScale(newScale);
+    setPosition({ x: 50, y: 50 });
+    setRotation(0);
+    toast({ title: "Imagem enquadrada" });
+  }, [imageResolution, toast]);
+
   const handleImageUpload = (file: File) => {
     setImageFileName(file.name);
     setIsCompressing(true);
@@ -132,7 +158,6 @@ const Customize = () => {
 
   const handleFilterClick = (filterId: string) => {
     if (!image || applyingFilterId) return;
-    // Toggle off: no confirmation needed
     if (activeFilterId === filterId) {
       if (originalImage) { setImage(originalImage); setActiveFilterId(null); }
       return;
@@ -176,6 +201,46 @@ const Customize = () => {
     }
   };
 
+  const handleUpscaleClick = () => {
+    if (!image || isUpscaling || isHD) return;
+    setShowUpscaleDialog(true);
+  };
+
+  const handleUpscaleConfirm = async () => {
+    if (!image) return;
+    setShowUpscaleDialog(false);
+    setIsUpscaling(true);
+    try {
+      const sourceImage = originalImage || image;
+      const { data, error } = await supabase.functions.invoke("upscale-image", {
+        body: { imageBase64: sourceImage },
+      });
+      if (error || !data?.image) {
+        const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
+        const errorMsg = data?.error || "Tente novamente.";
+        toast({
+          title: isInsufficientCoins ? "Moedas insuficientes" : "Erro no upscale",
+          description: isInsufficientCoins ? "Compre mais moedas para usar o upscale IA." : errorMsg,
+          variant: "destructive",
+        });
+        if (isInsufficientCoins) navigate("/coins");
+        return;
+      }
+      setImage(data.image);
+      setOriginalImage(data.image);
+      if (data.width && data.height) {
+        setImageResolution({ w: data.width, h: data.height });
+      }
+      setActiveFilterId(null);
+      refreshCoins();
+      toast({ title: "Upscale concluído!", description: `Nova resolução: ${data.width}×${data.height}px` });
+    } catch {
+      toast({ title: "Erro no upscale", variant: "destructive" });
+    } finally {
+      setIsUpscaling(false);
+    }
+  };
+
   const handleContinue = async () => {
     if (!product || !image) return;
     setIsRendering(true);
@@ -200,7 +265,7 @@ const Customize = () => {
   };
 
   const productName = product?.name?.replace("Capa ", "") ?? "iPhone";
-  const isProcessing = isCompressing || isRendering || !!applyingFilterId;
+  const isProcessing = isCompressing || isRendering || !!applyingFilterId || isUpscaling;
 
   if (productLoading) return <LoadingSpinner variant="fullPage" />;
 
@@ -224,6 +289,11 @@ const Customize = () => {
           rotation={rotation}
           onScaleChange={setScale}
           onRotate={handleRotate}
+          onExpand={handleExpand}
+          onUpscale={handleUpscaleClick}
+          isHD={isHD}
+          upscaleCost={aiUpscaleCost}
+          isUpscaling={isUpscaling}
           filters={filters}
           activeFilterId={activeFilterId}
           applyingFilterId={applyingFilterId}
@@ -247,6 +317,14 @@ const Customize = () => {
         open={!!pendingFilterId}
         onOpenChange={(open) => { if (!open) setPendingFilterId(null); }}
         onConfirm={handleFilterConfirm}
+      />
+
+      <UpscaleConfirmDialog
+        balance={coinBalance}
+        cost={aiUpscaleCost}
+        open={showUpscaleDialog}
+        onOpenChange={setShowUpscaleDialog}
+        onConfirm={handleUpscaleConfirm}
       />
     </div>
   );
