@@ -1,56 +1,37 @@
 
 
-## Disponibilizar imagens de customização nos cards de pedidos (Admin)
+## Verificação do Webhook Stripe Live
 
-### Contexto
+### O que o código espera
 
-Cada pedido armazena em `customization_data` (JSON) os campos `original_image_url` e `edited_image_url` — que são **paths** no bucket `customizations` (ex: `userId/original_123.jpg`, `userId/edited_123.jpg`). Atualmente o card do admin não exibe essas imagens.
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Plano
+### Como verificar (manual no Stripe Dashboard)
 
-**1. Criar componente `OrderImagesPreviewer`**
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-Novo componente em `src/components/admin/OrderImagesPreviewer.tsx` que:
-- Recebe `customizationData: Record<string, any> | null`
-- Extrai `original_image_url` e `edited_image_url` (paths)
-- Gera signed URLs via `supabase.storage.from("customizations").createSignedUrl(path, 3600)`
-- Exibe 3 thumbnails lado a lado com labels:
-  - **Original** — imagem original enviada pelo usuário
-  - **Editada** — imagem após ajustes/filtros IA
-  - **Preview** — imagem editada renderizada dentro de um frame de celular (usando as dimensões `PHONE_W`/`PHONE_H` de `customize-types.ts`)
-- Cada thumbnail é clicável e abre um Dialog com a imagem em tamanho maior
-- Inclui botão de link externo para abrir a signed URL em nova aba
-- Mostra skeleton/placeholder enquanto carrega as URLs
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-**2. Integrar no card de pedidos em `Admin.tsx`**
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-- Na seção de orders (linhas 363-418), adicionar `<OrderImagesPreviewer customizationData={order.customization_data} />` dentro de cada card, abaixo do header e acima do tracking input
-- Tipar `customization_data` no `DbOrder` interface (já existe como `Json | null` na tabela)
-- Adicionar `customization_data` ao select de orders no `fetchOrders`
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-**3. Preview com frame do celular**
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-- Reutilizar a lógica de `renderSnapshot` de `src/lib/image-utils.ts` para gerar o preview com frame
-- Extrair `scale`, `position`, `rotation` do `customization_data` para renderizar fielmente
-- Exibir o resultado dentro de um container com borda arredondada simulando o dispositivo
-
-### Dados necessários do `customization_data`
-
-```json
-{
-  "scale": 100,
-  "rotation": 0,
-  "position": { "x": 50, "y": 50 },
-  "activeFilter": null,
-  "original_image_url": "userId/original_123.jpg",  // path no bucket
-  "edited_image_url": "userId/edited_123.jpg"        // path no bucket
-}
-```
-
-### Arquivos modificados/criados
-
-| Arquivo | Ação |
-|---------|------|
-| `src/components/admin/OrderImagesPreviewer.tsx` | Criar |
-| `src/pages/Admin.tsx` | Adicionar campo `customization_data` ao DbOrder e integrar componente |
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
