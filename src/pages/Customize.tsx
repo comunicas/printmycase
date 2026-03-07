@@ -316,7 +316,7 @@ const Customize = () => {
             originalPath,
             editedPath,
           );
-        } catch (e) {
+        } catch {
           // silently ignore persistence failures
         }
       }
