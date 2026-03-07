@@ -1,23 +1,39 @@
 
 
-## Ajustar overlay gradient do hero
+## Corrigir lógica do "Expandir" para cobrir 100% do frame
 
-A imagem atual já tem tons roxos que combinam com a marca. O overlay pode ser refinado para realçar a imagem enquanto mantém a legibilidade.
+### Problema
 
-### Mudanças em `src/pages/Landing.tsx` (linha 55)
+A fórmula atual está **invertida**. Para imagens mais largas que o phone (imgRatio > phoneRatio), ela calcula `phoneRatio / imgRatio * 100`, resultando em um scale **menor** que 100 — o oposto do necessário.
+
+Analisando o rendering no `PhonePreview`, a largura real renderizada da imagem é `scale% × PHONE_W`, e a altura é proporcional ao aspect ratio. Para cobrir 100% do frame:
+
+- **Largura**: `scale >= 100`
+- **Altura**: `scale >= 100 × (imgRatio / phoneRatio)`
+
+Ou seja: `minScale = max(100, ceil(100 × imgRatio / phoneRatio))`
+
+Para uma imagem mais larga, precisamos de **mais** zoom (não menos) para que a altura preencha o frame.
+
+### Mudança
+
+**Arquivo**: `src/pages/Customize.tsx`, função `handleExpand` (linhas 111-129)
 
 **De:**
-```
-bg-gradient-to-b from-black/70 via-black/50 to-black/80
+```js
+if (imgRatio > phoneRatio) {
+  newScale = Math.ceil((phoneRatio / imgRatio) * 100);
+} else {
+  newScale = 100;
+}
 ```
 
 **Para:**
-```
-bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75
+```js
+newScale = imgRatio > phoneRatio
+  ? Math.ceil((imgRatio / phoneRatio) * 100)
+  : 100;
 ```
 
-Isso reduz levemente a opacidade no topo, adiciona um tom roxo sutil no meio (harmonizando com o fundo roxo da imagem), e mantém a base escura para contraste com a próxima seção.
-
-Também ajustar o radial glow (linha 57-59) para aumentar levemente a intensidade:
-- Opacidade de `0.35` → `0.40`
+Uma única inversão de fração. Resultado: imagem sempre cobre 100% do frame, sem bordas vazias.
 
