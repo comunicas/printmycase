@@ -21,8 +21,10 @@ const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading: productLoading } = useProduct(id);
   const { toast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const draftRestored = useRef(false);
+  const { upsert: upsertPending, fetchByProduct: fetchPending, getSignedUrl } = usePendingCheckout();
 
   useEffect(() => {
     if (!productLoading && !product) {
