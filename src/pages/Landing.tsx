@@ -11,7 +11,7 @@ import SeoHead from "@/components/SeoHead";
 import AppHeader from "@/components/AppHeader";
 import ProductCard from "@/components/ProductCard";
 import LoadingSpinner from "@/components/ui/loading-spinner";
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/assets/hero-bg.png";
 import ScrollReveal from "@/components/ScrollReveal";
 import AiCoinsSection from "@/components/AiCoinsSection";
 import WhyArtisCase from "@/components/WhyArtisCase";
@@ -52,10 +52,10 @@ const Landing = () => {
               style={{ backgroundImage: `url(${heroBg})` }} />
             
             {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-purple-950/50 to-black/80" />
             {/* Radial glow */}
-            <div className="absolute inset-0 opacity-60" style={{
-              background: "radial-gradient(ellipse 80% 60% at 50% 40%, hsl(265 83% 57% / 0.40), transparent 70%)"
+            <div className="absolute inset-0 opacity-40" style={{
+              background: "radial-gradient(ellipse 80% 60% at 50% 20%, hsl(265 83% 57% / 0.45), transparent 70%)"
             }} />
 
             {/* Floating shapes */}
@@ -71,7 +71,7 @@ const Landing = () => {
                 <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">personalizada</span>{" "}
                 em 1 minuto.
               </h1>
-              <p className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Receba em casa sua capa personalizada com qualidade premium e impressão PrintMyCase.
+              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Receba em casa sua capa personalizada com qualidade premium e impressão PrintMyCase.
 
               </p>
 
