@@ -393,7 +393,7 @@ const Customize = () => {
         <PhonePreview
           image={image} scale={scale} position={position} rotation={rotation}
           onPositionChange={setPosition} onScaleChange={setScale} onImageUpload={handleImageUpload}
-          imageResolution={imageResolution} isProcessing={isProcessing}
+          imageResolution={imageResolution} isProcessing={isProcessing} processingMessage={processingMsg || undefined}
           onUpscaleClick={!isHD && image ? handleUpscaleClick : undefined}
         />
 
