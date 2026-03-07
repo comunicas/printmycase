@@ -191,7 +191,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
   return (
     <div className="flex flex-col items-center gap-2 lg:gap-3">
       <div className="relative">
-        <div className="relative w-[220px] h-[450px] lg:w-[260px] lg:h-[532px] rounded-[2.4rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
+        <div className="relative w-[200px] h-[410px] lg:w-[260px] lg:h-[532px] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
           {/* Previous image layer (fading out) */}
           {prevImage && (
             <div

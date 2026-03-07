@@ -42,7 +42,7 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering }:
 
       {/* Mobile */}
       <div className="flex-shrink-0 lg:hidden border-t border-border bg-background/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex items-center gap-3 px-3 py-2">
           {resetButton}
           <div className="flex-1" />
           {continueButton}
