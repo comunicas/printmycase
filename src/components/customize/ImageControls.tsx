@@ -13,12 +13,13 @@ interface ImageControlsProps {
   filters: AiFilter[];
   activeFilterId: string | null;
   applyingFilterId: string | null;
+  filterCost: number;
   onFilterClick: (filterId: string) => void;
 }
 
 const ImageControls = ({
   hasImage, scale, rotation, onScaleChange, onRotate,
-  filters, activeFilterId, applyingFilterId, onFilterClick,
+  filters, activeFilterId, applyingFilterId, filterCost, onFilterClick,
 }: ImageControlsProps) => (
   <div className={`w-full max-w-xs ${!hasImage ? "opacity-50 pointer-events-none" : ""}`}>
     <Tabs defaultValue="ajustes">
@@ -52,6 +53,7 @@ const ImageControls = ({
             activeFilterId={activeFilterId}
             applyingFilterId={applyingFilterId}
             disabled={!hasImage}
+            filterCost={filterCost}
             onFilterClick={onFilterClick}
           />
         </TabsContent>
