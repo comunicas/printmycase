@@ -19,3 +19,5 @@ project_id = "gfsbsgwxylvhnwbpcodj"
     verify_jwt = false
   [functions.bulk-sync-stripe]
     verify_jwt = false
+  [functions.upscale-image]
+    verify_jwt = false
