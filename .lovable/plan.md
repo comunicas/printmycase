@@ -1,65 +1,23 @@
 
 
-## Configuração de valores de moedas pelo admin
+## Ajustar overlay gradient do hero
 
-Atualmente, todos os valores de ganho e consumo de moedas estão **hardcoded** em vários pontos do código:
+A imagem atual já tem tons roxos que combinam com a marca. O overlay pode ser refinado para realçar a imagem enquanto mantém a legibilidade.
 
-| Valor | Onde está | Quantidade |
-|-------|-----------|------------|
-| Bônus cadastro | Trigger SQL `handle_signup_bonus` | 50 moedas, 30 dias |
-| Bônus indicação | Trigger SQL `handle_referral_bonus` | 50 moedas, 30 dias |
-| Bônus compra case | `stripe-webhook/index.ts` | 100 moedas, 30 dias |
-| Custo filtro IA | `apply-ai-filter/index.ts` + `FilterConfirmDialog.tsx` | 10 moedas |
+### Mudanças em `src/pages/Landing.tsx` (linha 55)
 
-Para torná-los editáveis pelo admin, o plano é:
-
-### 1. Criar tabela `coin_settings` no banco
-
-Uma tabela simples chave-valor para armazenar cada configuração:
-
+**De:**
 ```
-coin_settings (
-  key text PRIMARY KEY,     -- ex: "signup_bonus_amount"
-  value integer NOT NULL,
-  description text
-)
+bg-gradient-to-b from-black/70 via-black/50 to-black/80
 ```
 
-Chaves iniciais:
-- `signup_bonus_amount` → 50
-- `signup_bonus_days` → 30
-- `referral_bonus_amount` → 50
-- `referral_bonus_days` → 30
-- `purchase_bonus_amount` → 100
-- `purchase_bonus_days` → 30
-- `ai_filter_cost` → 10
+**Para:**
+```
+bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75
+```
 
-RLS: leitura pública (authenticated), escrita apenas admin.
+Isso reduz levemente a opacidade no topo, adiciona um tom roxo sutil no meio (harmonizando com o fundo roxo da imagem), e mantém a base escura para contraste com a próxima seção.
 
-### 2. Atualizar triggers SQL
-
-Alterar `handle_signup_bonus` e `handle_referral_bonus` para ler os valores de `coin_settings` em vez de usar constantes.
-
-### 3. Atualizar edge functions
-
-- `apply-ai-filter/index.ts` → ler `ai_filter_cost` da tabela
-- `stripe-webhook/index.ts` → ler `purchase_bonus_amount` e `purchase_bonus_days` da tabela
-
-### 4. Atualizar frontend
-
-- `FilterConfirmDialog.tsx` → buscar custo do filtro via query à `coin_settings`
-- `AiFiltersList.tsx` → exibir custo dinâmico
-
-### 5. Criar UI admin para editar valores
-
-Adicionar uma seção no `CoinsManager.tsx` (ou novo componente) com campos editáveis para cada configuração, permitindo ao admin alterar os valores diretamente.
-
-### Resumo de arquivos alterados
-
-- **Migração SQL**: criar tabela, seed, atualizar triggers
-- `supabase/functions/apply-ai-filter/index.ts`
-- `supabase/functions/stripe-webhook/index.ts`
-- `src/components/customize/FilterConfirmDialog.tsx`
-- `src/components/customize/AiFiltersList.tsx`
-- `src/components/admin/CoinsManager.tsx` (nova seção de configurações)
+Também ajustar o radial glow (linha 57-59) para aumentar levemente a intensidade:
+- Opacidade de `0.35` → `0.40`
 

@@ -7,12 +7,13 @@ interface AiFiltersListProps {
   activeFilterId: string | null;
   applyingFilterId: string | null;
   disabled: boolean;
+  filterCost: number;
   onFilterClick: (filterId: string) => void;
 }
 
-const AiFiltersList = ({ filters, activeFilterId, applyingFilterId, disabled, onFilterClick }: AiFiltersListProps) => (
+const AiFiltersList = ({ filters, activeFilterId, applyingFilterId, disabled, filterCost, onFilterClick }: AiFiltersListProps) => (
   <div className="space-y-2">
-    <p className="text-xs text-muted-foreground">Cada filtro consome 🪙 10 moedas</p>
+    <p className="text-xs text-muted-foreground">Cada filtro consome 🪙 {filterCost} moedas</p>
     <div className="flex flex-wrap gap-2 pb-1 -mb-1">
       {filters.map((filter) => {
         const isActive = activeFilterId === filter.id;

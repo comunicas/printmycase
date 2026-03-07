@@ -116,13 +116,26 @@ Deno.serve(async (req) => {
           });
         console.log(`Credited ${metadata.coin_amount} coins to ${metadata.user_id}`);
       } else {
-        // Regular case purchase — update order + credit 100 bonus coins
+        // Regular case purchase — update order + credit dynamic bonus coins
         await supabaseAdmin
           .from("orders")
           .update({ status: "analyzing" })
           .eq("stripe_session_id", session.id);
 
-        // Find order to get user_id for bonus
+        // Fetch bonus settings
+        const { data: bonusAmountRow } = await supabaseAdmin
+          .from("coin_settings")
+          .select("value")
+          .eq("key", "purchase_bonus_amount")
+          .single();
+        const { data: bonusDaysRow } = await supabaseAdmin
+          .from("coin_settings")
+          .select("value")
+          .eq("key", "purchase_bonus_days")
+          .single();
+        const bonusAmount = bonusAmountRow?.value ?? 100;
+        const bonusDays = bonusDaysRow?.value ?? 30;
+
         const { data: order } = await supabaseAdmin
           .from("orders")
           .select("user_id")
@@ -134,12 +147,12 @@ Deno.serve(async (req) => {
             .from("coin_transactions")
             .insert({
               user_id: order.user_id,
-              amount: 100,
+              amount: bonusAmount,
               type: "purchase_bonus",
-              expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              expires_at: new Date(Date.now() + bonusDays * 24 * 60 * 60 * 1000).toISOString(),
               description: "Bônus por compra de case",
             });
-          console.log(`Credited 100 bonus coins to ${order.user_id}`);
+          console.log(`Credited ${bonusAmount} bonus coins to ${order.user_id}`);
         }
       }
     } else if (event.type === "checkout.session.expired") {

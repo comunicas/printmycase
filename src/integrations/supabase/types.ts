@@ -92,6 +92,24 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_settings: {
+        Row: {
+          description: string | null
+          key: string
+          value: number
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          value: number
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          value?: number
+        }
+        Relationships: []
+      }
       coin_transactions: {
         Row: {
           amount: number
