@@ -1,23 +1,19 @@
 
+## Adicionar Fade Suave ao Comparar Imagem Original vs Filtrada
 
-## Ajustar overlay gradient do hero
+### Análise Atual
+O `PhonePreview.tsx` já tem um sistema robusto de crossfade implementado (CROSSFADE_MS = 350):
+- Usa duas camadas de imagem (`prevImage` e `displayImage`)
+- Controla opacidade com `fadeIn` state
+- Aplica transição de opacidade em 350ms com easing
 
-A imagem atual já tem tons roxos que combinam com a marca. O overlay pode ser refinado para realçar a imagem enquanto mantém a legibilidade.
+Quando `handleCompareStart`/`handleCompareEnd` são chamados em `Customize.tsx`, eles simplesmente fazem `setImage()` que dispara o `useEffect` existente do crossfade. Portanto, **a animação fade já funciona automaticamente** para a comparação!
 
-### Mudanças em `src/pages/Landing.tsx` (linha 55)
+### Possível Melhoria (Opcional)
+Se o usuário quiser uma transição **ainda mais suave** ou com comportamento específico para o "hold to compare":
+1. Reduzir CROSSFADE_MS de 350ms para 200-250ms para comparação ser mais rápida
+2. Usar easing diferente (ex: `ease-in-out` em vez de `ease-out`) para sensação mais fluida
+3. Adicionar uma flag `isComparing` para diferenciar transições de comparação vs filtro normal
 
-**De:**
-```
-bg-gradient-to-b from-black/70 via-black/50 to-black/80
-```
-
-**Para:**
-```
-bg-gradient-to-b from-black/60 via-purple-950/40 to-black/75
-```
-
-Isso reduz levemente a opacidade no topo, adiciona um tom roxo sutil no meio (harmonizando com o fundo roxo da imagem), e mantém a base escura para contraste com a próxima seção.
-
-Também ajustar o radial glow (linha 57-59) para aumentar levemente a intensidade:
-- Opacidade de `0.35` → `0.40`
-
+### Recomendação
+A animação já está implementada via o sistema de crossfade existente. Validar com o usuário se a transição atual (350ms) está satisfatória ou se prefere ajustar o tempo/easing.
