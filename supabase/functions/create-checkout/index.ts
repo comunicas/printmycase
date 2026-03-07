@@ -183,6 +183,13 @@ Deno.serve(async (req) => {
       status: "pending",
     });
 
+    // Clean up pending checkout draft
+    await supabaseAdmin
+      .from("pending_checkouts")
+      .delete()
+      .eq("user_id", userId)
+      .eq("product_id", product_id);
+
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

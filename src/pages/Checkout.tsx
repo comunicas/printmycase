@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { type ShippingResult } from "@/lib/shipping";
+import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
 
@@ -30,6 +31,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { fetchByProduct, remove: removePending, getSignedUrl } = usePendingCheckout();
 
   const [customization, setCustomization] = useState<CustomizationData | null>(null);
   const [shipping, setShipping] = useState<ShippingResult | null>(null);
@@ -37,22 +39,56 @@ const Checkout = () => {
   const [submitted, setSubmitted] = useState(false);
   const [addressData, setAddressData] = useState<AddressData | null>(null);
   const [isAddressValid, setIsAddressValid] = useState(false);
+  const [recovering, setRecovering] = useState(false);
 
   const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
     setAddressData(data);
     setIsAddressValid(valid);
   }, []);
 
-  // Load customization from sessionStorage
+  // Load customization from sessionStorage, fallback to DB
   useEffect(() => {
     const raw = sessionStorage.getItem("customization");
-    if (!raw) {
-      toast({ title: "Customização não encontrada", description: "Volte e personalize sua capinha.", variant: "destructive" });
-      navigate(`/customize/${id}`, { replace: true });
+    if (raw) {
+      setCustomization(JSON.parse(raw));
       return;
     }
-    setCustomization(JSON.parse(raw));
-  }, [id, navigate, toast]);
+    // Fallback: recover from DB
+    if (!product?.id || !user) return;
+    setRecovering(true);
+    (async () => {
+      try {
+        const pending = await fetchByProduct(product.id);
+        if (!pending) {
+          toast({ title: "Customização não encontrada", description: "Volte e personalize sua capinha.", variant: "destructive" });
+          navigate(`/customize/${id}`, { replace: true });
+          return;
+        }
+        const cd = pending.customization_data as any;
+        let imgUrl: string | null = null;
+        let editedUrl: string | null = null;
+        if (pending.edited_image_path) editedUrl = await getSignedUrl(pending.edited_image_path);
+        if (pending.original_image_path) imgUrl = await getSignedUrl(pending.original_image_path);
+        setCustomization({
+          image: imgUrl,
+          editedImage: editedUrl,
+          imageFileName: null,
+          scale: cd.scale ?? 100,
+          rotation: cd.rotation ?? 0,
+          brightness: 100,
+          contrast: 100,
+          activeFilter: cd.activeFilter ?? null,
+          position: cd.position ?? { x: 50, y: 50 },
+        });
+        toast({ title: "Pedido pendente recuperado" });
+      } catch {
+        toast({ title: "Customização não encontrada", description: "Volte e personalize sua capinha.", variant: "destructive" });
+        navigate(`/customize/${id}`, { replace: true });
+      } finally {
+        setRecovering(false);
+      }
+    })();
+  }, [product?.id, user, id, navigate, toast]);
 
   // Redirect if product not found
   useEffect(() => {
@@ -61,6 +97,21 @@ const Checkout = () => {
       navigate("/catalog", { replace: true });
     }
   }, [product, productLoading, navigate, toast]);
+
+  const handleEditCustomization = () => {
+    if (!product?.slug || !customization) return;
+    // Save current data as draft so Customize.tsx auto-restores it
+    const key = `draft-customize-${product.slug}`;
+    try {
+      sessionStorage.setItem(key, JSON.stringify({
+        image: customization.image,
+        scale: customization.scale,
+        position: customization.position,
+        rotation: customization.rotation,
+      }));
+    } catch { /* ignore */ }
+    navigate(`/customize/${product.slug}`);
+  };
 
   const handleCheckout = async () => {
     if (!user || !product || !customization || !shipping || !addressData) return;
@@ -149,7 +200,7 @@ const Checkout = () => {
     { label: "Checkout" },
   ];
 
-  if (productLoading || !customization) {
+  if (productLoading || !customization || recovering) {
     return <LoadingSpinner variant="fullPage" />;
   }
 
@@ -166,10 +217,18 @@ const Checkout = () => {
               alt="Preview da customização"
               className="w-16 h-16 rounded-lg object-cover border"
             />
-            <div>
+            <div className="flex-1">
               <p className="font-medium text-sm text-foreground">{product?.name}</p>
               <p className="text-xs text-muted-foreground">Customização pronta</p>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 text-xs"
+              onClick={handleEditCustomization}
+            >
+              <Pencil className="w-3.5 h-3.5" /> Editar
+            </Button>
           </div>
         )}
 

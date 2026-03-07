@@ -3,12 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import PhonePreview from "@/components/PhonePreview";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter } from "@/lib/customize-types";
 import { compressImage, renderSnapshot } from "@/lib/image-utils";
 import { useCoins } from "@/hooks/useCoins";
 import { useCoinSettings } from "@/hooks/useCoinSettings";
+import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 import CustomizeHeader from "@/components/customize/CustomizeHeader";
 import ImageControls from "@/components/customize/ImageControls";
 import ContinueBar from "@/components/customize/ContinueBar";
@@ -19,8 +21,10 @@ const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading: productLoading } = useProduct(id);
   const { toast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const draftRestored = useRef(false);
+  const { upsert: upsertPending, fetchByProduct: fetchPending, getSignedUrl } = usePendingCheckout();
 
   useEffect(() => {
     if (!productLoading && !product) {
@@ -64,22 +68,41 @@ const Customize = () => {
       });
   }, []);
 
-  // Draft restore
+  // Draft restore (sessionStorage first, then DB fallback)
   useEffect(() => {
-    if (!product?.slug || draftRestored.current) return;
+    if (!product?.slug || !product?.id || draftRestored.current) return;
     draftRestored.current = true;
     const key = `draft-customize-${product.slug}`;
     const raw = sessionStorage.getItem(key);
-    if (!raw) return;
-    try {
-      const d = JSON.parse(raw);
-      if (d.image) { setImage(d.image); setOriginalImage(d.image); }
-      if (d.scale != null) setScale(d.scale);
-      if (d.position) setPosition(d.position);
-      if (d.rotation != null) setRotation(d.rotation);
-      toast({ title: "Rascunho restaurado" });
-    } catch { /* ignore */ }
-  }, [product?.slug, toast]);
+    if (raw) {
+      try {
+        const d = JSON.parse(raw);
+        if (d.image) { setImage(d.image); setOriginalImage(d.image); }
+        if (d.scale != null) setScale(d.scale);
+        if (d.position) setPosition(d.position);
+        if (d.rotation != null) setRotation(d.rotation);
+        toast({ title: "Rascunho restaurado" });
+      } catch { /* ignore */ }
+      return;
+    }
+    // DB fallback
+    if (!user) return;
+    (async () => {
+      const pending = await fetchPending(product.id);
+      if (!pending) return;
+      const cd = pending.customization_data as any;
+      if (cd.scale != null) setScale(cd.scale);
+      if (cd.position) setPosition(cd.position);
+      if (cd.rotation != null) setRotation(cd.rotation);
+      // Restore image from storage
+      const imgPath = pending.edited_image_path || pending.original_image_path;
+      if (imgPath) {
+        const url = await getSignedUrl(imgPath);
+        if (url) { setImage(url); setOriginalImage(url); }
+      }
+      toast({ title: "Rascunho recuperado" });
+    })();
+  }, [product?.slug, product?.id, user, toast]);
 
   // Auto-save draft
   useEffect(() => {
@@ -266,6 +289,38 @@ const Customize = () => {
           return;
         }
       }
+
+      // Persist to DB for recovery
+      if (user) {
+        try {
+          const ts = Date.now();
+          let originalPath: string | null = null;
+          let editedPath: string | null = null;
+          const sourceImg = originalImage || image;
+          if (sourceImg) {
+            const blob = await fetch(sourceImg).then(r => r.blob());
+            const ext = imageFileName?.split(".").pop() || "png";
+            const path = `${user.id}/pending_orig_${ts}.${ext}`;
+            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
+            originalPath = path;
+          }
+          if (editedImage) {
+            const blob = await fetch(editedImage).then(r => r.blob());
+            const path = `${user.id}/pending_edit_${ts}.jpg`;
+            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
+            editedPath = path;
+          }
+          await upsertPending(
+            product.id,
+            { scale, position, rotation, activeFilter: activeFilterId },
+            originalPath,
+            editedPath,
+          );
+        } catch (e) {
+          console.warn("Failed to persist pending checkout:", e);
+        }
+      }
+
       if (product.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
       navigate(`/checkout/${product.slug}`);
     } finally {
