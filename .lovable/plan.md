@@ -1,49 +1,37 @@
 
 
-## Refatoração da Página de Pedidos
+## Verificação do Webhook Stripe Live
 
-### Problemas encontrados
+### O que o código espera
 
-1. **Tipo `OrderRow` redundante** — duplica campos já definidos em `Tables<"orders">` do types.ts gerado automaticamente
-2. **Labels de status duplicados** — `statusFlow` redefine labels que já existem em `src/lib/constants.ts` (`statusLabels`)
-3. **Timeline de status ilegível no mobile** — 7 steps com `min-w-[56px]` cada = 392px mínimo, estoura em telas pequenas e fica comprimido
-4. **Sem filtro por status** — todos os pedidos misturados (pendentes, entregues, cancelados)
-5. **Sem paginação** — lista cresce infinitamente
-6. **Seção "Pedidos pendentes" confusa** — mistura pending_checkouts (rascunhos) com orders de status "pending", nomenclatura ambígua
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Alterações propostas
+### Como verificar (manual no Stripe Dashboard)
 
-**Arquivo: `src/pages/Orders.tsx`**
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-1. **Remover tipo `OrderRow`** — usar `Tables<"orders">` diretamente, estender com campos enriched
-2. **Usar `statusLabels` de constants.ts** — eliminar duplicação de labels no `statusFlow`
-3. **Simplificar timeline no mobile** — mostrar apenas o step atual com texto descritivo + barra de progresso (proporção `currentStep/total`), em vez de 7 ícones comprimidos
-4. **Adicionar filtro por tabs** — "Ativos" (pending→producing), "Enviados" (shipped/delivered), "Cancelados" — usando Tabs do Radix
-5. **Paginação client-side** — `PAGE_SIZE = 8`, controles idênticos ao padrão do Catálogo e Moedas
-6. **Renomear seção** — "Pedidos pendentes" → "Rascunhos" para distinguir de orders com status pending
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-**Arquivo: `src/components/PendingCheckoutCards.tsx`**
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-7. **Renomear título** — "Pedidos pendentes" → "Rascunhos de customização"
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-**Arquivo: `src/lib/constants.ts`**
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-8. **Adicionar `statusIcons`** — mapa de ícones por status, centralizado, para reutilização
-
-### Detalhes visuais — Timeline simplificada
-
-```text
-Antes (7 ícones comprimidos):
-[💳][💳][🔍][🎨][🏭][🚚][✅]
-
-Depois (progresso compacto):
-🏭 Produzindo          ━━━━━━━━░░░  4/7
-```
-
-O step atual é mostrado com ícone + label + barra de progresso proporcional. Ocupa uma linha, legível em qualquer tela.
-
-### Arquivos alterados
-- `src/pages/Orders.tsx` — tipos, tabs, paginação, timeline compacta
-- `src/components/PendingCheckoutCards.tsx` — rename título
-- `src/lib/constants.ts` — adicionar `statusIcons`
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
