@@ -1,21 +1,37 @@
 
 
-## Plano: Opção B — Área de segurança + correção de proporção
+## Verificação do Webhook Stripe Live
 
-### Mudanças em `src/components/PhonePreview.tsx`
+### O que o código espera
 
-**1. Corrigir proporção do frame (linha 196)**
-- Remover `width: 200` fixo e corrigir `aspectRatio` para `260/532`
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-**2. Substituir módulo de câmera fake por zona de segurança (linhas 256-266)**
-- Remover os 3 círculos de lente + flash
-- Adicionar overlay sutil no canto superior esquerdo: retângulo arredondado com borda tracejada (`border-dashed border-foreground/15`), ícone `Camera` pequeno e texto "Câmera" em `text-[8px]`
-- Dimensões: `w-[30%] h-[14%]`, posicionado `top-2 left-2`
-- `pointer-events-none`, `z-20`
-- Visível apenas quando há imagem (`{image && ...}`)
+### Como verificar (manual no Stripe Dashboard)
 
-### Resultado
-- Frame sem distorção em qualquer viewport
-- Guia visual genérico que funciona para qualquer modelo de celular
-- Sem manutenção por modelo
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

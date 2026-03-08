@@ -193,7 +193,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
   return (
     <div className="flex flex-col items-center gap-2 lg:gap-3">
       <div className="relative">
-        <div className="relative lg:w-[260px] lg:h-[532px] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden" style={{ width: 200, height: 'min(410px, 50dvh)', aspectRatio: '200/410' }}>
+        <div className="relative lg:w-[260px] lg:h-[532px] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden" style={{ height: 'min(410px, 50dvh)', aspectRatio: '260/532' }}>
           {/* Previous image layer (fading out) */}
           {prevImage && (
             <div
@@ -254,16 +254,12 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             )}
           </div>
           {/* Camera module overlay */}
-          <div className="absolute top-4 left-4 lg:top-5 lg:left-5 z-20 pointer-events-none">
-            <div className="w-[60px] h-[60px] lg:w-[72px] lg:h-[72px] rounded-2xl border border-foreground/20 bg-foreground/10 backdrop-blur-sm flex flex-wrap items-center justify-center gap-1 p-1.5 lg:p-2">
-              <div className="w-[18px] h-[18px] lg:w-[22px] lg:h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
-              <div className="w-[18px] h-[18px] lg:w-[22px] lg:h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
-              <div className="w-[18px] h-[18px] lg:w-[22px] lg:h-[22px] rounded-full border-2 border-foreground/30 bg-foreground/20 shadow-inner" />
-              <div className="w-[18px] h-[18px] lg:w-[22px] lg:h-[22px] flex items-center justify-center">
-                <div className="w-[8px] h-[8px] lg:w-[10px] lg:h-[10px] rounded-full bg-yellow-300/60 border border-yellow-400/40" />
-              </div>
+          {image && (
+            <div className="absolute top-2 left-2 lg:top-3 lg:left-3 z-20 pointer-events-none w-[30%] h-[14%] rounded-xl border border-dashed border-foreground/15 bg-foreground/5 flex flex-col items-center justify-center gap-0.5">
+              <Camera className="w-3 h-3 text-foreground/20" />
+              <span className="text-[8px] text-foreground/20 font-medium">Câmera</span>
             </div>
-          </div>
+          )}
           {isProcessing && (
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
