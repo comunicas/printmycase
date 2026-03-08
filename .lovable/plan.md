@@ -1,40 +1,58 @@
 
-## Plano: Corrigir vulnerabilidade de segurança no edge function cleanup-pending-checkouts
 
-### Contexto
-O scan de segurança detectou que o edge function `cleanup-pending-checkouts` é **publicamente acessível** sem autenticação. Atualmente, dois cron jobs (`cleanup-pending-checkouts-daily` e `cleanup-pending-checkouts-hourly`) chamam este endpoint usando o anon key, o que permite que qualquer pessoa invoque a função via HTTP.
+## Proteger o edge function `cleanup-pending-checkouts` com CRON_SECRET
 
-### Vulnerabilidade
-- **Edge function**: `supabase/functions/cleanup-pending-checkouts/index.ts`
-- **Problema**: Nenhuma validação de autenticação ou autorização
-- **Risco**: Qualquer um pode deletar dados de `pending_checkouts` e arquivos do storage
+### O que será feito
 
-### Solução
-Implementar validação de um secret compartilhado entre os cron jobs e a função.
+1. **Criar o secret `CRON_SECRET`** — solicitar ao usuário que forneça um valor (string aleatória forte). Ele pode inventar qualquer valor, ex: `artiscase_cron_2024_xK9mP3nQ7w`.
 
-**Passos:**
+2. **Atualizar `supabase/functions/cleanup-pending-checkouts/index.ts`** — adicionar validação do header `X-Cron-Secret` no início da função, retornando 401 se ausente ou inválido.
 
-1. **Criar novo secret `CRON_SECRET`** (solicitado ao usuário)
-   - Este será um token único para autenticar chamadas do cron job
+3. **Atualizar o cron job via SQL** — remover o job diário redundante e atualizar o job horário para incluir o header `X-Cron-Secret` na chamada HTTP.
 
-2. **Atualizar edge function** (`cleanup-pending-checkouts/index.ts`)
-   - Validar header `X-Cron-Secret` contra `Deno.env.get("CRON_SECRET")`
-   - Retornar 401 se secret inválido ou ausente
+### Detalhes técnicos
 
-3. **Atualizar cron jobs** (via SQL)
-   - Modificar ambos (`cleanup-pending-checkouts-daily` e `cleanup-pending-checkouts-hourly`)
-   - Adicionar header `X-Cron-Secret` com o valor do secret
+**Edge function** — adicionar antes do bloco try:
+```typescript
+const cronSecret = req.headers.get("x-cron-secret");
+if (cronSecret !== Deno.env.get("CRON_SECRET")) {
+  return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    status: 401,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+```
 
-4. **Remover cron job duplicado** (bonus)
-   - Manter apenas o job `cleanup-pending-checkouts-hourly`
-   - Deletar `cleanup-pending-checkouts-daily` (redundante)
+**SQL para cron jobs** — unschedule o job diário e atualizar o horário com o novo header:
+```sql
+SELECT cron.unschedule('cleanup-pending-checkouts-daily');
 
-### Arquivos a modificar
+SELECT cron.unschedule('cleanup-pending-checkouts-hourly');
+
+SELECT cron.schedule(
+  'cleanup-pending-checkouts-hourly',
+  '0 * * * *',
+  $$
+  SELECT net.http_post(
+    url:='https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/cleanup-pending-checkouts',
+    headers:=jsonb_build_object(
+      'Content-Type','application/json',
+      'Authorization','Bearer ANON_KEY',
+      'X-Cron-Secret', current_setting('app.settings.cron_secret', true)
+    ),
+    body:='{}'::jsonb
+  ) as request_id;
+  $$
+);
+```
+
+> Nota: o secret no cron será hardcoded no SQL pois `pg_cron` não acessa secrets de edge functions. O valor será o mesmo fornecido pelo usuário.
+
+### Arquivos
+
 | Arquivo | Ação |
 |---------|------|
 | `supabase/functions/cleanup-pending-checkouts/index.ts` | Adicionar validação de secret |
-| SQL para cron jobs | Atualizar headers de chamada e deletar job diário |
-
-### O que o usuário fornecerá
-**Um valor único para `CRON_SECRET`** — pode ser uma string aleatória forte (ex: `sup_cron_abc123xyz789...`) que será gerado automaticamente pelo sistema Lovable.
+| Secret `CRON_SECRET` | Criar via ferramenta de secrets |
+| SQL (cron jobs) | Atualizar via query direta |
 
