@@ -15,6 +15,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 
 interface CustomizationData {
+  rawImage: string | null;
   image: string | null;
   editedImage: string | null;
   imageFileName: string | null;
@@ -71,6 +72,7 @@ const Checkout = () => {
         if (pending.edited_image_path) editedUrl = await getSignedUrl(pending.edited_image_path);
         if (pending.original_image_path) imgUrl = await getSignedUrl(pending.original_image_path);
         setCustomization({
+          rawImage: imgUrl,
           image: imgUrl,
           editedImage: editedUrl,
           imageFileName: null,
@@ -120,26 +122,37 @@ const Checkout = () => {
     if (!isAddressValid) return;
     setCheckoutLoading(true);
     try {
+      let rawImageUrl: string | null = null;
       let originalImageUrl: string | null = null;
       let editedImageUrl: string | null = null;
       const ts = Date.now();
 
-      // Upload original image
-      if (customization.image) {
-        const blob = await fetch(customization.image).then((r) => r.blob());
+      // Upload raw image (original user upload, untouched)
+      const rawSrc = customization.rawImage || customization.image;
+      if (rawSrc) {
+        const blob = await fetch(rawSrc).then((r) => r.blob());
         const ext = customization.imageFileName?.split(".").pop() || "png";
         const path = `${user.id}/original_${ts}.${ext}`;
         const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
         if (uploadError) throw new Error("Erro ao fazer upload da imagem original: " + uploadError.message);
+        rawImageUrl = path;
+      }
+
+      // Upload optimized image (after filters/upscale, max quality)
+      if (customization.image) {
+        const blob = await fetch(customization.image).then((r) => r.blob());
+        const path = `${user.id}/optimized_${ts}.jpg`;
+        const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
+        if (uploadError) throw new Error("Erro ao fazer upload da imagem otimizada: " + uploadError.message);
         originalImageUrl = path;
       }
 
-      // Upload edited image (snapshot with edits applied)
+      // Upload final image (snapshot with frame positioning)
       if (customization.editedImage) {
         const blob = await fetch(customization.editedImage).then((r) => r.blob());
-        const path = `${user.id}/edited_${ts}.jpg`;
+        const path = `${user.id}/final_${ts}.jpg`;
         const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
-        if (uploadError) throw new Error("Erro ao fazer upload da imagem editada: " + uploadError.message);
+        if (uploadError) throw new Error("Erro ao fazer upload da imagem final: " + uploadError.message);
         editedImageUrl = path;
       }
 
@@ -157,6 +170,7 @@ const Checkout = () => {
         body: {
           product_id: product.id,
           customization_data: customizationPayload,
+          raw_image_url: rawImageUrl,
           original_image_url: originalImageUrl,
           edited_image_url: editedImageUrl,
           shipping_cents: shipping.priceCents,

@@ -1,9 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Image as ImageIcon } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { PHONE_W, PHONE_H } from "@/lib/customize-types";
-import { renderSnapshot } from "@/lib/image-utils";
 
 interface Props {
   customizationData: Record<string, any> | null;
@@ -15,64 +13,50 @@ interface ImageState {
 }
 
 const OrderImagesPreviewer = ({ customizationData }: Props) => {
-  const [original, setOriginal] = useState<ImageState>({ url: null, loading: true });
-  const [edited, setEdited] = useState<ImageState>({ url: null, loading: true });
-  const [preview, setPreview] = useState<ImageState>({ url: null, loading: true });
+  const [raw, setRaw] = useState<ImageState>({ url: null, loading: true });
+  const [optimized, setOptimized] = useState<ImageState>({ url: null, loading: true });
+  const [final_, setFinal] = useState<ImageState>({ url: null, loading: true });
   const [lightbox, setLightbox] = useState<{ url: string; label: string } | null>(null);
 
-  const originalPath = customizationData?.original_image_url as string | undefined;
-  const editedPath = customizationData?.edited_image_url as string | undefined;
+  const rawPath = customizationData?.raw_image_url as string | undefined;
+  const optimizedPath = customizationData?.original_image_url as string | undefined;
+  const finalPath = customizationData?.edited_image_url as string | undefined;
 
   useEffect(() => {
-    if (!originalPath && !editedPath) {
-      setOriginal({ url: null, loading: false });
-      setEdited({ url: null, loading: false });
-      setPreview({ url: null, loading: false });
+    if (!rawPath && !optimizedPath && !finalPath) {
+      setRaw({ url: null, loading: false });
+      setOptimized({ url: null, loading: false });
+      setFinal({ url: null, loading: false });
       return;
     }
 
     const load = async () => {
-      // Generate signed URLs in parallel
-      const [origResult, editResult] = await Promise.all([
-        originalPath
-          ? supabase.storage.from("customizations").createSignedUrl(originalPath, 3600)
+      const [rawRes, optimRes, finalRes] = await Promise.all([
+        rawPath
+          ? supabase.storage.from("customizations").createSignedUrl(rawPath, 3600)
           : Promise.resolve({ data: null, error: null }),
-        editedPath
-          ? supabase.storage.from("customizations").createSignedUrl(editedPath, 3600)
+        optimizedPath
+          ? supabase.storage.from("customizations").createSignedUrl(optimizedPath, 3600)
+          : Promise.resolve({ data: null, error: null }),
+        finalPath
+          ? supabase.storage.from("customizations").createSignedUrl(finalPath, 3600)
           : Promise.resolve({ data: null, error: null }),
       ]);
 
-      const origUrl = origResult.data?.signedUrl ?? null;
-      const editUrl = editResult.data?.signedUrl ?? null;
-
-      setOriginal({ url: origUrl, loading: false });
-      setEdited({ url: editUrl, loading: false });
-
-      // Generate phone-frame preview from edited image
-      if (editUrl) {
-        try {
-          const scale = customizationData?.scale ?? 100;
-          const position = customizationData?.position ?? { x: 50, y: 50 };
-          const rotation = customizationData?.rotation ?? 0;
-          const snapshot = await renderSnapshot(editUrl, scale, position, rotation);
-          setPreview({ url: snapshot, loading: false });
-        } catch {
-          setPreview({ url: null, loading: false });
-        }
-      } else {
-        setPreview({ url: null, loading: false });
-      }
+      setRaw({ url: rawRes.data?.signedUrl ?? null, loading: false });
+      setOptimized({ url: optimRes.data?.signedUrl ?? null, loading: false });
+      setFinal({ url: finalRes.data?.signedUrl ?? null, loading: false });
     };
 
     load();
-  }, [originalPath, editedPath, customizationData?.scale, customizationData?.position?.x, customizationData?.position?.y, customizationData?.rotation]);
+  }, [rawPath, optimizedPath, finalPath]);
 
-  if (!originalPath && !editedPath) return null;
+  if (!rawPath && !optimizedPath && !finalPath) return null;
 
   const items = [
-    { label: "Original", state: original, path: originalPath },
-    { label: "Editada", state: edited, path: editedPath },
-    { label: "Preview", state: preview, path: null },
+    { label: "Original", state: raw, path: rawPath },
+    { label: "Otimizada", state: optimized, path: optimizedPath },
+    { label: "Final", state: final_, path: finalPath },
   ];
 
   return (
@@ -94,7 +78,7 @@ const OrderImagesPreviewer = ({ customizationData }: Props) => {
                     <img
                       src={state.url!}
                       alt={label}
-                      className={`object-cover ${label === "Preview" ? "w-[42px] h-[86px]" : "w-14 h-20"}`}
+                      className="w-14 h-20 object-cover"
                     />
                   </button>
                   {path && state.url && (

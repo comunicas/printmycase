@@ -252,6 +252,7 @@ export type Database = {
           id: string
           original_image_path: string | null
           product_id: string
+          raw_image_path: string | null
           updated_at: string
           user_id: string
         }
@@ -262,6 +263,7 @@ export type Database = {
           id?: string
           original_image_path?: string | null
           product_id: string
+          raw_image_path?: string | null
           updated_at?: string
           user_id: string
         }
@@ -272,6 +274,7 @@ export type Database = {
           id?: string
           original_image_path?: string | null
           product_id?: string
+          raw_image_path?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -20,6 +20,7 @@ export function usePendingCheckout() {
     customizationData: Record<string, any>,
     originalImagePath: string | null,
     editedImagePath: string | null,
+    rawImagePath?: string | null,
   ) => {
     if (!user) return;
     await (supabase as any)
@@ -31,6 +32,7 @@ export function usePendingCheckout() {
           customization_data: customizationData,
           original_image_path: originalImagePath,
           edited_image_path: editedImagePath,
+          raw_image_path: rawImagePath ?? null,
         },
         { onConflict: "user_id,product_id" },
       );

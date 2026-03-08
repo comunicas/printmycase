@@ -27,6 +27,7 @@ export function useCustomize(productId: string | undefined) {
 
   // --- state ---
   const [image, setImage] = useState<string | null>(null);
+  const [rawImage, setRawImage] = useState<string | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [filteredImage, setFilteredImage] = useState<string | null>(null);
   const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
@@ -211,6 +212,7 @@ export function useCustomize(productId: string | undefined) {
       }
       const { url, compressed } = await compressImage(originalDataUrl);
       setImage(url);
+      setRawImage(url);
       setOriginalImage(url);
       setIsCompressing(false);
       if (compressed) toast({ title: "Imagem otimizada automaticamente" });
@@ -333,13 +335,13 @@ export function useCustomize(productId: string | undefined) {
     if (!product || !image) return;
     setIsRendering(true);
     try {
-      const editedImage = await renderSnapshot(image, scale, position, rotation);
-      const customData = { image, editedImage, imageFileName, scale, position, rotation };
+      const finalImage = await renderSnapshot(image, scale, position, rotation);
+      const customData = { rawImage, image, editedImage: finalImage, imageFileName, scale, position, rotation };
       try {
         sessionStorage.setItem("customization", JSON.stringify(customData));
       } catch {
         try {
-          sessionStorage.setItem("customization", JSON.stringify({ ...customData, image: null }));
+          sessionStorage.setItem("customization", JSON.stringify({ ...customData, rawImage: null, image: null }));
         } catch {
           toast({ title: "Erro ao salvar customização", variant: "destructive" });
           return;
@@ -348,27 +350,43 @@ export function useCustomize(productId: string | undefined) {
       if (user) {
         try {
           const ts = Date.now();
-          let originalPath: string | null = null;
-          let editedPath: string | null = null;
-          const sourceImg = originalImage || image;
-          if (sourceImg) {
-            const blob = await fetch(sourceImg).then(r => r.blob());
+          let rawPath: string | null = null;
+          let optimizedPath: string | null = null;
+          let finalPath: string | null = null;
+
+          // 1. Raw image (original upload, never changes)
+          const rawSrc = rawImage || originalImage || image;
+          if (rawSrc) {
+            const blob = await fetch(rawSrc).then(r => r.blob());
             const ext = imageFileName?.split(".").pop() || "png";
-            const path = `${user.id}/pending_orig_${ts}.${ext}`;
+            const path = `${user.id}/pending_raw_${ts}.${ext}`;
             await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
-            originalPath = path;
+            rawPath = path;
           }
-          if (editedImage) {
-            const blob = await fetch(editedImage).then(r => r.blob());
-            const path = `${user.id}/pending_edit_${ts}.jpg`;
+
+          // 2. Optimized image (after filters/upscale, max quality)
+          const optimSrc = originalImage || image;
+          if (optimSrc) {
+            const blob = await fetch(optimSrc).then(r => r.blob());
+            const path = `${user.id}/pending_optim_${ts}.jpg`;
             await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
-            editedPath = path;
+            optimizedPath = path;
           }
+
+          // 3. Final image (snapshot with frame positioning)
+          if (finalImage) {
+            const blob = await fetch(finalImage).then(r => r.blob());
+            const path = `${user.id}/pending_final_${ts}.jpg`;
+            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
+            finalPath = path;
+          }
+
           await upsertPending(
             product.id,
             { scale, position, rotation, activeFilter: activeFilterId },
-            originalPath,
-            editedPath,
+            optimizedPath,
+            finalPath,
+            rawPath,
           );
         } catch { /* silently ignore */ }
       }
@@ -377,7 +395,7 @@ export function useCustomize(productId: string | undefined) {
     } finally {
       setIsRendering(false);
     }
-  }, [product, image, originalImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
+  }, [product, image, rawImage, originalImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
 
   return {
     // product
