@@ -1,47 +1,78 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShoppingBag, ArrowLeft, Clock, Search, Paintbrush, Factory, Truck, CheckCircle, XCircle, CreditCard } from "lucide-react";
+import { ShoppingBag, ArrowLeft, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AppHeader from "@/components/AppHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
+import { statusLabels, statusIcons, statusFlow, getStepIndex } from "@/lib/constants";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import PendingCheckoutCards from "@/components/PendingCheckoutCards";
 
-type OrderRow = {
-  id: string;
-  product_id: string;
-  total_cents: number;
-  status: string;
-  created_at: string;
-  tracking_code?: string | null;
-};
+type OrderWithProduct = Tables<"orders"> & { product_name?: string; product_image?: string };
 
-type OrderWithProduct = OrderRow & { product_name?: string; product_image?: string };
+const PAGE_SIZE = 8;
 
-const statusFlow = [
-  { key: "pending", label: "Aguardando Pagamento", icon: CreditCard },
-  { key: "paid", label: "Pago", icon: CreditCard },
-  { key: "analyzing", label: "Em Análise", icon: Search },
-  { key: "customizing", label: "Customizando", icon: Paintbrush },
-  { key: "producing", label: "Produzindo", icon: Factory },
-  { key: "shipped", label: "Enviado", icon: Truck },
-  { key: "delivered", label: "Entregue", icon: CheckCircle },
-];
+const activeStatuses = ["pending", "paid", "analyzing", "customizing", "producing"];
+const doneStatuses = ["shipped", "delivered"];
 
-function getStepIndex(status: string) {
-  const idx = statusFlow.findIndex((s) => s.key === status);
-  return idx >= 0 ? idx : 0;
+function filterByTab(orders: OrderWithProduct[], tab: string) {
+  if (tab === "active") return orders.filter((o) => activeStatuses.includes(o.status));
+  if (tab === "done") return orders.filter((o) => doneStatuses.includes(o.status));
+  if (tab === "cancelled") return orders.filter((o) => o.status === "cancelled");
+  return orders;
 }
+
+/* Compact progress bar for order status */
+const OrderProgress = ({ status }: { status: string }) => {
+  if (status === "cancelled") {
+    const Icon = statusIcons.cancelled;
+    return (
+      <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+        <Icon className="w-4 h-4" />
+        {statusLabels.cancelled}
+      </div>
+    );
+  }
+
+  const stepIdx = getStepIndex(status);
+  const total = statusFlow.length;
+  const pct = ((stepIdx + 1) / total) * 100;
+  const Icon = statusIcons[status] ?? statusIcons.pending;
+  const label = statusLabels[status] ?? status;
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0 space-y-1">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-medium text-foreground">{label}</span>
+          <span className="text-muted-foreground">{stepIdx + 1}/{total}</span>
+        </div>
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Orders = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [orders, setOrders] = useState<OrderWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("active");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -60,7 +91,7 @@ const Orders = () => {
       const nameMap = await resolveProductInfo(productIds);
 
       setOrders(
-        ordersData.map((o: any) => ({
+        ordersData.map((o) => ({
           ...o,
           product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
           product_image: nameMap.get(o.product_id)?.image,
@@ -70,7 +101,6 @@ const Orders = () => {
     };
     fetchOrders();
 
-    // Realtime subscription filtered by current user
     if (!user?.id) return;
 
     const channel = supabase
@@ -87,7 +117,6 @@ const Orders = () => {
           setOrders((prev) =>
             prev.map((o) => {
               if (o.id !== payload.new.id) return o;
-              // Preserve enriched fields that don't exist in the DB payload
               const { product_name, product_image, ...rest } = o;
               return {
                 ...rest,
@@ -106,11 +135,25 @@ const Orders = () => {
     };
   }, [user?.id]);
 
-  const breadcrumbs = [{ label: "Meus Pedidos" }];
+  const filtered = useMemo(() => filterByTab(orders, activeTab), [orders, activeTab]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setPage(1);
+  };
+
+  const tabCounts = useMemo(() => ({
+    active: orders.filter((o) => activeStatuses.includes(o.status)).length,
+    done: orders.filter((o) => doneStatuses.includes(o.status)).length,
+    cancelled: orders.filter((o) => o.status === "cancelled").length,
+  }), [orders]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <AppHeader breadcrumbs={breadcrumbs} />
+      <AppHeader breadcrumbs={[{ label: "Meus Pedidos" }]} />
 
       <main className="flex-1 max-w-3xl mx-auto w-full p-5 space-y-6">
         <div className="flex items-center justify-between">
@@ -131,105 +174,91 @@ const Orders = () => {
             <Button onClick={() => navigate("/catalog")}>Explorar Modelos</Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {orders.map((order) => {
-              const isCancelled = order.status === "cancelled";
-              const currentStep = getStepIndex(order.status);
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="w-full">
+              <TabsTrigger value="active" className="flex-1">
+                Ativos {tabCounts.active > 0 && <span className="ml-1 text-xs opacity-70">({tabCounts.active})</span>}
+              </TabsTrigger>
+              <TabsTrigger value="done" className="flex-1">
+                Concluídos {tabCounts.done > 0 && <span className="ml-1 text-xs opacity-70">({tabCounts.done})</span>}
+              </TabsTrigger>
+              <TabsTrigger value="cancelled" className="flex-1">
+                Cancelados {tabCounts.cancelled > 0 && <span className="ml-1 text-xs opacity-70">({tabCounts.cancelled})</span>}
+              </TabsTrigger>
+            </TabsList>
 
-              return (
-                <div key={order.id} className="border rounded-xl p-5 bg-card space-y-4">
-                  {/* Header */}
-                  <div className="flex items-center gap-4">
-                    {order.product_image && (
-                      <img
-                        src={order.product_image}
-                        alt={order.product_name}
-                        className="w-[60px] h-[60px] rounded-lg object-cover flex-shrink-0"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0 space-y-0.5">
-                      <p className="font-semibold text-foreground truncate">
-                        {order.product_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(order.created_at).toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                    <span className="font-semibold text-foreground text-lg flex-shrink-0">
-                      {formatPrice(order.total_cents / 100)}
-                    </span>
+            {["active", "done", "cancelled"].map((tab) => (
+              <TabsContent key={tab} value={tab}>
+                {filtered.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground text-sm">
+                    Nenhum pedido nesta categoria.
                   </div>
-
-                  {/* Status */}
-                  {isCancelled ? (
-                    <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
-                      <XCircle className="w-4 h-4" />
-                      Cancelado
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 overflow-x-auto pb-1">
-                      {statusFlow.map((step, i) => {
-                        const Icon = step.icon;
-                        const isActive = i <= currentStep;
-                        const isCurrent = i === currentStep;
-                        return (
-                          <div key={step.key} className="flex items-center">
-                            <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                              <div
-                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                                  isCurrent
-                                    ? "bg-primary text-primary-foreground"
-                                    : isActive
-                                    ? "bg-primary/20 text-primary"
-                                    : "bg-muted text-muted-foreground"
-                                }`}
-                              >
-                                <Icon className="w-4 h-4" />
-                              </div>
-                              <span
-                                className={`text-[10px] text-center leading-tight ${
-                                  isCurrent ? "font-semibold text-foreground" : "text-muted-foreground"
-                                }`}
-                              >
-                                {step.label}
-                              </span>
-                            </div>
-                            {i < statusFlow.length - 1 && (
-                              <div
-                                className={`w-4 h-0.5 mt-[-16px] ${
-                                  i < currentStep ? "bg-primary/40" : "bg-muted"
-                                }`}
-                              />
-                            )}
+                ) : (
+                  <div className="space-y-4">
+                    {paginated.map((order) => (
+                      <div key={order.id} className="border rounded-xl p-5 bg-card space-y-4">
+                        {/* Header */}
+                        <div className="flex items-center gap-4">
+                          {order.product_image && (
+                            <img
+                              src={order.product_image}
+                              alt={order.product_name}
+                              className="w-[60px] h-[60px] rounded-lg object-cover flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <p className="font-semibold text-foreground truncate">{order.product_name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(order.created_at).toLocaleDateString("pt-BR", {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              })}
+                            </p>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          <span className="font-semibold text-foreground text-lg flex-shrink-0">
+                            {formatPrice(order.total_cents / 100)}
+                          </span>
+                        </div>
 
-                  {/* Footer info */}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5" />
-                    Prazo: 5 a 7 dias úteis
-                    {order.tracking_code && (
-                      <a
-                        href={`https://www.linkcorreios.com.br/?id=${order.tracking_code}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-auto text-primary hover:underline font-medium"
-                      >
-                        Rastreio: {order.tracking_code}
-                      </a>
+                        {/* Status progress */}
+                        <OrderProgress status={order.status} />
+
+                        {/* Footer */}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Clock className="w-3.5 h-3.5" />
+                          Prazo: 5 a 7 dias úteis
+                          {order.tracking_code && (
+                            <a
+                              href={`https://www.linkcorreios.com.br/?id=${order.tracking_code}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-auto text-primary hover:underline font-medium"
+                            >
+                              Rastreio: {order.tracking_code}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-3 mt-4">
+                        <Button size="icon" variant="outline" disabled={safePage === 1} onClick={() => setPage(safePage - 1)}>
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm text-muted-foreground">{safePage} / {totalPages}</span>
+                        <Button size="icon" variant="outline" disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                )}
+              </TabsContent>
+            ))}
+          </Tabs>
         )}
       </main>
     </div>

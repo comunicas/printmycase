@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Pencil, ArrowRight, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePendingCheckout, type PendingCheckoutRow } from "@/hooks/usePendingCheckout";
-import { resolveProductInfo, type ProductInfo } from "@/lib/products";
+import { resolveProductInfo } from "@/lib/products";
 import { useToast } from "@/hooks/use-toast";
 
 const PendingCheckoutCards = () => {
@@ -28,10 +28,8 @@ const PendingCheckoutCards = () => {
           let thumbUrl: string | null = null;
           const imgPath = r.edited_image_path || r.original_image_path;
           if (imgPath) thumbUrl = await getSignedUrl(imgPath);
-          // Find slug from product info
           let slug: string | undefined;
           if (info) {
-            // resolveProductInfo maps both id and slug, find the slug key
             for (const [key, val] of infoMap.entries()) {
               if (val === info && !/^[0-9a-f-]{36}$/i.test(key)) {
                 slug = key;
@@ -59,7 +57,7 @@ const PendingCheckoutCards = () => {
 
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pedidos pendentes</h2>
+      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Rascunhos de customização</h2>
       {items.map((item) => (
         <div key={item.id} className="border rounded-xl p-4 bg-card flex items-center gap-4">
           {item.thumbUrl && (
