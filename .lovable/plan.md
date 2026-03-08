@@ -1,41 +1,37 @@
 
 
-## Adicionar frame do smartphone na imagem Final
+## Verificação do Webhook Stripe Live
 
-### O que muda
-Expandir o canvas do `renderSnapshot` para incluir a borda/frame do smartphone ao redor da imagem, produzindo um mockup realista idêntico ao que o usuário vê na UI.
+### O que o código espera
 
-### Implementação — `src/lib/image-utils.ts`
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-1. **Aumentar o canvas** para incluir a borda: adicionar padding ao redor (ex: `BORDER = 5px` proporcional, `RADIUS = ~36px` para o rounded corners)
-2. **Desenhar o frame** antes da imagem:
-   - Preencher o canvas com fundo transparente ou branco
-   - Desenhar um `roundRect` com a cor da borda (`foreground/80` → preto/cinza escuro)
-   - Desenhar um `roundRect` interno com o fundo do telefone
-   - Clipar a região interna para desenhar a imagem do usuário
-3. **Manter toda a lógica de posicionamento existente**, apenas offset por `BORDER`
-4. **Usar PNG** em vez de JPEG para preservar transparência do fundo (ou fundo branco)
+### Como verificar (manual no Stripe Dashboard)
 
-```text
-Canvas final:
-┌──────────────────────┐
-│  border (5px, dark)  │
-│  ┌────────────────┐  │
-│  │                │  │
-│  │  user image    │  │
-│  │  (clipped,     │  │
-│  │   positioned)  │  │
-│  │                │  │
-│  └────────────────┘  │
-└──────────────────────┘
-  rounded corners ~36px
-```
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Constantes
-- `FRAME_BORDER = 5` (matching CSS `border-[5px]`)
-- `FRAME_RADIUS = 36` (matching CSS `rounded-[2.8rem]`)
-- Canvas: `(PHONE_W + 2*BORDER) × (PHONE_H + 2*BORDER)`
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-### Arquivo
-- `src/lib/image-utils.ts` — função `renderSnapshot`
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
