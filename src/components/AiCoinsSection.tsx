@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import ScrollReveal from "@/components/ScrollReveal";
 
 const showcaseImages = [
-  "/lovable-uploads/ai-showcase-1.png",
-  "/lovable-uploads/ai-showcase-2.png",
-  "/lovable-uploads/ai-showcase-3.png",
-  "/lovable-uploads/ai-showcase-4.png",
-  "/lovable-uploads/ai-showcase-5.png",
+  "/lovable-uploads/ai-showcase-1.webp",
+  "/lovable-uploads/ai-showcase-2.webp",
+  "/lovable-uploads/ai-showcase-3.webp",
+  "/lovable-uploads/ai-showcase-4.webp",
+  "/lovable-uploads/ai-showcase-5.webp",
 ];
 
 const AiCoinsSection = () => {
