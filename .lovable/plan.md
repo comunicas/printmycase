@@ -1,54 +1,37 @@
 
 
-## Refatoração da Página de Catálogo
+## Verificação do Webhook Stripe Live
 
-### Problemas atuais
+### O que o código espera
 
-1. **Sem busca por texto** — o usuário não tem como pesquisar por modelo específico (ex: "iPhone 15", "Galaxy S24")
-2. **Filtros de marca hardcoded** — lista `BRANDS` é estática; se surgir uma nova marca no banco, não aparece
-3. **Sem estado vazio** — quando o filtro não retorna produtos, o grid fica em branco sem feedback
-4. **Sem scroll to top** — ao mudar de página, o usuário permanece na posição atual do scroll
-5. **Contagem de resultados distante da busca** — fica no canto, pouco visível
-6. **Paginação mínima** — sem indicadores de página ou atalhos; apenas setas com "1/3"
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Alterações propostas
+### Como verificar (manual no Stripe Dashboard)
 
-**Arquivo: `src/pages/Catalog.tsx`**
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-1. **Adicionar campo de busca** — `<Input>` com ícone `Search` acima dos filtros de marca. Filtra por `product.name` (case-insensitive, debounce não necessário pois é client-side sobre array já carregado). Reseta página ao digitar.
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-2. **Derivar marcas dos dados** — ao invés do array `BRANDS` hardcoded, extrair marcas únicas dos produtos carregados via `extractBrand()` + adicionar "Todos" como primeiro item. Assim novas marcas aparecem automaticamente.
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-3. **Estado vazio** — quando `filtered.length === 0` e não está loading, exibir bloco com ícone `SearchX` + texto "Nenhuma capa encontrada" + sugestão para limpar filtros.
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-4. **Scroll to top** na mudança de página — `window.scrollTo({ top: 0, behavior: 'smooth' })` no handler de paginação.
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-5. **Reorganizar header da seção** — busca e filtros ficam em bloco coeso; contagem de resultados fica abaixo dos filtros.
-
-6. **Botão limpar filtros** — quando há busca ou filtro ativo (diferente de "Todos"), exibir botão "Limpar" que reseta ambos.
-
-### Resumo visual
-
-```text
-┌─────────────────────────────────┐
-│  AppHeader (breadcrumb: Catálogo)│
-├─────────────────────────────────┤
-│  Nossos Modelos                 │
-│  [🔍 Buscar modelo...        ]  │
-│  [Todos] [Apple] [Samsung] ...  │
-│  12 capas encontradas   [Limpar]│
-├─────────────────────────────────┤
-│  ┌────┐ ┌────┐ ┌────┐ ┌────┐   │
-│  │card│ │card│ │card│ │card│   │
-│  └────┘ └────┘ └────┘ └────┘   │
-│       ...                       │
-│       ◀  1 / 3  ▶              │
-└─────────────────────────────────┘
-```
-
-### Arquivos alterados
-
-- `src/pages/Catalog.tsx` — todas as mudanças acima (busca, marcas dinâmicas, estado vazio, scroll, limpar filtros)
-
-Nenhuma mudança de backend, rotas ou outros componentes.
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
