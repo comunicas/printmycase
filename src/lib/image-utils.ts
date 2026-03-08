@@ -1,5 +1,16 @@
 import { PHONE_W, PHONE_H } from "./customize-types";
 
+/** Load image dimensions from a src URL or data URL */
+export function getImageResolution(src: string): Promise<{ w: number; h: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+    img.onerror = () => reject(new Error("Failed to load image for resolution"));
+    img.src = src;
+  });
+}
+
 export function compressImage(
   dataUrl: string,
   maxW = 1200,
