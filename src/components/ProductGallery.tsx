@@ -24,6 +24,7 @@ const ProductGallery = ({ images, productName, deviceImage }: ProductGalleryProp
 
   return (
     <div className="flex flex-col gap-3">
+      <h2 className="sr-only">Galeria de imagens</h2>
       <div className="relative aspect-square w-full rounded-xl border bg-card overflow-hidden">
         <img
           src={allImages[selectedIndex]}
