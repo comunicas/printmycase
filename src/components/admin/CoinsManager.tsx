@@ -76,7 +76,7 @@ const CoinsManager = () => {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(200);
-    if (typeFilter !== "all") query = query.eq("type", typeFilter);
+    if (typeFilter !== "all") query = query.eq("type", typeFilter as Database["public"]["Enums"]["coin_transaction_type"]);
     const { data, error } = await query;
     if (error) {
       toast({ title: "Erro ao carregar transações", description: error.message, variant: "destructive" });
