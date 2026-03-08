@@ -1,18 +1,22 @@
-import { useState } from "react";
-import { Loader2, Gift, ShoppingCart, Sparkles, UserPlus, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSearchParams, Link } from "react-router-dom";
+import { Loader2, Gift, ShoppingCart, Sparkles, UserPlus, Settings, Copy, Users, ArrowRight } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCoins } from "@/hooks/useCoins";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const PACKAGES = [
-  { coins: 100, label: "100 moedas", price: "R$ 9,90" },
-  { coins: 500, label: "500 moedas", price: "R$ 39,90" },
-  { coins: 1500, label: "1.500 moedas", price: "R$ 99,90" },
-  { coins: 5000, label: "5.000 moedas", price: "R$ 249,90" },
+  { coins: 100, priceCents: 990, label: "100", price: "R$ 9,90" },
+  { coins: 500, priceCents: 3990, label: "500", price: "R$ 39,90", badge: "Mais popular" },
+  { coins: 1500, priceCents: 9990, label: "1.500", price: "R$ 99,90" },
+  { coins: 5000, priceCents: 24990, label: "5.000", price: "R$ 249,90", badge: "Melhor valor" },
 ];
+
+const basePricePerCoin = PACKAGES[0].priceCents / PACKAGES[0].coins;
 
 const typeLabels: Record<string, { label: string; icon: typeof Gift }> = {
   signup_bonus: { label: "Bônus de cadastro", icon: Gift },
@@ -25,9 +29,21 @@ const typeLabels: Record<string, { label: string; icon: typeof Gift }> = {
 
 const Coins = () => {
   const { profile } = useAuth();
-  const { balance, transactions, loading } = useCoins();
+  const { balance, transactions, loading, refresh } = useCoins();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [buyingPackage, setBuyingPackage] = useState<number | null>(null);
+
+  // Feedback de compra bem-sucedida
+  useEffect(() => {
+    const purchased = searchParams.get("purchased");
+    if (purchased) {
+      toast({ title: "Compra realizada! 🎉", description: `${purchased} moedas adicionadas ao seu saldo.` });
+      searchParams.delete("purchased");
+      setSearchParams(searchParams, { replace: true });
+      refresh();
+    }
+  }, []);
 
   const referralLink = profile?.referral_code
     ? `${window.location.origin}/signup?ref=${profile.referral_code}`
@@ -55,84 +71,155 @@ const Coins = () => {
     }
   };
 
+  const gains = transactions.filter((t) => t.amount > 0);
+  const expenses = transactions.filter((t) => t.amount < 0);
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader breadcrumbs={[{ label: "Moedas" }]} />
-      <main className="max-w-2xl mx-auto px-5 py-10 space-y-8">
-        {/* Balance */}
-        <div className="text-center space-y-2">
+      <main className="max-w-2xl mx-auto px-5 py-10 space-y-10">
+
+        {/* ── Saldo ── */}
+        <div className="text-center space-y-1.5">
           <p className="text-sm text-muted-foreground">Seu saldo</p>
           <p className="text-5xl font-bold text-foreground">
             🪙 {loading ? "…" : balance}
           </p>
+          <p className="text-sm text-muted-foreground">
+            Use para aplicar filtros IA nas suas capas.{" "}
+            <Link to="/catalog" className="text-primary hover:underline inline-flex items-center gap-0.5">
+              Ver catálogo <ArrowRight className="h-3 w-3" />
+            </Link>
+          </p>
         </div>
 
-        {/* Referral */}
+        {/* ── Pacotes ── */}
+        <div className="space-y-3">
+          <h2 className="font-semibold">Comprar moedas</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {PACKAGES.map((pkg) => {
+              const perCoin = pkg.priceCents / pkg.coins;
+              const discount = Math.round((1 - perCoin / basePricePerCoin) * 100);
+              const isPopular = pkg.badge === "Mais popular";
+
+              return (
+                <button
+                  key={pkg.coins}
+                  onClick={() => handleBuyCoins(pkg.coins)}
+                  disabled={buyingPackage !== null}
+                  className={`relative rounded-xl border p-4 text-left transition-all hover:shadow-md disabled:opacity-60 ${
+                    isPopular
+                      ? "border-primary ring-2 ring-primary/20 bg-primary/5"
+                      : "border-border bg-card hover:border-primary/40"
+                  }`}
+                >
+                  {pkg.badge && (
+                    <span className={`absolute -top-2.5 left-3 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                      isPopular ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground"
+                    }`}>
+                      {pkg.badge}
+                    </span>
+                  )}
+
+                  {buyingPackage === pkg.coins ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xl font-bold">🪙 {pkg.label}</p>
+                      <p className="text-base font-semibold text-foreground mt-1">{pkg.price}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        R$ {(perCoin / 100).toFixed(2).replace(".", ",")}/moeda
+                        {discount > 0 && (
+                          <span className="ml-1.5 text-green-600 font-semibold">-{discount}%</span>
+                        )}
+                      </p>
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Referral ── */}
         {referralLink && (
-          <div className="border rounded-xl p-4 bg-card space-y-2">
-            <h2 className="font-semibold text-sm">Convide amigos e ganhe 50 moedas</h2>
+          <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/30 p-5 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-primary/10 p-2.5 flex-shrink-0">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-base">Convide e ganhe!</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Você ganha <strong className="text-foreground">50 moedas</strong> e seu amigo também ganha <strong className="text-foreground">50 moedas</strong> ao se cadastrar.
+                </p>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg truncate">{referralLink}</code>
-              <Button size="sm" variant="outline" onClick={handleCopyReferral}>Copiar</Button>
+              <code className="flex-1 text-xs bg-background/80 border px-3 py-2 rounded-lg truncate">{referralLink}</code>
+              <Button size="sm" onClick={handleCopyReferral} className="gap-1.5">
+                <Copy className="h-3.5 w-3.5" /> Copiar
+              </Button>
             </div>
           </div>
         )}
 
-        {/* Packages */}
-        <div className="space-y-3">
-          <h2 className="font-semibold">Comprar moedas</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {PACKAGES.map((pkg) => (
-              <Button
-                key={pkg.coins}
-                variant="outline"
-                className="h-auto py-4 flex-col gap-1"
-                onClick={() => handleBuyCoins(pkg.coins)}
-                disabled={buyingPackage !== null}
-              >
-                {buyingPackage === pkg.coins ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>
-                    <span className="text-lg font-bold">🪙 {pkg.coins.toLocaleString("pt-BR")}</span>
-                    <span className="text-sm font-semibold text-foreground">{pkg.price}</span>
-                  </>
-                )}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* History */}
+        {/* ── Histórico ── */}
         <div className="space-y-3">
           <h2 className="font-semibold">Histórico</h2>
+
           {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
           ) : transactions.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhuma transação ainda.</p>
           ) : (
-            <div className="space-y-2">
-              {transactions.map((tx) => {
-                const info = typeLabels[tx.type] ?? { label: tx.type, icon: Gift };
-                const Icon = info.icon;
-                const isExpired = new Date(tx.expires_at) < new Date() && tx.amount > 0;
+            <Tabs defaultValue="all">
+              <TabsList className="w-full">
+                <TabsTrigger value="all" className="flex-1">Todos</TabsTrigger>
+                <TabsTrigger value="gains" className="flex-1">Ganhos</TabsTrigger>
+                <TabsTrigger value="expenses" className="flex-1">Gastos</TabsTrigger>
+              </TabsList>
+
+              {(["all", "gains", "expenses"] as const).map((tab) => {
+                const list = tab === "gains" ? gains : tab === "expenses" ? expenses : transactions;
                 return (
-                  <div key={tx.id} className={`flex items-center gap-3 border rounded-lg p-3 bg-card ${isExpired ? "opacity-50" : ""}`}>
-                    <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{tx.description || info.label}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(tx.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-                        {isExpired && " · Expirado"}
-                      </p>
-                    </div>
-                    <span className={`font-bold text-sm ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
-                      {tx.amount > 0 ? "+" : ""}{tx.amount}
-                    </span>
-                  </div>
+                  <TabsContent key={tab} value={tab} className="space-y-2 mt-3">
+                    {list.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-6">Nenhuma transação nesta categoria.</p>
+                    ) : (
+                      list.map((tx) => {
+                        const info = typeLabels[tx.type] ?? { label: tx.type, icon: Gift };
+                        const Icon = info.icon;
+                        const isExpired = new Date(tx.expires_at) < new Date() && tx.amount > 0;
+                        return (
+                          <div key={tx.id} className={`flex items-center gap-3 border rounded-lg p-3 bg-card ${isExpired ? "opacity-50" : ""}`}>
+                            <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{tx.description || info.label}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(tx.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                                {isExpired && (
+                                  <span className="ml-1.5 inline-flex items-center rounded-full bg-destructive/10 text-destructive text-[10px] font-medium px-1.5 py-0.5">
+                                    Expirado
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            <span className={`font-bold text-sm tabular-nums ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
+                              {tx.amount > 0 ? "+" : ""}{tx.amount}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </TabsContent>
                 );
               })}
-            </div>
+            </Tabs>
           )}
         </div>
       </main>
