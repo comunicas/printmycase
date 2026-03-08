@@ -1,37 +1,37 @@
 
 
-## Diagnóstico e Plano
+## Verificação do Webhook Stripe Live
 
-### Bug do Expandir
-O `handleExpand` retorna silenciosamente quando `imageResolution` é `null`. Isso acontece em dois cenários:
-1. **Restauração de rascunho** (sessionStorage ou DB) — seta a imagem mas nunca popula `imageResolution`
-2. **Qualquer caso** onde a resolução não foi calculada
+### O que o código espera
 
-**Correção**: Ao setar uma imagem (upload, restore, filtro, upscale), sempre garantir que `imageResolution` seja populada. Criar helper `loadImageResolution(src)` que retorna `{w, h}` via `Image.onload`.
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Refatoração do Customize.tsx (450 linhas → ~80)
-Extrair toda a lógica de estado e handlers para um hook `useCustomize`:
+### Como verificar (manual no Stripe Dashboard)
 
-```text
-src/hooks/useCustomize.ts        (~350 linhas) — todo o estado + handlers
-src/pages/Customize.tsx          (~80 linhas)  — apenas layout/JSX
-```
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-O hook exporta um objeto flat com tudo que o JSX precisa: `image`, `scale`, `position`, `rotation`, `filters`, `handlers`, `flags`, `dialogs`.
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-### Mudanças
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-| Arquivo | Ação |
-|---------|------|
-| `src/lib/image-utils.ts` | Adicionar `getImageResolution(src): Promise<{w,h}>` |
-| `src/hooks/useCustomize.ts` | **Novo** — extrair todo estado/lógica de `Customize.tsx` |
-| `src/pages/Customize.tsx` | Reduzir a layout puro usando `useCustomize()` |
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-### Correções incluídas no hook
-1. **Expand**: usar `getImageResolution` para popular resolução quando null (lazy load da imagem atual)
-2. **Draft restore**: chamar `getImageResolution` ao restaurar imagem
-3. **Filtro/Upscale result**: atualizar `imageResolution` após receber resultado
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-### Componentes existentes mantidos
-`PhonePreview`, `ImageControls`, `AdjustmentsPanel`, `AiFiltersList`, `ContinueBar`, `CustomizeHeader`, `FilterConfirmDialog`, `UpscaleConfirmDialog` — sem alterações.
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
