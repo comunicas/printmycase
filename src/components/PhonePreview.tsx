@@ -253,13 +253,6 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
               </button>
             )}
           </div>
-          {/* Camera module overlay */}
-          {image && (
-            <div className="absolute top-2 left-2 lg:top-3 lg:left-3 z-20 pointer-events-none w-[30%] h-[14%] rounded-xl border border-dashed border-foreground/15 bg-foreground/5 flex flex-col items-center justify-center gap-0.5">
-              <Camera className="w-3 h-3 text-foreground/20" />
-              <span className="text-[8px] text-foreground/20 font-medium">Câmera</span>
-            </div>
-          )}
           {isProcessing && (
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
