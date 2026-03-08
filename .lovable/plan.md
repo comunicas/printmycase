@@ -1,37 +1,40 @@
 
+## Plano: Corrigir vulnerabilidade de segurança no edge function cleanup-pending-checkouts
 
-## Verificação do Webhook Stripe Live
+### Contexto
+O scan de segurança detectou que o edge function `cleanup-pending-checkouts` é **publicamente acessível** sem autenticação. Atualmente, dois cron jobs (`cleanup-pending-checkouts-daily` e `cleanup-pending-checkouts-hourly`) chamam este endpoint usando o anon key, o que permite que qualquer pessoa invoque a função via HTTP.
 
-### O que o código espera
+### Vulnerabilidade
+- **Edge function**: `supabase/functions/cleanup-pending-checkouts/index.ts`
+- **Problema**: Nenhuma validação de autenticação ou autorização
+- **Risco**: Qualquer um pode deletar dados de `pending_checkouts` e arquivos do storage
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### Solução
+Implementar validação de um secret compartilhado entre os cron jobs e a função.
 
-### Como verificar (manual no Stripe Dashboard)
+**Passos:**
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+1. **Criar novo secret `CRON_SECRET`** (solicitado ao usuário)
+   - Este será um token único para autenticar chamadas do cron job
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+2. **Atualizar edge function** (`cleanup-pending-checkouts/index.ts`)
+   - Validar header `X-Cron-Secret` contra `Deno.env.get("CRON_SECRET")`
+   - Retornar 401 se secret inválido ou ausente
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+3. **Atualizar cron jobs** (via SQL)
+   - Modificar ambos (`cleanup-pending-checkouts-daily` e `cleanup-pending-checkouts-hourly`)
+   - Adicionar header `X-Cron-Secret` com o valor do secret
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+4. **Remover cron job duplicado** (bonus)
+   - Manter apenas o job `cleanup-pending-checkouts-hourly`
+   - Deletar `cleanup-pending-checkouts-daily` (redundante)
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+### Arquivos a modificar
+| Arquivo | Ação |
+|---------|------|
+| `supabase/functions/cleanup-pending-checkouts/index.ts` | Adicionar validação de secret |
+| SQL para cron jobs | Atualizar headers de chamada e deletar job diário |
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+### O que o usuário fornecerá
+**Um valor único para `CRON_SECRET`** — pode ser uma string aleatória forte (ex: `sup_cron_abc123xyz789...`) que será gerado automaticamente pelo sistema Lovable.
 
