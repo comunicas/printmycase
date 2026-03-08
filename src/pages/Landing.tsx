@@ -118,7 +118,7 @@ const Landing = () => {
           <Separator />
 
           {/* How it works */}
-          <section id="como-funciona" className="py-16 px-5">
+          <section id="como-funciona" className="py-16 px-5 bg-card">
             <div className="max-w-5xl mx-auto">
               <ScrollReveal>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Como funciona</h2>
