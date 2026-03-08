@@ -212,6 +212,7 @@ export function useCustomize(productId: string | undefined) {
       }
       const { url, compressed } = await compressImage(originalDataUrl);
       setImage(url);
+      setRawImage(url);
       setOriginalImage(url);
       setIsCompressing(false);
       if (compressed) toast({ title: "Imagem otimizada automaticamente" });
