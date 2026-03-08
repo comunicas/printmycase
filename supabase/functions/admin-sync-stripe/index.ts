@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const userId = userData.user.id;
+    const userId = claimsData.claims.sub as string;
 
     // Check admin role using service role
     const supabaseAdmin = createClient(
