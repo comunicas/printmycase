@@ -106,14 +106,19 @@ const FaqManager = () => {
   };
 
   const handleDelete = async (faq: Faq) => {
-    if (!confirm(`Excluir "${faq.question}"?`)) return;
-    const { error } = await supabase.from("faqs").delete().eq("id", faq.id);
+    setDeleteTarget(faq);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("faqs").delete().eq("id", deleteTarget.id);
     if (error) {
       toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "FAQ excluído" });
       fetchFaqs();
     }
+    setDeleteTarget(null);
   };
 
   const handleMove = async (faq: Faq, direction: "up" | "down") => {
