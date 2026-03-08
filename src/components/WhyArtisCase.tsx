@@ -62,8 +62,8 @@ const WhyArtisCase = () => {
         <ScrollReveal delay={350}>
           <div className="flex flex-col items-center gap-6">
             <div className="flex items-center gap-8">
-              <img src={logoEpson} alt="Epson" className="h-7 sm:h-9 opacity-70" />
-              <img src={logoPrecisionCore} alt="PrecisionCore" className="h-8 sm:h-10 opacity-70" />
+              <img src={logoEpson} alt="Epson" className="h-7 sm:h-9 opacity-70" width={80} height={28} />
+              <img src={logoPrecisionCore} alt="PrecisionCore" className="h-8 sm:h-10 opacity-70" width={100} height={32} />
             </div>
             <Button asChild size="lg" className="rounded-full px-8">
               <Link to="/catalog">Crie sua Case →</Link>
