@@ -1,37 +1,41 @@
 
 
-## Verificação do Webhook Stripe Live
+## Correção de Hierarquia de Headings — Página de Produto
 
-### O que o código espera
+### Problema
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+A página de produto tem apenas `<h1>` (nome do produto em `ProductInfo`). Não existe nenhum `<h2>` — as seções "Descrição" e "Especificações" usam apenas texto nos TabsTrigger sem heading semântico. Isso prejudica SEO porque crawlers não conseguem identificar a estrutura de conteúdo da página.
 
-### Como verificar (manual no Stripe Dashboard)
+Hierarquia atual:
+```text
+H1: Motorola Edge 50
+(sem H2)
+```
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+### Alterações
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+**`src/components/ProductInfo.tsx`**
+1. Adicionar `<h2>` para o preço com classe `sr-only` implícita no contexto (ou visível como label "Preço")
+2. Manter H1 como está — correto
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+**`src/components/ProductDetails.tsx`**
+3. Adicionar `<h2>` visível acima das tabs: "Detalhes do Produto"
+4. Dentro de cada TabsContent, usar `<h3>` antes do conteúdo: "Descrição" e "Especificações Técnicas" — isso dá estrutura semântica ao conteúdo que hoje só existe como label de tab
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+**`src/components/ProductGallery.tsx`**
+5. Adicionar `<h2 className="sr-only">` com texto "Galeria de imagens" para acessibilidade e SEO
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+Hierarquia resultante:
+```text
+H1: Motorola Edge 50
+  H2: Galeria de imagens (sr-only)
+  H2: Detalhes do Produto
+    H3: Descrição
+    H3: Especificações Técnicas
+```
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+### Arquivos alterados
+- `src/components/ProductDetails.tsx` — H2 + H3 semânticos
+- `src/components/ProductGallery.tsx` — H2 sr-only
+- `src/components/ProductInfo.tsx` — sem mudança (H1 já correto)
 
