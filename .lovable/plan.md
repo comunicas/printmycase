@@ -1,37 +1,36 @@
 
 
-## Verificação do Webhook Stripe Live
+## Retaguamento da Landing Page — Correção de Layout
 
-### O que o código espera
+### Problemas identificados
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+1. **BUG GRAVE: Imagem hero `position: fixed` vaza por todas as seções.** O CSS `.parallax-bg > img` aplica `position: fixed` na imagem do hero, fazendo-a cobrir todo o viewport. As seções subsequentes (Como funciona, Modelos em Destaque) ficam com o fundo da hero visível por trás — exatamente o que aparece nos screenshots.
 
-### Como verificar (manual no Stripe Dashboard)
+2. **`<Separator />` desnecessários** entre hero e seções criam linhas finas sem função visual.
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+3. **Backgrounds inconsistentes** — `bg-card` (`hsl(0 0% 98%)`) vs `bg-background` (`hsl(240 4% 95%)`) usados sem critério entre seções, criando variação sutil de tom.
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+4. **`-mt-[56px]` no hero** é frágil — depende da altura exata do header.
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+5. **FAQ usa `bg-muted/30`** enquanto outras seções usam `bg-card` — inconsistência visual.
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+### Alterações propostas
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+**Arquivo: `src/index.css`**
+- Remover as regras `.parallax-bg > img { position: fixed }` e o fallback iOS. Substituir por `position: absolute` simples dentro do container. O efeito parallax via `background-attachment: fixed` no WhyArtisCase permanece intacto (usa CSS background-image, não img).
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+**Arquivo: `src/pages/Landing.tsx`**
+- Remover `<Separator />` entre hero → "Como funciona" e entre "Como funciona" → "Modelos em Destaque" e entre "WhyArtisCase" → "Depoimentos".
+- Padronizar todas as seções claras para `bg-background` (consistência).
+- Remover wrapper `<div className="bg-black">` do AppHeader — mover para dentro da hero section.
+- Substituir `-mt-[56px]` por uma abordagem onde o header fica DENTRO da hero section.
+
+**Arquivo: `src/components/FaqSection.tsx`**
+- Trocar `bg-muted/30` por `bg-background` para consistência com as demais seções.
+
+### Resumo de impacto
+- Zero mudança funcional ou de UX
+- Corrige o bug visual grave do background vazando
+- Remove código legado (parallax via fixed img)
+- Padroniza backgrounds entre seções
 
