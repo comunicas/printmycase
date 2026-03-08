@@ -15,6 +15,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 
 interface CustomizationData {
+  rawImage: string | null;
   image: string | null;
   editedImage: string | null;
   imageFileName: string | null;
