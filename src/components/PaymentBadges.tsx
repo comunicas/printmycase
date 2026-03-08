@@ -45,9 +45,9 @@ const PaymentBadges = () => (
     </div>
 
     {/* Powered by Stripe */}
-    <div className="flex items-center gap-2 text-muted-foreground/50">
+    <div className="flex items-center gap-2 text-muted-foreground">
       <div className="w-10 border-t border-muted-foreground/20" />
-      <span className="text-xs font-medium tracking-wide">Powered by</span>
+      <span className="text-xs font-medium tracking-wide text-muted-foreground">Powered by</span>
       <img src="/lovable-uploads/stripe-logo.png" alt="Stripe" className="h-5 w-auto opacity-50" />
       <div className="w-10 border-t border-muted-foreground/20" />
     </div>
