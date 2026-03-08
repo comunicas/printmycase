@@ -1,0 +1,1 @@
+ALTER TABLE public.pending_checkouts ADD COLUMN IF NOT EXISTS raw_image_path text;
