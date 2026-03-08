@@ -169,6 +169,7 @@ const Checkout = () => {
         body: {
           product_id: product.id,
           customization_data: customizationPayload,
+          raw_image_url: rawImageUrl,
           original_image_url: originalImageUrl,
           edited_image_url: editedImageUrl,
           shipping_cents: shipping.priceCents,

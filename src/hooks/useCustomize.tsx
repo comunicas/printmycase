@@ -395,7 +395,7 @@ export function useCustomize(productId: string | undefined) {
     } finally {
       setIsRendering(false);
     }
-  }, [product, image, originalImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
+  }, [product, image, rawImage, originalImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
 
   return {
     // product

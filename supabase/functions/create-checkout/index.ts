@@ -177,6 +177,7 @@ Deno.serve(async (req) => {
       stripe_session_id: session.id,
       customization_data: {
         ...customization_data,
+        raw_image_url: raw_image_url || null,
         original_image_url: original_image_url || null,
         edited_image_url: edited_image_url || null,
       },
