@@ -30,6 +30,7 @@ const FaqManager = () => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Faq | null>(null);
   const { toast } = useToast();
 
   const fetchFaqs = useCallback(async () => {
