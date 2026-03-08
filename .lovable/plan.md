@@ -1,37 +1,17 @@
 
 
-## Verificação do Webhook Stripe Live
+# Add explicit width/height to unsized images
 
-### O que o código espera
+Three images need explicit `width` and `height` attributes to prevent layout shift (CLS) and resolve unsized-images warnings:
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+## Changes
 
-### Como verificar (manual no Stripe Dashboard)
+### 1. `src/components/PaymentBadges.tsx` (line 51)
+- Stripe logo `<img>`: add `width={60} height={20}`
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+### 2. `src/components/WhyArtisCase.tsx` (lines 65-66)
+- Epson logo: add `width={80} height={28}`
+- PrecisionCore logo: add `width={100} height={32}`
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
-
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
-
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
-
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+All images already use CSS classes for visual sizing (`h-5`, `h-7`, etc.), so the HTML attributes serve as intrinsic ratio hints for the browser without changing appearance.
 
