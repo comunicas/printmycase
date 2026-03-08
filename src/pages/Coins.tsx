@@ -27,12 +27,16 @@ const typeLabels: Record<string, { label: string; icon: typeof Gift }> = {
   admin_adjustment: { label: "Ajuste manual", icon: Settings },
 };
 
+const HISTORY_PAGE_SIZE = 10;
+
 const Coins = () => {
   const { profile } = useAuth();
   const { balance, transactions, loading, refresh } = useCoins();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [buyingPackage, setBuyingPackage] = useState<number | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("all");
 
   // Feedback de compra bem-sucedida
   useEffect(() => {
