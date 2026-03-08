@@ -221,10 +221,10 @@ const Landing = () => {
           <section className="py-20 px-5 bg-primary text-primary-foreground">
             <div className="max-w-2xl mx-auto text-center space-y-6">
               <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Pronto para criar sua Case única?</h2>
-              <p className="text-lg opacity-90">
+              <p className="text-lg text-white">
                 Escolha seu modelo, envie sua foto e receba sua capinha exclusiva na sua porta.
                 <br />
-                <span className="text-sm opacity-75">Não encontrou seu modelo? Solicite e avisaremos!</span>
+                <span className="text-sm text-white/80">Não encontrou seu modelo? Solicite e avisaremos!</span>
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold" onClick={() => navigate("/catalog")}>
