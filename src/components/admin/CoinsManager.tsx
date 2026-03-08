@@ -140,7 +140,7 @@ const CoinsManager = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Moedas</h1>
+      <h2 className="text-2xl font-bold">Moedas</h2>
 
       {/* Settings */}
       <div className="border rounded-xl p-4 bg-card space-y-3">
