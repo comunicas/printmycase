@@ -60,7 +60,7 @@ const CoinsManager = () => {
 
   const fetchSettings = useCallback(async () => {
     setSettingsLoading(true);
-    const { data } = await (supabase as any).from("coin_settings").select("*").order("key");
+    const { data } = await supabase.from("coin_settings").select("*").order("key");
     const items = (data ?? []) as CoinSetting[];
     setSettings(items);
     const edited: Record<string, number> = {};
