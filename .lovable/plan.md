@@ -1,22 +1,37 @@
 
 
-## Simplificar a imagem Final — print de referência para produção
+## Verificação do Webhook Stripe Live
 
-### Abordagem
-Concordo — o objetivo da imagem "Final" é servir como **referência visual de posicionamento** para a produção da case, não um mockup realista. A solução mais prática é renderizar apenas a área da "tela" do celular (sem frame/borda) com a imagem posicionada exatamente como o usuário escolheu. Isso gera uma imagem limpa e direta que mostra o enquadramento correto.
+### O que o código espera
 
-### Mudança em `src/lib/image-utils.ts`
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-Simplificar `renderSnapshot`:
-- **Canvas**: Usar apenas `PHONE_W × PHONE_H` (260×532) — sem frame, sem borda
-- **Fundo**: Branco sólido para clareza
-- **Imagem**: Manter a lógica de posicionamento CSS (oversize, bgSize, position%) que já está correta
-- **Rotação**: Manter se aplicável
-- **Remover**: Constantes `FRAME_BORDER`, `FRAME_RADIUS`, `FRAME_COLOR`, `SCREEN_BG` e todo o código de desenho do frame
-- **Output**: PNG para qualidade
+### Como verificar (manual no Stripe Dashboard)
 
-Resultado: uma imagem retangular simples mostrando exatamente o recorte/posição que o usuário definiu, perfeita como guia de produção.
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Arquivo
-- `src/lib/image-utils.ts` — simplificar `renderSnapshot`
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

@@ -86,11 +86,6 @@ export function urlToDataUrl(url: string): Promise<string> {
   });
 }
 
-const FRAME_BORDER = 5;
-const FRAME_RADIUS = 36;
-const FRAME_COLOR = "rgba(30, 30, 30, 0.85)";
-const SCREEN_BG = "rgba(240, 240, 240, 0.08)";
-
 export function renderSnapshot(
   imgSrc: string,
   scale: number,
@@ -102,31 +97,14 @@ export function renderSnapshot(
     const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const totalW = PHONE_W + FRAME_BORDER * 2;
-      const totalH = PHONE_H + FRAME_BORDER * 2;
       const canvas = document.createElement("canvas");
-      canvas.width = totalW;
-      canvas.height = totalH;
+      canvas.width = PHONE_W;
+      canvas.height = PHONE_H;
       const ctx = canvas.getContext("2d")!;
 
-      // 1. Draw outer frame (rounded rect)
-      ctx.beginPath();
-      ctx.roundRect(0, 0, totalW, totalH, FRAME_RADIUS);
-      ctx.fillStyle = FRAME_COLOR;
-      ctx.fill();
-
-      // 2. Draw inner screen background
-      const innerR = FRAME_RADIUS - FRAME_BORDER;
-      ctx.beginPath();
-      ctx.roundRect(FRAME_BORDER, FRAME_BORDER, PHONE_W, PHONE_H, innerR);
-      ctx.fillStyle = SCREEN_BG;
-      ctx.fill();
-
-      // 3. Clip to inner screen area and draw user image
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(FRAME_BORDER, FRAME_BORDER, PHONE_W, PHONE_H, innerR);
-      ctx.clip();
+      // White background for clarity
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, PHONE_W, PHONE_H);
 
       // Replicate PhonePreview CSS logic exactly
       const oversize = Math.max(150, scale * 1.25);
@@ -134,8 +112,8 @@ export function renderSnapshot(
 
       const divW = PHONE_W * oversize / 100;
       const divH = PHONE_H * oversize / 100;
-      const divLeft = FRAME_BORDER + PHONE_W * offset / 100;
-      const divTop = FRAME_BORDER + PHONE_H * offset / 100;
+      const divLeft = PHONE_W * offset / 100;
+      const divTop = PHONE_H * offset / 100;
 
       const bgSizePct = scale * (100 / oversize) / 100;
 
@@ -154,9 +132,15 @@ export function renderSnapshot(
       const imgLeft = divLeft + (divW - imgW) * position.x / 100;
       const imgTop = divTop + (divH - imgH) * position.y / 100;
 
-      // Apply rotation around screen center
-      const cx = FRAME_BORDER + PHONE_W / 2;
-      const cy = FRAME_BORDER + PHONE_H / 2;
+      // Clip to canvas area
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, PHONE_W, PHONE_H);
+      ctx.clip();
+
+      // Apply rotation around center
+      const cx = PHONE_W / 2;
+      const cy = PHONE_H / 2;
       ctx.translate(cx, cy);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.translate(-cx, -cy);
