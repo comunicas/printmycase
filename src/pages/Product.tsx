@@ -1,14 +1,128 @@
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ProductGallery from "@/components/ProductGallery";
 import ProductInfo from "@/components/ProductInfo";
 import ProductDetails from "@/components/ProductDetails";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
+import { extractBrand } from "@/lib/utils";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+
+const SITE_NAME = "ArtisCase";
+const SITE_URL =
+  typeof window !== "undefined" ? window.location.origin : "https://studio.artiscase.com";
 
 const Product = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading } = useProduct(id);
+
+  const brand = product ? extractBrand(product.name) : "";
+
+  // --- SEO injection ---
+  useEffect(() => {
+    if (!product) return;
+
+    const title = `Capa ${product.name} | ${SITE_NAME}`;
+    const desc =
+      product.description ??
+      `Capa personalizada para ${product.name}. Proteção premium com acabamento soft-touch.`;
+    const image = product.device_image ?? product.images[0] ?? "";
+    const url = `${SITE_URL}/product/${product.slug}`;
+    const brandName = extractBrand(product.name);
+
+    document.title = title;
+
+    const setMeta = (attr: string, key: string, content: string) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+    };
+
+    setMeta("name", "description", desc);
+    setMeta("property", "og:title", title);
+    setMeta("property", "og:description", desc);
+    setMeta("property", "og:image", image);
+    setMeta("property", "og:url", url);
+    setMeta("property", "og:type", "product");
+    setMeta("name", "twitter:card", "summary_large_image");
+    setMeta("name", "twitter:title", title);
+    setMeta("name", "twitter:description", desc);
+    setMeta("name", "twitter:image", image);
+
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", url);
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Product",
+          name: product.name,
+          image,
+          url,
+          description: desc,
+          brand: { "@type": "Brand", name: brandName },
+          offers: {
+            "@type": "Offer",
+            price: product.price_cents / 100,
+            priceCurrency: "BRL",
+            availability: "https://schema.org/InStock",
+            url,
+          },
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: product.rating,
+            reviewCount: product.review_count,
+          },
+        },
+        {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Catálogo",
+              item: `${SITE_URL}/catalog`,
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: brandName,
+              item: `${SITE_URL}/catalog?brand=${encodeURIComponent(brandName)}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: `Capa ${product.name}`,
+            },
+          ],
+        },
+      ],
+    };
+
+    let script = document.querySelector('script[data-seo="product-jsonld"]') as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.setAttribute("data-seo", "product-jsonld");
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(jsonLd);
+
+    return () => {
+      script?.remove();
+      canonical?.remove();
+    };
+  }, [product]);
 
   if (loading) {
     return <LoadingSpinner variant="fullPage" />;
@@ -24,6 +138,7 @@ const Product = () => {
 
   const breadcrumbs = [
     { label: "Catálogo", to: "/catalog" },
+    { label: brand, to: `/catalog?brand=${encodeURIComponent(brand)}` },
     { label: product.name },
   ];
 
