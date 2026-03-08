@@ -226,6 +226,15 @@ const FaqManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        title={`Excluir "${deleteTarget?.question}"?`}
+        description="Esta ação não pode ser desfeita."
+        destructive
+      />
     </div>
   );
 };
