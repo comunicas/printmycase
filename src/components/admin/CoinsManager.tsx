@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import type { Database } from "@/integrations/supabase/types";
 import { Loader2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
