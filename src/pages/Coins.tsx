@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Loader2, Gift, ShoppingCart, Sparkles, UserPlus, Settings, Copy, Users, ArrowRight } from "lucide-react";
+import { Loader2, Gift, ShoppingCart, Sparkles, UserPlus, Settings, Copy, Users, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -27,12 +27,16 @@ const typeLabels: Record<string, { label: string; icon: typeof Gift }> = {
   admin_adjustment: { label: "Ajuste manual", icon: Settings },
 };
 
+const HISTORY_PAGE_SIZE = 10;
+
 const Coins = () => {
   const { profile } = useAuth();
   const { balance, transactions, loading, refresh } = useCoins();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [buyingPackage, setBuyingPackage] = useState<number | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("all");
 
   // Feedback de compra bem-sucedida
   useEffect(() => {
@@ -177,7 +181,7 @@ const Coins = () => {
           ) : transactions.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhuma transação ainda.</p>
           ) : (
-            <Tabs defaultValue="all">
+            <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setHistoryPage(1); }}>
               <TabsList className="w-full">
                 <TabsTrigger value="all" className="flex-1">Todos</TabsTrigger>
                 <TabsTrigger value="gains" className="flex-1">Ganhos</TabsTrigger>
@@ -186,35 +190,53 @@ const Coins = () => {
 
               {(["all", "gains", "expenses"] as const).map((tab) => {
                 const list = tab === "gains" ? gains : tab === "expenses" ? expenses : transactions;
+                const totalPages = Math.max(1, Math.ceil(list.length / HISTORY_PAGE_SIZE));
+                const safePage = Math.min(historyPage, totalPages);
+                const paginated = list.slice((safePage - 1) * HISTORY_PAGE_SIZE, safePage * HISTORY_PAGE_SIZE);
+
                 return (
                   <TabsContent key={tab} value={tab} className="space-y-2 mt-3">
                     {list.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-6">Nenhuma transação nesta categoria.</p>
                     ) : (
-                      list.map((tx) => {
-                        const info = typeLabels[tx.type] ?? { label: tx.type, icon: Gift };
-                        const Icon = info.icon;
-                        const isExpired = new Date(tx.expires_at) < new Date() && tx.amount > 0;
-                        return (
-                          <div key={tx.id} className={`flex items-center gap-3 border rounded-lg p-3 bg-card ${isExpired ? "opacity-50" : ""}`}>
-                            <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{tx.description || info.label}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(tx.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-                                {isExpired && (
-                                  <span className="ml-1.5 inline-flex items-center rounded-full bg-destructive/10 text-destructive text-[10px] font-medium px-1.5 py-0.5">
-                                    Expirado
-                                  </span>
-                                )}
-                              </p>
+                      <>
+                        {paginated.map((tx) => {
+                          const info = typeLabels[tx.type] ?? { label: tx.type, icon: Gift };
+                          const Icon = info.icon;
+                          const isExpired = tx.expires_at && tx.amount > 0 && new Date(tx.expires_at) < new Date();
+                          return (
+                            <div key={tx.id} className={`flex items-center gap-3 border rounded-lg p-3 bg-card ${isExpired ? "opacity-50" : ""}`}>
+                              <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{tx.description || info.label}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(tx.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                                  {isExpired && (
+                                    <span className="ml-1.5 inline-flex items-center rounded-full bg-destructive/10 text-destructive text-[10px] font-medium px-1.5 py-0.5">
+                                      Expirado
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              <span className={`font-bold text-sm tabular-nums ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
+                                {tx.amount > 0 ? "+" : ""}{tx.amount}
+                              </span>
                             </div>
-                            <span className={`font-bold text-sm tabular-nums ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
-                              {tx.amount > 0 ? "+" : ""}{tx.amount}
-                            </span>
+                          );
+                        })}
+
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-center gap-3 pt-3">
+                            <Button size="icon" variant="outline" disabled={safePage === 1} onClick={() => setHistoryPage(safePage - 1)}>
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <span className="text-sm text-muted-foreground">{safePage} / {totalPages}</span>
+                            <Button size="icon" variant="outline" disabled={safePage === totalPages} onClick={() => setHistoryPage(safePage + 1)}>
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
                           </div>
-                        );
-                      })
+                        )}
+                      </>
                     )}
                   </TabsContent>
                 );
