@@ -27,6 +27,7 @@ export function useCustomize(productId: string | undefined) {
 
   // --- state ---
   const [image, setImage] = useState<string | null>(null);
+  const [rawImage, setRawImage] = useState<string | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [filteredImage, setFilteredImage] = useState<string | null>(null);
   const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
