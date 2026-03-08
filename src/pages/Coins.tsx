@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Loader2, Gift, ShoppingCart, Sparkles, UserPlus, Settings, Copy, Users, ArrowRight } from "lucide-react";
+import { Loader2, Gift, ShoppingCart, Sparkles, UserPlus, Settings, Copy, Users, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
