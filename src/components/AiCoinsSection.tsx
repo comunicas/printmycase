@@ -60,6 +60,8 @@ const AiCoinsSection = () => {
                     alt={`Exemplo de filtro IA ${(i % showcaseImages.length) + 1}`}
                     className="aspect-square w-full object-cover"
                     loading="lazy"
+                    width={176}
+                    height={176}
                   />
                 </div>
               ))}
