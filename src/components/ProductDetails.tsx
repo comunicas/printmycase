@@ -17,6 +17,7 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
 
   return (
     <div>
+      <h2 className="text-lg font-semibold text-foreground mb-3">Detalhes do Produto</h2>
       <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="w-full">
           {hasDescription && (
@@ -31,6 +32,7 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
 
         {hasDescription && (
           <TabsContent value="description" className="pt-4">
+            <h3 className="sr-only">Descrição</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {product.description}
             </p>
@@ -38,6 +40,7 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
         )}
 
         <TabsContent value="specs" className="pt-4">
+          <h3 className="sr-only">Especificações Técnicas</h3>
           <Table>
             <TableBody>
               {product.specs.map((spec) => (
