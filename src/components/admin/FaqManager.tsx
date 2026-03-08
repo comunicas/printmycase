@@ -134,7 +134,7 @@ const FaqManager = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Perguntas Frequentes</h1>
+        <h2 className="text-2xl font-bold">Perguntas Frequentes</h2>
         <Button onClick={openNew}>
           <Plus className="mr-2 h-4 w-4" /> Nova Pergunta
         </Button>
