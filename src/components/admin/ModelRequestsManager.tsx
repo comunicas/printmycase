@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Smartphone } from "lucide-react";
@@ -16,6 +17,7 @@ const ModelRequestsManager = () => {
   const [requests, setRequests] = useState<ModelRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetch_ = useCallback(async () => {
@@ -34,17 +36,20 @@ const ModelRequestsManager = () => {
 
   useEffect(() => { fetch_(); }, [fetch_]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Excluir esta solicitação?")) return;
-    setDeleting(id);
-    const { error } = await supabase.from("model_requests").delete().eq("id", id);
+  const handleDelete = (id: string) => setDeleteTarget(id);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(deleteTarget);
+    const { error } = await supabase.from("model_requests").delete().eq("id", deleteTarget);
     if (error) {
       toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
     } else {
-      setRequests((prev) => prev.filter((r) => r.id !== id));
+      setRequests((prev) => prev.filter((r) => r.id !== deleteTarget));
       toast({ title: "Solicitação excluída" });
     }
     setDeleting(null);
+    setDeleteTarget(null);
   };
 
   if (loading) return <LoadingSpinner />;
@@ -52,7 +57,7 @@ const ModelRequestsManager = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Solicitações de Modelo</h1>
+        <h2 className="text-2xl font-bold">Solicitações de Modelo</h2>
         <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
           {requests.length} solicitação{requests.length !== 1 ? "ões" : ""}
         </span>
@@ -87,6 +92,14 @@ const ModelRequestsManager = () => {
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        title="Excluir esta solicitação?"
+        description="Esta ação não pode ser desfeita."
+        destructive
+      />
     </div>
   );
 };

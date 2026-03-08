@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import type { Database } from "@/integrations/supabase/types";
 import { Loader2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,7 @@ const CoinsManager = () => {
 
   const fetchSettings = useCallback(async () => {
     setSettingsLoading(true);
-    const { data } = await (supabase as any).from("coin_settings").select("*").order("key");
+    const { data } = await supabase.from("coin_settings").select("*").order("key");
     const items = (data ?? []) as CoinSetting[];
     setSettings(items);
     const edited: Record<string, number> = {};
@@ -71,12 +72,12 @@ const CoinsManager = () => {
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
-    let query = (supabase as any)
+    let query = supabase
       .from("coin_transactions")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(200);
-    if (typeFilter !== "all") query = query.eq("type", typeFilter);
+    if (typeFilter !== "all") query = query.eq("type", typeFilter as Database["public"]["Enums"]["coin_transaction_type"]);
     const { data, error } = await query;
     if (error) {
       toast({ title: "Erro ao carregar transações", description: error.message, variant: "destructive" });
@@ -94,7 +95,7 @@ const CoinsManager = () => {
     try {
       const updates = settings
         .filter((s) => editedSettings[s.key] !== s.value)
-        .map((s) => (supabase as any).from("coin_settings").update({ value: editedSettings[s.key] }).eq("key", s.key));
+        .map((s) => supabase.from("coin_settings").update({ value: editedSettings[s.key] }).eq("key", s.key));
       if (updates.length === 0) {
         toast({ title: "Nenhuma alteração" });
         setSavingSettings(false);
@@ -116,7 +117,7 @@ const CoinsManager = () => {
     try {
       const amount = parseInt(adjAmount);
       if (isNaN(amount) || amount === 0) throw new Error("Valor inválido");
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("coin_transactions")
         .insert({
           user_id: adjUserId.trim(),
@@ -140,7 +141,7 @@ const CoinsManager = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Moedas</h1>
+      <h2 className="text-2xl font-bold">Moedas</h2>
 
       {/* Settings */}
       <div className="border rounded-xl p-4 bg-card space-y-3">

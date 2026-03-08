@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ const FaqManager = () => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Faq | null>(null);
   const { toast } = useToast();
 
   const fetchFaqs = useCallback(async () => {
@@ -106,14 +108,19 @@ const FaqManager = () => {
   };
 
   const handleDelete = async (faq: Faq) => {
-    if (!confirm(`Excluir "${faq.question}"?`)) return;
-    const { error } = await supabase.from("faqs").delete().eq("id", faq.id);
+    setDeleteTarget(faq);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("faqs").delete().eq("id", deleteTarget.id);
     if (error) {
       toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "FAQ excluído" });
       fetchFaqs();
     }
+    setDeleteTarget(null);
   };
 
   const handleMove = async (faq: Faq, direction: "up" | "down") => {
@@ -134,7 +141,7 @@ const FaqManager = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Perguntas Frequentes</h1>
+        <h2 className="text-2xl font-bold">Perguntas Frequentes</h2>
         <Button onClick={openNew}>
           <Plus className="mr-2 h-4 w-4" /> Nova Pergunta
         </Button>
@@ -220,6 +227,15 @@ const FaqManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        title={`Excluir "${deleteTarget?.question}"?`}
+        description="Esta ação não pode ser desfeita."
+        destructive
+      />
     </div>
   );
 };
