@@ -11,7 +11,7 @@ import SeoHead from "@/components/SeoHead";
 import AppHeader from "@/components/AppHeader";
 import ProductCard from "@/components/ProductCard";
 import LoadingSpinner from "@/components/ui/loading-spinner";
-import heroBg from "@/assets/hero-bg.webp";
+import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import AiCoinsSection from "@/components/AiCoinsSection";
 import WhyArtisCase from "@/components/WhyArtisCase";

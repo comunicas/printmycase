@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import ScrollReveal from "@/components/ScrollReveal";
 import logoEpson from "@/assets/logo-epson.png";
 import logoPrecisionCore from "@/assets/logo-precisioncore.png";
-import parallaxBg from "@/assets/printmycase-hero.webp";
+import parallaxBg from "@/assets/printmycase-hero-optimized.webp";
 
 const features = [
   {
