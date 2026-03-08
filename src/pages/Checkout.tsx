@@ -72,6 +72,7 @@ const Checkout = () => {
         if (pending.edited_image_path) editedUrl = await getSignedUrl(pending.edited_image_path);
         if (pending.original_image_path) imgUrl = await getSignedUrl(pending.original_image_path);
         setCustomization({
+          rawImage: imgUrl,
           image: imgUrl,
           editedImage: editedUrl,
           imageFileName: null,
