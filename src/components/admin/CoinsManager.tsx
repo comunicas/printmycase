@@ -116,7 +116,7 @@ const CoinsManager = () => {
     try {
       const amount = parseInt(adjAmount);
       if (isNaN(amount) || amount === 0) throw new Error("Valor inválido");
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("coin_transactions")
         .insert({
           user_id: adjUserId.trim(),
