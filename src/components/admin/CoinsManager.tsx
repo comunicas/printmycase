@@ -71,7 +71,7 @@ const CoinsManager = () => {
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
-    let query = (supabase as any)
+    let query = supabase
       .from("coin_transactions")
       .select("*")
       .order("created_at", { ascending: false })
