@@ -41,24 +41,25 @@ const Landing = () => {
     <>
       <SeoHead products={featuredProducts} />
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="bg-black">
-          <AppHeader variant="transparent" />
-        </div>
-
         <main>
-          {/* Hero — Dark Parallax */}
-          <section aria-label="Banner principal" className="relative min-h-[100svh] -mt-[56px] flex items-center justify-center overflow-hidden">
-            {/* Parallax BG */}
-            <div className="absolute inset-0 parallax-bg">
+          {/* Hero — Dark */}
+          <section aria-label="Banner principal" className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
+            {/* Header inside hero */}
+            <div className="absolute top-0 left-0 right-0 z-20">
+              <AppHeader variant="transparent" />
+            </div>
+
+            {/* BG image */}
+            <div className="absolute inset-0">
               <img
                 src={heroBg}
                 alt=""
                 fetchPriority="high"
                 decoding="async"
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
-            
+
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-purple-950/55 to-black/80" />
             {/* Radial glow */}
@@ -74,21 +75,15 @@ const Landing = () => {
 
             {/* Content */}
             <div className="relative z-10 max-w-3xl mx-auto text-center space-y-5 sm:space-y-7 px-5 pt-20 pb-16">
-             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={{ ...fadeIn(0), textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={{ ...fadeIn(0), textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
                 Crie sua case{" "}
                 <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">personalizada</span>{" "}
                 em 1 minuto.
               </h1>
-              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Receba em casa sua capa personalizada com qualidade premium e impressão PrintMyCase.
-
-              </p>
+              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Receba em casa sua capa personalizada com qualidade premium e impressão PrintMyCase.</p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={fadeIn(300)}>
-                <Button
-                  size="lg"
-                  className="gap-2 text-base glow-primary"
-                  onClick={() => navigate("/catalog")}>
-                  
+                <Button size="lg" className="gap-2 text-base glow-primary" onClick={() => navigate("/catalog")}>
                   Criar Minha Case <ArrowRight className="w-4 h-4" />
                 </Button>
                 <Button
@@ -98,7 +93,6 @@ const Landing = () => {
                   onClick={() => {
                     document.getElementById("destaques")?.scrollIntoView({ behavior: "smooth" });
                   }}>
-                  
                   Ver Modelos
                 </Button>
               </div>
@@ -107,7 +101,7 @@ const Landing = () => {
               <div className="inline-flex items-center gap-2.5 glass rounded-full px-5 py-2.5 mx-auto opacity-0 animate-fade-in" style={fadeIn(450)}>
                 <div className="flex" aria-hidden="true">
                   {Array.from({ length: 5 }).map((_, i) =>
-                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   )}
                 </div>
                 <span className="text-sm text-white/80 font-medium">Mais de 10.000 Cases criadas</span>
@@ -115,10 +109,8 @@ const Landing = () => {
             </div>
           </section>
 
-          <Separator />
-
           {/* How it works */}
-          <section id="como-funciona" className="py-16 px-5 bg-card">
+          <section id="como-funciona" className="py-16 px-5 bg-background">
             <div className="max-w-5xl mx-auto">
               <ScrollReveal>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Como funciona</h2>
@@ -140,10 +132,10 @@ const Landing = () => {
                   </ScrollReveal>
                   {i < steps.length - 1 &&
                   <div className="hidden md:flex items-center justify-center">
-                      <div className="w-full border-t-2 border-dashed border-primary/30 relative">
-                        <ChevronRight className="w-5 h-5 text-primary/50 absolute -right-2.5 -top-2.5" />
-                      </div>
+                    <div className="w-full border-t-2 border-dashed border-primary/30 relative">
+                      <ChevronRight className="w-5 h-5 text-primary/50 absolute -right-2.5 -top-2.5" />
                     </div>
+                  </div>
                   }
                 </Fragment>
                 )}
@@ -151,24 +143,21 @@ const Landing = () => {
             </div>
           </section>
 
-          <Separator />
-
           {/* Featured Products */}
-          <section id="destaques" className="py-16 px-5 bg-card">
+          <section id="destaques" className="py-16 px-5 bg-background">
             <div className="max-w-5xl mx-auto">
               <ScrollReveal>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Modelos em Destaque</h2>
               </ScrollReveal>
               {loading ?
               <LoadingSpinner /> :
-
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {featuredProducts.map((product, i) =>
-                <ScrollReveal key={product.id} delay={i * 80}>
-                      <ProductCard product={product} />
-                    </ScrollReveal>
+                {featuredProducts.map((product, i) =>
+                  <ScrollReveal key={product.id} delay={i * 80}>
+                    <ProductCard product={product} />
+                  </ScrollReveal>
                 )}
-                </div>
+              </div>
               }
               <ScrollReveal delay={350}>
                 <div className="text-center mt-8">
@@ -186,10 +175,8 @@ const Landing = () => {
           {/* Benefits + Print Tech */}
           <WhyArtisCase />
 
-          <Separator />
-
           {/* Testimonials */}
-          <section id="depoimentos" className="py-16 px-5 bg-card">
+          <section id="depoimentos" className="py-16 px-5 bg-background">
             <div className="max-w-5xl mx-auto">
               <ScrollReveal>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">O que nossos clientes dizem</h2>
@@ -235,7 +222,6 @@ const Landing = () => {
                   variant="outline"
                   className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground bg-transparent"
                   onClick={() => navigate("/solicitar-modelo")}>
-                  
                   <Smartphone className="w-4 h-4" /> Solicitar Modelo
                 </Button>
               </div>
@@ -246,15 +232,12 @@ const Landing = () => {
         {/* Footer */}
         <footer className="border-t bg-card py-10 px-5">
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
-            {/* Brand */}
             <div className="space-y-3">
               <span className="text-lg font-bold text-foreground">ArtisCase</span>
               <p className="text-muted-foreground leading-relaxed">
                 Capas personalizadas com tecnologia de impressão profissional. Qualidade premium direto na sua porta.
               </p>
             </div>
-
-            {/* Links */}
             <div className="space-y-3">
               <span className="font-semibold text-foreground">Links Úteis</span>
               <nav className="flex flex-col gap-2 text-muted-foreground">
@@ -263,8 +246,6 @@ const Landing = () => {
                 <a href="#faq" className="hover:text-foreground transition-colors w-fit">Perguntas Frequentes</a>
               </nav>
             </div>
-
-            {/* Contact */}
             <div className="space-y-3">
               <span className="font-semibold text-foreground">Contato</span>
               <p className="text-muted-foreground leading-relaxed">
@@ -273,16 +254,13 @@ const Landing = () => {
               <Link
                 to="/solicitar-modelo"
                 className="inline-block text-primary hover:text-primary/80 font-medium transition-colors">
-                
                 Fale Conosco →
               </Link>
             </div>
           </div>
 
           <Separator className="my-6" />
-
           <PaymentBadges />
-
           <Separator className="my-6" />
 
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -291,8 +269,8 @@ const Landing = () => {
           </div>
         </footer>
       </div>
-    </>);
-
+    </>
+  );
 };
 
 export default Landing;
