@@ -101,33 +101,52 @@ export function renderSnapshot(
       canvas.width = PHONE_W;
       canvas.height = PHONE_H;
       const ctx = canvas.getContext("2d")!;
+
+      // Replicate PhonePreview CSS logic exactly
       const oversize = Math.max(150, scale * 1.25);
-      const drawW = (scale / oversize) * PHONE_W * (oversize / 100);
-      const drawH = (scale / oversize) * PHONE_H * (oversize / 100);
+      const offset = -(oversize - 100) / 2;
+
+      // The oversize div dimensions in canvas space
+      const divW = PHONE_W * oversize / 100;
+      const divH = PHONE_H * oversize / 100;
+      const divLeft = PHONE_W * offset / 100;
+      const divTop = PHONE_H * offset / 100;
+
+      // CSS background-size percentage applied to the oversize div
+      const bgSizePct = scale * (100 / oversize) / 100;
+
+      // The image is scaled to cover the div width, preserving aspect ratio
       const imgAspect = img.naturalWidth / img.naturalHeight;
-      const cellAspect = PHONE_W / PHONE_H;
-      let srcW: number, srcH: number;
-      if (imgAspect > cellAspect) {
-        srcH = img.naturalHeight;
-        srcW = srcH * cellAspect;
+      const divAspect = divW / divH;
+
+      let imgW: number, imgH: number;
+      if (imgAspect > divAspect) {
+        // Image wider than container — fit by height
+        imgH = divH * bgSizePct;
+        imgW = imgH * imgAspect;
       } else {
-        srcW = img.naturalWidth;
-        srcH = srcW / cellAspect;
+        // Image taller than container — fit by width
+        imgW = divW * bgSizePct;
+        imgH = imgW / imgAspect;
       }
-      const maxOffX = img.naturalWidth - srcW;
-      const maxOffY = img.naturalHeight - srcH;
-      const srcX = (position.x / 100) * maxOffX;
-      const srcY = (position.y / 100) * maxOffY;
+
+      // CSS background-position: position.x% position.y%
+      // Formula: (containerSize - imageSize) * percentage / 100
+      const imgLeft = divLeft + (divW - imgW) * position.x / 100;
+      const imgTop = divTop + (divH - imgH) * position.y / 100;
 
       ctx.save();
+      // Clip to phone frame
+      ctx.beginPath();
+      ctx.rect(0, 0, PHONE_W, PHONE_H);
+      ctx.clip();
+
+      // Apply rotation around center
       ctx.translate(PHONE_W / 2, PHONE_H / 2);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.translate(-PHONE_W / 2, -PHONE_H / 2);
-      ctx.drawImage(
-        img,
-        srcX, srcY, srcW, srcH,
-        (PHONE_W - drawW) / 2, (PHONE_H - drawH) / 2, drawW, drawH
-      );
+
+      ctx.drawImage(img, imgLeft, imgTop, imgW, imgH);
       ctx.restore();
 
       resolve(canvas.toDataURL("image/jpeg", quality));

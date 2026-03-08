@@ -1,33 +1,37 @@
 
 
-## Corrigir imagem Final para replicar o frame do smartphone
+## Verificação do Webhook Stripe Live
 
-### Problema
-A função `renderSnapshot` usa matemática diferente do componente `PhonePreview`. O CSS do PhonePreview usa `background-size`, `background-position` e um truque de "oversize div", enquanto o canvas usa recorte de fonte (`drawImage` com src crop) — resultando em enquadramento completamente diferente.
+### O que o código espera
 
-### Solução
-Reescrever `renderSnapshot` em `src/lib/image-utils.ts` para replicar exatamente a lógica CSS do `PhonePreview`:
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-**Lógica CSS do PhonePreview:**
-```text
-oversize = max(150, scale × 1.25)
-divW = PHONE_W × oversize / 100
-bgSize = scale × (100 / oversize) %
-imgDrawW = divW × bgSize / 100 = PHONE_W × scale / 100
-imgDrawH = imgDrawW / aspectRatio
-position: (divW - imgW) × posX% offset from div edge
-```
+### Como verificar (manual no Stripe Dashboard)
 
-**Mudança em `src/lib/image-utils.ts` (função `renderSnapshot`, ~linhas 89-137):**
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-Substituir toda a lógica do canvas por:
-1. Calcular `divW`, `divH`, `divLeft`, `divTop` (o div "oversize" deslocado)
-2. Calcular `imgW` = `PHONE_W * scale / 100`, `imgH` = `imgW / aspect`
-3. Calcular posição absoluta usando `background-position` CSS: `(divW - imgW) * posX / 100`
-4. Desenhar com rotação aplicada ao redor do centro
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-Isso garante que o snapshot no canvas seja pixel-perfect com o que o usuário vê no preview CSS.
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-### Arquivo editado
-- `src/lib/image-utils.ts` — reescrever `renderSnapshot`
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
