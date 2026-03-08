@@ -162,7 +162,7 @@ const OrdersManager = () => {
                     )}
                   </div>
                 </div>
-                <OrderImagesPreviewer customizationData={order.customization_data ?? null} />
+                <OrderImagesPreviewer customizationData={(order.customization_data as Record<string, any>) ?? null} />
                 <div className="flex items-center gap-2">
                   <Input
                     placeholder="Código de rastreio"

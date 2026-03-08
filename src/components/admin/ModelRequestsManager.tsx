@@ -92,6 +92,14 @@ const ModelRequestsManager = () => {
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        title="Excluir esta solicitação?"
+        description="Esta ação não pode ser desfeita."
+        destructive
+      />
     </div>
   );
 };

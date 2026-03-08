@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
