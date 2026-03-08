@@ -49,9 +49,15 @@ const Landing = () => {
           {/* Hero — Dark Parallax */}
           <section aria-label="Banner principal" className="relative min-h-[100svh] -mt-[56px] flex items-center justify-center overflow-hidden">
             {/* Parallax BG */}
-            <div
-              className="absolute inset-0 parallax-bg"
-              style={{ backgroundImage: `url(${heroBg})` }} />
+            <div className="absolute inset-0 parallax-bg">
+              <img
+                src={heroBg}
+                alt=""
+                fetchPriority="high"
+                decoding="async"
+                className="w-full h-full object-cover"
+              />
+            </div>
             
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-purple-950/55 to-black/80" />
