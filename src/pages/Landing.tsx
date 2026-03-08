@@ -154,7 +154,7 @@ const Landing = () => {
           <Separator />
 
           {/* Featured Products */}
-          <section id="destaques" className="py-16 px-5 bg-card">
+          <section id="destaques" className="py-16 px-5 bg-background">
             <div className="max-w-5xl mx-auto">
               <ScrollReveal>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Modelos em Destaque</h2>
