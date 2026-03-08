@@ -94,7 +94,7 @@ const CoinsManager = () => {
     try {
       const updates = settings
         .filter((s) => editedSettings[s.key] !== s.value)
-        .map((s) => (supabase as any).from("coin_settings").update({ value: editedSettings[s.key] }).eq("key", s.key));
+        .map((s) => supabase.from("coin_settings").update({ value: editedSettings[s.key] }).eq("key", s.key));
       if (updates.length === 0) {
         toast({ title: "Nenhuma alteração" });
         setSavingSettings(false);
