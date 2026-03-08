@@ -1,39 +1,37 @@
 
 
-## Correção: Frame parece tablet
+## Verificação do Webhook Stripe Live
 
-### Problema
-O `style={{ height: 'min(410px, 50dvh)', aspectRatio: '260/532' }}` inline tem prioridade sobre as classes Tailwind `lg:w-[260px] lg:h-[532px]`. No desktop, isso resulta em:
-- Largura fixa: 260px (do `lg:w-[260px]`)
-- Altura reduzida: ~400px (do inline style, que sobrescreve `lg:h-[532px]`)
-- Aspect-ratio ignorado (porque largura E altura estão definidos)
-- Resultado: 260×400 = proporção 0.65 → parece tablet
+### O que o código espera
 
-### Solução
-Separar estilos mobile/desktop corretamente:
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-**Mobile** (< lg): usar `aspect-ratio: 260/532` com altura dinâmica `min(410px, 50dvh)`, sem largura fixa — o aspect-ratio calcula a largura automaticamente (~196px).
+### Como verificar (manual no Stripe Dashboard)
 
-**Desktop** (lg+): usar as classes Tailwind `lg:w-[260px] lg:h-[532px]` sem override inline.
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Mudança em `src/components/PhonePreview.tsx` (linha 196)
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-Remover o inline `style` e usar classes Tailwind com arbitrary values:
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-```tsx
-// De:
-<div className="relative lg:w-[260px] lg:h-[532px] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden" 
-  style={{ height: 'min(410px, 50dvh)', aspectRatio: '260/532' }}>
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-// Para:
-<div className="relative h-[min(410px,50dvh)] aspect-[260/532] lg:w-[260px] lg:h-[532px] lg:aspect-auto rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
-```
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-- Mobile: `h-[min(410px,50dvh)]` + `aspect-[260/532]` → altura dinâmica, largura calculada pelo aspect-ratio
-- Desktop: `lg:w-[260px]` + `lg:h-[532px]` + `lg:aspect-auto` → dimensões fixas corretas, aspect-ratio desativado
-
-### Arquivo
-| Arquivo | Ação |
-|---------|------|
-| `src/components/PhonePreview.tsx` | Trocar inline style por classes Tailwind (1 linha) |
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
