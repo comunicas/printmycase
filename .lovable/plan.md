@@ -1,58 +1,37 @@
 
 
-## Proteger o edge function `cleanup-pending-checkouts` com CRON_SECRET
+## Verificação do Webhook Stripe Live
 
-### O que será feito
+### O que o código espera
 
-1. **Criar o secret `CRON_SECRET`** — solicitar ao usuário que forneça um valor (string aleatória forte). Ele pode inventar qualquer valor, ex: `artiscase_cron_2024_xK9mP3nQ7w`.
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-2. **Atualizar `supabase/functions/cleanup-pending-checkouts/index.ts`** — adicionar validação do header `X-Cron-Secret` no início da função, retornando 401 se ausente ou inválido.
+### Como verificar (manual no Stripe Dashboard)
 
-3. **Atualizar o cron job via SQL** — remover o job diário redundante e atualizar o job horário para incluir o header `X-Cron-Secret` na chamada HTTP.
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Detalhes técnicos
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-**Edge function** — adicionar antes do bloco try:
-```typescript
-const cronSecret = req.headers.get("x-cron-secret");
-if (cronSecret !== Deno.env.get("CRON_SECRET")) {
-  return new Response(JSON.stringify({ error: "Unauthorized" }), {
-    status: 401,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-```
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-**SQL para cron jobs** — unschedule o job diário e atualizar o horário com o novo header:
-```sql
-SELECT cron.unschedule('cleanup-pending-checkouts-daily');
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-SELECT cron.unschedule('cleanup-pending-checkouts-hourly');
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-SELECT cron.schedule(
-  'cleanup-pending-checkouts-hourly',
-  '0 * * * *',
-  $$
-  SELECT net.http_post(
-    url:='https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/cleanup-pending-checkouts',
-    headers:=jsonb_build_object(
-      'Content-Type','application/json',
-      'Authorization','Bearer ANON_KEY',
-      'X-Cron-Secret', current_setting('app.settings.cron_secret', true)
-    ),
-    body:='{}'::jsonb
-  ) as request_id;
-  $$
-);
-```
-
-> Nota: o secret no cron será hardcoded no SQL pois `pg_cron` não acessa secrets de edge functions. O valor será o mesmo fornecido pelo usuário.
-
-### Arquivos
-
-| Arquivo | Ação |
-|---------|------|
-| `supabase/functions/cleanup-pending-checkouts/index.ts` | Adicionar validação de secret |
-| Secret `CRON_SECRET` | Criar via ferramenta de secrets |
-| SQL (cron jobs) | Atualizar via query direta |
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
