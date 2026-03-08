@@ -17,6 +17,7 @@ const ModelRequestsManager = () => {
   const [requests, setRequests] = useState<ModelRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetch_ = useCallback(async () => {
