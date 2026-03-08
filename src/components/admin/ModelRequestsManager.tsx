@@ -57,7 +57,7 @@ const ModelRequestsManager = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Solicitações de Modelo</h1>
+        <h2 className="text-2xl font-bold">Solicitações de Modelo</h2>
         <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
           {requests.length} solicitação{requests.length !== 1 ? "ões" : ""}
         </span>
