@@ -44,7 +44,7 @@ const FaqSection = () => {
                 className="rounded-xl border bg-card overflow-hidden"
               >
                 <Accordion.Header>
-                  <Accordion.Trigger className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-foreground hover:bg-muted/50 transition-colors data-[state=open]:bg-muted/50 group">
+                  <Accordion.Trigger className="flex w-full items-center justify-between px-5 py-5 text-left text-base font-medium text-foreground hover:bg-muted/50 transition-colors data-[state=open]:bg-muted/50 group">
                     {faq.question}
                     <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 ml-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </Accordion.Trigger>
