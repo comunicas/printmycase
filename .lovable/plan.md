@@ -1,17 +1,37 @@
 
 
-## Melhorar espaçamento do Accordion FAQ
+## Verificação do Webhook Stripe Live
 
-### Problema
-O trigger (header) do accordion usa `px-5 py-4` e o conteúdo usa `px-5 pb-4` sem `pt`, resultando em pouco espaço entre a pergunta e a resposta quando aberto. O espaçamento entre itens (`space-y-3`) também é apertado.
+### O que o código espera
 
-### Alterações em `src/components/FaqSection.tsx`
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-1. **Trigger**: aumentar padding vertical de `py-4` para `py-5` — mais respiro no header
-2. **Content div**: adicionar `pt-1` para criar separação visual entre pergunta e resposta, e aumentar `pb-4` para `pb-5`
-3. **Accordion Root**: aumentar `space-y-3` para `space-y-4` — mais espaço entre itens
-4. **Texto do trigger**: aumentar de `text-sm` para `text-base` para melhor legibilidade e proporção com o espaçamento
+### Como verificar (manual no Stripe Dashboard)
 
-### Arquivo alterado
-- `src/components/FaqSection.tsx`
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

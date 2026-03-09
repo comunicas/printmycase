@@ -36,7 +36,7 @@ const FaqSection = () => {
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
-          <Accordion.Root type="single" collapsible className="space-y-3">
+          <Accordion.Root type="single" collapsible className="space-y-4">
             {faqs.map((faq) => (
               <Accordion.Item
                 key={faq.id}
@@ -44,13 +44,13 @@ const FaqSection = () => {
                 className="rounded-xl border bg-card overflow-hidden"
               >
                 <Accordion.Header>
-                  <Accordion.Trigger className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-foreground hover:bg-muted/50 transition-colors data-[state=open]:bg-muted/50 group">
+                  <Accordion.Trigger className="flex w-full items-center justify-between px-5 py-5 text-left text-base font-medium text-foreground hover:bg-muted/50 transition-colors data-[state=open]:bg-muted/50 group">
                     {faq.question}
                     <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 ml-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </Accordion.Trigger>
                 </Accordion.Header>
                 <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                  <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">
+                  <div className="px-5 pt-1 pb-5 text-sm text-muted-foreground leading-relaxed">
                     {faq.answer}
                   </div>
                 </Accordion.Content>
