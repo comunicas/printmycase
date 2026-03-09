@@ -36,7 +36,7 @@ const FaqSection = () => {
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
-          <Accordion.Root type="single" collapsible className="space-y-3">
+          <Accordion.Root type="single" collapsible className="space-y-4">
             {faqs.map((faq) => (
               <Accordion.Item
                 key={faq.id}
