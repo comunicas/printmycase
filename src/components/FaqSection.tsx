@@ -50,7 +50,7 @@ const FaqSection = () => {
                   </Accordion.Trigger>
                 </Accordion.Header>
                 <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                  <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">
+                  <div className="px-5 pt-1 pb-5 text-sm text-muted-foreground leading-relaxed">
                     {faq.answer}
                   </div>
                 </Accordion.Content>
