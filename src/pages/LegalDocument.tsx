@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
+const slugMap: Record<string, string> = {
+  "/termos": "terms",
+  "/privacidade": "privacy",
+};
+
 const LegalDocument = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { pathname } = useLocation();
+  const slug = slugMap[pathname];
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
