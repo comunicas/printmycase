@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
-import SeoHead from "@/components/SeoHead";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import ScrollReveal from "@/components/ScrollReveal";
 import { ChevronRight } from "lucide-react";
