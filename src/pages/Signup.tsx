@@ -10,6 +10,7 @@ import AppHeader from "@/components/AppHeader";
 import { useToast } from "@/hooks/use-toast";
 import logoArtisCase from "@/assets/logo-artiscase.png";
 import GoogleIcon from "@/components/GoogleIcon";
+import { clarityEvent } from "@/lib/clarity";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
