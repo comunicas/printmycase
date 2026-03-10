@@ -7,6 +7,7 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 const slugMap: Record<string, string> = {
   "/termos": "terms",
   "/privacidade": "privacy",
+  "/compras": "purchase-policy",
 };
 
 const LegalDocument = () => {

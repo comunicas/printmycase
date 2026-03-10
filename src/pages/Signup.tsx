@@ -150,8 +150,10 @@ const Signup = () => {
               <span className="text-muted-foreground leading-tight">
                 Li e aceito os{" "}
                 <Link to="/termos" target="_blank" className="text-primary hover:underline">Termos de Uso</Link>
-                {" "}e a{" "}
+                , a{" "}
                 <Link to="/privacidade" target="_blank" className="text-primary hover:underline">Política de Privacidade</Link>
+                {" "}e a{" "}
+                <Link to="/compras" target="_blank" className="text-primary hover:underline">Política de Compra e Devolução</Link>
               </span>
             </label>
             <SubmitButton loading={loading} className="w-full" disabled={!acceptedTerms}>

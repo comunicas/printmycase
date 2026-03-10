@@ -1,50 +1,37 @@
 
 
-## Atualizar documentos legais com dados reais da empresa
+## Verificação do Webhook Stripe Live
 
-### Alterações
+### O que o código espera
 
-**1. Migration SQL** — Atualizar os 3 documentos na tabela `legal_documents`
-- `UPDATE` nos slugs `terms` e `privacy` com dados reais: RB DIGITAL TECH LTDA, CNPJ 49.841.456/0001-73, São Paulo, sac@artiscase.com, https://studio.artiscase.com
-- `INSERT` novo documento slug `purchase-policy` (Política de Compra e Devolução) com regras de CDC para produtos personalizados, prazos, frete Sudeste, Stripe/Pix, garantia de defeitos
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-**2. `src/pages/LegalDocument.tsx`** — Adicionar mapeamento
-- Novo entry no `slugMap`: `"/compras": "purchase-policy"`
+### Como verificar (manual no Stripe Dashboard)
 
-**3. `src/App.tsx`** — Nova rota
-- `<Route path="/compras" element={<LegalDocument />} />`
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-**4. `src/pages/Landing.tsx`** — Atualizar footer
-- Adicionar link "Política de Compra e Devolução" → `/compras`
-- Atualizar seção "Contato" com email `sac@artiscase.com`
-- Atualizar copyright para "RB DIGITAL TECH LTDA — CNPJ 49.841.456/0001-73"
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-**5. `src/pages/Signup.tsx`** — Atualizar checkbox de aceite
-- Incluir link para `/compras` (Política de Compra e Devolução) junto aos existentes
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-### Conteúdo dos documentos atualizados
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-Todos os documentos terão:
-- Razão social: RB DIGITAL TECH LTDA
-- CNPJ: 49.841.456/0001-73
-- Sede: São Paulo/SP
-- Contato: sac@artiscase.com
-- URL: https://studio.artiscase.com
-- Foro: São Paulo/SP
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-**Política de Compra e Devolução** cobrirá:
-- Formas de pagamento (Stripe: Visa, Master, Elo, Amex + Pix)
-- Preços em BRL, frete calculado por CEP (atualmente Sudeste)
-- Prazo de produção (48h úteis) e pipeline de status
-- Direito de arrependimento (7 dias CDC) com exceção para produtos personalizados
-- Garantia de defeitos de fabricação (30 dias)
-- Cancelamento antes da produção
-- Processo de troca/devolução via sac@artiscase.com
-
-### Arquivos alterados
-- Migration SQL (update terms + privacy, insert purchase-policy)
-- `src/pages/LegalDocument.tsx`
-- `src/App.tsx`
-- `src/pages/Landing.tsx`
-- `src/pages/Signup.tsx`
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
