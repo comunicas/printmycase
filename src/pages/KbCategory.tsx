@@ -12,7 +12,7 @@ interface Article {
   slug: string;
 }
 
-const KbCategory = React.forwardRef<HTMLDivElement>((_, ref) => {
+const KbCategory = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const [categoryName, setCategoryName] = useState("");
   const [articles, setArticles] = useState<Article[]>([]);
