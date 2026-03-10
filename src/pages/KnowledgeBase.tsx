@@ -6,11 +6,11 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 import ScrollReveal from "@/components/ScrollReveal";
 import {
-  HelpCircle, Package, Sparkles, CreditCard, User, Shield,
+  HelpCircle, Package, Sparkles, CreditCard, User, UserCircle, Shield,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ElementType> = {
-  HelpCircle, Package, Sparkles, CreditCard, User, Shield,
+  HelpCircle, Package, Sparkles, CreditCard, User, UserCircle, Shield,
 };
 
 interface KbCategory {
