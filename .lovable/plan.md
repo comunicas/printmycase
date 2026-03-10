@@ -1,22 +1,60 @@
 
 
-## Adicionar FAQ sobre Trocas e Devoluções
+## Imagens Ilustrativas Globais + Galeria no Produto
 
-### Situação atual
-O artigo "Compra e Pagamento" (`12d6a17a`) já contém uma seção sobre trocas e devoluções no final do conteúdo. Porém, não existe um FAQ correspondente na tabela `faqs` — provavelmente foi perdido por truncamento na migração anterior.
+### Conceito
+Criar uma tabela `product_gallery_images` para armazenar imagens ilustrativas (embalagem, material, detalhes de impressão) que aparecem em **todos** os produtos, após as imagens específicas. Essas imagens são gerenciadas via admin e nunca são usadas como thumbnail/capa.
 
-### Plano
+### 1. Banco de dados — nova tabela
 
-**Migração SQL** para inserir 1 novo FAQ:
+```sql
+CREATE TABLE public.product_gallery_images (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  url text NOT NULL,
+  label text NOT NULL DEFAULT '',
+  sort_order integer NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-| Campo | Valor |
+ALTER TABLE public.product_gallery_images ENABLE ROW LEVEL SECURITY;
+
+-- Qualquer pessoa pode ver imagens ativas
+CREATE POLICY "Anyone can view active gallery images"
+  ON public.product_gallery_images FOR SELECT TO public
+  USING (active = true);
+
+-- Admins gerenciam
+CREATE POLICY "Admins can manage gallery images"
+  ON public.product_gallery_images FOR ALL TO authenticated
+  USING (has_role(auth.uid(), 'admin'))
+  WITH CHECK (has_role(auth.uid(), 'admin'));
+```
+
+### 2. Admin — novo manager `GalleryImagesManager`
+
+- Nova aba "Galeria" no painel admin (ícone `ImageIcon`)
+- Lista as imagens com preview, label editável, reordenação e toggle ativo/inativo
+- Upload de novas imagens para o bucket `product-assets` (pasta `gallery/`)
+- CRUD completo na tabela `product_gallery_images`
+
+### 3. Página do Produto — integrar na galeria
+
+- `ProductGallery.tsx`: receber prop `galleryImages` (array de URLs)
+- Ordem: `device_image` → `images` (específicas) → `galleryImages` (ilustrativas)
+- Separador visual opcional (label "Imagens ilustrativas") nas thumbnails
+- `Product.tsx`: buscar `product_gallery_images` ativas, ordenadas por `sort_order`, e passar ao `ProductGallery`
+
+### 4. Catálogo/Thumbnails — sem impacto
+
+As imagens ilustrativas **não** afetam `ProductCard` nem thumbnails. Apenas aparecem na galeria da página de produto.
+
+### Arquivos alterados
+
+| Arquivo | Alteração |
 |---|---|
-| question | "E se minha case chegar com defeito?" |
-| answer | "Por se tratar de um produto personalizado e fabricado sob demanda, trocas e devoluções são aceitas apenas em caso de defeito de fabricação. Nestes casos, entre em contato conosco com fotos do produto para análise e resolução." |
-| kb_article_id | `12d6a17a-4d25-4644-aff8-a7330a59d772` (Compra e Pagamento) |
-| active | true |
-| featured | false |
-| sort_order | próximo da sequência atual |
-
-Sem alterações de código — apenas dados.
+| `src/components/admin/GalleryImagesManager.tsx` | **Novo** — CRUD de imagens ilustrativas |
+| `src/pages/Admin.tsx` | Adicionar aba "Galeria" |
+| `src/components/ProductGallery.tsx` | Receber e exibir `galleryImages` após imagens do produto |
+| `src/pages/Product.tsx` | Buscar `product_gallery_images` e passar ao gallery |
 
