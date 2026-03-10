@@ -36,6 +36,9 @@ const Admin = () => {
             <TabsTrigger value="coins" className="gap-1.5">
               <Coins className="w-4 h-4" /> Moedas
             </TabsTrigger>
+            <TabsTrigger value="legal" className="gap-1.5">
+              <FileText className="w-4 h-4" /> Legal
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products"><ProductsManager /></TabsContent>
