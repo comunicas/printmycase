@@ -1,30 +1,22 @@
 
 
-## Ajustar Categoria "Perguntas Frequentes" na Central de Ajuda
+## Adicionar FAQ sobre Trocas e Devoluções
 
 ### Situação atual
-A categoria "Perguntas Frequentes" (`132e18f2`) existe no KB mas tem **0 artigos**. A descrição atual é genérica: "Dúvidas mais comuns sobre nossos produtos e serviços".
-
-Na home, os FAQs em destaque cobrem: material, impressão, tecnologia PrintMyCase, prazo, filtros IA, ArtisCoins e pagamentos.
+O artigo "Compra e Pagamento" (`12d6a17a`) já contém uma seção sobre trocas e devoluções no final do conteúdo. Porém, não existe um FAQ correspondente na tabela `faqs` — provavelmente foi perdido por truncamento na migração anterior.
 
 ### Plano
 
-**1. Atualizar descrição da categoria** para refletir os 4 pilares: qualidade, impressão, compra e facilidade.
+**Migração SQL** para inserir 1 novo FAQ:
 
-**2. Criar 4 artigos-guia** na categoria "Perguntas Frequentes", cada um consolidando as respostas da home num formato mais completo:
-
-| Artigo | Conteúdo base (FAQs relacionados) |
+| Campo | Valor |
 |---|---|
-| **Qualidade e Material** | Material policarbonato, durabilidade, resistência |
-| **Impressão e Tecnologia** | Qualidade da impressão Epson, tecnologia PrintMyCase, desbotamento |
-| **Compra e Pagamento** | Formas de pagamento, segurança, prazo de entrega |
-| **Personalização Fácil** | Envio de imagem, filtros IA, ArtisCoins, resolução mínima |
+| question | "E se minha case chegar com defeito?" |
+| answer | "Por se tratar de um produto personalizado e fabricado sob demanda, trocas e devoluções são aceitas apenas em caso de defeito de fabricação. Nestes casos, entre em contato conosco com fotos do produto para análise e resolução." |
+| kb_article_id | `12d6a17a-4d25-4644-aff8-a7330a59d772` (Compra e Pagamento) |
+| active | true |
+| featured | false |
+| sort_order | próximo da sequência atual |
 
-**3. Vincular FAQs da home** aos novos artigos via `kb_article_id` nos registros que ainda não têm link.
-
-### Implementação
-- Migração SQL para inserir os 4 artigos na tabela `kb_articles` com conteúdo Markdown
-- Migração SQL para atualizar `kb_article_id` nos FAQs sem vínculo
-- Atualizar descrição da categoria "Perguntas Frequentes"
-- Sem alterações de código
+Sem alterações de código — apenas dados.
 
