@@ -14,6 +14,20 @@ interface GalleryImage {
   active: boolean;
 }
 
+const EditableLabel = ({ value, onSave }: { value: string; onSave: (v: string) => void }) => {
+  const [local, setLocal] = useState(value);
+  useEffect(() => { setLocal(value); }, [value]);
+  return (
+    <Input
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => { if (local !== value) onSave(local); }}
+      placeholder="Label (opcional)"
+      className="flex-1 max-w-xs text-sm"
+    />
+  );
+};
+
 const GalleryImagesManager = () => {
   const { toast } = useToast();
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -157,11 +171,9 @@ const GalleryImagesManager = () => {
               className="h-16 w-16 rounded-md border object-contain bg-background"
             />
 
-            <Input
+            <EditableLabel
               value={img.label}
-              onChange={(e) => updateField(img.id, { label: e.target.value })}
-              placeholder="Label (opcional)"
-              className="flex-1 max-w-xs text-sm"
+              onSave={(val) => updateField(img.id, { label: val })}
             />
 
             <div className="flex items-center gap-2">
