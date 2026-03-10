@@ -122,6 +122,7 @@ const Checkout = () => {
     if (!user || !product || !customization || !shipping || !addressData) return;
     setSubmitted(true);
     if (!isAddressValid) return;
+    clarityEvent("checkout_payment_started");
     setCheckoutLoading(true);
     try {
       let rawImageUrl: string | null = null;

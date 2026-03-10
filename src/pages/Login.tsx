@@ -28,6 +28,7 @@ const Login = () => {
     if (error) {
       toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
     } else {
+      clarityEvent("auth_login");
       navigate(redirect);
     }
     setLoading(false);

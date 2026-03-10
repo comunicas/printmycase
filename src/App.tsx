@@ -30,6 +30,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <BrowserRouter>
+        <ClarityFunnelTracker />
         <Suspense fallback={<LoadingSpinner variant="fullPage" />}>
           <Routes>
             <Route path="/" element={<Landing />} />

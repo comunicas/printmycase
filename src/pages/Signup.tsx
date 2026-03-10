@@ -36,6 +36,7 @@ const Signup = () => {
     if (error) {
       toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
     } else {
+      clarityEvent("auth_signup");
       setSent(true);
     }
     setLoading(false);

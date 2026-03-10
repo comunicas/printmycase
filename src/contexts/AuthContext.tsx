@@ -41,7 +41,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null);
+        const u = session?.user ?? null;
+        setUser(u);
+        if (u) {
+          clarityIdentify(u.id, u.email);
+          clarityTag("user_type", "logged_in");
+        } else {
+          clarityTag("user_type", "anonymous");
+        }
       },
     );
 
