@@ -1,23 +1,37 @@
 
 
-## Correções Menores — Warnings de Ref
+## Verificação do Webhook Stripe Live
 
-A Base de Conhecimento e o painel admin estão funcionais. Os únicos problemas são warnings do React sobre refs em componentes funcionais (`LoadingSpinner`, `KbCategory`). Não são erros críticos mas poluem o console.
+### O que o código espera
 
-### Correção
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-Nenhuma correção obrigatória. Os warnings ocorrem porque o React Router tenta passar refs para componentes de página. Se quiser eliminar os warnings:
+### Como verificar (manual no Stripe Dashboard)
 
-- Envolver `KnowledgeBase`, `KbCategory` e `KbArticle` com `React.forwardRef` (opcional, cosmético)
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Verificação funcional
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-Tudo está operacional:
-- CRUD de categorias e artigos no admin
-- Toggle featured/active nas FAQs
-- Páginas públicas `/ajuda`, listagem e artigos individuais
-- Breadcrumbs e navegação
-- FAQ filtrado na landing page
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-Não há bugs funcionais a corrigir.
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

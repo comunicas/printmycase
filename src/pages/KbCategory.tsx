@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
@@ -12,7 +12,7 @@ interface Article {
   slug: string;
 }
 
-const KbCategory = () => {
+const KbCategory = React.forwardRef<HTMLDivElement>((_, ref) => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const [categoryName, setCategoryName] = useState("");
   const [articles, setArticles] = useState<Article[]>([]);
@@ -81,6 +81,8 @@ const KbCategory = () => {
         </main>
       </div>
   );
-};
+});
+
+KbCategory.displayName = "KbCategory";
 
 export default KbCategory;
