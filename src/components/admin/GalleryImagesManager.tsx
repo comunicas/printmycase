@@ -165,11 +165,15 @@ const GalleryImagesManager = () => {
             />
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Ativa</span>
-              <Switch
-                checked={img.active}
-                onCheckedChange={(v) => updateField(img.id, { active: v })}
-              />
+              <label className="text-xs text-muted-foreground flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={img.active}
+                  onChange={(e) => updateField(img.id, { active: e.target.checked })}
+                  className="accent-primary w-4 h-4"
+                />
+                Ativa
+              </label>
             </div>
 
             <Button
