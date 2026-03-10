@@ -1,22 +1,37 @@
 
 
-## Correção: Ícone "UserCircle" não mapeado
+## Verificação do Webhook Stripe Live
 
-### Problema encontrado
+### O que o código espera
 
-A categoria "Conta e Perfil" foi inserida no banco com `icon = 'UserCircle'`, mas o `iconMap` em `KnowledgeBase.tsx` só mapeia `User` (não `UserCircle`). O ícone faz fallback para `HelpCircle`.
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Correção
+### Como verificar (manual no Stripe Dashboard)
 
-Adicionar `UserCircle` ao import do lucide-react e ao `iconMap` em `KnowledgeBase.tsx`:
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-```typescript
-import { HelpCircle, Package, Sparkles, CreditCard, User, UserCircle, Shield } from "lucide-react";
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-const iconMap = { HelpCircle, Package, Sparkles, CreditCard, User, UserCircle, Shield };
-```
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-### Resultado
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-Todas as 5 categorias exibirão o ícone correto. Sem outros problemas detectados — console limpo, navegação funcional.
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
