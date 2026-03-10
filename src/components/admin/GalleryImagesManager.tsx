@@ -157,11 +157,9 @@ const GalleryImagesManager = () => {
               className="h-16 w-16 rounded-md border object-contain bg-background"
             />
 
-            <Input
+            <EditableLabel
               value={img.label}
-              onChange={(e) => updateField(img.id, { label: e.target.value })}
-              placeholder="Label (opcional)"
-              className="flex-1 max-w-xs text-sm"
+              onSave={(val) => updateField(img.id, { label: val })}
             />
 
             <div className="flex items-center gap-2">
