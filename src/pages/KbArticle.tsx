@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
-import SeoHead from "@/components/SeoHead";
+
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const KbArticle = () => {
