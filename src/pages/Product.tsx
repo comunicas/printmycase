@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ProductGallery from "@/components/ProductGallery";
 import ProductInfo from "@/components/ProductInfo";
@@ -8,6 +8,7 @@ import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
 import { clarityEvent, clarityTag } from "@/lib/clarity";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { supabase } from "@/integrations/supabase/client";
 
 const SITE_NAME = "ArtisCase";
 const SITE_URL =
