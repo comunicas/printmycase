@@ -267,7 +267,7 @@ const Landing = () => {
           <Separator className="my-6" />
 
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-            <span>© 2026 ArtisCase. Todos os direitos reservados.</span>
+            <span>© 2026 RB DIGITAL TECH LTDA — CNPJ 49.841.456/0001-73. Todos os direitos reservados.</span>
             <span>Feito com ❤️ no Brasil</span>
           </div>
         </footer>
