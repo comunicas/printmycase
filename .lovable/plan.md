@@ -1,37 +1,53 @@
 
 
-## Verificação do Webhook Stripe Live
+## Inserir Categorias e Artigos na Base de Conhecimento
 
-### O que o código espera
+Vou inserir dados reais nas tabelas `kb_categories` e `kb_articles` usando as informações extraídas dos documentos legais, FAQs existentes, configurações de moedas e funcionalidades reais da plataforma. Nenhuma informação será inventada.
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### Categorias a criar (5)
 
-### Como verificar (manual no Stripe Dashboard)
+| # | Nome | Slug | Ícone | Descrição |
+|---|---|---|---|---|
+| 1 | Pedidos e Envio | pedidos-envio | Package | Prazos, rastreamento, frete e entrega |
+| 2 | Personalização e IA | personalizacao-ia | Sparkles | Filtros artísticos, ArtisCoins e upload de imagens |
+| 3 | Pagamentos | pagamentos | CreditCard | Meios de pagamento, segurança e reembolso |
+| 4 | Conta e Perfil | conta-perfil | UserCircle | Cadastro, indicações e gerenciamento de conta |
+| 5 | Produto e Qualidade | produto-qualidade | Shield | Material, impressão, garantia e tecnologia |
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+### Artigos por categoria (baseados em dados reais)
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+**Pedidos e Envio** (5 artigos):
+1. Como acompanhar meu pedido — status reais do sistema (Pendente → Entregue)
+2. Quais os prazos de produção e entrega — 48h produção, frete por região (Sudeste R$12,90)
+3. Para quais regiões vocês entregam — atualmente Sudeste
+4. Posso cancelar meu pedido — antes da produção, conforme política
+5. O que fazer se meu pedido chegou com defeito — procedimento via sac@artiscase.com
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+**Personalização e IA** (4 artigos):
+1. Como personalizar minha case — fluxo: catálogo → upload → ajustes → checkout
+2. Como funcionam os filtros de IA — custo de 15 ArtisCoins por filtro, estilos disponíveis
+3. O que são ArtisCoins — moeda virtual, bônus de cadastro (50 moedas), pacotes de compra
+4. Qual a resolução recomendada para imagens — acima de 1000x1000px, upscale disponível (20 coins)
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+**Pagamentos** (3 artigos):
+1. Quais formas de pagamento aceitas — Visa, Mastercard, Elo, Amex, Pix via Stripe
+2. O pagamento é seguro — processado via Stripe, dados não armazenados
+3. Como funciona o reembolso — até 10 dias úteis, mesmo meio de pagamento
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+**Conta e Perfil** (3 artigos):
+1. Como criar minha conta — cadastro com email ou Google, bônus de 50 ArtisCoins
+2. Como funciona o programa de indicação — código de indicação, 50 moedas por indicação
+3. Como alterar meus dados ou excluir minha conta — perfil editável, exclusão via configurações
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+**Produto e Qualidade** (4 artigos):
+1. De que material é feita a case — policarbonato rígido + TPU flexível, soft-touch
+2. Qual a qualidade da impressão — Epson Micro Piezo, impressão UV direta no policarbonato
+3. A impressão desbota com o tempo — tinta UV resistente a raios solares
+4. O que é a tecnologia PrintMyCase — processo de impressão direta, presente em +10 shoppings
+
+### Implementação
+
+- Usar o insert tool para inserir as 5 categorias e os 19 artigos
+- Marcar as FAQs existentes mais relevantes como `featured = true` para aparecerem na landing
+- Todo conteúdo em Markdown, baseado exclusivamente nos documentos legais, configurações e código real da aplicação
 
