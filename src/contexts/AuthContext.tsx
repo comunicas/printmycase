@@ -28,7 +28,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        clarityIdentify(u.id, u.email);
+        clarityTag("user_type", "logged_in");
+      } else {
+        clarityTag("user_type", "anonymous");
+      }
       setLoading(false);
     });
 
