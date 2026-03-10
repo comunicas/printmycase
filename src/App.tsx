@@ -24,6 +24,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Admin = lazy(() => import("./pages/Admin"));
 const RequestModel = lazy(() => import("./pages/RequestModel"));
 const Coins = lazy(() => import("./pages/Coins"));
+const LegalDocument = lazy(() => import("./pages/LegalDocument"));
 
 const App = () => (
   <AuthProvider>
