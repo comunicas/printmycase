@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
 
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
-const KbArticle = React.forwardRef<HTMLDivElement>((_, ref) => {
+const KbArticle = () => {
   const { categorySlug, articleSlug } = useParams<{
     categorySlug: string;
     articleSlug: string;
@@ -83,8 +83,6 @@ const KbArticle = React.forwardRef<HTMLDivElement>((_, ref) => {
         </main>
       </div>
   );
-});
-
-KbArticle.displayName = "KbArticle";
+};
 
 export default KbArticle;

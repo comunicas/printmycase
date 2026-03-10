@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
@@ -22,7 +22,7 @@ interface KbCategory {
   article_count: number;
 }
 
-const KnowledgeBase = React.forwardRef<HTMLDivElement>((_, ref) => {
+const KnowledgeBase = () => {
   const [categories, setCategories] = useState<KbCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -108,8 +108,6 @@ const KnowledgeBase = React.forwardRef<HTMLDivElement>((_, ref) => {
       </div>
     </>
   );
-});
-
-KnowledgeBase.displayName = "KnowledgeBase";
+};
 
 export default KnowledgeBase;
