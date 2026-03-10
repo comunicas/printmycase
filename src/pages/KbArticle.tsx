@@ -5,7 +5,7 @@ import AppHeader from "@/components/AppHeader";
 
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
-const KbArticle = React.forwardRef<HTMLDivElement>((_, ref) => {
+const KbArticle = () => {
   const { categorySlug, articleSlug } = useParams<{
     categorySlug: string;
     articleSlug: string;
