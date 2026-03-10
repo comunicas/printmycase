@@ -144,6 +144,7 @@ export type Database = {
         Row: {
           active: boolean
           answer: string
+          category: string
           created_at: string
           id: string
           question: string
@@ -153,6 +154,7 @@ export type Database = {
         Insert: {
           active?: boolean
           answer: string
+          category?: string
           created_at?: string
           id?: string
           question: string
@@ -162,6 +164,7 @@ export type Database = {
         Update: {
           active?: boolean
           answer?: string
+          category?: string
           created_at?: string
           id?: string
           question?: string

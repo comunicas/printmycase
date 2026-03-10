@@ -1,14 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import * as Accordion from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ScrollReveal from "@/components/ScrollReveal";
 
 interface Faq {
   id: string;
   question: string;
   answer: string;
+  category: string;
 }
+
+const CATEGORY_ORDER = [
+  "Produto & Qualidade",
+  "Personalização & IA",
+  "Pedido & Entrega",
+  "Pagamento & Segurança",
+  "Trocas & Políticas",
+];
 
 const FaqSection = () => {
   const [faqs, setFaqs] = useState<Faq[]>([]);
@@ -16,7 +26,7 @@ const FaqSection = () => {
   useEffect(() => {
     supabase
       .from("faqs")
-      .select("id, question, answer")
+      .select("id, question, answer, category")
       .eq("active", true)
       .order("sort_order", { ascending: true })
       .then(({ data }) => {
@@ -24,7 +34,31 @@ const FaqSection = () => {
       });
   }, []);
 
+  const grouped = useMemo(() => {
+    const map = new Map<string, Faq[]>();
+    for (const faq of faqs) {
+      const cat = faq.category || "Geral";
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(faq);
+    }
+    // Sort by predefined order, unknown categories go at the end
+    const sorted = new Map<string, Faq[]>();
+    for (const cat of CATEGORY_ORDER) {
+      if (map.has(cat)) {
+        sorted.set(cat, map.get(cat)!);
+        map.delete(cat);
+      }
+    }
+    for (const [cat, items] of map) {
+      sorted.set(cat, items);
+    }
+    return sorted;
+  }, [faqs]);
+
   if (faqs.length === 0) return null;
+
+  const categories = Array.from(grouped.keys());
+  const defaultTab = categories[0] || "";
 
   return (
     <section id="faq" className="py-16 px-5 bg-background">
@@ -36,27 +70,41 @@ const FaqSection = () => {
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
-          <Accordion.Root type="single" collapsible className="space-y-4">
-            {faqs.map((faq) => (
-              <Accordion.Item
-                key={faq.id}
-                value={faq.id}
-                className="rounded-xl border bg-card overflow-hidden"
-              >
-                <Accordion.Header>
-                  <Accordion.Trigger className="flex w-full items-center justify-between px-5 py-5 text-left text-base font-medium text-foreground hover:bg-muted/50 transition-colors data-[state=open]:bg-muted/50 group">
-                    {faq.question}
-                    <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 ml-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                  </Accordion.Trigger>
-                </Accordion.Header>
-                <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                  <div className="px-5 pt-1 pb-5 text-sm text-muted-foreground leading-relaxed">
-                    {faq.answer}
-                  </div>
-                </Accordion.Content>
-              </Accordion.Item>
+          <Tabs defaultValue={defaultTab} className="w-full">
+            <TabsList className="mb-6 w-full overflow-x-auto justify-start flex-wrap h-auto gap-1 p-1.5">
+              {categories.map((cat) => (
+                <TabsTrigger key={cat} value={cat} className="text-xs sm:text-sm whitespace-nowrap">
+                  {cat}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {categories.map((cat) => (
+              <TabsContent key={cat} value={cat}>
+                <Accordion.Root type="single" collapsible className="space-y-4">
+                  {grouped.get(cat)!.map((faq) => (
+                    <Accordion.Item
+                      key={faq.id}
+                      value={faq.id}
+                      className="rounded-xl border bg-card overflow-hidden"
+                    >
+                      <Accordion.Header>
+                        <Accordion.Trigger className="flex w-full items-center justify-between px-5 py-5 text-left text-base font-medium text-foreground hover:bg-muted/50 transition-colors data-[state=open]:bg-muted/50 group">
+                          {faq.question}
+                          <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 ml-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                        </Accordion.Trigger>
+                      </Accordion.Header>
+                      <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                        <div className="px-5 pt-1 pb-5 text-sm text-muted-foreground leading-relaxed">
+                          {faq.answer}
+                        </div>
+                      </Accordion.Content>
+                    </Accordion.Item>
+                  ))}
+                </Accordion.Root>
+              </TabsContent>
             ))}
-          </Accordion.Root>
+          </Tabs>
         </ScrollReveal>
       </div>
     </section>

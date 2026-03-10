@@ -1,0 +1,1 @@
+ALTER TABLE public.faqs ADD COLUMN category text NOT NULL DEFAULT 'geral';
