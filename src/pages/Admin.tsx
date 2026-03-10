@@ -70,6 +70,7 @@ const Admin = () => {
           <TabsContent value="requests"><ModelRequestsManager /></TabsContent>
           <TabsContent value="ai-filters"><AiFiltersManager /></TabsContent>
           <TabsContent value="coins"><CoinsManager /></TabsContent>
+          <TabsContent value="gallery"><GalleryImagesManager /></TabsContent>
           <TabsContent value="legal"><LegalDocsManager /></TabsContent>
         </Tabs>
       </main>

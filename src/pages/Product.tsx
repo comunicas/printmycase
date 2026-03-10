@@ -165,7 +165,7 @@ const Product = () => {
       <main className="flex-1 w-full max-w-5xl mx-auto p-5 lg:p-10">
         <section className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           <div className="w-full lg:w-1/2">
-            <ProductGallery images={product.images} productName={product.name} deviceImage={product.device_image} />
+            <ProductGallery images={product.images} productName={product.name} deviceImage={product.device_image} galleryImages={galleryImages} />
           </div>
           <div className="w-full lg:w-1/2">
             <ProductInfo product={product} />
