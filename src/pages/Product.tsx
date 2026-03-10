@@ -123,6 +123,8 @@ const Product = () => {
       script?.remove();
       canonical?.remove();
     };
+    clarityEvent("product_viewed");
+    clarityTag("product_viewed", product.slug);
   }, [product]);
 
   if (loading) {
