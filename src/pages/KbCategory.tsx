@@ -47,15 +47,10 @@ const KbCategory = () => {
   if (loading) return <LoadingSpinner variant="fullPage" />;
 
   return (
-    <>
-      <SeoHead
-        title={`${categoryName || "Categoria"} | Central de Ajuda | ArtisCase`}
-        description={`Artigos sobre ${categoryName}`}
-      />
       <div className="min-h-screen bg-background flex flex-col">
         <AppHeader
           breadcrumbs={[
-            { label: "Central de Ajuda", href: "/ajuda" },
+            { label: "Central de Ajuda", to: "/ajuda" },
             { label: categoryName },
           ]}
         />
