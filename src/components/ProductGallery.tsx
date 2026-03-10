@@ -8,11 +8,13 @@ interface ProductGalleryProps {
   galleryImages?: string[];
 }
 
-const ProductGallery = ({ images, productName, deviceImage }: ProductGalleryProps) => {
-  const allImages = [
+const ProductGallery = ({ images, productName, deviceImage, galleryImages = [] }: ProductGalleryProps) => {
+  const productImages = [
     ...(deviceImage ? [deviceImage] : []),
     ...images,
   ].filter(Boolean);
+  const productCount = productImages.length;
+  const allImages = [...productImages, ...galleryImages];
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   if (allImages.length === 0) {
