@@ -5,6 +5,7 @@ interface ProductGalleryProps {
   images: string[];
   productName: string;
   deviceImage?: string | null;
+  galleryImages?: string[];
 }
 
 const ProductGallery = ({ images, productName, deviceImage }: ProductGalleryProps) => {
