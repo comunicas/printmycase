@@ -45,7 +45,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
           <Link to="/" className="flex-shrink-0">
             <img
               alt="ArtisCase"
-              className={`h-7 sm:h-8 w-auto transition-all duration-300 ${isTransparent && !scrolled ? "brightness-0 invert" : ""}`}
+              className="h-7 sm:h-8 w-auto transition-all duration-300"
               src="/lovable-uploads/79379ce7-c6b3-4051-9947-c8dfc449251d.png"
               fetchPriority="high"
               width={149}

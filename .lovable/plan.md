@@ -1,24 +1,37 @@
 
 
-## Substituir o logo da ArtisCase em toda a plataforma
+## Verificação do Webhook Stripe Live
 
-### Locais de uso do logo atual
+### O que o código espera
 
-1. **`src/assets/logo-artiscase.png`** — usado em Login, Signup, CheckoutSuccess
-2. **`/lovable-uploads/79379ce7-...png`** — usado no AppHeader (header de todas as páginas)
-3. **Footer** (`Landing.tsx`) — texto "ArtisCase" (sem imagem atualmente)
-4. **Email templates** — referência a logo no storage (não será alterado agora, requer upload manual no storage)
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Plano
+### Como verificar (manual no Stripe Dashboard)
 
-1. **Copiar** o novo logo para `src/assets/logo-artiscase.png` (substituir o arquivo existente) — será usado automaticamente em Login, Signup e CheckoutSuccess
-2. **Copiar** o novo logo para `public/lovable-uploads/79379ce7-c6b3-4051-9947-c8dfc449251d.png` (substituir) — será usado automaticamente no AppHeader
-3. **Footer** — substituir o texto "ArtisCase" por uma tag `<img>` com o novo logo importado de `src/assets/logo-artiscase.png`
-4. **AppHeader** — remover o filtro `brightness-0 invert` no modo transparente, pois o novo logo já possui cores que funcionam em fundo escuro (gradiente roxo/magenta sobre fundo dark)
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Arquivos alterados
-- `src/assets/logo-artiscase.png` — substituído pelo novo
-- `public/lovable-uploads/79379ce7-c6b3-4051-9947-c8dfc449251d.png` — substituído pelo novo
-- `src/pages/Landing.tsx` — footer com imagem ao invés de texto
-- `src/components/AppHeader.tsx` — ajustar filtro CSS para modo transparente
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
