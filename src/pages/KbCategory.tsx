@@ -81,6 +81,8 @@ const KbCategory = React.forwardRef<HTMLDivElement>((_, ref) => {
         </main>
       </div>
   );
-};
+});
+
+KbCategory.displayName = "KbCategory";
 
 export default KbCategory;

@@ -83,6 +83,8 @@ const KbArticle = React.forwardRef<HTMLDivElement>((_, ref) => {
         </main>
       </div>
   );
-};
+});
+
+KbArticle.displayName = "KbArticle";
 
 export default KbArticle;

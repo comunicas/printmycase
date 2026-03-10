@@ -108,6 +108,8 @@ const KnowledgeBase = React.forwardRef<HTMLDivElement>((_, ref) => {
       </div>
     </>
   );
-};
+});
+
+KnowledgeBase.displayName = "KnowledgeBase";
 
 export default KnowledgeBase;
