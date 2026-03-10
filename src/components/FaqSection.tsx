@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import * as Accordion from "@radix-ui/react-accordion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ScrollReveal from "@/components/ScrollReveal";
+import { Button } from "@/components/ui/button";
 
 interface Faq {
   id: string;
@@ -18,7 +20,9 @@ const FaqSection = () => {
       .from("faqs")
       .select("id, question, answer")
       .eq("active", true)
+      .eq("featured", true)
       .order("sort_order", { ascending: true })
+      .limit(5)
       .then(({ data }) => {
         if (data) setFaqs(data);
       });
@@ -57,6 +61,16 @@ const FaqSection = () => {
               </Accordion.Item>
             ))}
           </Accordion.Root>
+        </ScrollReveal>
+
+        <ScrollReveal delay={200}>
+          <div className="text-center mt-8">
+            <Button variant="outline" className="gap-2" asChild>
+              <Link to="/ajuda">
+                Ver Central de Ajuda <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Button>
+          </div>
         </ScrollReveal>
       </div>
     </section>

@@ -1,13 +1,15 @@
-import { Package, Truck, HelpCircle, Smartphone, Wand2, Coins, FileText } from "lucide-react";
+import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsManager from "@/components/admin/ProductsManager";
 import OrdersManager from "@/components/admin/OrdersManager";
-import FaqManager from "@/components/admin/FaqManager";
 import AiFiltersManager from "@/components/admin/AiFiltersManager";
 import ModelRequestsManager from "@/components/admin/ModelRequestsManager";
 import CoinsManager from "@/components/admin/CoinsManager";
 import LegalDocsManager from "@/components/admin/LegalDocsManager";
+import KbCategoriesManager from "@/components/admin/KbCategoriesManager";
+import KbArticlesManager from "@/components/admin/KbArticlesManager";
+import FaqManager from "@/components/admin/FaqManager";
 
 const Admin = () => {
   return (
@@ -24,8 +26,8 @@ const Admin = () => {
             <TabsTrigger value="orders" className="gap-1.5">
               <Truck className="w-4 h-4" /> Pedidos
             </TabsTrigger>
-            <TabsTrigger value="faq" className="gap-1.5">
-              <HelpCircle className="w-4 h-4" /> FAQ
+            <TabsTrigger value="kb" className="gap-1.5">
+              <BookOpen className="w-4 h-4" /> Base de Conhecimento
             </TabsTrigger>
             <TabsTrigger value="requests" className="gap-1.5">
               <Smartphone className="w-4 h-4" /> Solicitações
@@ -43,7 +45,24 @@ const Admin = () => {
 
           <TabsContent value="products"><ProductsManager /></TabsContent>
           <TabsContent value="orders"><OrdersManager /></TabsContent>
-          <TabsContent value="faq"><FaqManager /></TabsContent>
+          <TabsContent value="kb">
+            <Tabs defaultValue="kb-categories" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="kb-categories" className="gap-1.5">
+                  <FolderOpen className="w-4 h-4" /> Categorias
+                </TabsTrigger>
+                <TabsTrigger value="kb-articles" className="gap-1.5">
+                  <FileQuestion className="w-4 h-4" /> Artigos
+                </TabsTrigger>
+                <TabsTrigger value="kb-faq" className="gap-1.5">
+                  <Star className="w-4 h-4" /> FAQ Home
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="kb-categories"><KbCategoriesManager /></TabsContent>
+              <TabsContent value="kb-articles"><KbArticlesManager /></TabsContent>
+              <TabsContent value="kb-faq"><FaqManager /></TabsContent>
+            </Tabs>
+          </TabsContent>
           <TabsContent value="requests"><ModelRequestsManager /></TabsContent>
           <TabsContent value="ai-filters"><AiFiltersManager /></TabsContent>
           <TabsContent value="coins"><CoinsManager /></TabsContent>
