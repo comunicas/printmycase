@@ -146,7 +146,9 @@ export type Database = {
           answer: string
           category: string
           created_at: string
+          featured: boolean
           id: string
+          kb_article_id: string | null
           question: string
           sort_order: number
           updated_at: string
@@ -156,7 +158,9 @@ export type Database = {
           answer: string
           category?: string
           created_at?: string
+          featured?: boolean
           id?: string
+          kb_article_id?: string | null
           question: string
           sort_order?: number
           updated_at?: string
@@ -166,10 +170,97 @@ export type Database = {
           answer?: string
           category?: string
           created_at?: string
+          featured?: boolean
           id?: string
+          kb_article_id?: string | null
           question?: string
           sort_order?: number
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faqs_kb_article_id_fkey"
+            columns: ["kb_article_id"]
+            isOneToOne: false
+            referencedRelation: "kb_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_articles: {
+        Row: {
+          active: boolean
+          category_id: string
+          content: string
+          created_at: string
+          id: string
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category_id: string
+          content?: string
+          created_at?: string
+          id?: string
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "kb_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_categories: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
         }
         Relationships: []
       }
