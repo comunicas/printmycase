@@ -1,17 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import FormField from "@/components/ui/form-field";
 
@@ -21,6 +17,7 @@ interface Faq {
   answer: string;
   sort_order: number;
   active: boolean;
+  featured: boolean;
 }
 
 const FaqManager = () => {
@@ -30,6 +27,7 @@ const FaqManager = () => {
   const [editing, setEditing] = useState<Faq | null>(null);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [featured, setFeatured] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Faq | null>(null);
   const { toast } = useToast();
@@ -40,27 +38,21 @@ const FaqManager = () => {
       .from("faqs")
       .select("*")
       .order("sort_order", { ascending: true });
-    if (error) {
-      toast({ title: "Erro ao carregar FAQs", description: error.message, variant: "destructive" });
-    } else {
-      setFaqs(data ?? []);
-    }
+    if (error) toast({ title: "Erro ao carregar FAQs", description: error.message, variant: "destructive" });
+    else setFaqs(data ?? []);
     setLoading(false);
   }, [toast]);
 
   useEffect(() => { fetchFaqs(); }, [fetchFaqs]);
 
   const openNew = () => {
-    setEditing(null);
-    setQuestion("");
-    setAnswer("");
+    setEditing(null); setQuestion(""); setAnswer(""); setFeatured(false);
     setDialogOpen(true);
   };
 
   const openEdit = (faq: Faq) => {
-    setEditing(faq);
-    setQuestion(faq.question);
-    setAnswer(faq.answer);
+    setEditing(faq); setQuestion(faq.question); setAnswer(faq.answer);
+    setFeatured(faq.featured);
     setDialogOpen(true);
   };
 
@@ -69,57 +61,36 @@ const FaqManager = () => {
     setSaving(true);
 
     if (editing) {
-      const { error } = await supabase
-        .from("faqs")
-        .update({ question: question.trim(), answer: answer.trim() })
+      const { error } = await supabase.from("faqs")
+        .update({ question: question.trim(), answer: answer.trim(), featured })
         .eq("id", editing.id);
-      if (error) {
-        toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "FAQ atualizado" });
-      }
+      if (error) toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
+      else toast({ title: "FAQ atualizado" });
     } else {
       const maxOrder = faqs.length > 0 ? Math.max(...faqs.map((f) => f.sort_order)) : 0;
-      const { error } = await supabase
-        .from("faqs")
-        .insert({ question: question.trim(), answer: answer.trim(), sort_order: maxOrder + 1 });
-      if (error) {
-        toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "FAQ criado" });
-      }
+      const { error } = await supabase.from("faqs")
+        .insert({ question: question.trim(), answer: answer.trim(), sort_order: maxOrder + 1, featured });
+      if (error) toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
+      else toast({ title: "FAQ criado" });
     }
-
-    setSaving(false);
-    setDialogOpen(false);
-    fetchFaqs();
+    setSaving(false); setDialogOpen(false); fetchFaqs();
   };
 
   const handleToggleActive = async (faq: Faq) => {
-    const { error } = await supabase
-      .from("faqs")
-      .update({ active: !faq.active })
-      .eq("id", faq.id);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      fetchFaqs();
-    }
+    await supabase.from("faqs").update({ active: !faq.active }).eq("id", faq.id);
+    fetchFaqs();
   };
 
-  const handleDelete = async (faq: Faq) => {
-    setDeleteTarget(faq);
+  const handleToggleFeatured = async (faq: Faq) => {
+    await supabase.from("faqs").update({ featured: !faq.featured }).eq("id", faq.id);
+    fetchFaqs();
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     const { error } = await supabase.from("faqs").delete().eq("id", deleteTarget.id);
-    if (error) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "FAQ excluído" });
-      fetchFaqs();
-    }
+    if (error) toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+    else { toast({ title: "FAQ excluído" }); fetchFaqs(); }
     setDeleteTarget(null);
   };
 
@@ -127,7 +98,6 @@ const FaqManager = () => {
     const idx = faqs.findIndex((f) => f.id === faq.id);
     const swapIdx = direction === "up" ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= faqs.length) return;
-
     const other = faqs[swapIdx];
     await Promise.all([
       supabase.from("faqs").update({ sort_order: other.sort_order }).eq("id", faq.id),
@@ -141,10 +111,8 @@ const FaqManager = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Perguntas Frequentes</h2>
-        <Button onClick={openNew}>
-          <Plus className="mr-2 h-4 w-4" /> Nova Pergunta
-        </Button>
+        <h2 className="text-xl font-bold">FAQ da Home</h2>
+        <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Nova Pergunta</Button>
       </div>
 
       {faqs.length === 0 ? (
@@ -152,40 +120,31 @@ const FaqManager = () => {
       ) : (
         <div className="space-y-2">
           {faqs.map((faq, idx) => (
-            <div
-              key={faq.id}
-              className={`border rounded-xl p-4 bg-card flex flex-col sm:flex-row sm:items-center gap-3 ${!faq.active ? "opacity-50" : ""}`}
-            >
+            <div key={faq.id} className={`border rounded-xl p-4 bg-card flex flex-col sm:flex-row sm:items-center gap-3 ${!faq.active ? "opacity-50" : ""}`}>
               <div className="flex flex-col gap-0.5 mr-2">
-                <button
-                  onClick={() => handleMove(faq, "up")}
-                  disabled={idx === 0}
-                  className="text-muted-foreground hover:text-foreground disabled:opacity-30"
-                >
+                <button onClick={() => handleMove(faq, "up")} disabled={idx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronUp className="w-4 h-4" />
                 </button>
-                <button
-                  onClick={() => handleMove(faq, "down")}
-                  disabled={idx === faqs.length - 1}
-                  className="text-muted-foreground hover:text-foreground disabled:opacity-30"
-                >
+                <button onClick={() => handleMove(faq, "down")} disabled={idx === faqs.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
-
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{faq.question}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground truncate">{faq.question}</p>
+                  {faq.featured && <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
+                </div>
                 <p className="text-xs text-muted-foreground truncate">{faq.answer}</p>
               </div>
-
               <div className="flex items-center gap-1.5 shrink-0">
+                <Button size="icon" variant="ghost" onClick={() => handleToggleFeatured(faq)} title={faq.featured ? "Remover destaque" : "Destacar na Home"}>
+                  <Star className={`w-4 h-4 ${faq.featured ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                </Button>
                 <Button size="icon" variant="ghost" onClick={() => handleToggleActive(faq)} title={faq.active ? "Desativar" : "Ativar"}>
                   {faq.active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => openEdit(faq)}>
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(faq)}>
+                <Button size="icon" variant="ghost" onClick={() => openEdit(faq)}><Pencil className="w-4 h-4" /></Button>
+                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(faq)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
@@ -201,12 +160,7 @@ const FaqManager = () => {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <FormField label="Pergunta" id="faq-question" required>
-              <Input
-                id="faq-question"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Ex: Como funciona a impressão?"
-              />
+              <Input id="faq-question" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ex: Como funciona a impressão?" />
             </FormField>
             <FormField label="Resposta" id="faq-answer" required>
               <textarea
@@ -218,6 +172,10 @@ const FaqManager = () => {
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
             </FormField>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded border-input" />
+              <span className="text-sm text-foreground">Destacar na Home</span>
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>

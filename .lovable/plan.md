@@ -1,72 +1,37 @@
 
 
-## Plano Revisado: Base de Conhecimento + FAQ Integrado
+## Verificação do Webhook Stripe Live
 
-### Resumo
+### O que o código espera
 
-Criar uma Central de Ajuda (`/ajuda`) com artigos organizados por categoria. O FAQ atual da tabela `faqs` será migrado para dentro da base de conhecimento como artigos. Na landing page, as perguntas em destaque continuam aparecendo no accordion, mas com link para a central completa. O admin unifica a gestão de tudo.
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### 1. Banco de Dados
+### Como verificar (manual no Stripe Dashboard)
 
-**Tabela `kb_categories`** (nova):
-- `id` uuid PK, `name` text, `slug` text unique, `icon` text nullable, `description` text nullable, `sort_order` int default 0, `active` bool default true, `created_at` timestamptz
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-**Tabela `kb_articles`** (nova):
-- `id` uuid PK, `category_id` uuid FK → kb_categories, `title` text, `slug` text unique, `content` text (markdown), `sort_order` int default 0, `active` bool default true, `created_at` timestamptz, `updated_at` timestamptz
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-**Tabela `faqs`** — adicionar coluna:
-- `featured` boolean default false — controla quais aparecem na landing
-- `kb_article_id` uuid nullable FK → kb_articles — vincula FAQ a um artigo da base (opcional, para "leia mais")
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-**RLS**: SELECT público para registros ativos; ALL para admins (mesmo padrão das tabelas existentes).
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-**Migração de dados**: Criar uma categoria "Perguntas Frequentes" automaticamente e inserir as FAQs existentes como artigos nessa categoria.
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-### 2. Páginas Frontend
-
-| Rota | Página | Descrição |
-|---|---|---|
-| `/ajuda` | `KnowledgeBase.tsx` | Grid de categorias com ícone, nome, descrição e contagem de artigos |
-| `/ajuda/:categorySlug` | `KbCategory.tsx` | Lista de artigos da categoria com breadcrumb |
-| `/ajuda/:categorySlug/:articleSlug` | `KbArticle.tsx` | Artigo individual com markdown renderizado (reutilizar parser do LegalDocument) |
-
-### 3. Alterações no FAQ da Landing
-
-- `FaqSection.tsx`: filtrar por `featured = true`, limitar a 5 itens
-- Adicionar botão "Ver Central de Ajuda →" linkando para `/ajuda`
-
-### 4. Painel Admin — Reestruturação
-
-Substituir a aba "FAQ" por uma aba **"Base de Conhecimento"** que contém:
-
-- **Sub-aba Categorias** (`KbCategoriesManager`): CRUD de categorias (nome, slug auto-gerado, ícone, descrição, ordem, ativo)
-- **Sub-aba Artigos** (`KbArticlesManager`): CRUD de artigos com editor markdown, seletor de categoria, ordem, ativo
-- **Sub-aba FAQ Home** (FaqManager atualizado): lista as FAQs existentes com toggle `featured` para controlar quais aparecem na landing. Cada FAQ pode ser vinculada a um artigo da base para "leia mais"
-
-O FaqManager continua gerindo a tabela `faqs`, mas agora com o campo `featured` e link opcional para artigo.
-
-### 5. Rotas (App.tsx)
-
-Adicionar:
-```
-/ajuda → KnowledgeBase
-/ajuda/:categorySlug → KbCategory  
-/ajuda/:categorySlug/:articleSlug → KbArticle
-```
-
-### 6. Arquivos
-
-| Ação | Arquivo |
-|---|---|
-| Migration | Criar `kb_categories`, `kb_articles`, alterar `faqs` (add `featured`, `kb_article_id`) |
-| Criar | `src/pages/KnowledgeBase.tsx` |
-| Criar | `src/pages/KbCategory.tsx` |
-| Criar | `src/pages/KbArticle.tsx` |
-| Criar | `src/components/admin/KbCategoriesManager.tsx` |
-| Criar | `src/components/admin/KbArticlesManager.tsx` |
-| Editar | `src/components/FaqSection.tsx` — filtrar `featured`, adicionar link `/ajuda` |
-| Editar | `src/components/admin/FaqManager.tsx` — toggle featured + link para artigo |
-| Editar | `src/pages/Admin.tsx` — substituir aba FAQ por "Base de Conhecimento" com sub-abas |
-| Editar | `src/App.tsx` — novas rotas |
-| Editar | `src/pages/Landing.tsx` — link no footer para `/ajuda` |
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

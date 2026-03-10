@@ -244,7 +244,7 @@ const Landing = () => {
               <nav className="flex flex-col gap-2 text-muted-foreground">
                 <Link to="/catalog" className="hover:text-foreground transition-colors w-fit">Catálogo</Link>
                 <Link to="/solicitar-modelo" className="hover:text-foreground transition-colors w-fit">Solicitar Modelo</Link>
-                <a href="#faq" className="hover:text-foreground transition-colors w-fit">Perguntas Frequentes</a>
+                <Link to="/ajuda" className="hover:text-foreground transition-colors w-fit">Central de Ajuda</Link>
                 <Link to="/termos" className="hover:text-foreground transition-colors w-fit">Termos de Uso</Link>
                 <Link to="/privacidade" className="hover:text-foreground transition-colors w-fit">Política de Privacidade</Link>
                 <Link to="/compras" className="hover:text-foreground transition-colors w-fit">Política de Compra e Devolução</Link>
