@@ -25,6 +25,9 @@ const Admin = lazy(() => import("./pages/Admin"));
 const RequestModel = lazy(() => import("./pages/RequestModel"));
 const Coins = lazy(() => import("./pages/Coins"));
 const LegalDocument = lazy(() => import("./pages/LegalDocument"));
+const KnowledgeBase = lazy(() => import("./pages/KnowledgeBase"));
+const KbCategory = lazy(() => import("./pages/KbCategory"));
+const KbArticle = lazy(() => import("./pages/KbArticle"));
 
 const App = () => (
   <AuthProvider>
