@@ -246,18 +246,19 @@ const Landing = () => {
                 <a href="#faq" className="hover:text-foreground transition-colors w-fit">Perguntas Frequentes</a>
                 <Link to="/termos" className="hover:text-foreground transition-colors w-fit">Termos de Uso</Link>
                 <Link to="/privacidade" className="hover:text-foreground transition-colors w-fit">Política de Privacidade</Link>
+                <Link to="/compras" className="hover:text-foreground transition-colors w-fit">Política de Compra e Devolução</Link>
               </nav>
             </div>
             <div className="space-y-3">
               <span className="font-semibold text-foreground">Contato</span>
               <p className="text-muted-foreground leading-relaxed">
-                Dúvidas ou sugestões? Entre em contato pelo nosso formulário de solicitação.
+                Dúvidas ou sugestões? Entre em contato:
               </p>
-              <Link
-                to="/solicitar-modelo"
+              <a
+                href="mailto:sac@artiscase.com"
                 className="inline-block text-primary hover:text-primary/80 font-medium transition-colors">
-                Fale Conosco →
-              </Link>
+                sac@artiscase.com
+              </a>
             </div>
           </div>
 
