@@ -40,7 +40,12 @@ const Catalog = () => {
       const q = search.trim().toLowerCase();
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
-    return list;
+    // Sort by model number descending so newer models appear first
+    return [...list].sort((a, b) => {
+      const numA = Math.max(...(a.name.match(/\d+/g) || ["0"]).map(Number));
+      const numB = Math.max(...(b.name.match(/\d+/g) || ["0"]).map(Number));
+      return numB - numA;
+    });
   }, [products, selectedBrand, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
