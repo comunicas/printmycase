@@ -6,6 +6,7 @@ import ProductDetails from "@/components/ProductDetails";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
+import { clarityEvent, clarityTag } from "@/lib/clarity";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const SITE_NAME = "ArtisCase";
@@ -122,6 +123,8 @@ const Product = () => {
       script?.remove();
       canonical?.remove();
     };
+    clarityEvent("product_viewed");
+    clarityTag("product_viewed", product.slug);
   }, [product]);
 
   if (loading) {
