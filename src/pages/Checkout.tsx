@@ -47,6 +47,7 @@ const Checkout = () => {
   const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
     setAddressData(data);
     setIsAddressValid(valid);
+    if (valid) clarityEvent("checkout_address_filled");
   }, []);
 
   // Load customization from sessionStorage, fallback to DB
