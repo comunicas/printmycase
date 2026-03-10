@@ -1,37 +1,16 @@
 
 
-## Verificação do Webhook Stripe Live
+## Ajustar ordenação de marcas e produtos no catálogo
 
-### O que o código espera
+### Alterações em `src/pages/Catalog.tsx`
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+**1. Ordenar marcas com Apple e Samsung primeiro**
+- Substituir o `.sort()` alfabético por uma ordenação com prioridade fixa: `["Apple", "Samsung"]` primeiro, depois o restante alfabeticamente.
 
-### Como verificar (manual no Stripe Dashboard)
+**2. Ordenar produtos para mostrar modelos mais recentes primeiro**
+- Dentro de cada marca, ordenar por nome de forma que números maiores (modelos mais recentes) apareçam primeiro. Ex: iPhone 16 antes de iPhone 14, Galaxy S25 antes de Galaxy S23.
+- Aplicar uma função de sort que extrai o número do modelo do nome e ordena decrescente.
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
-
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
-
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
-
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
-
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+### Arquivo alterado
+- `src/pages/Catalog.tsx` — lógica de `brands` e `filtered` no `useMemo`
 
