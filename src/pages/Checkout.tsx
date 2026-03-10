@@ -13,6 +13,7 @@ import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
+import { clarityEvent } from "@/lib/clarity";
 
 interface CustomizationData {
   rawImage: string | null;
@@ -46,6 +47,7 @@ const Checkout = () => {
   const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
     setAddressData(data);
     setIsAddressValid(valid);
+    if (valid) clarityEvent("checkout_address_filled");
   }, []);
 
   // Load customization from sessionStorage, fallback to DB
@@ -120,6 +122,7 @@ const Checkout = () => {
     if (!user || !product || !customization || !shipping || !addressData) return;
     setSubmitted(true);
     if (!isAddressValid) return;
+    clarityEvent("checkout_payment_started");
     setCheckoutLoading(true);
     try {
       let rawImageUrl: string | null = null;

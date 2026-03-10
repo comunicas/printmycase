@@ -7,6 +7,7 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import Landing from "./pages/Landing";
 import AuthGuard from "./components/AuthGuard";
 import AdminGuard from "./components/AdminGuard";
+import { ClarityFunnelTracker } from "@/hooks/useClarityFunnel";
 
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
@@ -29,6 +30,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <BrowserRouter>
+        <ClarityFunnelTracker />
         <Suspense fallback={<LoadingSpinner variant="fullPage" />}>
           <Routes>
             <Route path="/" element={<Landing />} />

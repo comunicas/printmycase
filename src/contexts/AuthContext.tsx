@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { clarityIdentify, clarityTag } from "@/lib/clarity";
 
 interface Profile {
   id: string;
@@ -27,13 +28,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        clarityIdentify(u.id, u.email);
+        clarityTag("user_type", "logged_in");
+      } else {
+        clarityTag("user_type", "anonymous");
+      }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null);
+        const u = session?.user ?? null;
+        setUser(u);
+        if (u) {
+          clarityIdentify(u.id, u.email);
+          clarityTag("user_type", "logged_in");
+        } else {
+          clarityTag("user_type", "anonymous");
+        }
       },
     );
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { clarityEvent } from "@/lib/clarity";
 import { useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
@@ -216,6 +217,7 @@ export function useCustomize(productId: string | undefined) {
       setOriginalImage(url);
       setIsCompressing(false);
       if (compressed) toast({ title: "Imagem otimizada automaticamente" });
+      clarityEvent("customize_image_uploaded");
     };
     reader.readAsDataURL(file);
   }, [toast]);
@@ -273,6 +275,7 @@ export function useCustomize(productId: string | undefined) {
       await setImageWithResolution(resultImage);
       setFilteredImage(resultImage);
       setActiveFilterId(filterId);
+      clarityEvent("customize_filter_applied");
       refreshCoins();
     } catch {
       toast({ title: "Erro ao aplicar filtro", variant: "destructive" });

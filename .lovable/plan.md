@@ -1,70 +1,37 @@
 
 
-## Implementação do Microsoft Clarity com Tagging e Funil de Vendas
+## Verificação do Webhook Stripe Live
 
-### Visão geral
+### O que o código espera
 
-Integrar o Clarity (ID `vtca7ojltd`) com eventos customizados que mapeiam o funil de vendas completo da ArtisCase, identificação de usuários logados e tags de comportamento.
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Funil de vendas mapeado
+### Como verificar (manual no Stripe Dashboard)
 
-```text
-Landing → Catálogo → Produto → Personalizar → Checkout → Sucesso
-  (1)       (2)        (3)        (4)           (5)       (6)
-```
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Arquivos
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-**1. `src/lib/clarity.ts` (novo)**
-- Declaração de tipo global `window.clarity`
-- Helper `clarityEvent(name: string)` — chama `window.clarity("event", name)`
-- Helper `clarityIdentify(userId: string, email?: string)` — chama `window.clarity("identify", userId, …)`
-- Helper `clarityTag(key: string, value: string)` — chama `window.clarity("set", key, value)`
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-**2. `index.html`**
-- Inserir o script do Clarity no `<head>` (inline, antes do module script)
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-**3. `src/contexts/AuthContext.tsx`**
-- Após login/session restore, chamar `clarityIdentify(user.id, user.email)` para associar sessões a usuários
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-**4. `src/hooks/useClarityFunnel.ts` (novo)**
-- Hook que usa `useLocation()` para detectar mudanças de rota e disparar eventos de funil automaticamente:
-  - `/` → `funnel_landing`
-  - `/catalog` → `funnel_catalog`
-  - `/product/*` → `funnel_product_view`
-  - `/customize/*` → `funnel_customize`
-  - `/checkout/*` (não success) → `funnel_checkout`
-  - `/checkout/success` → `funnel_purchase_complete`
-- Também dispara tags: `clarityTag("funnel_step", stepName)`
-
-**5. `src/App.tsx`**
-- Adicionar `<ClarityFunnelTracker />` dentro do `<BrowserRouter>` para ativar o tracking de rotas
-
-**6. Eventos extras em páginas-chave**
-- `src/pages/Customize.tsx` — evento `customize_image_uploaded` ao fazer upload, `customize_filter_applied` ao aplicar filtro IA
-- `src/pages/Checkout.tsx` — evento `checkout_address_filled` ao preencher endereço, `checkout_payment_started` ao clicar pagar
-- `src/pages/Signup.tsx` / `src/pages/Login.tsx` — evento `auth_signup` / `auth_login` no sucesso
-
-### Tags customizadas
-
-| Tag Key | Valor | Onde |
-|---|---|---|
-| `funnel_step` | Nome do passo atual | Hook de rota |
-| `user_type` | `logged_in` / `anonymous` | AuthContext |
-| `product_viewed` | slug do produto | Product page |
-
-### Resultado
-
-O Clarity mostrará heatmaps e session recordings já segmentados por etapa do funil. No dashboard do Clarity, será possível filtrar sessões por `funnel_step`, `user_type` e eventos customizados para analisar drop-off entre cada etapa.
-
-### Arquivos alterados
-- `index.html` — script Clarity
-- `src/lib/clarity.ts` — novo, helpers tipados
-- `src/hooks/useClarityFunnel.ts` — novo, tracking automático de funil
-- `src/App.tsx` — montar tracker
-- `src/contexts/AuthContext.tsx` — identify
-- `src/pages/Customize.tsx` — eventos de upload/filtro
-- `src/pages/Checkout.tsx` — eventos de checkout
-- `src/pages/Login.tsx` — evento auth_login
-- `src/pages/Signup.tsx` — evento auth_signup
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
