@@ -80,7 +80,6 @@ const KbCategory = () => {
           )}
         </main>
       </div>
-    </>
   );
 };
 

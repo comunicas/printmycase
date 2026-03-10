@@ -82,7 +82,6 @@ const KbArticle = () => {
           </article>
         </main>
       </div>
-    </>
   );
 };
 
