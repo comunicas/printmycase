@@ -15,21 +15,12 @@ import {
 } from "@/components/ui/dialog";
 import FormField from "@/components/ui/form-field";
 
-const CATEGORY_OPTIONS = [
-  "Produto & Qualidade",
-  "Personalização & IA",
-  "Pedido & Entrega",
-  "Pagamento & Segurança",
-  "Trocas & Políticas",
-];
-
 interface Faq {
   id: string;
   question: string;
   answer: string;
   sort_order: number;
   active: boolean;
-  category: string;
 }
 
 const FaqManager = () => {
@@ -39,7 +30,6 @@ const FaqManager = () => {
   const [editing, setEditing] = useState<Faq | null>(null);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  const [category, setCategory] = useState(CATEGORY_OPTIONS[0]);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Faq | null>(null);
   const { toast } = useToast();
@@ -64,7 +54,6 @@ const FaqManager = () => {
     setEditing(null);
     setQuestion("");
     setAnswer("");
-    setCategory(CATEGORY_OPTIONS[0]);
     setDialogOpen(true);
   };
 
@@ -72,7 +61,6 @@ const FaqManager = () => {
     setEditing(faq);
     setQuestion(faq.question);
     setAnswer(faq.answer);
-    setCategory(faq.category || CATEGORY_OPTIONS[0]);
     setDialogOpen(true);
   };
 
@@ -83,7 +71,7 @@ const FaqManager = () => {
     if (editing) {
       const { error } = await supabase
         .from("faqs")
-        .update({ question: question.trim(), answer: answer.trim(), category })
+        .update({ question: question.trim(), answer: answer.trim() })
         .eq("id", editing.id);
       if (error) {
         toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
@@ -94,7 +82,7 @@ const FaqManager = () => {
       const maxOrder = faqs.length > 0 ? Math.max(...faqs.map((f) => f.sort_order)) : 0;
       const { error } = await supabase
         .from("faqs")
-        .insert({ question: question.trim(), answer: answer.trim(), sort_order: maxOrder + 1, category });
+        .insert({ question: question.trim(), answer: answer.trim(), sort_order: maxOrder + 1 });
       if (error) {
         toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       } else {
@@ -186,11 +174,6 @@ const FaqManager = () => {
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                    {faq.category || "Geral"}
-                  </span>
-                </div>
                 <p className="text-sm font-medium text-foreground truncate">{faq.question}</p>
                 <p className="text-xs text-muted-foreground truncate">{faq.answer}</p>
               </div>
@@ -217,18 +200,6 @@ const FaqManager = () => {
             <DialogTitle>{editing ? "Editar Pergunta" : "Nova Pergunta"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <FormField label="Categoria" id="faq-category" required>
-              <select
-                id="faq-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                {CATEGORY_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </FormField>
             <FormField label="Pergunta" id="faq-question" required>
               <Input
                 id="faq-question"
