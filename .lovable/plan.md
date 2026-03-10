@@ -1,37 +1,30 @@
 
 
-## Verificação do Webhook Stripe Live
+## Ajustar Categoria "Perguntas Frequentes" na Central de Ajuda
 
-### O que o código espera
+### Situação atual
+A categoria "Perguntas Frequentes" (`132e18f2`) existe no KB mas tem **0 artigos**. A descrição atual é genérica: "Dúvidas mais comuns sobre nossos produtos e serviços".
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+Na home, os FAQs em destaque cobrem: material, impressão, tecnologia PrintMyCase, prazo, filtros IA, ArtisCoins e pagamentos.
 
-### Como verificar (manual no Stripe Dashboard)
+### Plano
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+**1. Atualizar descrição da categoria** para refletir os 4 pilares: qualidade, impressão, compra e facilidade.
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+**2. Criar 4 artigos-guia** na categoria "Perguntas Frequentes", cada um consolidando as respostas da home num formato mais completo:
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+| Artigo | Conteúdo base (FAQs relacionados) |
+|---|---|
+| **Qualidade e Material** | Material policarbonato, durabilidade, resistência |
+| **Impressão e Tecnologia** | Qualidade da impressão Epson, tecnologia PrintMyCase, desbotamento |
+| **Compra e Pagamento** | Formas de pagamento, segurança, prazo de entrega |
+| **Personalização Fácil** | Envio de imagem, filtros IA, ArtisCoins, resolução mínima |
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+**3. Vincular FAQs da home** aos novos artigos via `kb_article_id` nos registros que ainda não têm link.
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+### Implementação
+- Migração SQL para inserir os 4 artigos na tabela `kb_articles` com conteúdo Markdown
+- Migração SQL para atualizar `kb_article_id` nos FAQs sem vínculo
+- Atualizar descrição da categoria "Perguntas Frequentes"
+- Sem alterações de código
 
