@@ -10,6 +10,8 @@ interface Faq {
   id: string;
   question: string;
   answer: string;
+  article_slug: string | null;
+  category_slug: string | null;
 }
 
 const FaqSection = () => {
@@ -18,13 +20,21 @@ const FaqSection = () => {
   useEffect(() => {
     supabase
       .from("faqs")
-      .select("id, question, answer")
+      .select("id, question, answer, kb_article_id, kb_articles(slug, kb_categories(slug))")
       .eq("active", true)
       .eq("featured", true)
       .order("sort_order", { ascending: true })
       .limit(5)
       .then(({ data }) => {
-        if (data) setFaqs(data);
+        if (data) {
+          setFaqs(data.map((f: any) => ({
+            id: f.id,
+            question: f.question,
+            answer: f.answer,
+            article_slug: f.kb_articles?.slug ?? null,
+            category_slug: f.kb_articles?.kb_categories?.slug ?? null,
+          })));
+        }
       });
   }, []);
 
@@ -56,6 +66,14 @@ const FaqSection = () => {
                 <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                   <div className="px-5 pt-1 pb-5 text-sm text-muted-foreground leading-relaxed">
                     {faq.answer}
+                    {faq.article_slug && faq.category_slug && (
+                      <Link
+                        to={`/ajuda/${faq.category_slug}/${faq.article_slug}`}
+                        className="inline-flex items-center gap-1 mt-3 text-primary hover:underline text-sm font-medium"
+                      >
+                        Leia mais <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    )}
                   </div>
                 </Accordion.Content>
               </Accordion.Item>
