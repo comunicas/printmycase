@@ -22,7 +22,7 @@ interface KbCategory {
   article_count: number;
 }
 
-const KnowledgeBase = () => {
+const KnowledgeBase = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [categories, setCategories] = useState<KbCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
