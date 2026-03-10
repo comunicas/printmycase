@@ -244,6 +244,8 @@ const Landing = () => {
                 <Link to="/catalog" className="hover:text-foreground transition-colors w-fit">Catálogo</Link>
                 <Link to="/solicitar-modelo" className="hover:text-foreground transition-colors w-fit">Solicitar Modelo</Link>
                 <a href="#faq" className="hover:text-foreground transition-colors w-fit">Perguntas Frequentes</a>
+                <Link to="/termos" className="hover:text-foreground transition-colors w-fit">Termos de Uso</Link>
+                <Link to="/privacidade" className="hover:text-foreground transition-colors w-fit">Política de Privacidade</Link>
               </nav>
             </div>
             <div className="space-y-3">

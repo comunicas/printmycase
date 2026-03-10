@@ -1,4 +1,4 @@
-import { Package, Truck, HelpCircle, Smartphone, Wand2, Coins } from "lucide-react";
+import { Package, Truck, HelpCircle, Smartphone, Wand2, Coins, FileText } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsManager from "@/components/admin/ProductsManager";
@@ -7,6 +7,7 @@ import FaqManager from "@/components/admin/FaqManager";
 import AiFiltersManager from "@/components/admin/AiFiltersManager";
 import ModelRequestsManager from "@/components/admin/ModelRequestsManager";
 import CoinsManager from "@/components/admin/CoinsManager";
+import LegalDocsManager from "@/components/admin/LegalDocsManager";
 
 const Admin = () => {
   return (
@@ -35,6 +36,9 @@ const Admin = () => {
             <TabsTrigger value="coins" className="gap-1.5">
               <Coins className="w-4 h-4" /> Moedas
             </TabsTrigger>
+            <TabsTrigger value="legal" className="gap-1.5">
+              <FileText className="w-4 h-4" /> Legal
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products"><ProductsManager /></TabsContent>
@@ -43,6 +47,7 @@ const Admin = () => {
           <TabsContent value="requests"><ModelRequestsManager /></TabsContent>
           <TabsContent value="ai-filters"><AiFiltersManager /></TabsContent>
           <TabsContent value="coins"><CoinsManager /></TabsContent>
+          <TabsContent value="legal"><LegalDocsManager /></TabsContent>
         </Tabs>
       </main>
     </div>
