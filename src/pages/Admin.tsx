@@ -1,4 +1,4 @@
-import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star } from "lucide-react";
+import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsManager from "@/components/admin/ProductsManager";
@@ -10,6 +10,7 @@ import LegalDocsManager from "@/components/admin/LegalDocsManager";
 import KbCategoriesManager from "@/components/admin/KbCategoriesManager";
 import KbArticlesManager from "@/components/admin/KbArticlesManager";
 import FaqManager from "@/components/admin/FaqManager";
+import GalleryImagesManager from "@/components/admin/GalleryImagesManager";
 
 const Admin = () => {
   return (
