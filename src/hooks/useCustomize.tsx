@@ -275,6 +275,7 @@ export function useCustomize(productId: string | undefined) {
       await setImageWithResolution(resultImage);
       setFilteredImage(resultImage);
       setActiveFilterId(filterId);
+      clarityEvent("customize_filter_applied");
       refreshCoins();
     } catch {
       toast({ title: "Erro ao aplicar filtro", variant: "destructive" });
