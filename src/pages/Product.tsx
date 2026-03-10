@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ProductGallery from "@/components/ProductGallery";
 import ProductInfo from "@/components/ProductInfo";
@@ -8,6 +8,7 @@ import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
 import { clarityEvent, clarityTag } from "@/lib/clarity";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { supabase } from "@/integrations/supabase/client";
 
 const SITE_NAME = "ArtisCase";
 const SITE_URL =
@@ -18,6 +19,18 @@ const Product = () => {
   const { product, loading } = useProduct(id);
 
   const brand = product ? extractBrand(product.name) : "";
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("product_gallery_images")
+      .select("url")
+      .eq("active", true)
+      .order("sort_order")
+      .then(({ data }) => {
+        setGalleryImages((data ?? []).map((r: any) => r.url));
+      });
+  }, []);
 
   // --- SEO injection ---
   useEffect(() => {
@@ -152,7 +165,7 @@ const Product = () => {
       <main className="flex-1 w-full max-w-5xl mx-auto p-5 lg:p-10">
         <section className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           <div className="w-full lg:w-1/2">
-            <ProductGallery images={product.images} productName={product.name} deviceImage={product.device_image} />
+            <ProductGallery images={product.images} productName={product.name} deviceImage={product.device_image} galleryImages={galleryImages} />
           </div>
           <div className="w-full lg:w-1/2">
             <ProductInfo product={product} />

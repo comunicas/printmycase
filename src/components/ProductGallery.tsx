@@ -5,13 +5,16 @@ interface ProductGalleryProps {
   images: string[];
   productName: string;
   deviceImage?: string | null;
+  galleryImages?: string[];
 }
 
-const ProductGallery = ({ images, productName, deviceImage }: ProductGalleryProps) => {
-  const allImages = [
+const ProductGallery = ({ images, productName, deviceImage, galleryImages = [] }: ProductGalleryProps) => {
+  const productImages = [
     ...(deviceImage ? [deviceImage] : []),
     ...images,
   ].filter(Boolean);
+  const productCount = productImages.length;
+  const allImages = [...productImages, ...galleryImages];
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   if (allImages.length === 0) {
@@ -35,25 +38,29 @@ const ProductGallery = ({ images, productName, deviceImage }: ProductGalleryProp
       </div>
 
       {allImages.length > 1 && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {allImages.map((img, i) => (
-            <button
-              key={i}
-              onClick={() => setSelectedIndex(i)}
-              className={cn(
-                "w-16 h-16 rounded-lg border-2 overflow-hidden bg-card transition-colors",
-                i === selectedIndex
-                  ? "border-primary"
-                  : "border-transparent hover:border-muted-foreground/30"
+            <div key={i} className="flex items-center gap-1">
+              {i === productCount && galleryImages.length > 0 && (
+                <span className="text-[10px] text-muted-foreground mr-1 hidden sm:inline">|</span>
               )}
-            >
-              <img
-                src={img}
-                alt={`${productName} - Miniatura ${i + 1}`}
-                className="w-full h-full object-contain p-1"
-                loading="lazy"
-              />
-            </button>
+              <button
+                onClick={() => setSelectedIndex(i)}
+                className={cn(
+                  "w-16 h-16 rounded-lg border-2 overflow-hidden bg-card transition-colors",
+                  i === selectedIndex
+                    ? "border-primary"
+                    : "border-transparent hover:border-muted-foreground/30"
+                )}
+              >
+                <img
+                  src={img}
+                  alt={`${productName} - ${i >= productCount ? "Ilustrativa" : "Miniatura"} ${i + 1}`}
+                  className="w-full h-full object-contain p-1"
+                  loading="lazy"
+                />
+              </button>
+            </div>
           ))}
         </div>
       )}

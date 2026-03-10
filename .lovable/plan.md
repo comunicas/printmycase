@@ -1,60 +1,37 @@
 
 
-## Imagens Ilustrativas Globais + Galeria no Produto
+## Verificação do Webhook Stripe Live
 
-### Conceito
-Criar uma tabela `product_gallery_images` para armazenar imagens ilustrativas (embalagem, material, detalhes de impressão) que aparecem em **todos** os produtos, após as imagens específicas. Essas imagens são gerenciadas via admin e nunca são usadas como thumbnail/capa.
+### O que o código espera
 
-### 1. Banco de dados — nova tabela
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-```sql
-CREATE TABLE public.product_gallery_images (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  url text NOT NULL,
-  label text NOT NULL DEFAULT '',
-  sort_order integer NOT NULL DEFAULT 0,
-  active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+### Como verificar (manual no Stripe Dashboard)
 
-ALTER TABLE public.product_gallery_images ENABLE ROW LEVEL SECURITY;
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
--- Qualquer pessoa pode ver imagens ativas
-CREATE POLICY "Anyone can view active gallery images"
-  ON public.product_gallery_images FOR SELECT TO public
-  USING (active = true);
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
--- Admins gerenciam
-CREATE POLICY "Admins can manage gallery images"
-  ON public.product_gallery_images FOR ALL TO authenticated
-  USING (has_role(auth.uid(), 'admin'))
-  WITH CHECK (has_role(auth.uid(), 'admin'));
-```
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-### 2. Admin — novo manager `GalleryImagesManager`
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-- Nova aba "Galeria" no painel admin (ícone `ImageIcon`)
-- Lista as imagens com preview, label editável, reordenação e toggle ativo/inativo
-- Upload de novas imagens para o bucket `product-assets` (pasta `gallery/`)
-- CRUD completo na tabela `product_gallery_images`
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-### 3. Página do Produto — integrar na galeria
-
-- `ProductGallery.tsx`: receber prop `galleryImages` (array de URLs)
-- Ordem: `device_image` → `images` (específicas) → `galleryImages` (ilustrativas)
-- Separador visual opcional (label "Imagens ilustrativas") nas thumbnails
-- `Product.tsx`: buscar `product_gallery_images` ativas, ordenadas por `sort_order`, e passar ao `ProductGallery`
-
-### 4. Catálogo/Thumbnails — sem impacto
-
-As imagens ilustrativas **não** afetam `ProductCard` nem thumbnails. Apenas aparecem na galeria da página de produto.
-
-### Arquivos alterados
-
-| Arquivo | Alteração |
-|---|---|
-| `src/components/admin/GalleryImagesManager.tsx` | **Novo** — CRUD de imagens ilustrativas |
-| `src/pages/Admin.tsx` | Adicionar aba "Galeria" |
-| `src/components/ProductGallery.tsx` | Receber e exibir `galleryImages` após imagens do produto |
-| `src/pages/Product.tsx` | Buscar `product_gallery_images` e passar ao gallery |
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
