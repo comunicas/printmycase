@@ -13,6 +13,7 @@ import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
+import { clarityEvent } from "@/lib/clarity";
 
 interface CustomizationData {
   rawImage: string | null;
