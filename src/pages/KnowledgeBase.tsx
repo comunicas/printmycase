@@ -60,10 +60,6 @@ const KnowledgeBase = () => {
 
   return (
     <>
-      <SeoHead
-        title="Central de Ajuda | ArtisCase"
-        description="Encontre respostas sobre pedidos, personalização, pagamentos e mais."
-      />
       <div className="min-h-screen bg-background flex flex-col">
         <AppHeader breadcrumbs={[{ label: "Central de Ajuda" }]} />
         <main className="flex-1 max-w-4xl mx-auto w-full px-5 py-10">
