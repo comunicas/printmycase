@@ -45,6 +45,8 @@ const App = () => (
             <Route path="/coins" element={<AuthGuard><Coins /></AuthGuard>} />
             <Route path="/admin" element={<AuthGuard><AdminGuard><Admin /></AdminGuard></AuthGuard>} />
             <Route path="/solicitar-modelo" element={<RequestModel />} />
+            <Route path="/termos" element={<LegalDocument />} />
+            <Route path="/privacidade" element={<LegalDocument />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />

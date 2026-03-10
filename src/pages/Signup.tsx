@@ -140,7 +140,21 @@ const Signup = () => {
                 required
               />
             </FormField>
-            <SubmitButton loading={loading} className="w-full">
+            <label className="flex items-start gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 rounded border-input"
+              />
+              <span className="text-muted-foreground leading-tight">
+                Li e aceito os{" "}
+                <Link to="/termos" target="_blank" className="text-primary hover:underline">Termos de Uso</Link>
+                {" "}e a{" "}
+                <Link to="/privacidade" target="_blank" className="text-primary hover:underline">Política de Privacidade</Link>
+              </span>
+            </label>
+            <SubmitButton loading={loading} className="w-full" disabled={!acceptedTerms}>
               Criar conta
             </SubmitButton>
           </form>
