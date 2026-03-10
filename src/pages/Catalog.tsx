@@ -19,7 +19,16 @@ const Catalog = () => {
   const brands = useMemo(() => {
     const set = new Set<string>();
     products.forEach((p) => set.add(extractBrand(p.name)));
-    return ["Todos", ...Array.from(set).sort()];
+    const priority = ["Apple", "Samsung"];
+    const sorted = Array.from(set).sort((a, b) => {
+      const ai = priority.indexOf(a);
+      const bi = priority.indexOf(b);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    return ["Todos", ...sorted];
   }, [products]);
 
   const filtered = useMemo(() => {
@@ -31,7 +40,12 @@ const Catalog = () => {
       const q = search.trim().toLowerCase();
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
-    return list;
+    // Sort by model number descending so newer models appear first
+    return [...list].sort((a, b) => {
+      const numA = Math.max(...(a.name.match(/\d+/g) || ["0"]).map(Number));
+      const numB = Math.max(...(b.name.match(/\d+/g) || ["0"]).map(Number));
+      return numB - numA;
+    });
   }, [products, selectedBrand, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
