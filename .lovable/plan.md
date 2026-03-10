@@ -1,37 +1,67 @@
 
 
-## Verificação do Webhook Stripe Live
+## Plano: Reestruturar FAQ com categorias baseadas na jornada do usuário
 
-### O que o código espera
+### Situação atual
+A FAQ possui 6 perguntas genéricas sem agrupamento. A tabela `faqs` não tem campo de categoria — todas as perguntas aparecem em uma lista linear.
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### Proposta
 
-### Como verificar (manual no Stripe Dashboard)
+Reorganizar a seção FAQ em **categorias temáticas** alinhadas à jornada do usuário e aos documentos legais da aplicação. O usuário verá abas (tabs) com os grupos, e dentro de cada aba o accordion já existente.
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+### Categorias propostas
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+```text
+┌─────────────────┬──────────────────────────────────────────────────────────┐
+│ Categoria       │ Perguntas sugeridas                                     │
+├─────────────────┼──────────────────────────────────────────────────────────┤
+│ Produto &       │ • De que material é feita a case?                       │
+│ Qualidade       │ • Qual a qualidade da impressão?                        │
+│                 │ • A impressão desbota com o tempo?                      │
+│                 │ • O que é a tecnologia PrintMyCase?                     │
+├─────────────────┼──────────────────────────────────────────────────────────┤
+│ Personalização  │ • Posso enviar qualquer imagem?                         │
+│ & IA            │ • Como funcionam os filtros de IA?                      │
+│                 │ • O que são ArtisCoins?                                 │
+│                 │ • A imagem precisa ter resolução mínima?                │
+├─────────────────┼──────────────────────────────────────────────────────────┤
+│ Pedido &        │ • Qual o prazo de produção e entrega?                   │
+│ Entrega         │ • Como acompanho meu pedido?                           │
+│                 │ • Para quais regiões vocês entregam?                    │
+│                 │ • Posso alterar meu pedido após o pagamento?            │
+├─────────────────┼──────────────────────────────────────────────────────────┤
+│ Pagamento &     │ • Quais formas de pagamento são aceitas?                │
+│ Segurança       │ • O pagamento é seguro?                                │
+│                 │ • Posso parcelar?                                       │
+├─────────────────┼──────────────────────────────────────────────────────────┤
+│ Trocas &        │ • Posso trocar ou devolver?                             │
+│ Políticas       │ • E se o produto chegar com defeito?                    │
+│                 │ • Onde encontro os termos de uso?                       │
+└─────────────────┴──────────────────────────────────────────────────────────┘
+```
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+### Alterações técnicas
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+**1. Migração de banco de dados**
+- Adicionar coluna `category TEXT NOT NULL DEFAULT 'geral'` na tabela `faqs`.
+- Atualizar as 6 FAQs existentes com suas categorias corretas.
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+**2. Componente `FaqSection.tsx`**
+- Buscar FAQs ativas com o campo `category`.
+- Agrupar por categoria no frontend.
+- Renderizar com `Tabs` (Radix) — uma aba por categoria — com o accordion dentro de cada aba.
+- Em mobile, as tabs ficam com scroll horizontal.
+- Manter o visual atual (cards `rounded-xl`, animações, ScrollReveal).
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+**3. Admin `FaqManager.tsx`**
+- Adicionar campo `Categoria` no formulário de criação/edição (input de texto ou select com as categorias existentes).
+- Exibir a categoria como badge/tag em cada item da lista.
+
+**4. Conteúdo das FAQs**
+- Inserir via migração SQL as novas perguntas sugeridas acima (além das 6 existentes), já categorizadas e com `sort_order` correto.
+
+### Arquivos alterados
+- `supabase/migrations/` — nova migração (add category + insert FAQs)
+- `src/components/FaqSection.tsx` — tabs + agrupamento
+- `src/components/admin/FaqManager.tsx` — campo categoria
 
