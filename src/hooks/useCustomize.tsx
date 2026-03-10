@@ -217,6 +217,7 @@ export function useCustomize(productId: string | undefined) {
       setOriginalImage(url);
       setIsCompressing(false);
       if (compressed) toast({ title: "Imagem otimizada automaticamente" });
+      clarityEvent("customize_image_uploaded");
     };
     reader.readAsDataURL(file);
   }, [toast]);
