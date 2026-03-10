@@ -19,6 +19,18 @@ const Product = () => {
   const { product, loading } = useProduct(id);
 
   const brand = product ? extractBrand(product.name) : "";
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("product_gallery_images")
+      .select("url")
+      .eq("active", true)
+      .order("sort_order")
+      .then(({ data }) => {
+        setGalleryImages((data ?? []).map((r: any) => r.url));
+      });
+  }, []);
 
   // --- SEO injection ---
   useEffect(() => {
