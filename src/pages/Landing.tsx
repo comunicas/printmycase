@@ -81,7 +81,7 @@ const Landing = () => {
                 <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">personalizada</span>{" "}
                 e receba casa.
               </h1>
-              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Receba em casa sua capa personalizada com qualidade premium e impressão PrintMyCase.</p>
+              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Escolha seu modelo, envie sua arte e receba em casa uma case exclusiva com impressão premium.</p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={fadeIn(300)}>
                 <Button size="lg" className="gap-2 text-base glow-primary" onClick={() => navigate("/catalog")}>
