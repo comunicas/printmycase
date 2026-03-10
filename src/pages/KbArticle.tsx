@@ -48,16 +48,11 @@ const KbArticle = () => {
   if (loading) return <LoadingSpinner variant="fullPage" />;
 
   return (
-    <>
-      <SeoHead
-        title={`${title || "Artigo"} | Central de Ajuda | ArtisCase`}
-        description={title}
-      />
       <div className="min-h-screen bg-background flex flex-col">
         <AppHeader
           breadcrumbs={[
-            { label: "Central de Ajuda", href: "/ajuda" },
-            { label: categoryName, href: `/ajuda/${categorySlug}` },
+            { label: "Central de Ajuda", to: "/ajuda" },
+            { label: categoryName, to: `/ajuda/${categorySlug}` },
             { label: title },
           ]}
         />
