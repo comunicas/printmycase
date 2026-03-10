@@ -81,8 +81,6 @@ const KbCategory = () => {
         </main>
       </div>
   );
-});
-
-KbCategory.displayName = "KbCategory";
+};
 
 export default KbCategory;

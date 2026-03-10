@@ -108,8 +108,6 @@ const KnowledgeBase = () => {
       </div>
     </>
   );
-});
-
-KnowledgeBase.displayName = "KnowledgeBase";
+};
 
 export default KnowledgeBase;

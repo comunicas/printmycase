@@ -83,8 +83,6 @@ const KbArticle = () => {
         </main>
       </div>
   );
-});
-
-KbArticle.displayName = "KbArticle";
+};
 
 export default KbArticle;
