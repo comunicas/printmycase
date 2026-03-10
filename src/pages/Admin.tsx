@@ -7,6 +7,7 @@ import FaqManager from "@/components/admin/FaqManager";
 import AiFiltersManager from "@/components/admin/AiFiltersManager";
 import ModelRequestsManager from "@/components/admin/ModelRequestsManager";
 import CoinsManager from "@/components/admin/CoinsManager";
+import LegalDocsManager from "@/components/admin/LegalDocsManager";
 
 const Admin = () => {
   return (
