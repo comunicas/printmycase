@@ -19,7 +19,16 @@ const Catalog = () => {
   const brands = useMemo(() => {
     const set = new Set<string>();
     products.forEach((p) => set.add(extractBrand(p.name)));
-    return ["Todos", ...Array.from(set).sort()];
+    const priority = ["Apple", "Samsung"];
+    const sorted = Array.from(set).sort((a, b) => {
+      const ai = priority.indexOf(a);
+      const bi = priority.indexOf(b);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    return ["Todos", ...sorted];
   }, [products]);
 
   const filtered = useMemo(() => {
