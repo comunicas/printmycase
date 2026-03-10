@@ -1,4 +1,4 @@
-import { Package, Truck, HelpCircle, Smartphone, Wand2, Coins } from "lucide-react";
+import { Package, Truck, HelpCircle, Smartphone, Wand2, Coins, FileText } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsManager from "@/components/admin/ProductsManager";
