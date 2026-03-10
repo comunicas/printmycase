@@ -1,32 +1,24 @@
 
 
-## Remover FAQs Duplicados
+## Vincular FAQs a Artigos da Base de Conhecimento
 
-### Duplicados identificados (5 pares)
+### Problema
+O campo `kb_article_id` já existe na tabela `faqs`, mas o FaqManager não permite selecioná-lo. O FaqSection também não exibe o link "Leia mais" quando há um artigo vinculado.
 
-| Pergunta | Manter (ID) | Motivo | Remover (ID) |
-|---|---|---|---|
-| De que material é feita a case? | c8bc55d5 | featured + kb_article_id | a89cdb79 |
-| Qual a qualidade da impressão? | fed798bb | sort_order 1, original | 2c79af63 |
-| O que é a tecnologia PrintMyCase? | 2d0c6e6f | featured + kb_article_id | 99464719 |
-| A impressão desbota com o tempo? | f9275bf7 | sort_order 3, original | 43eec994 |
-| Posso enviar qualquer imagem? | f97bd43e | resposta mais completa | e2f4e663 |
-| Qual o prazo de produção e entrega? | fca11a71 | featured + kb_article_id | aa628dac |
+### Alterações
 
-### Implementação
+**1. `src/components/admin/FaqManager.tsx`**
+- Adicionar `kb_article_id` à interface `Faq`
+- Carregar lista de artigos (`kb_articles`) ao montar o componente para popular um `<select>`
+- Adicionar campo select no dialog de criação/edição para escolher artigo vinculado (opcional)
+- Incluir `kb_article_id` nas operações de insert/update
+- Exibir indicador visual (ícone link) nos FAQs que têm artigo vinculado
 
-Uma única operação DELETE para remover os 6 registros duplicados:
+**2. `src/components/FaqSection.tsx`**
+- Incluir `kb_article_id` no select da query
+- Fazer join com `kb_articles` para obter slug e `kb_categories` para obter o slug da categoria
+- Renderizar link "Leia mais" abaixo da resposta quando `kb_article_id` estiver preenchido, apontando para `/ajuda/{category_slug}/{article_slug}`
 
-```sql
-DELETE FROM faqs WHERE id IN (
-  'a89cdb79-2928-4432-86fe-28d61dd32c4d',
-  '2c79af63-bf0a-41fa-bd5e-29889f198ee0',
-  '99464719-ff8c-4691-8a49-955d4383787f',
-  '43eec994-cb9c-49ae-8a4c-6d2326f0e652',
-  'e2f4e663-ab7f-4d5c-bd48-04a2fa3d7dc0',
-  'aa628dac-3571-4a9d-8b5d-6bdb93a15093'
-);
-```
-
-Após a remoção, reordenar os `sort_order` para manter sequência contínua. Nenhuma alteração de código necessária.
+### Sem alterações no banco
+O campo `kb_article_id` já existe na tabela `faqs`. Nenhuma migração necessária.
 
