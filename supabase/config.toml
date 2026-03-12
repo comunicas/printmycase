@@ -23,3 +23,5 @@ project_id = "gfsbsgwxylvhnwbpcodj"
     verify_jwt = false
   [functions.cleanup-pending-checkouts]
     verify_jwt = false
+  [functions.generate-gallery-image]
+    verify_jwt = false
