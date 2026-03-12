@@ -202,10 +202,11 @@ const CollectionDesignsManager = () => {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onCancel={() => setDeleteTarget(null)}
         title="Excluir design?"
         description={`"${deleteTarget?.name}" será excluído permanentemente.`}
         onConfirm={handleDelete}
+        destructive
       />
     </div>
   );

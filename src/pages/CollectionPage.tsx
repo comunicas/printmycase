@@ -26,7 +26,7 @@ const CollectionPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SeoHead title={`${collection.name} | ArtisCase`} description={collection.description || `Coleção ${collection.name} de designs exclusivos.`} />
+      
       <AppHeader breadcrumbs={[{ label: "Coleções", to: "/colecoes" }, { label: collection.name }]} />
       <main className="max-w-5xl mx-auto px-5 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-2">{collection.name}</h1>

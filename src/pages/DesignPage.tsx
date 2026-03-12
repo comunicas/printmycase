@@ -112,7 +112,7 @@ const DesignPage = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <SeoHead title={`${design.name} | ArtisCase`} description={`Design ${design.name} - capinha exclusiva para seu celular.`} />
+      
       <AppHeader breadcrumbs={breadcrumbs} />
 
       <main className="flex-1 max-w-4xl mx-auto w-full p-5 lg:p-10">

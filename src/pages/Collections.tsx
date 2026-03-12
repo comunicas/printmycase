@@ -11,7 +11,7 @@ const Collections = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SeoHead title="Coleções | ArtisCase" description="Explore nossas coleções de designs exclusivos para capinhas de celular." />
+      
       <AppHeader breadcrumbs={[{ label: "Coleções" }]} />
       <main className="max-w-5xl mx-auto px-5 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-2">Coleções</h1>

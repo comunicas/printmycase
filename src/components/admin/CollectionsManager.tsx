@@ -168,10 +168,11 @@ const CollectionsManager = () => {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onCancel={() => setDeleteTarget(null)}
         title="Excluir coleção?"
         description={`"${deleteTarget?.name}" e todos os seus designs serão excluídos permanentemente.`}
         onConfirm={handleDelete}
+        destructive
       />
     </div>
   );
