@@ -1,24 +1,37 @@
 
 
-## Infinite Scroll na Lista de Gerações IA
+## Verificação do Webhook Stripe Live
 
-### Alteração
+### O que o código espera
 
-**`src/components/admin/AiGenerationsManager.tsx`**
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-- Carregar imagens em lotes de 12 (`PAGE_SIZE = 12`)
-- Usar `useRef` + `IntersectionObserver` num elemento sentinela no final do grid
-- Quando o sentinela ficar visível, carregar próximo lote via `.range(from, to)` no query
-- Estado `hasMore` para parar de observar quando não houver mais registros
-- Ao gerar nova imagem (`onGenerated`), resetar para página 1 e recarregar
-- Ao deletar, remover do estado local (sem recarregar tudo)
-- Loading spinner inline no final do grid enquanto carrega mais
+### Como verificar (manual no Stripe Dashboard)
 
-### Fluxo
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-1. `fetchImages(reset?)` — se reset, limpa array e começa do 0; senão, appenda ao array existente
-2. Query usa `.range(offset, offset + PAGE_SIZE - 1)`
-3. Se `data.length < PAGE_SIZE`, seta `hasMore = false`
-4. Sentinela `<div ref={sentinelRef} />` após o grid, observado pelo IntersectionObserver
-5. Observer dispara `fetchMore` quando visível e `hasMore && !loading`
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
