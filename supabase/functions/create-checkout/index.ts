@@ -143,7 +143,11 @@ Deno.serve(async (req) => {
     const origin = req.headers.get("origin") || req.headers.get("referer") || "https://studio.artiscase.com";
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
     const shippingValue = shipping_cents ? Number(shipping_cents) : 0;
-    const totalCents = product.price_cents + shippingValue;
+    const itemPriceCents = isCollectionPurchase ? design!.price_cents : product.price_cents;
+    const totalCents = itemPriceCents + shippingValue;
+    const itemName = isCollectionPurchase
+      ? `Capa ${design!.name} - ${product.name}`
+      : `Capa Personalizada - ${product.name}`;
 
     const params = new URLSearchParams();
     params.append("payment_method_types[0]", "card");
