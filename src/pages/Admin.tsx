@@ -1,4 +1,4 @@
-import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon } from "lucide-react";
+import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsManager from "@/components/admin/ProductsManager";
@@ -11,6 +11,7 @@ import KbCategoriesManager from "@/components/admin/KbCategoriesManager";
 import KbArticlesManager from "@/components/admin/KbArticlesManager";
 import FaqManager from "@/components/admin/FaqManager";
 import GalleryImagesManager from "@/components/admin/GalleryImagesManager";
+import AiGenerationsManager from "@/components/admin/AiGenerationsManager";
 
 const Admin = () => {
   return (
@@ -70,7 +71,20 @@ const Admin = () => {
           <TabsContent value="requests"><ModelRequestsManager /></TabsContent>
           <TabsContent value="ai-filters"><AiFiltersManager /></TabsContent>
           <TabsContent value="coins"><CoinsManager /></TabsContent>
-          <TabsContent value="gallery"><GalleryImagesManager /></TabsContent>
+          <TabsContent value="gallery">
+            <Tabs defaultValue="gallery-illustrations" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="gallery-illustrations" className="gap-1.5">
+                  <ImageIcon className="w-4 h-4" /> Ilustrativas
+                </TabsTrigger>
+                <TabsTrigger value="gallery-generations" className="gap-1.5">
+                  <Sparkles className="w-4 h-4" /> Gerações
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="gallery-illustrations"><GalleryImagesManager /></TabsContent>
+              <TabsContent value="gallery-generations"><AiGenerationsManager /></TabsContent>
+            </Tabs>
+          </TabsContent>
           <TabsContent value="legal"><LegalDocsManager /></TabsContent>
         </Tabs>
       </main>

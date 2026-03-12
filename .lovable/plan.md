@@ -1,53 +1,37 @@
 
 
-## Gerador IA — Controles do Modelo + Galeria "Gerações"
+## Verificação do Webhook Stripe Live
 
-### Mudanças
+### O que o código espera
 
-**1. Nova tabela `ai_generated_images`** — galeria separada para imagens geradas por IA
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-| Coluna | Tipo | Nota |
-|---|---|---|
-| id | uuid PK | |
-| url | text | URL pública no storage |
-| prompt | text | Prompt usado |
-| seed | integer | Seed retornado pela API |
-| image_size | text | Tamanho usado |
-| created_at | timestamptz | |
+### Como verificar (manual no Stripe Dashboard)
 
-RLS: admins gerenciam tudo, leitura pública.
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-**2. Edge Function `generate-gallery-image`** — adicionar parâmetros
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-Passar para a fal.ai: `seed` (opcional), `image_size` (default `auto`), `safety_tolerance`, `output_format`. Salvar na tabela `ai_generated_images` em vez de `product_gallery_images`. Retornar o seed da resposta para referência futura.
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-Upload no storage em `generations/` (separado de `gallery/`).
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-**3. UI `AiImageGenerator.tsx`** — novos controles
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-- **Image Size**: dropdown com opções `auto, square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9`
-- **Seed**: input numérico opcional (para reproduzir gerações anteriores)
-- **Safety Tolerance**: slider 1-5 (default 2)
-- **Output Format**: toggle jpeg/png
-
-**4. Nova aba/seção "Gerações" no Admin**
-
-Componente `AiGenerationsManager.tsx` para listar imagens geradas com:
-- Preview, prompt usado, seed, data
-- Botão copiar seed
-- Botão deletar
-- Opção de mover para galeria global (insere em `product_gallery_images`)
-
-Adicionar sub-aba "Gerações" dentro da aba Galeria do admin.
-
-### Arquivos
-
-| Arquivo | Alteração |
-|---|---|
-| Migration SQL | Nova tabela `ai_generated_images` |
-| `supabase/functions/generate-gallery-image/index.ts` | Aceitar novos params, salvar em nova tabela |
-| `src/components/admin/AiImageGenerator.tsx` | Controles de image_size, seed, safety_tolerance, output_format |
-| `src/components/admin/AiGenerationsManager.tsx` | **Novo** — listagem de gerações |
-| `src/components/admin/GalleryImagesManager.tsx` | Remover AiImageGenerator (vai para Gerações) |
-| `src/pages/Admin.tsx` | Sub-abas Galeria: "Ilustrativas" + "Gerações" |
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

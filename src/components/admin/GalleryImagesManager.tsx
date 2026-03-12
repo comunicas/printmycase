@@ -4,7 +4,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
-import AiImageGenerator from "@/components/admin/AiImageGenerator";
 import { Upload, Trash2, GripVertical } from "lucide-react";
 
 interface GalleryImage {
@@ -114,8 +113,6 @@ const GalleryImagesManager = () => {
 
   return (
     <div className="space-y-6">
-      <AiImageGenerator onGenerated={fetchImages} />
-
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Imagens Ilustrativas (Galeria Global)</h2>
         <Button onClick={() => fileRef.current?.click()} disabled={uploading}>
