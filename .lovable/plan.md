@@ -1,37 +1,35 @@
 
 
-## Verificação do Webhook Stripe Live
+## Migrar `getUser` → `getClaims` em 5 Edge Functions
 
-### O que o código espera
+Todas as funções abaixo usam `supabase.auth.getUser(token)` que é incompatível com tokens ES256 do Lovable Cloud, causando 401.
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### Alterações
 
-### Como verificar (manual no Stripe Dashboard)
+| Função | Mudança |
+|---|---|
+| `apply-ai-filter/index.ts` | `getUser(token)` → `getClaims(token)`, userId via `claims.sub` |
+| `generate-gallery-image/index.ts` | Idem |
+| `upscale-image/index.ts` | Idem |
+| `create-coin-checkout/index.ts` | Idem; email via `claims.email` em vez de `userData.user.email` |
+| `notify-order-status/index.ts` | Idem |
+| `delete-account/index.ts` | Usa `adminClient.auth.getUser(token)` → `getClaims` com client anon, depois `admin.deleteUser(userId)` com o userId extraído das claims |
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+### Padrão aplicado
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+```typescript
+// ANTES
+const { data: userData, error: userError } = await supabase.auth.getUser(token);
+if (userError || !userData?.user) { /* 401 */ }
+const userId = userData.user.id;
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+// DEPOIS
+const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+if (claimsError || !claimsData?.claims) { /* 401 */ }
+const userId = claimsData.claims.sub as string;
+```
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+Para `create-coin-checkout`, o email do usuário (`user.email`) passa a ser `claimsData.claims.email as string`.
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+Para `delete-account`, será criado um client anon para validar o token via `getClaims`, mantendo o `adminClient` apenas para a operação de deletar.
 
