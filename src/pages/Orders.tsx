@@ -13,7 +13,12 @@ import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import PendingCheckoutCards from "@/components/PendingCheckoutCards";
 
-type OrderWithProduct = Tables<"orders"> & { product_name?: string; product_image?: string };
+type OrderWithProduct = Tables<"orders"> & {
+  product_name?: string;
+  product_image?: string;
+  design_name?: string;
+  design_image?: string;
+};
 
 const PAGE_SIZE = 8;
 
