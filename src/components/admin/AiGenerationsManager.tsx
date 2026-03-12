@@ -7,27 +7,11 @@ import AiImageGenerator, { type AiSetup } from "@/components/admin/AiImageGenera
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Trash2, Copy, ArrowRightCircle, ImagePlus, Maximize2, Settings2 } from "lucide-react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import type { Tables } from "@/integrations/supabase/types";
 
 const PAGE_SIZE = 12;
 
-interface AiGenImage {
-  id: string;
-  url: string;
-  prompt: string;
-  seed: number | null;
-  image_size: string;
-  image_urls: string[];
-  safety_tolerance: number;
-  output_format: string;
-  created_at: string;
-}
-
-interface ProductOption {
-  id: string;
-  name: string;
-  slug: string;
-  images: string[] | null;
-}
+type AiGenImage = Tables<"ai_generated_images">;
 
 const AiGenerationsManager = () => {
   const { toast } = useToast();
@@ -37,7 +21,7 @@ const AiGenerationsManager = () => {
   const [deleteTarget, setDeleteTarget] = useState<AiGenImage | null>(null);
   const [lightboxImage, setLightboxImage] = useState<AiGenImage | null>(null);
   const [addToProductImage, setAddToProductImage] = useState<AiGenImage | null>(null);
-  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [products, setProducts] = useState<Tables<"products">[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [setupToLoad, setSetupToLoad] = useState<AiSetup | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -55,7 +39,7 @@ const AiGenerationsManager = () => {
       .order("created_at", { ascending: false })
       .range(from, to);
 
-    const rows = (data as unknown as AiGenImage[]) ?? [];
+    const rows = data ?? [];
 
     if (reset) {
       setImages(rows);
@@ -122,7 +106,7 @@ const AiGenerationsManager = () => {
       .order("sort_order", { ascending: false })
       .limit(1)
       .maybeSingle();
-    const nextOrder = ((maxRow as { sort_order: number } | null)?.sort_order ?? -1) + 1;
+    const nextOrder = (maxRow?.sort_order ?? -1) + 1;
 
     const { error } = await supabase
       .from("product_gallery_images")
@@ -141,11 +125,11 @@ const AiGenerationsManager = () => {
       .from("products")
       .select("id, name, slug, images")
       .order("name");
-    setProducts((data as ProductOption[]) ?? []);
+    setProducts((data ?? []) as Tables<"products">[]);
     setLoadingProducts(false);
   };
 
-  const addImageToProduct = async (product: ProductOption) => {
+  const addImageToProduct = async (product: Tables<"products">) => {
     if (!addToProductImage) return;
     const currentImages = product.images ?? [];
     const { error } = await supabase

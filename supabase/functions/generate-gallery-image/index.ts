@@ -168,6 +168,10 @@ Deno.serve(async (req) => {
         output_format: output_format || "png",
       });
 
+    if (insertError) {
+      console.error("Failed to save generation record:", insertError.message);
+    }
+
     return new Response(JSON.stringify({ url: urlData.publicUrl, seed: resultSeed }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

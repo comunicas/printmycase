@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,40 @@ export interface AiSetup {
   imageUrls: string[];
 }
 
+/* ── ImageSlot (extracted to avoid re-mount on every parent render) ── */
+
+interface ImageSlotProps {
+  label: string;
+  image: string | null;
+  onClear: () => void;
+  onPickFile: () => void;
+  required?: boolean;
+}
+
+const ImageSlot = ({ label, image, onClear, onPickFile, required }: ImageSlotProps) => (
+  <div className="space-y-1.5">
+    <label className="text-sm font-medium">{label}{required ? "" : " (opcional)"}</label>
+    {image ? (
+      <div className="relative">
+        <img src={image} alt="" className="h-28 w-full rounded-md border object-contain bg-background" />
+        <button
+          type="button"
+          onClick={onClear}
+          className="absolute top-1 right-1 rounded-full bg-background/80 p-1 text-destructive hover:bg-background"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    ) : (
+      <Button variant="outline" className="w-full h-28" onClick={onPickFile}>
+        <Upload className="h-5 w-5 mr-2" /> Enviar imagem
+      </Button>
+    )}
+  </div>
+);
+
+/* ── Main component ── */
+
 interface AiImageGeneratorProps {
   onGenerated: () => void;
   initialSetup?: AiSetup | null;
@@ -69,13 +103,12 @@ const AiImageGenerator = ({ onGenerated, initialSetup, onSetupConsumed }: AiImag
     setImageSize(initialSetup.imageSize);
     setSafetyTolerance(initialSetup.safetyTolerance);
     setOutputFormat(initialSetup.outputFormat);
-    // Load reference image URLs directly (they are public URLs)
     setImage1(initialSetup.imageUrls[0] ?? null);
     setImage2(initialSetup.imageUrls[1] ?? null);
-    // Scroll to the form
     containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     onSetupConsumed?.();
     toast({ title: "Setup carregado! Ajuste e gere novamente." });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when initialSetup changes
   }, [initialSetup]);
 
   const readFile = (file: File): Promise<string> =>
@@ -85,19 +118,17 @@ const AiImageGenerator = ({ onGenerated, initialSetup, onSetupConsumed }: AiImag
       reader.readAsDataURL(file);
     });
 
-  const handleFile = async (file: File, setter: (v: string | null) => void) => {
+  const handleFile = useCallback(async (file: File, setter: (v: string | null) => void) => {
     if (!file.type.startsWith("image/")) {
       toast({ title: "Selecione uma imagem válida", variant: "destructive" });
       return;
     }
     const dataUrl = await readFile(file);
     setter(dataUrl);
-  };
+  }, [toast]);
 
-  /** Check if a string is a remote URL (not a data URL) */
   const isRemoteUrl = (url: string) => url.startsWith("http://") || url.startsWith("https://");
 
-  /** Upload a data-URL to temp-refs and return the public URL. If already a remote URL, return as-is. */
   const uploadToStorage = async (dataUrl: string): Promise<string> => {
     if (isRemoteUrl(dataUrl)) return dataUrl;
     const res = await fetch(dataUrl);
@@ -122,7 +153,7 @@ const AiImageGenerator = ({ onGenerated, initialSetup, onSetupConsumed }: AiImag
     setStepIndex(0);
 
     try {
-      // Step 0: Compress (skip for remote URLs — already compressed)
+      // Step 0: Compress (skip for remote URLs)
       const compressed1 = isRemoteUrl(image1) ? image1 : await compressForAI(image1);
       const compressed2 = image2 ? (isRemoteUrl(image2) ? image2 : await compressForAI(image2)) : null;
 
@@ -181,45 +212,6 @@ const AiImageGenerator = ({ onGenerated, initialSetup, onSetupConsumed }: AiImag
     }
   };
 
-  const ImageSlot = ({
-    label,
-    image,
-    setImage,
-    fileRef,
-    required,
-  }: {
-    label: string;
-    image: string | null;
-    setImage: (v: string | null) => void;
-    fileRef: React.RefObject<HTMLInputElement>;
-    required?: boolean;
-  }) => (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium">{label}{required ? "" : " (opcional)"}</label>
-      {image ? (
-        <div className="relative">
-          <img src={image} alt="" className="h-28 w-full rounded-md border object-contain bg-background" />
-          <button
-            type="button"
-            onClick={() => setImage(null)}
-            className="absolute top-1 right-1 rounded-full bg-background/80 p-1 text-destructive hover:bg-background"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      ) : (
-        <Button variant="outline" className="w-full h-28" onClick={() => fileRef.current?.click()}>
-          <Upload className="h-5 w-5 mr-2" /> Enviar imagem
-        </Button>
-      )}
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
-        const f = e.target.files?.[0];
-        if (f) handleFile(f, setImage);
-        e.target.value = "";
-      }} />
-    </div>
-  );
-
   return (
     <div ref={containerRef} className="space-y-5">
       <p className="text-sm text-muted-foreground">
@@ -228,8 +220,33 @@ const AiImageGenerator = ({ onGenerated, initialSetup, onSetupConsumed }: AiImag
 
       {/* Reference images */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <ImageSlot label="Imagem 1" image={image1} setImage={setImage1} fileRef={file1Ref} required />
-        <ImageSlot label="Imagem 2" image={image2} setImage={setImage2} fileRef={file2Ref} />
+        <div>
+          <ImageSlot
+            label="Imagem 1"
+            image={image1}
+            onClear={() => setImage1(null)}
+            onPickFile={() => file1Ref.current?.click()}
+            required
+          />
+          <input ref={file1Ref} type="file" accept="image/*" className="hidden" onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f, setImage1);
+            e.target.value = "";
+          }} />
+        </div>
+        <div>
+          <ImageSlot
+            label="Imagem 2"
+            image={image2}
+            onClear={() => setImage2(null)}
+            onPickFile={() => file2Ref.current?.click()}
+          />
+          <input ref={file2Ref} type="file" accept="image/*" className="hidden" onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f, setImage2);
+            e.target.value = "";
+          }} />
+        </div>
       </div>
 
       {/* Quick prompts */}
