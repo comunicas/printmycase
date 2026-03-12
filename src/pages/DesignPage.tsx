@@ -102,7 +102,6 @@ const DesignPage = () => {
   }
 
   const shippingCents = shipping?.priceCents ?? 0;
-  const totalCents = design.price_cents + shippingCents;
 
   const breadcrumbs = [
     { label: "Coleções", to: "/colecoes" },
