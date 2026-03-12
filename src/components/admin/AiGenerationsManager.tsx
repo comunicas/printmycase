@@ -3,9 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
-import AiImageGenerator from "@/components/admin/AiImageGenerator";
+import AiImageGenerator, { type AiSetup } from "@/components/admin/AiImageGenerator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Trash2, Copy, ArrowRightCircle, ImagePlus, Maximize2 } from "lucide-react";
+import { Trash2, Copy, ArrowRightCircle, ImagePlus, Maximize2, Settings2 } from "lucide-react";
 
 interface AiGenImage {
   id: string;
@@ -13,6 +13,9 @@ interface AiGenImage {
   prompt: string;
   seed: number | null;
   image_size: string;
+  image_urls: string[];
+  safety_tolerance: number;
+  output_format: string;
   created_at: string;
 }
 
@@ -28,21 +31,18 @@ const AiGenerationsManager = () => {
   const [images, setImages] = useState<AiGenImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<AiGenImage | null>(null);
-
-  // Lightbox state
   const [lightboxImage, setLightboxImage] = useState<AiGenImage | null>(null);
-
-  // Add-to-product state
   const [addToProductImage, setAddToProductImage] = useState<AiGenImage | null>(null);
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [setupToLoad, setSetupToLoad] = useState<AiSetup | null>(null);
 
   const fetchImages = async () => {
     const { data } = await supabase
       .from("ai_generated_images")
       .select("*")
       .order("created_at", { ascending: false });
-    setImages((data as AiGenImage[]) ?? []);
+    setImages((data as unknown as AiGenImage[]) ?? []);
     setLoading(false);
   };
 
@@ -72,7 +72,7 @@ const AiGenerationsManager = () => {
       .order("sort_order", { ascending: false })
       .limit(1)
       .maybeSingle();
-    const nextOrder = ((maxRow as any)?.sort_order ?? -1) + 1;
+    const nextOrder = ((maxRow as { sort_order: number } | null)?.sort_order ?? -1) + 1;
 
     const { error } = await supabase
       .from("product_gallery_images")
@@ -84,7 +84,6 @@ const AiGenerationsManager = () => {
     toast({ title: "Imagem adicionada à galeria ilustrativa!" });
   };
 
-  // Fetch products when dialog opens
   const openAddToProduct = async (img: AiGenImage) => {
     setAddToProductImage(img);
     setLoadingProducts(true);
@@ -111,9 +110,26 @@ const AiGenerationsManager = () => {
     setAddToProductImage(null);
   };
 
+  const copySetup = (img: AiGenImage) => {
+    const setup: AiSetup = {
+      prompt: img.prompt,
+      seed: img.seed != null ? String(img.seed) : "",
+      imageSize: img.image_size,
+      safetyTolerance: img.safety_tolerance ?? 2,
+      outputFormat: (img.output_format === "jpeg" ? "jpeg" : "png"),
+      imageUrls: img.image_urls ?? [],
+    };
+    setSetupToLoad(setup);
+    setLightboxImage(null); // close lightbox if open
+  };
+
   return (
     <div className="space-y-6">
-      <AiImageGenerator onGenerated={fetchImages} />
+      <AiImageGenerator
+        onGenerated={fetchImages}
+        initialSetup={setupToLoad}
+        onSetupConsumed={() => setSetupToLoad(null)}
+      />
 
       <h2 className="text-xl font-semibold">Imagens Geradas</h2>
 
@@ -156,6 +172,9 @@ const AiGenerationsManager = () => {
                 <span>{new Date(img.created_at).toLocaleDateString("pt-BR")}</span>
               </div>
               <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => copySetup(img)}>
+                  <Settings2 className="h-4 w-4 mr-1" /> Setup
+                </Button>
                 <Button variant="outline" size="sm" className="flex-1" onClick={() => moveToGallery(img)}>
                   <ArrowRightCircle className="h-4 w-4 mr-1" /> Galeria
                 </Button>
@@ -205,6 +224,9 @@ const AiGenerationsManager = () => {
                   )}
                   <span>{new Date(lightboxImage.created_at).toLocaleDateString("pt-BR")}</span>
                 </div>
+                <Button variant="outline" size="sm" onClick={() => copySetup(lightboxImage)} className="mt-2">
+                  <Settings2 className="h-4 w-4 mr-1" /> Copiar Setup
+                </Button>
               </div>
             </div>
           )}

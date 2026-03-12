@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -30,12 +30,24 @@ const STEPS = [
   { label: "Salvando resultado...", icon: Save },
 ] as const;
 
-interface AiImageGeneratorProps {
-  onGenerated: () => void;
+export interface AiSetup {
+  prompt: string;
+  seed: string;
+  imageSize: string;
+  safetyTolerance: number;
+  outputFormat: "png" | "jpeg";
+  imageUrls: string[];
 }
 
-const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
+interface AiImageGeneratorProps {
+  onGenerated: () => void;
+  initialSetup?: AiSetup | null;
+  onSetupConsumed?: () => void;
+}
+
+const AiImageGenerator = ({ onGenerated, initialSetup, onSetupConsumed }: AiImageGeneratorProps) => {
   const { toast } = useToast();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [image1, setImage1] = useState<string | null>(null);
   const [image2, setImage2] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
@@ -48,6 +60,23 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
   const [lastSeed, setLastSeed] = useState<number | null>(null);
   const file1Ref = useRef<HTMLInputElement>(null);
   const file2Ref = useRef<HTMLInputElement>(null);
+
+  // Apply initialSetup when it changes
+  useEffect(() => {
+    if (!initialSetup) return;
+    setPrompt(initialSetup.prompt);
+    setSeed(initialSetup.seed);
+    setImageSize(initialSetup.imageSize);
+    setSafetyTolerance(initialSetup.safetyTolerance);
+    setOutputFormat(initialSetup.outputFormat);
+    // Load reference image URLs directly (they are public URLs)
+    setImage1(initialSetup.imageUrls[0] ?? null);
+    setImage2(initialSetup.imageUrls[1] ?? null);
+    // Scroll to the form
+    containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    onSetupConsumed?.();
+    toast({ title: "Setup carregado! Ajuste e gere novamente." });
+  }, [initialSetup]);
 
   const readFile = (file: File): Promise<string> =>
     new Promise((resolve) => {
@@ -65,8 +94,12 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
     setter(dataUrl);
   };
 
-  /** Upload a data-URL to temp-refs and return the public URL */
+  /** Check if a string is a remote URL (not a data URL) */
+  const isRemoteUrl = (url: string) => url.startsWith("http://") || url.startsWith("https://");
+
+  /** Upload a data-URL to temp-refs and return the public URL. If already a remote URL, return as-is. */
   const uploadToStorage = async (dataUrl: string): Promise<string> => {
+    if (isRemoteUrl(dataUrl)) return dataUrl;
     const res = await fetch(dataUrl);
     const blob = await res.blob();
     const ext = blob.type.includes("png") ? "png" : "jpg";
@@ -89,9 +122,9 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
     setStepIndex(0);
 
     try {
-      // Step 0: Compress
-      const compressed1 = await compressForAI(image1);
-      const compressed2 = image2 ? await compressForAI(image2) : null;
+      // Step 0: Compress (skip for remote URLs — already compressed)
+      const compressed1 = isRemoteUrl(image1) ? image1 : await compressForAI(image1);
+      const compressed2 = image2 ? (isRemoteUrl(image2) ? image2 : await compressForAI(image2)) : null;
 
       // Step 1: Upload to storage
       setStepIndex(1);
@@ -139,8 +172,9 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
       setPrompt("");
       setSeed("");
       onGenerated();
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ title: "Erro", description: message, variant: "destructive" });
     } finally {
       setGenerating(false);
       setStepIndex(0);
@@ -187,7 +221,7 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
   );
 
   return (
-    <div className="space-y-5">
+    <div ref={containerRef} className="space-y-5">
       <p className="text-sm text-muted-foreground">
         Envie até 2 imagens de referência e um prompt. A IA gerará uma nova imagem salva na galeria de gerações.
       </p>
