@@ -3,7 +3,7 @@ import AppHeader from "@/components/AppHeader";
 import { useCollections } from "@/hooks/useCollections";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
-import SeoHead from "@/components/SeoHead";
+
 
 const Collections = () => {
   const { collections, loading } = useCollections();
