@@ -36,8 +36,6 @@ Deno.serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub as string;
-
-    const userId = userData.user.id;
     const { product_id, design_id, customization_data, raw_image_url, original_image_url, edited_image_url, shipping_cents, address_id, address_inline, save_address } = await req.json();
 
     if (!product_id) {
