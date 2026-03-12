@@ -28,6 +28,9 @@ const LegalDocument = lazy(() => import("./pages/LegalDocument"));
 const KnowledgeBase = lazy(() => import("./pages/KnowledgeBase"));
 const KbCategory = lazy(() => import("./pages/KbCategory"));
 const KbArticle = lazy(() => import("./pages/KbArticle"));
+const Collections = lazy(() => import("./pages/Collections"));
+const CollectionPage = lazy(() => import("./pages/CollectionPage"));
+const DesignPage = lazy(() => import("./pages/DesignPage"));
 
 const App = () => (
   <AuthProvider>
