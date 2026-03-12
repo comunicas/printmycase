@@ -131,6 +131,30 @@ Deno.serve(async (req) => {
 
     const { data: urlData } = serviceClient.storage.from("product-assets").getPublicUrl(path);
 
+    // Move temp-refs to permanent ref-images path
+    const permanentUrls: string[] = [];
+    for (const originalUrl of image_urls as string[]) {
+      const match = originalUrl.match(/\/product-assets\/(.+)$/);
+      const oldPath = match ? match[1] : null;
+      if (oldPath && oldPath.startsWith("temp-refs/")) {
+        const newPath = oldPath.replace("temp-refs/", "ref-images/");
+        // Download then upload to new path (Supabase storage has no move/copy)
+        const dlRes = await fetch(originalUrl);
+        if (dlRes.ok) {
+          const blob = await dlRes.blob();
+          await serviceClient.storage.from("product-assets").upload(newPath, blob, { contentType: blob.type });
+          // Delete old temp file
+          serviceClient.storage.from("product-assets").remove([oldPath]).catch(() => {});
+          const { data: newUrlData } = serviceClient.storage.from("product-assets").getPublicUrl(newPath);
+          permanentUrls.push(newUrlData.publicUrl);
+        } else {
+          permanentUrls.push(originalUrl); // fallback
+        }
+      } else {
+        permanentUrls.push(originalUrl); // already permanent
+      }
+    }
+
     // Insert into ai_generated_images
     const { error: insertError } = await serviceClient
       .from("ai_generated_images")
@@ -139,31 +163,10 @@ Deno.serve(async (req) => {
         prompt,
         seed: resultSeed,
         image_size: image_size || "auto",
-        image_urls: image_urls,
+        image_urls: permanentUrls,
         safety_tolerance: safety_tolerance ?? 2,
         output_format: output_format || "png",
       });
-    if (insertError) {
-      console.error("Insert error:", insertError.message);
-      return new Response(JSON.stringify({ error: "Erro ao registrar imagem" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Cleanup temp-refs (fire-and-forget)
-    const tempPaths = image_urls
-      .map((u: string) => {
-        const match = u.match(/\/product-assets\/(.+)$/);
-        return match ? match[1] : null;
-      })
-      .filter((p: string | null): p is string => p !== null && p.startsWith("temp-refs/"));
-
-    if (tempPaths.length > 0) {
-      serviceClient.storage.from("product-assets").remove(tempPaths).catch((e: Error) => {
-        console.error("Temp cleanup error:", e.message);
-      });
-    }
 
     return new Response(JSON.stringify({ url: urlData.publicUrl, seed: resultSeed }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
