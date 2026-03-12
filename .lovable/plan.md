@@ -1,37 +1,28 @@
 
 
-## Verificação do Webhook Stripe Live
+## Revisão: Upload otimizado + Loading melhorado
 
-### O que o código espera
+### Problema atual
+Os logs mostram **"Memory limit exceeded"** na edge function — as imagens são enviadas como base64 no body do request, estourando a memória.
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### Solução
 
-### Como verificar (manual no Stripe Dashboard)
+**1. Frontend (`AiImageGenerator.tsx`)**
+- Comprimir imagens com `compressForAI` antes do envio
+- Fazer upload das imagens de referência para `product-assets/temp-refs/` no storage, obtendo URLs públicas
+- Enviar apenas as URLs públicas (não base64) para a edge function
+- Progress em 4 etapas: "Comprimindo imagens..." → "Enviando referências..." → "Gerando com IA..." → "Salvando resultado..."
+- Adicionar barra de progresso visual com animação pulsante e ícone de etapa
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+**2. Edge Function (`generate-gallery-image/index.ts`)**
+- Recebe URLs públicas em vez de base64 (elimina o problema de memória)
+- Sem mudança na lógica de envio para fal.ai (já envia todos os params corretamente)
+- Limpar imagens temporárias de `temp-refs/` após geração
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+### Arquivos
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
-
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
-
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+| Arquivo | Alteração |
+|---|---|
+| `src/components/admin/AiImageGenerator.tsx` | Comprimir + upload para storage, progress em etapas visuais |
+| `supabase/functions/generate-gallery-image/index.ts` | Cleanup de temp refs após uso |
 
