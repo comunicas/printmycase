@@ -1,37 +1,38 @@
 
 
-## Verificação do Webhook Stripe Live
+## Gerador de Imagens IA no Admin (fal-ai/flux-2-pro/edit)
 
-### O que o código espera
+Ferramenta exclusiva para admins que permite enviar até 2 imagens + prompt, processar via fal-ai/flux-2-pro/edit, e salvar o resultado diretamente na galeria ilustrativa.
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### 1. Edge Function — `generate-gallery-image`
 
-### Como verificar (manual no Stripe Dashboard)
+Nova edge function que:
+- Valida que o usuário é admin (via `has_role`)
+- Recebe `image_urls` (array de até 2 URLs/base64) e `prompt`
+- Chama `https://fal.run/fal-ai/flux-2-pro/edit` com esses parâmetros
+- Baixa a imagem resultante e faz upload no bucket `product-assets` (pasta `gallery/`)
+- Insere registro na tabela `product_gallery_images`
+- Retorna a URL pública da imagem salva
+- Sem cobrança de coins (ferramenta admin)
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+### 2. Admin UI — Seção no GalleryImagesManager
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+Adicionar um painel colapsável ou seção no topo do `GalleryImagesManager` com:
+- 2 campos de upload de imagem (image 1 e image 2) com preview
+- Campo de texto para o prompt
+- Botão "Gerar Imagem"
+- Loading state com mensagem de progresso
+- Ao concluir, a imagem aparece na lista da galeria automaticamente
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+### 3. Config
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+Adicionar a nova função no `supabase/config.toml` com `verify_jwt = false`.
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+### Arquivos
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+| Arquivo | Alteração |
+|---|---|
+| `supabase/functions/generate-gallery-image/index.ts` | **Novo** — edge function |
+| `supabase/config.toml` | Adicionar entry da função |
+| `src/components/admin/GalleryImagesManager.tsx` | Adicionar UI de geração IA |
 
