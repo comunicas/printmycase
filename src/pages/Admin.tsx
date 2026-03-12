@@ -71,7 +71,20 @@ const Admin = () => {
           <TabsContent value="requests"><ModelRequestsManager /></TabsContent>
           <TabsContent value="ai-filters"><AiFiltersManager /></TabsContent>
           <TabsContent value="coins"><CoinsManager /></TabsContent>
-          <TabsContent value="gallery"><GalleryImagesManager /></TabsContent>
+          <TabsContent value="gallery">
+            <Tabs defaultValue="gallery-illustrations" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="gallery-illustrations" className="gap-1.5">
+                  <ImageIcon className="w-4 h-4" /> Ilustrativas
+                </TabsTrigger>
+                <TabsTrigger value="gallery-generations" className="gap-1.5">
+                  <Sparkles className="w-4 h-4" /> Gerações
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="gallery-illustrations"><GalleryImagesManager /></TabsContent>
+              <TabsContent value="gallery-generations"><AiGenerationsManager /></TabsContent>
+            </Tabs>
+          </TabsContent>
           <TabsContent value="legal"><LegalDocsManager /></TabsContent>
         </Tabs>
       </main>
