@@ -1,37 +1,29 @@
 
 
-## Verificação do Webhook Stripe Live
+## Indicação visual de pedidos de coleção na página de pedidos
 
-### O que o código espera
+### Alterações
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+| Arquivo | O que muda |
+|---|---|
+| `src/pages/Orders.tsx` | Enriquecer tipo `OrderWithProduct` com `design_name?` e `design_image?`. No fetch, buscar dados do design para pedidos com `design_id`. Exibir imagem do design + badge "Coleção" no card. |
+| `src/components/admin/OrdersManager.tsx` | Mesmo enriquecimento para o admin: mostrar nome/imagem do design quando `design_id` presente. |
 
-### Como verificar (manual no Stripe Dashboard)
+### Detalhes
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+**Tipo estendido:**
+```typescript
+type OrderWithProduct = Tables<"orders"> & {
+  product_name?: string;
+  product_image?: string;
+  design_name?: string;
+  design_image?: string;
+};
+```
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+**Fetch (Orders.tsx):** Após resolver produtos, coletar `design_id`s não-nulos → query `collection_designs` por IDs → mapear nome e imagem no enriquecimento.
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+**Card visual:** Quando `design_image` existe, mostrar duas imagens lado a lado (design à esquerda, modelo à direita em tamanho menor) + badge "Coleção" em roxo/primary. O nome exibido muda para `"{design_name} — {product_name}"`.
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
-
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+**Admin (OrdersManager.tsx):** Mesmo padrão de enriquecimento, exibir nome do design ao lado do produto.
 
