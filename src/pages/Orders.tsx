@@ -13,7 +13,12 @@ import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import PendingCheckoutCards from "@/components/PendingCheckoutCards";
 
-type OrderWithProduct = Tables<"orders"> & { product_name?: string; product_image?: string };
+type OrderWithProduct = Tables<"orders"> & {
+  product_name?: string;
+  product_image?: string;
+  design_name?: string;
+  design_image?: string;
+};
 
 const PAGE_SIZE = 8;
 
@@ -90,11 +95,24 @@ const Orders = () => {
       const productIds = ordersData.map((o) => o.product_id);
       const nameMap = await resolveProductInfo(productIds);
 
+      // Resolve design info for collection orders
+      const designIds = [...new Set(ordersData.map((o) => o.design_id).filter(Boolean))] as string[];
+      const designMap = new Map<string, { name: string; image: string }>();
+      if (designIds.length > 0) {
+        const { data: designs } = await supabase
+          .from("collection_designs")
+          .select("id, name, image_url")
+          .in("id", designIds);
+        designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
+      }
+
       setOrders(
         ordersData.map((o) => ({
           ...o,
           product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
           product_image: nameMap.get(o.product_id)?.image,
+          design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
+          design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
         }))
       );
       setLoading(false);
@@ -199,15 +217,29 @@ const Orders = () => {
                       <div key={order.id} className="border rounded-xl p-5 bg-card space-y-4">
                         {/* Header */}
                         <div className="flex items-center gap-4">
-                          {order.product_image && (
-                            <img
-                              src={order.product_image}
-                              alt={order.product_name}
-                              className="w-[60px] h-[60px] rounded-lg object-cover flex-shrink-0"
-                            />
-                          )}
+                          <div className="relative flex-shrink-0">
+                            {order.design_image ? (
+                              <>
+                                <img src={order.design_image} alt={order.design_name} className="w-[60px] h-[60px] rounded-lg object-cover" />
+                                {order.product_image && (
+                                  <img src={order.product_image} alt={order.product_name} className="w-7 h-7 rounded-md object-cover absolute -bottom-1 -right-1 border-2 border-card" />
+                                )}
+                              </>
+                            ) : order.product_image ? (
+                              <img src={order.product_image} alt={order.product_name} className="w-[60px] h-[60px] rounded-lg object-cover" />
+                            ) : null}
+                          </div>
                           <div className="flex-1 min-w-0 space-y-0.5">
-                            <p className="font-semibold text-foreground truncate">{order.product_name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-foreground truncate">
+                                {order.design_name ? `${order.design_name} — ${order.product_name}` : order.product_name}
+                              </p>
+                              {order.design_id && (
+                                <span className="inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary flex-shrink-0">
+                                  Coleção
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString("pt-BR", {
                                 day: "2-digit",

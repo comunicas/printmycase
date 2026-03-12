@@ -14,6 +14,8 @@ import type { Database } from "@/integrations/supabase/types";
 type OrderRow = Tables<"orders"> & {
   product_name?: string;
   product_image?: string;
+  design_name?: string;
+  design_image?: string;
 };
 
 const PAGE_SIZE = 10;
@@ -41,10 +43,23 @@ const OrdersManager = () => {
     const productIds = rows.map((o) => o.product_id);
     const nameMap = await resolveProductInfo(productIds);
 
+    // Resolve design info
+    const designIds = [...new Set(rows.map((o) => o.design_id).filter(Boolean))] as string[];
+    const designMap = new Map<string, { name: string; image: string }>();
+    if (designIds.length > 0) {
+      const { data: designs } = await supabase
+        .from("collection_designs")
+        .select("id, name, image_url")
+        .in("id", designIds);
+      designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
+    }
+
     const enriched: OrderRow[] = rows.map((o) => ({
       ...o,
       product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
       product_image: nameMap.get(o.product_id)?.image,
+      design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
+      design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
     }));
     setOrders(enriched);
 
@@ -134,11 +149,27 @@ const OrdersManager = () => {
               <div key={order.id} className="border rounded-xl p-4 bg-card space-y-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    {order.product_image && (
-                      <img src={order.product_image} alt={order.product_name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                    )}
+                    <div className="relative flex-shrink-0">
+                      {order.design_image ? (
+                        <>
+                          <img src={order.design_image} alt={order.design_name} className="w-10 h-10 rounded-lg object-cover" />
+                          {order.product_image && (
+                            <img src={order.product_image} alt={order.product_name} className="w-5 h-5 rounded object-cover absolute -bottom-0.5 -right-0.5 border border-card" />
+                          )}
+                        </>
+                      ) : order.product_image ? (
+                        <img src={order.product_image} alt={order.product_name} className="w-10 h-10 rounded-lg object-cover" />
+                      ) : null}
+                    </div>
                     <div className="space-y-0.5">
-                      <p className="text-sm font-medium text-foreground truncate max-w-[200px]">{order.product_name ?? order.product_id}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                          {order.design_name ? `${order.design_name} — ${order.product_name}` : (order.product_name ?? order.product_id)}
+                        </p>
+                        {order.design_id && (
+                          <span className="inline-flex rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">Coleção</span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground font-mono">{order.id.slice(0, 8)}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
