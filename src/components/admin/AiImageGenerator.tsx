@@ -4,8 +4,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Sparkles, Upload, X, Image, Send, Wand2, Save } from "lucide-react";
+import { Sparkles, Upload, X, Image, Send, Wand2, Save, Zap } from "lucide-react";
 import { compressForAI } from "@/lib/image-utils";
+
+const QUICK_PROMPTS = [
+  { label: "Still Matte", text: "Renderize a case do smartphone aplicando o background no local demarcado. O resultado deve ser um still com fundo 100% branco, garantindo texturas realistas e um material com brilho difuso (matte) inclusive no espaço das cameras." },
+  { label: "Fundo Branco RGB", text: "Aplique o background na área indicada da case do smartphone. Finalize a imagem em formato still, com fundo branco puro (RGB 255, 255, 255), textura realista e acabamento de brilho fosco inclusive no espaço das cameras." },
+  { label: "Arte Fosca", text: "Aplique a arte na case respeitando a marcação. Finalize como still em fundo branco, com foco em texturas realistas e um toque fosco suave inclusive no espaço das cameras." },
+];
 
 const IMAGE_SIZES = [
   { value: "auto", label: "Auto" },
@@ -190,6 +196,27 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <ImageSlot label="Imagem 1" image={image1} setImage={setImage1} fileRef={file1Ref} required />
         <ImageSlot label="Imagem 2" image={image2} setImage={setImage2} fileRef={file2Ref} />
+      </div>
+
+      {/* Quick prompts */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">Prompts rápidos</label>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_PROMPTS.map((qp) => (
+            <Button
+              key={qp.label}
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={generating}
+              onClick={() => setPrompt(qp.text)}
+              className={prompt === qp.text ? "border-primary bg-primary/10" : ""}
+            >
+              <Zap className="h-3.5 w-3.5 mr-1" />
+              {qp.label}
+            </Button>
+          ))}
+        </div>
       </div>
 
       {/* Prompt */}
