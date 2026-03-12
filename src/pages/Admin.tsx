@@ -1,4 +1,4 @@
-import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles } from "lucide-react";
+import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsManager from "@/components/admin/ProductsManager";
@@ -12,6 +12,8 @@ import KbArticlesManager from "@/components/admin/KbArticlesManager";
 import FaqManager from "@/components/admin/FaqManager";
 import GalleryImagesManager from "@/components/admin/GalleryImagesManager";
 import AiGenerationsManager from "@/components/admin/AiGenerationsManager";
+import CollectionsManager from "@/components/admin/CollectionsManager";
+import CollectionDesignsManager from "@/components/admin/CollectionDesignsManager";
 
 const Admin = () => {
   return (
@@ -27,6 +29,9 @@ const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="orders" className="gap-1.5">
               <Truck className="w-4 h-4" /> Pedidos
+            </TabsTrigger>
+            <TabsTrigger value="collections" className="gap-1.5">
+              <Palette className="w-4 h-4" /> Coleções
             </TabsTrigger>
             <TabsTrigger value="kb" className="gap-1.5">
               <BookOpen className="w-4 h-4" /> Base de Conhecimento
@@ -50,6 +55,20 @@ const Admin = () => {
 
           <TabsContent value="products"><ProductsManager /></TabsContent>
           <TabsContent value="orders"><OrdersManager /></TabsContent>
+          <TabsContent value="collections">
+            <Tabs defaultValue="col-list" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="col-list" className="gap-1.5">
+                  <Palette className="w-4 h-4" /> Coleções
+                </TabsTrigger>
+                <TabsTrigger value="col-designs" className="gap-1.5">
+                  <ImageIcon className="w-4 h-4" /> Designs
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="col-list"><CollectionsManager /></TabsContent>
+              <TabsContent value="col-designs"><CollectionDesignsManager /></TabsContent>
+            </Tabs>
+          </TabsContent>
           <TabsContent value="kb">
             <Tabs defaultValue="kb-categories" className="w-full">
               <TabsList className="mb-4">

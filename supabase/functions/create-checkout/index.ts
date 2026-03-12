@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
 
     const userId = userData.user.id;
-    const { product_id, customization_data, raw_image_url, original_image_url, edited_image_url, shipping_cents, address_id, address_inline, save_address } = await req.json();
+    const { product_id, design_id, customization_data, raw_image_url, original_image_url, edited_image_url, shipping_cents, address_id, address_inline, save_address } = await req.json();
 
     if (!product_id) {
       return new Response(JSON.stringify({ error: "product_id is required" }), {
@@ -44,6 +44,9 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // If design_id is provided, this is a collection purchase (no customization needed)
+    const isCollectionPurchase = !!design_id;
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -62,6 +65,24 @@ Deno.serve(async (req) => {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Fetch design if collection purchase
+    let design = null;
+    if (isCollectionPurchase) {
+      const { data: designData, error: designError } = await supabaseAdmin
+        .from("collection_designs")
+        .select("*")
+        .eq("id", design_id)
+        .eq("active", true)
+        .single();
+      if (designError || !designData) {
+        return new Response(JSON.stringify({ error: "Design not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      design = designData;
     }
 
     // Resolve shipping address
@@ -122,19 +143,25 @@ Deno.serve(async (req) => {
     const origin = req.headers.get("origin") || req.headers.get("referer") || "https://studio.artiscase.com";
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
     const shippingValue = shipping_cents ? Number(shipping_cents) : 0;
-    const totalCents = product.price_cents + shippingValue;
+    const itemPriceCents = isCollectionPurchase ? design!.price_cents : product.price_cents;
+    const totalCents = itemPriceCents + shippingValue;
+    const itemName = isCollectionPurchase
+      ? `Capa ${design!.name} - ${product.name}`
+      : `Capa Personalizada - ${product.name}`;
 
     const params = new URLSearchParams();
     params.append("payment_method_types[0]", "card");
     params.append("mode", "payment");
 
-    if (product.stripe_price_id) {
-      params.append("line_items[0][price]", product.stripe_price_id);
+    const stripePriceId = isCollectionPurchase ? design!.stripe_price_id : product.stripe_price_id;
+
+    if (stripePriceId) {
+      params.append("line_items[0][price]", stripePriceId);
     } else {
       params.append("line_items[0][price_data][currency]", "brl");
-      params.append("line_items[0][price_data][unit_amount]", String(product.price_cents));
-      params.append("line_items[0][price_data][product_data][name]", `Capa Personalizada - ${product.name}`);
-      params.append("line_items[0][price_data][product_data][description]", product.description || "Capa de celular personalizada");
+      params.append("line_items[0][price_data][unit_amount]", String(itemPriceCents));
+      params.append("line_items[0][price_data][product_data][name]", itemName);
+      params.append("line_items[0][price_data][product_data][description]", isCollectionPurchase ? "Capa com design de coleção" : (product.description || "Capa de celular personalizada"));
     }
     params.append("line_items[0][quantity]", "1");
 
@@ -170,12 +197,13 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from("orders").insert({
       user_id: userId,
       product_id,
+      design_id: design_id || null,
       total_cents: totalCents,
       shipping_cents: shippingValue || null,
       shipping_address: shippingAddress,
       address_id: resolvedAddressId,
       stripe_session_id: session.id,
-      customization_data: {
+      customization_data: isCollectionPurchase ? null : {
         ...customization_data,
         raw_image_url: raw_image_url || null,
         original_image_url: original_image_url || null,
@@ -184,12 +212,14 @@ Deno.serve(async (req) => {
       status: "pending",
     });
 
-    // Clean up pending checkout draft
-    await supabaseAdmin
-      .from("pending_checkouts")
-      .delete()
-      .eq("user_id", userId)
-      .eq("product_id", product_id);
+    // Clean up pending checkout draft (only for customizable orders)
+    if (!isCollectionPurchase) {
+      await supabaseAdmin
+        .from("pending_checkouts")
+        .delete()
+        .eq("user_id", userId)
+        .eq("product_id", product_id);
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

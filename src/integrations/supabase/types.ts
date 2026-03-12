@@ -176,6 +176,92 @@ export type Database = {
         }
         Relationships: []
       }
+      collection_designs: {
+        Row: {
+          active: boolean
+          collection_id: string
+          created_at: string
+          id: string
+          image_url: string
+          name: string
+          price_cents: number
+          slug: string
+          sort_order: number
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          collection_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          name: string
+          price_cents: number
+          slug: string
+          sort_order?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          collection_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          name?: string
+          price_cents?: number
+          slug?: string
+          sort_order?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_designs_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          active: boolean
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       faqs: {
         Row: {
           active: boolean
@@ -347,6 +433,7 @@ export type Database = {
           address_id: string | null
           created_at: string
           customization_data: Json | null
+          design_id: string | null
           id: string
           product_id: string
           shipping_address: Json | null
@@ -361,6 +448,7 @@ export type Database = {
           address_id?: string | null
           created_at?: string
           customization_data?: Json | null
+          design_id?: string | null
           id?: string
           product_id: string
           shipping_address?: Json | null
@@ -375,6 +463,7 @@ export type Database = {
           address_id?: string | null
           created_at?: string
           customization_data?: Json | null
+          design_id?: string | null
           id?: string
           product_id?: string
           shipping_address?: Json | null
@@ -391,6 +480,13 @@ export type Database = {
             columns: ["address_id"]
             isOneToOne: false
             referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "collection_designs"
             referencedColumns: ["id"]
           },
         ]

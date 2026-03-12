@@ -28,6 +28,9 @@ const LegalDocument = lazy(() => import("./pages/LegalDocument"));
 const KnowledgeBase = lazy(() => import("./pages/KnowledgeBase"));
 const KbCategory = lazy(() => import("./pages/KbCategory"));
 const KbArticle = lazy(() => import("./pages/KbArticle"));
+const Collections = lazy(() => import("./pages/Collections"));
+const CollectionPage = lazy(() => import("./pages/CollectionPage"));
+const DesignPage = lazy(() => import("./pages/DesignPage"));
 
 const App = () => (
   <AuthProvider>
@@ -48,6 +51,9 @@ const App = () => (
             <Route path="/coins" element={<AuthGuard><Coins /></AuthGuard>} />
             <Route path="/admin" element={<AuthGuard><AdminGuard><Admin /></AdminGuard></AuthGuard>} />
             <Route path="/solicitar-modelo" element={<RequestModel />} />
+            <Route path="/colecoes" element={<Collections />} />
+            <Route path="/colecao/:slug" element={<CollectionPage />} />
+            <Route path="/colecao/:collectionSlug/:designSlug" element={<DesignPage />} />
             <Route path="/ajuda" element={<KnowledgeBase />} />
             <Route path="/ajuda/:categorySlug" element={<KbCategory />} />
             <Route path="/ajuda/:categorySlug/:articleSlug" element={<KbArticle />} />
