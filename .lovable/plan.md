@@ -1,39 +1,37 @@
 
 
-## Refatoração Frontend — AI Generations
+## Verificação do Webhook Stripe Live
 
-### Problemas identificados
+### O que o código espera
 
-1. **`fetchImages` closure bug** (`AiGenerationsManager.tsx:30-53`): `loading` está no array de deps do `useCallback` e é checado com `if (loading) return`. Quando `loading` muda, `fetchImages` recria → observer reconecta → loop potencial. Solução: usar `useRef` para `loading` em vez de estado no guard.
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-2. **Cast inválido de products** (`AiGenerationsManager.tsx:128`): `as Tables<"products">[]` mas o select é parcial (`id, name, slug, images`). Deve usar um tipo local com apenas os campos selecionados.
+### Como verificar (manual no Stripe Dashboard)
 
-3. **Edge function cleanup silencioso** (`generate-gallery-image/index.ts:147`): `.catch(() => {})` no `remove()` não funciona — o SDK Supabase retorna `{ data, error }`, não rejeita. O delete falha silenciosamente sem log. Deve usar `await` e checar `error`.
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-4. **Prompt em `Input` single-line** (`AiImageGenerator.tsx:276`): prompts são longos (100+ chars). Deveria ser `textarea` para melhor UX.
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-5. **`useCustomize.ts` barrel desnecessário** (`src/hooks/useCustomize.ts`): arquivo que apenas re-exporta `useCustomize.tsx`. Legado redundante.
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-### Plano
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-| Arquivo | Alteração |
-|---|---|
-| `src/components/admin/AiGenerationsManager.tsx` | Usar `loadingRef` para guard no `fetchImages`; remover `loading` dos deps do `useCallback`; criar tipo `ProductOption` com campos parciais em vez do cast |
-| `src/components/admin/AiImageGenerator.tsx` | Trocar `Input` do prompt por `textarea` estilizado |
-| `supabase/functions/generate-gallery-image/index.ts` | Corrigir cleanup: `await` o `remove()` e logar erro se houver |
-| `src/hooks/useCustomize.ts` | Remover barrel; atualizar imports que referenciam `.ts` para `.tsx` |
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-### Detalhes
-
-**fetchImages refactor:**
-- `const loadingRef = useRef(false)` — guard usa ref, `loading` state fica só para UI
-- `fetchImages` não terá `loading` nos deps → referência estável → observer não reconecta desnecessariamente
-
-**ProductOption type:**
-```typescript
-type ProductOption = Pick<Tables<"products">, "id" | "name" | "slug" | "images">;
-```
-
-**Textarea do prompt:**
-- `<textarea>` com classes Tailwind equivalentes ao Input, `rows={3}`, resize vertical
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

@@ -12,6 +12,7 @@ import type { Tables } from "@/integrations/supabase/types";
 const PAGE_SIZE = 12;
 
 type AiGenImage = Tables<"ai_generated_images">;
+type ProductOption = Pick<Tables<"products">, "id" | "name" | "slug" | "images">;
 
 const AiGenerationsManager = () => {
   const { toast } = useToast();
@@ -21,14 +22,16 @@ const AiGenerationsManager = () => {
   const [deleteTarget, setDeleteTarget] = useState<AiGenImage | null>(null);
   const [lightboxImage, setLightboxImage] = useState<AiGenImage | null>(null);
   const [addToProductImage, setAddToProductImage] = useState<AiGenImage | null>(null);
-  const [products, setProducts] = useState<Tables<"products">[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [setupToLoad, setSetupToLoad] = useState<AiSetup | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
+  const loadingRef = useRef(false);
 
   const fetchImages = useCallback(async (reset = false) => {
-    if (loading) return;
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     const from = reset ? 0 : offsetRef.current;
     const to = from + PAGE_SIZE - 1;
@@ -49,8 +52,9 @@ const AiGenerationsManager = () => {
 
     offsetRef.current = from + rows.length;
     setHasMore(rows.length === PAGE_SIZE);
+    loadingRef.current = false;
     setLoading(false);
-  }, [loading]);
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -125,11 +129,11 @@ const AiGenerationsManager = () => {
       .from("products")
       .select("id, name, slug, images")
       .order("name");
-    setProducts((data ?? []) as Tables<"products">[]);
+    setProducts((data ?? []) as ProductOption[]);
     setLoadingProducts(false);
   };
 
-  const addImageToProduct = async (product: Tables<"products">) => {
+  const addImageToProduct = async (product: ProductOption) => {
     if (!addToProductImage) return;
     const currentImages = product.images ?? [];
     const { error } = await supabase

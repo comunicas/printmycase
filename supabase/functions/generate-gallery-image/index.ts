@@ -144,7 +144,8 @@ Deno.serve(async (req) => {
           const blob = await dlRes.blob();
           await serviceClient.storage.from("product-assets").upload(newPath, blob, { contentType: blob.type });
           // Delete old temp file
-          serviceClient.storage.from("product-assets").remove([oldPath]).catch(() => {});
+          const { error: removeError } = await serviceClient.storage.from("product-assets").remove([oldPath]);
+          if (removeError) console.error("Failed to remove temp file:", oldPath, removeError.message);
           const { data: newUrlData } = serviceClient.storage.from("product-assets").getPublicUrl(newPath);
           permanentUrls.push(newUrlData.publicUrl);
         } else {
