@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useProducts } from "@/hooks/useProducts";
+import { useCollections } from "@/hooks/useCollections";
 import SeoHead from "@/components/SeoHead";
 import AppHeader from "@/components/AppHeader";
 import ProductCard from "@/components/ProductCard";
