@@ -139,6 +139,9 @@ Deno.serve(async (req) => {
         prompt,
         seed: resultSeed,
         image_size: image_size || "auto",
+        image_urls: image_urls,
+        safety_tolerance: safety_tolerance ?? 2,
+        output_format: output_format || "png",
       });
     if (insertError) {
       console.error("Insert error:", insertError.message);
