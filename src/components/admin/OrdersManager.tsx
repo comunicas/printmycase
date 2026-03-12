@@ -14,6 +14,8 @@ import type { Database } from "@/integrations/supabase/types";
 type OrderRow = Tables<"orders"> & {
   product_name?: string;
   product_image?: string;
+  design_name?: string;
+  design_image?: string;
 };
 
 const PAGE_SIZE = 10;
