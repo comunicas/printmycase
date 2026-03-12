@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
@@ -38,10 +38,10 @@ const DesignPage = () => {
     }
   }, [products, selectedProductId]);
 
-  const handleAddressChange = (data: AddressData, valid: boolean) => {
+  const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
     setAddressData(data);
     setIsAddressValid(valid);
-  };
+  }, []);
 
   const handleCheckout = async () => {
     if (!user) {
