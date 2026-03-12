@@ -55,6 +55,20 @@ const Admin = () => {
 
           <TabsContent value="products"><ProductsManager /></TabsContent>
           <TabsContent value="orders"><OrdersManager /></TabsContent>
+          <TabsContent value="collections">
+            <Tabs defaultValue="col-list" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="col-list" className="gap-1.5">
+                  <Palette className="w-4 h-4" /> Coleções
+                </TabsTrigger>
+                <TabsTrigger value="col-designs" className="gap-1.5">
+                  <ImageIcon className="w-4 h-4" /> Designs
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="col-list"><CollectionsManager /></TabsContent>
+              <TabsContent value="col-designs"><CollectionDesignsManager /></TabsContent>
+            </Tabs>
+          </TabsContent>
           <TabsContent value="kb">
             <Tabs defaultValue="kb-categories" className="w-full">
               <TabsList className="mb-4">
