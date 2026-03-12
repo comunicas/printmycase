@@ -40,7 +40,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check admin role
     const { data: isAdmin } = await serviceClient.rpc("has_role", {
       _user_id: userData.user.id,
       _role: "admin",
@@ -52,7 +51,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { image_urls, prompt } = await req.json();
+    const { image_urls, prompt, seed, image_size, safety_tolerance, output_format } = await req.json();
     if (!image_urls || !Array.isArray(image_urls) || image_urls.length === 0 || !prompt) {
       return new Response(JSON.stringify({ error: "image_urls (array) and prompt are required" }), {
         status: 400,
@@ -68,13 +67,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build fal.ai request for flux-2-pro/edit
     const falBody: Record<string, unknown> = {
-      image_urls: image_urls,
+      image_urls,
       prompt,
     };
+    if (seed != null && seed !== "") falBody.seed = Number(seed);
+    if (image_size && image_size !== "auto") falBody.image_size = image_size;
+    if (safety_tolerance != null) falBody.safety_tolerance = Number(safety_tolerance);
+    if (output_format) falBody.output_format = output_format;
 
-    console.log("Calling fal-ai/flux-2-pro/edit");
+    console.log("Calling fal-ai/flux-2-pro/edit with params:", JSON.stringify({ ...falBody, image_urls: `[${image_urls.length} images]` }));
     const falResponse = await fetch("https://fal.run/fal-ai/flux-2-pro/edit", {
       method: "POST",
       headers: {
@@ -87,7 +89,7 @@ Deno.serve(async (req) => {
     if (!falResponse.ok) {
       const errText = await falResponse.text();
       console.error("Fal.ai error:", errText.substring(0, 500));
-      return new Response(JSON.stringify({ error: "Erro na geração de IA" }), {
+      return new Response(JSON.stringify({ error: "Erro na geração de IA", details: errText.substring(0, 200) }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -95,6 +97,8 @@ Deno.serve(async (req) => {
 
     const falResult = await falResponse.json();
     const outputUrl = falResult?.images?.[0]?.url;
+    const resultSeed = falResult?.seed ?? null;
+
     if (!outputUrl) {
       return new Response(JSON.stringify({ error: "No image returned from AI" }), {
         status: 502,
@@ -112,11 +116,11 @@ Deno.serve(async (req) => {
     }
     const imgBlob = await imgResponse.blob();
 
-    // Upload to storage
-    const path = `gallery/${crypto.randomUUID()}.png`;
+    const fmt = output_format || "png";
+    const path = `generations/${crypto.randomUUID()}.${fmt}`;
     const { error: uploadError } = await serviceClient.storage
       .from("product-assets")
-      .upload(path, imgBlob, { contentType: "image/png" });
+      .upload(path, imgBlob, { contentType: `image/${fmt}` });
     if (uploadError) {
       console.error("Upload error:", uploadError.message);
       return new Response(JSON.stringify({ error: "Erro ao salvar imagem" }), {
@@ -127,19 +131,15 @@ Deno.serve(async (req) => {
 
     const { data: urlData } = serviceClient.storage.from("product-assets").getPublicUrl(path);
 
-    // Get next sort_order
-    const { data: maxOrder } = await serviceClient
-      .from("product_gallery_images")
-      .select("sort_order")
-      .order("sort_order", { ascending: false })
-      .limit(1)
-      .single();
-    const nextOrder = (maxOrder?.sort_order ?? -1) + 1;
-
-    // Insert into gallery
+    // Insert into ai_generated_images
     const { error: insertError } = await serviceClient
-      .from("product_gallery_images")
-      .insert({ url: urlData.publicUrl, label: "", sort_order: nextOrder });
+      .from("ai_generated_images")
+      .insert({
+        url: urlData.publicUrl,
+        prompt,
+        seed: resultSeed,
+        image_size: image_size || "auto",
+      });
     if (insertError) {
       console.error("Insert error:", insertError.message);
       return new Response(JSON.stringify({ error: "Erro ao registrar imagem" }), {
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ url: urlData.publicUrl }), {
+    return new Response(JSON.stringify({ url: urlData.publicUrl, seed: resultSeed }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
