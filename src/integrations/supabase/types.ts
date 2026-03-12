@@ -97,7 +97,10 @@ export type Database = {
           created_at: string
           id: string
           image_size: string
+          image_urls: string[]
+          output_format: string
           prompt: string
+          safety_tolerance: number
           seed: number | null
           url: string
         }
@@ -105,7 +108,10 @@ export type Database = {
           created_at?: string
           id?: string
           image_size?: string
+          image_urls?: string[]
+          output_format?: string
           prompt: string
+          safety_tolerance?: number
           seed?: number | null
           url: string
         }
@@ -113,7 +119,10 @@ export type Database = {
           created_at?: string
           id?: string
           image_size?: string
+          image_urls?: string[]
+          output_format?: string
           prompt?: string
+          safety_tolerance?: number
           seed?: number | null
           url?: string
         }
