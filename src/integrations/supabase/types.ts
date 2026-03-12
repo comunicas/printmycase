@@ -92,6 +92,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_generated_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_size: string
+          prompt: string
+          seed: number | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_size?: string
+          prompt: string
+          seed?: number | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_size?: string
+          prompt?: string
+          seed?: number | null
+          url?: string
+        }
+        Relationships: []
+      }
       coin_settings: {
         Row: {
           description: string | null
