@@ -74,6 +74,14 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
             variant="ghost"
             size="sm"
             className={`hidden sm:inline-flex ${isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}`}
+            onClick={() => navigate("/colecoes")}
+          >
+            Coleções
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`hidden sm:inline-flex ${isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}`}
             onClick={() => navigate("/catalog")}
           >
             Ver Modelos
