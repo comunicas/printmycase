@@ -153,13 +153,15 @@ Deno.serve(async (req) => {
     params.append("payment_method_types[0]", "card");
     params.append("mode", "payment");
 
-    if (product.stripe_price_id) {
-      params.append("line_items[0][price]", product.stripe_price_id);
+    const stripePriceId = isCollectionPurchase ? design!.stripe_price_id : product.stripe_price_id;
+
+    if (stripePriceId) {
+      params.append("line_items[0][price]", stripePriceId);
     } else {
       params.append("line_items[0][price_data][currency]", "brl");
-      params.append("line_items[0][price_data][unit_amount]", String(product.price_cents));
-      params.append("line_items[0][price_data][product_data][name]", `Capa Personalizada - ${product.name}`);
-      params.append("line_items[0][price_data][product_data][description]", product.description || "Capa de celular personalizada");
+      params.append("line_items[0][price_data][unit_amount]", String(itemPriceCents));
+      params.append("line_items[0][price_data][product_data][name]", itemName);
+      params.append("line_items[0][price_data][product_data][description]", isCollectionPurchase ? "Capa com design de coleção" : (product.description || "Capa de celular personalizada"));
     }
     params.append("line_items[0][quantity]", "1");
 
