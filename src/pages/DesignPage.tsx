@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
