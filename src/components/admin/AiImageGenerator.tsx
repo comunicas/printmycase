@@ -198,6 +198,27 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
         <ImageSlot label="Imagem 2" image={image2} setImage={setImage2} fileRef={file2Ref} />
       </div>
 
+      {/* Quick prompts */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">Prompts rápidos</label>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_PROMPTS.map((qp) => (
+            <Button
+              key={qp.label}
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={generating}
+              onClick={() => setPrompt(qp.text)}
+              className={prompt === qp.text ? "border-primary bg-primary/10" : ""}
+            >
+              <Zap className="h-3.5 w-3.5 mr-1" />
+              {qp.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
       {/* Prompt */}
       <div className="space-y-1.5">
         <label className="text-sm font-medium">Prompt</label>
