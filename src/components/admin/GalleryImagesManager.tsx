@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import AiImageGenerator from "@/components/admin/AiImageGenerator";
 import { Upload, Trash2, GripVertical } from "lucide-react";
 
 interface GalleryImage {
