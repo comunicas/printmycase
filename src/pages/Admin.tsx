@@ -30,6 +30,9 @@ const Admin = () => {
             <TabsTrigger value="orders" className="gap-1.5">
               <Truck className="w-4 h-4" /> Pedidos
             </TabsTrigger>
+            <TabsTrigger value="collections" className="gap-1.5">
+              <Palette className="w-4 h-4" /> Coleções
+            </TabsTrigger>
             <TabsTrigger value="kb" className="gap-1.5">
               <BookOpen className="w-4 h-4" /> Base de Conhecimento
             </TabsTrigger>
