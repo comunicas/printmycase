@@ -197,12 +197,13 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from("orders").insert({
       user_id: userId,
       product_id,
+      design_id: design_id || null,
       total_cents: totalCents,
       shipping_cents: shippingValue || null,
       shipping_address: shippingAddress,
       address_id: resolvedAddressId,
       stripe_session_id: session.id,
-      customization_data: {
+      customization_data: isCollectionPurchase ? null : {
         ...customization_data,
         raw_image_url: raw_image_url || null,
         original_image_url: original_image_url || null,
@@ -211,12 +212,14 @@ Deno.serve(async (req) => {
       status: "pending",
     });
 
-    // Clean up pending checkout draft
-    await supabaseAdmin
-      .from("pending_checkouts")
-      .delete()
-      .eq("user_id", userId)
-      .eq("product_id", product_id);
+    // Clean up pending checkout draft (only for customizable orders)
+    if (!isCollectionPurchase) {
+      await supabaseAdmin
+        .from("pending_checkouts")
+        .delete()
+        .eq("user_id", userId)
+        .eq("product_id", product_id);
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
