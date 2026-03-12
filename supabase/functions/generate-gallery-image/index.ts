@@ -148,6 +148,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Cleanup temp-refs (fire-and-forget)
+    const tempPaths = image_urls
+      .map((u: string) => {
+        const match = u.match(/\/product-assets\/(.+)$/);
+        return match ? match[1] : null;
+      })
+      .filter((p: string | null): p is string => p !== null && p.startsWith("temp-refs/"));
+
+    if (tempPaths.length > 0) {
+      serviceClient.storage.from("product-assets").remove(tempPaths).catch((e: Error) => {
+        console.error("Temp cleanup error:", e.message);
+      });
+    }
+
     return new Response(JSON.stringify({ url: urlData.publicUrl, seed: resultSeed }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

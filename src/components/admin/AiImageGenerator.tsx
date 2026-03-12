@@ -4,7 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Sparkles, Upload, X } from "lucide-react";
+import { Sparkles, Upload, X, Image, Send, Wand2, Save } from "lucide-react";
+import { compressForAI } from "@/lib/image-utils";
 
 const IMAGE_SIZES = [
   { value: "auto", label: "Auto" },
@@ -15,6 +16,13 @@ const IMAGE_SIZES = [
   { value: "landscape_4_3", label: "Landscape 4:3" },
   { value: "landscape_16_9", label: "Landscape 16:9" },
 ];
+
+const STEPS = [
+  { label: "Comprimindo imagens...", icon: Image },
+  { label: "Enviando referências...", icon: Send },
+  { label: "Gerando com IA...", icon: Wand2 },
+  { label: "Salvando resultado...", icon: Save },
+] as const;
 
 interface AiImageGeneratorProps {
   onGenerated: () => void;
@@ -30,7 +38,7 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
   const [safetyTolerance, setSafetyTolerance] = useState(2);
   const [outputFormat, setOutputFormat] = useState<"png" | "jpeg">("png");
   const [generating, setGenerating] = useState(false);
-  const [progress, setProgress] = useState("");
+  const [stepIndex, setStepIndex] = useState(0);
   const [lastSeed, setLastSeed] = useState<number | null>(null);
   const file1Ref = useRef<HTMLInputElement>(null);
   const file2Ref = useRef<HTMLInputElement>(null);
@@ -51,6 +59,20 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
     setter(dataUrl);
   };
 
+  /** Upload a data-URL to temp-refs and return the public URL */
+  const uploadToStorage = async (dataUrl: string): Promise<string> => {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const ext = blob.type.includes("png") ? "png" : "jpg";
+    const path = `temp-refs/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("product-assets")
+      .upload(path, blob, { contentType: blob.type });
+    if (error) throw new Error("Erro ao enviar imagem: " + error.message);
+    const { data } = supabase.storage.from("product-assets").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   const handleGenerate = async () => {
     if (!image1 || !prompt.trim()) {
       toast({ title: "Envie ao menos 1 imagem e um prompt", variant: "destructive" });
@@ -58,16 +80,25 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
     }
 
     setGenerating(true);
-    setProgress("Enviando imagens para IA...");
+    setStepIndex(0);
 
     try {
-      const image_urls = [image1];
-      if (image2) image_urls.push(image2);
+      // Step 0: Compress
+      const compressed1 = await compressForAI(image1);
+      const compressed2 = image2 ? await compressForAI(image2) : null;
 
-      setProgress("Gerando imagem com IA...");
+      // Step 1: Upload to storage
+      setStepIndex(1);
+      const url1 = await uploadToStorage(compressed1);
+      const url2 = compressed2 ? await uploadToStorage(compressed2) : null;
 
+      // Step 2: Generate
+      setStepIndex(2);
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
+
+      const image_urls = [url1];
+      if (url2) image_urls.push(url2);
 
       const body: Record<string, unknown> = {
         image_urls,
@@ -93,6 +124,8 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Erro na geração");
 
+      // Step 3: Done
+      setStepIndex(3);
       setLastSeed(result.seed ?? null);
       toast({ title: `Imagem gerada!${result.seed ? ` Seed: ${result.seed}` : ""}` });
       setImage1(null);
@@ -104,7 +137,7 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
       setGenerating(false);
-      setProgress("");
+      setStepIndex(0);
     }
   };
 
@@ -172,7 +205,6 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
 
       {/* Controls grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Image Size */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium">Tamanho</label>
           <select
@@ -187,7 +219,6 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
           </select>
         </div>
 
-        {/* Seed */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium">Seed (opcional)</label>
           <Input
@@ -199,7 +230,6 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
           />
         </div>
 
-        {/* Safety Tolerance */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium">Tolerância ({safetyTolerance})</label>
           <Slider
@@ -212,7 +242,6 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
           />
         </div>
 
-        {/* Output Format */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium">Formato</label>
           <div className="flex gap-2">
@@ -233,6 +262,28 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
         </div>
       </div>
 
+      {/* Progress stepper */}
+      {generating && (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+          {STEPS.map((step, i) => {
+            const Icon = step.icon;
+            const active = i === stepIndex;
+            const done = i < stepIndex;
+            return (
+              <div key={i} className="flex items-center gap-1.5">
+                <div className={`rounded-full p-1.5 transition-colors ${active ? "bg-primary text-primary-foreground animate-pulse" : done ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                  <Icon className="h-3.5 w-3.5" />
+                </div>
+                <span className={`text-xs hidden sm:inline ${active ? "font-semibold text-primary" : done ? "text-primary/70" : "text-muted-foreground"}`}>
+                  {step.label}
+                </span>
+                {i < STEPS.length - 1 && <div className={`w-4 h-px ${done ? "bg-primary/40" : "bg-border"}`} />}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Last seed info */}
       {lastSeed != null && (
         <p className="text-xs text-muted-foreground">
@@ -242,7 +293,7 @@ const AiImageGenerator = ({ onGenerated }: AiImageGeneratorProps) => {
 
       <Button onClick={handleGenerate} disabled={generating || !image1 || !prompt.trim()} className="w-full sm:w-auto">
         <Sparkles className="h-4 w-4 mr-2" />
-        {generating ? progress || "Gerando..." : "Gerar Imagem"}
+        {generating ? STEPS[stepIndex].label : "Gerar Imagem"}
       </Button>
     </div>
   );
