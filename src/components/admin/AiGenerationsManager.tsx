@@ -133,7 +133,7 @@ const AiGenerationsManager = () => {
     setLoadingProducts(false);
   };
 
-  const addImageToProduct = async (product: Tables<"products">) => {
+  const addImageToProduct = async (product: ProductOption) => {
     if (!addToProductImage) return;
     const currentImages = product.images ?? [];
     const { error } = await supabase

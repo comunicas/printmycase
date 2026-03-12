@@ -273,11 +273,13 @@ const AiImageGenerator = ({ onGenerated, initialSetup, onSetupConsumed }: AiImag
       {/* Prompt */}
       <div className="space-y-1.5">
         <label className="text-sm font-medium">Prompt</label>
-        <Input
+        <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Descreva a imagem que deseja gerar..."
           disabled={generating}
+          rows={3}
+          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
         />
       </div>
 
