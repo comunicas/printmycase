@@ -95,11 +95,24 @@ const Orders = () => {
       const productIds = ordersData.map((o) => o.product_id);
       const nameMap = await resolveProductInfo(productIds);
 
+      // Resolve design info for collection orders
+      const designIds = [...new Set(ordersData.map((o) => o.design_id).filter(Boolean))] as string[];
+      const designMap = new Map<string, { name: string; image: string }>();
+      if (designIds.length > 0) {
+        const { data: designs } = await supabase
+          .from("collection_designs")
+          .select("id, name, image_url")
+          .in("id", designIds);
+        designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
+      }
+
       setOrders(
         ordersData.map((o) => ({
           ...o,
           product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
           product_image: nameMap.get(o.product_id)?.image,
+          design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
+          design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
         }))
       );
       setLoading(false);
