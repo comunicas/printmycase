@@ -51,6 +51,9 @@ const App = () => (
             <Route path="/coins" element={<AuthGuard><Coins /></AuthGuard>} />
             <Route path="/admin" element={<AuthGuard><AdminGuard><Admin /></AdminGuard></AuthGuard>} />
             <Route path="/solicitar-modelo" element={<RequestModel />} />
+            <Route path="/colecoes" element={<Collections />} />
+            <Route path="/colecao/:slug" element={<CollectionPage />} />
+            <Route path="/colecao/:collectionSlug/:designSlug" element={<DesignPage />} />
             <Route path="/ajuda" element={<KnowledgeBase />} />
             <Route path="/ajuda/:categorySlug" element={<KbCategory />} />
             <Route path="/ajuda/:categorySlug/:articleSlug" element={<KbArticle />} />
