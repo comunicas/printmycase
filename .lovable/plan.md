@@ -1,37 +1,35 @@
 
 
-## Verificação do Webhook Stripe Live
+## Revisão Completa + "Copiar Setup" nas Gerações
 
-### O que o código espera
+### O que será feito
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+1. **Migration**: Adicionar colunas `image_urls text[]`, `safety_tolerance integer`, `output_format text` à tabela `ai_generated_images` para persistir o setup completo.
 
-### Como verificar (manual no Stripe Dashboard)
+2. **Edge Function (`generate-gallery-image/index.ts`)**: Salvar os novos campos (`image_urls`, `safety_tolerance`, `output_format`) no insert.
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+3. **Frontend — AiImageGenerator.tsx**: 
+   - Aceitar prop opcional `initialSetup` com dados pré-preenchidos (prompt, seed, imageSize, safetyTolerance, outputFormat, imageUrls).
+   - Quando receber `initialSetup`, preencher todos os campos automaticamente (incluindo carregar as URLs de referência como previews).
+   - Limpar código legado e garantir tipagem correta.
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+4. **Frontend — AiGenerationsManager.tsx**:
+   - Botão **"Copiar Setup"** em cada card — ao clicar, passa o setup da geração para o `AiImageGenerator` via estado, scrollando para o topo do formulário.
+   - Também disponível no lightbox.
+   - Remover casts `as any` desnecessários, tipar corretamente.
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+### Arquivos
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+| Arquivo | Alteração |
+|---|---|
+| Migration SQL | `ALTER TABLE ai_generated_images ADD COLUMN image_urls text[] DEFAULT '{}', ADD COLUMN safety_tolerance integer DEFAULT 2, ADD COLUMN output_format text DEFAULT 'png'` |
+| `supabase/functions/generate-gallery-image/index.ts` | Incluir `image_urls`, `safety_tolerance`, `output_format` no insert |
+| `src/components/admin/AiImageGenerator.tsx` | Prop `initialSetup`, preencher campos, scroll ao receber setup |
+| `src/components/admin/AiGenerationsManager.tsx` | Botão "Copiar Setup", passar dados ao generator, cleanup de tipos |
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+### Detalhes técnicos
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+- O `initialSetup` carrega URLs de referência diretamente (já são públicas no storage), sem precisar re-upload.
+- Ao clicar "Copiar Setup", o generator recebe o setup via `useState` e faz `scrollIntoView` do formulário.
+- As imagens de referência do setup anterior ficam como preview (URLs públicas carregadas diretamente no `<img>`).
 
