@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,9 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import AiImageGenerator, { type AiSetup } from "@/components/admin/AiImageGenerator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Trash2, Copy, ArrowRightCircle, ImagePlus, Maximize2, Settings2 } from "lucide-react";
+import LoadingSpinner from "@/components/ui/loading-spinner";
+
+const PAGE_SIZE = 12;
 
 interface AiGenImage {
   id: string;
@@ -29,24 +32,71 @@ interface ProductOption {
 const AiGenerationsManager = () => {
   const { toast } = useToast();
   const [images, setImages] = useState<AiGenImage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<AiGenImage | null>(null);
   const [lightboxImage, setLightboxImage] = useState<AiGenImage | null>(null);
   const [addToProductImage, setAddToProductImage] = useState<AiGenImage | null>(null);
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [setupToLoad, setSetupToLoad] = useState<AiSetup | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef(0);
 
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async (reset = false) => {
+    if (loading) return;
+    setLoading(true);
+    const from = reset ? 0 : offsetRef.current;
+    const to = from + PAGE_SIZE - 1;
+
     const { data } = await supabase
       .from("ai_generated_images")
       .select("*")
-      .order("created_at", { ascending: false });
-    setImages((data as unknown as AiGenImage[]) ?? []);
-    setLoading(false);
-  };
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-  useEffect(() => { fetchImages(); }, []);
+    const rows = (data as unknown as AiGenImage[]) ?? [];
+
+    if (reset) {
+      setImages(rows);
+    } else {
+      setImages((prev) => [...prev, ...rows]);
+    }
+
+    offsetRef.current = from + rows.length;
+    setHasMore(rows.length === PAGE_SIZE);
+    setLoading(false);
+  }, [loading]);
+
+  // Initial load
+  useEffect(() => {
+    fetchImages(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          fetchImages(false);
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loading, fetchImages]);
+
+  const handleGenerated = () => {
+    offsetRef.current = 0;
+    setHasMore(true);
+    fetchImages(true);
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -120,22 +170,20 @@ const AiGenerationsManager = () => {
       imageUrls: img.image_urls ?? [],
     };
     setSetupToLoad(setup);
-    setLightboxImage(null); // close lightbox if open
+    setLightboxImage(null);
   };
 
   return (
     <div className="space-y-6">
       <AiImageGenerator
-        onGenerated={fetchImages}
+        onGenerated={handleGenerated}
         initialSetup={setupToLoad}
         onSetupConsumed={() => setSetupToLoad(null)}
       />
 
       <h2 className="text-xl font-semibold">Imagens Geradas</h2>
 
-      {loading && <p className="text-muted-foreground">Carregando...</p>}
-
-      {!loading && images.length === 0 && (
+      {images.length === 0 && !loading && (
         <p className="text-muted-foreground text-center py-10">Nenhuma geração ainda. Use o formulário acima.</p>
       )}
 
@@ -194,6 +242,10 @@ const AiGenerationsManager = () => {
           </div>
         ))}
       </div>
+
+      {/* Sentinel for infinite scroll */}
+      <div ref={sentinelRef} className="h-1" />
+      {loading && <LoadingSpinner />}
 
       {/* Lightbox */}
       <Dialog open={!!lightboxImage} onOpenChange={(o) => !o && setLightboxImage(null)}>
