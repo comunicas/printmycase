@@ -67,6 +67,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Fetch design if collection purchase
+    let design = null;
+    if (isCollectionPurchase) {
+      const { data: designData, error: designError } = await supabaseAdmin
+        .from("collection_designs")
+        .select("*")
+        .eq("id", design_id)
+        .eq("active", true)
+        .single();
+      if (designError || !designData) {
+        return new Response(JSON.stringify({ error: "Design not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      design = designData;
+    }
+
     // Resolve shipping address
     let shippingAddress = null;
     let resolvedAddressId = address_id || null;
