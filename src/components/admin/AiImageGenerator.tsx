@@ -7,6 +7,12 @@ import { Slider } from "@/components/ui/slider";
 import { Sparkles, Upload, X, Image, Send, Wand2, Save } from "lucide-react";
 import { compressForAI } from "@/lib/image-utils";
 
+const QUICK_PROMPTS = [
+  { label: "Still Matte", text: "Renderize a case do smartphone aplicando o background no local demarcado. O resultado deve ser um still com fundo 100% branco, garantindo texturas realistas e um material com brilho difuso (matte) inclusive no espaço das cameras." },
+  { label: "Fundo Branco RGB", text: "Aplique o background na área indicada da case do smartphone. Finalize a imagem em formato still, com fundo branco puro (RGB 255, 255, 255), textura realista e acabamento de brilho fosco inclusive no espaço das cameras." },
+  { label: "Arte Fosca", text: "Aplique a arte na case respeitando a marcação. Finalize como still em fundo branco, com foco em texturas realistas e um toque fosco suave inclusive no espaço das cameras." },
+];
+
 const IMAGE_SIZES = [
   { value: "auto", label: "Auto" },
   { value: "square_hd", label: "Square HD" },
