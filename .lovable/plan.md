@@ -1,37 +1,24 @@
 
 
-## Verificação do Webhook Stripe Live
+## Revisão da Galeria de Gerações IA — Visualização Full + Adicionar a Produto
 
-### O que o código espera
+### O que muda
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+1. **Lightbox para imagem full** — Ao clicar na imagem gerada, abre um dialog/modal com a imagem em tamanho completo e os metadados (prompt, seed, tamanho, data).
 
-### Como verificar (manual no Stripe Dashboard)
+2. **Botão "Adicionar a Produto"** — Novo botão em cada card da geração que abre um seletor de produtos existentes. Ao selecionar, a URL da imagem é adicionada ao array `images` do produto escolhido.
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+3. **Manter "Mover p/ Galeria"** — O botão existente para galeria ilustrativa continua.
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+### Arquivos alterados
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+| Arquivo | Alteração |
+|---|---|
+| `src/components/admin/AiGenerationsManager.tsx` | Adicionar lightbox modal, botão "Adicionar a Produto" com seletor de produtos, lógica de append da URL ao array `images` do produto |
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+### Detalhes técnicos
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+- **Lightbox**: Dialog do Radix com `img` em tamanho real (`object-contain`, max-h/max-w limitados ao viewport).
+- **Seletor de produtos**: Ao clicar "Adicionar a Produto", abre dialog com lista de produtos (query `products` com `name` e `id`). Ao selecionar, faz `UPDATE products SET images = array_append(images, url) WHERE id = ?`.
+- Tudo em um único componente para simplicidade, sem necessidade de migration (usa coluna `images` existente no `products`).
 
