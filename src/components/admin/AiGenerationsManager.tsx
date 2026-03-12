@@ -129,7 +129,7 @@ const AiGenerationsManager = () => {
       .from("products")
       .select("id, name, slug, images")
       .order("name");
-    setProducts((data ?? []) as Tables<"products">[]);
+    setProducts((data ?? []) as ProductOption[]);
     setLoadingProducts(false);
   };
 
