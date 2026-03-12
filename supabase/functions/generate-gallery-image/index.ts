@@ -70,14 +70,9 @@ Deno.serve(async (req) => {
 
     // Build fal.ai request for flux-2-pro/edit
     const falBody: Record<string, unknown> = {
-      image_url: image_urls[0],
+      image_urls: image_urls,
       prompt,
     };
-
-    // If a second image is provided, pass as mask or reference
-    if (image_urls.length > 1 && image_urls[1]) {
-      falBody.mask_url = image_urls[1];
-    }
 
     console.log("Calling fal-ai/flux-2-pro/edit");
     const falResponse = await fetch("https://fal.run/fal-ai/flux-2-pro/edit", {
