@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Sparkles, Upload, X, Image, Send, Wand2, Save } from "lucide-react";
+import { Sparkles, Upload, X, Image, Send, Wand2, Save, Zap } from "lucide-react";
 import { compressForAI } from "@/lib/image-utils";
 
 const QUICK_PROMPTS = [
