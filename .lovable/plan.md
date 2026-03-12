@@ -1,37 +1,29 @@
 
 
-## Verificação do Webhook Stripe Live
+## Correção: Imagens de referência quebradas no "Copiar Setup"
 
-### O que o código espera
+### Bug identificado
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+No edge function `generate-gallery-image`, as URLs de referência (`temp-refs/...`) são salvas na coluna `image_urls` da tabela `ai_generated_images`, mas logo após são **deletadas** pelo cleanup (linhas ~138-148). Resultado: ao clicar "Setup", as imagens aparecem como broken/404.
 
-### Como verificar (manual no Stripe Dashboard)
+### Solução
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+**Edge Function (`supabase/functions/generate-gallery-image/index.ts`)**
+- Em vez de deletar os arquivos `temp-refs/`, **movê-los** para `ref-images/` (path permanente) antes de salvar no DB.
+- Atualizar as URLs no array `image_urls` para apontar para o novo path permanente antes do insert.
+- Remover o bloco de cleanup de temp-refs.
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+### Fluxo corrigido
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+1. Frontend faz upload para `temp-refs/xxx.png`
+2. Edge function recebe as URLs
+3. Edge function copia cada `temp-refs/` para `ref-images/` (mesmo bucket)
+4. Salva as URLs permanentes (`ref-images/`) no DB
+5. Deleta os `temp-refs/` originais
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+### Arquivo alterado
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+| Arquivo | Alteração |
+|---|---|
+| `supabase/functions/generate-gallery-image/index.ts` | Mover temp-refs para ref-images antes do insert, salvar URLs permanentes |
 
