@@ -217,15 +217,29 @@ const Orders = () => {
                       <div key={order.id} className="border rounded-xl p-5 bg-card space-y-4">
                         {/* Header */}
                         <div className="flex items-center gap-4">
-                          {order.product_image && (
-                            <img
-                              src={order.product_image}
-                              alt={order.product_name}
-                              className="w-[60px] h-[60px] rounded-lg object-cover flex-shrink-0"
-                            />
-                          )}
+                          <div className="relative flex-shrink-0">
+                            {order.design_image ? (
+                              <>
+                                <img src={order.design_image} alt={order.design_name} className="w-[60px] h-[60px] rounded-lg object-cover" />
+                                {order.product_image && (
+                                  <img src={order.product_image} alt={order.product_name} className="w-7 h-7 rounded-md object-cover absolute -bottom-1 -right-1 border-2 border-card" />
+                                )}
+                              </>
+                            ) : order.product_image ? (
+                              <img src={order.product_image} alt={order.product_name} className="w-[60px] h-[60px] rounded-lg object-cover" />
+                            ) : null}
+                          </div>
                           <div className="flex-1 min-w-0 space-y-0.5">
-                            <p className="font-semibold text-foreground truncate">{order.product_name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-foreground truncate">
+                                {order.design_name ? `${order.design_name} — ${order.product_name}` : order.product_name}
+                              </p>
+                              {order.design_id && (
+                                <span className="inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary flex-shrink-0">
+                                  Coleção
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString("pt-BR", {
                                 day: "2-digit",

@@ -149,11 +149,27 @@ const OrdersManager = () => {
               <div key={order.id} className="border rounded-xl p-4 bg-card space-y-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    {order.product_image && (
-                      <img src={order.product_image} alt={order.product_name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                    )}
+                    <div className="relative flex-shrink-0">
+                      {order.design_image ? (
+                        <>
+                          <img src={order.design_image} alt={order.design_name} className="w-10 h-10 rounded-lg object-cover" />
+                          {order.product_image && (
+                            <img src={order.product_image} alt={order.product_name} className="w-5 h-5 rounded object-cover absolute -bottom-0.5 -right-0.5 border border-card" />
+                          )}
+                        </>
+                      ) : order.product_image ? (
+                        <img src={order.product_image} alt={order.product_name} className="w-10 h-10 rounded-lg object-cover" />
+                      ) : null}
+                    </div>
                     <div className="space-y-0.5">
-                      <p className="text-sm font-medium text-foreground truncate max-w-[200px]">{order.product_name ?? order.product_id}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                          {order.design_name ? `${order.design_name} — ${order.product_name}` : (order.product_name ?? order.product_id)}
+                        </p>
+                        {order.design_id && (
+                          <span className="inline-flex rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">Coleção</span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground font-mono">{order.id.slice(0, 8)}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
