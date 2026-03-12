@@ -4,7 +4,7 @@ import { useCollection } from "@/hooks/useCollections";
 import { formatPrice } from "@/lib/types";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
-import SeoHead from "@/components/SeoHead";
+
 
 const CollectionPage = () => {
   const { slug } = useParams<{ slug: string }>();
