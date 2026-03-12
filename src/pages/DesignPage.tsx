@@ -38,10 +38,10 @@ const DesignPage = () => {
     }
   }, [products, selectedProductId]);
 
-  const handleAddressChange = (data: AddressData, valid: boolean) => {
+  const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
     setAddressData(data);
     setIsAddressValid(valid);
-  };
+  }, []);
 
   const handleCheckout = async () => {
     if (!user) {
