@@ -6,6 +6,7 @@ import ImageControls from "@/components/customize/ImageControls";
 import ContinueBar from "@/components/customize/ContinueBar";
 import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
 import UpscaleConfirmDialog from "@/components/customize/UpscaleConfirmDialog";
+import LoginDialog from "@/components/customize/LoginDialog";
 import { useCustomize } from "@/hooks/useCustomize.tsx";
 
 const Customize = () => {
