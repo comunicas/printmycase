@@ -222,7 +222,15 @@ export function useCustomize(productId: string | undefined) {
     reader.readAsDataURL(file);
   }, [toast]);
 
+  const requireAuth = useCallback(() => {
+    if (user) return true;
+    const redirectPath = `/customize/${product?.slug || productId}`;
+    navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+    return false;
+  }, [user, product?.slug, productId, navigate]);
+
   const handleFilterClick = useCallback((filterId: string) => {
+    if (!requireAuth()) return;
     if (!image || applyingFilterId) return;
     if (activeFilterId === filterId) {
       if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
