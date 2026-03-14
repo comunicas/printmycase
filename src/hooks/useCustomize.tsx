@@ -27,6 +27,7 @@ export function useCustomize(productId: string | undefined) {
   const { upsert: upsertPending, fetchByProduct: fetchPending, getSignedUrl } = usePendingCheckout();
 
   // --- state ---
+  const [draftSaved, setDraftSaved] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [rawImage, setRawImage] = useState<string | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
