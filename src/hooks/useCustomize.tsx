@@ -416,7 +416,7 @@ export function useCustomize(productId: string | undefined) {
 
   return {
     // product
-    product, productLoading, productName,
+    product, productLoading, productName, draftSaved,
     // image state
     image, imageResolution, isHD,
     // transform state
