@@ -178,6 +178,12 @@ const Landing = () => {
             </div>
           </section>
 
+          {/* AI Coins */}
+          <AiCoinsSection />
+
+          {/* Benefits + Print Tech */}
+          <WhyArtisCase />
+
           {/* Collections */}
           {!collectionsLoading && collections.length > 0 &&
           <section className="py-16 px-5 bg-muted/30">
@@ -221,12 +227,6 @@ const Landing = () => {
               </div>
             </section>
           }
-
-          {/* AI Coins */}
-          <AiCoinsSection />
-
-          {/* Benefits + Print Tech */}
-          <WhyArtisCase />
 
           {/* Testimonials */}
           <section id="depoimentos" className="py-16 px-5 bg-background">
