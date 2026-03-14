@@ -131,6 +131,9 @@ export function useCustomize(productId: string | undefined) {
       const key = `draft-customize-${product.slug}`;
       try {
         sessionStorage.setItem(key, JSON.stringify({ image: originalImage || image, scale, position, rotation }));
+        setDraftSaved(true);
+        const t = setTimeout(() => setDraftSaved(false), 2000);
+        return () => clearTimeout(t);
       } catch { /* ignore quota */ }
     }, 500);
     return () => clearTimeout(timeout);
