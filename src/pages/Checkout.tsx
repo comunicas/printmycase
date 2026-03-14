@@ -56,6 +56,7 @@ const Checkout = () => {
     const raw = sessionStorage.getItem("customization");
     if (raw) {
       setCustomization(JSON.parse(raw));
+      if (product) pixelEvent("InitiateCheckout", { value: product.price_cents / 100, currency: "BRL" });
       return;
     }
     // Fallback: recover from DB

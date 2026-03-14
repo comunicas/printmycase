@@ -352,6 +352,7 @@ export function useCustomize(productId: string | undefined) {
     if (!requireAuth()) return;
     if (!product || !image) return;
     setIsRendering(true);
+    pixelEvent("AddToCart", { content_name: product.name, value: product.price_cents / 100, currency: "BRL" });
     try {
       const finalImage = await renderSnapshot(image, scale, position, rotation);
       const customData = { rawImage, image, editedImage: finalImage, imageFileName, scale, position, rotation };

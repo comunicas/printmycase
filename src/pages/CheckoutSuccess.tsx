@@ -60,6 +60,8 @@ const CheckoutSuccess = () => {
         createdAt: order.created_at,
         aiFilterApplied: !!cd?.activeFilter,
       });
+
+      pixelTrackPurchase(order.total_cents / 100, order.product_id);
     };
 
     fetchOrder();
