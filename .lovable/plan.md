@@ -1,37 +1,28 @@
 
 
-## Verificação do Webhook Stripe Live
+## Miniatura do modelo + indicador de salvamento automático no header
 
-### O que o código espera
+### Alterações
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+| Arquivo | Mudança |
+|---|---|
+| `src/components/customize/CustomizeHeader.tsx` | Adicionar miniatura do produto (usando `product.images[0]` ou `device_image`) ao lado do nome, com tooltip/popover no hover mostrando imagem maior. Adicionar indicador sutil de "Salvo automaticamente" (ícone check + texto) que aparece brevemente quando o auto-save do sessionStorage executa |
+| `src/hooks/useCustomize.tsx` | Expor `product` no retorno (já expõe). Adicionar estado `draftSaved` que fica `true` por ~2s após cada auto-save do sessionStorage |
+| `src/pages/Customize.tsx` | Passar `product` e `draftSaved` ao `CustomizeHeader` |
 
-### Como verificar (manual no Stripe Dashboard)
+### CustomizeHeader — Nova estrutura
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+```text
+┌──────────────────────────────────────────┐
+│ ← │ [thumb] Galaxy A56  ✓ Salvo │      │
+└──────────────────────────────────────────┘
+```
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+- **Miniatura**: imagem pequena (24x24 ou 28x28) arredondada do produto, à esquerda do nome
+- **Hover/tooltip**: ao passar o mouse na miniatura, mostra imagem maior (~200px) do modelo usando `Tooltip` ou `HoverCard` do shadcn
+- **Indicador de salvamento**: texto sutil "✓ Salvo" com fade-in/out que aparece por 2 segundos após cada auto-save (debounce de 500ms já existe)
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+### Hook — Estado de salvamento
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
-
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+No `useCustomize.tsx`, no bloco de auto-save (efeito com `setTimeout` de 500ms), após o `sessionStorage.setItem`, setar `draftSaved = true` e após 2s setar de volta para `false`. Expor `draftSaved` no retorno.
 
