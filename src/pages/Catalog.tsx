@@ -5,7 +5,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import { ChevronLeft, ChevronRight, Search, SearchX, X } from "lucide-react";
 
 const PAGE_SIZE = 12;
@@ -157,7 +157,11 @@ const Catalog = () => {
         </div>
 
         {loading ? (
-          <LoadingSpinner />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
             <SearchX className="h-10 w-10" />
