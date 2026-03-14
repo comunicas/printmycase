@@ -16,11 +16,18 @@ const Catalog = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
+  const brandCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    products.forEach((p) => {
+      const brand = extractBrand(p.name);
+      map.set(brand, (map.get(brand) || 0) + 1);
+    });
+    return map;
+  }, [products]);
+
   const brands = useMemo(() => {
-    const set = new Set<string>();
-    products.forEach((p) => set.add(extractBrand(p.name)));
     const priority = ["Apple", "Samsung"];
-    const sorted = Array.from(set).sort((a, b) => {
+    const sorted = Array.from(brandCounts.keys()).sort((a, b) => {
       const ai = priority.indexOf(a);
       const bi = priority.indexOf(b);
       if (ai !== -1 && bi !== -1) return ai - bi;
@@ -29,7 +36,7 @@ const Catalog = () => {
       return a.localeCompare(b);
     });
     return ["Todos", ...sorted];
-  }, [products]);
+  }, [brandCounts]);
 
   const filtered = useMemo(() => {
     let list = products;
@@ -40,12 +47,7 @@ const Catalog = () => {
       const q = search.trim().toLowerCase();
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
-    // Sort by model number descending so newer models appear first
-    return [...list].sort((a, b) => {
-      const numA = Math.max(...(a.name.match(/\d+/g) || ["0"]).map(Number));
-      const numB = Math.max(...(b.name.match(/\d+/g) || ["0"]).map(Number));
-      return numB - numA;
-    });
+    return [...list].sort((a, b) => a.name.localeCompare(b.name));
   }, [products, selectedBrand, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -75,6 +77,18 @@ const Catalog = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Build visible page numbers (max 5)
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    let start = Math.max(1, safePage - 2);
+    let end = start + 4;
+    if (end > totalPages) {
+      end = totalPages;
+      start = end - 4;
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [totalPages, safePage]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader breadcrumbs={[{ label: "Catálogo" }]} />
@@ -84,34 +98,56 @@ const Catalog = () => {
 
         {/* Search */}
         <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none transition-colors" />
           <Input
-            placeholder="Buscar modelo..."
+            placeholder="Buscar por modelo, ex: iPhone 16..."
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 pr-9 h-11 border-border/80 focus-visible:ring-primary/50 text-sm"
           />
+          {search && (
+            <button
+              onClick={() => handleSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Limpar busca"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
-        {/* Brand filters */}
-        <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-          {brands.map((brand) => (
-            <Button
-              key={brand}
-              size="sm"
-              variant={selectedBrand === brand ? "default" : "outline"}
-              onClick={() => changeBrand(brand)}
-              className="shrink-0"
-            >
-              {brand}
-            </Button>
-          ))}
+        {/* Brand filters with fade edges */}
+        <div className="relative mb-3">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {brands.map((brand) => {
+              const count = brand === "Todos" ? products.length : (brandCounts.get(brand) || 0);
+              const isActive = selectedBrand === brand;
+              return (
+                <Button
+                  key={brand}
+                  size="sm"
+                  variant={isActive ? "default" : "outline"}
+                  onClick={() => changeBrand(brand)}
+                  className={`shrink-0 ${isActive ? "shadow-sm" : ""}`}
+                >
+                  {brand}
+                  <span className={`ml-1 text-xs ${isActive ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                    ({count})
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+          {/* Fade gradient right */}
+          <div className="absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
         </div>
 
         {/* Result count + clear */}
         <div className="flex items-center justify-between mb-5">
           <span className="text-sm text-muted-foreground">
-            {filtered.length} {filtered.length === 1 ? "capa encontrada" : "capas encontradas"}
+            {hasActiveFilters
+              ? `Mostrando ${filtered.length} de ${products.length} capas`
+              : `${products.length} capas disponíveis`}
           </span>
           {hasActiveFilters && (
             <Button size="sm" variant="ghost" onClick={clearFilters} className="gap-1 text-muted-foreground">
@@ -132,30 +168,46 @@ const Catalog = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {paginated.map((product) => (
-                <ProductCard key={product.id} product={product} />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {paginated.map((product, i) => (
+                <div
+                  key={product.id}
+                  className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+                  style={{ animationDelay: `${i * 50}ms`, animationDuration: "400ms" }}
+                >
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
 
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-3 mt-8">
+              <div className="flex items-center justify-center gap-1.5 mt-8">
                 <Button
                   size="icon"
                   variant="outline"
                   disabled={safePage === 1}
                   onClick={() => goToPage(safePage - 1)}
+                  className="h-9 w-9"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-muted-foreground">
-                  {safePage} / {totalPages}
-                </span>
+                {pageNumbers.map((page) => (
+                  <Button
+                    key={page}
+                    size="sm"
+                    variant={page === safePage ? "default" : "outline"}
+                    onClick={() => goToPage(page)}
+                    className="h-9 w-9 p-0"
+                  >
+                    {page}
+                  </Button>
+                ))}
                 <Button
                   size="icon"
                   variant="outline"
                   disabled={safePage === totalPages}
                   onClick={() => goToPage(safePage + 1)}
+                  className="h-9 w-9"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
