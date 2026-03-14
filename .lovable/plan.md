@@ -1,38 +1,37 @@
 
 
-## Customização aberta sem login — login exigido para ações pagas
+## Verificação do Webhook Stripe Live
 
-### Conceito
-Remover o `AuthGuard` da rota `/customize/:id` para permitir uso anônimo da ferramenta (upload, zoom, rotação, expandir). Login será exigido apenas ao tentar usar filtros IA, upscale IA ou prosseguir para checkout.
+### O que o código espera
 
-### Alterações
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-| Arquivo | Mudança |
-|---|---|
-| `src/App.tsx` | Remover `<AuthGuard>` da rota `/customize/:id` |
-| `src/hooks/useCustomize.tsx` | Adicionar helper `requireAuth()` que verifica `user` e, se ausente, redireciona para login com `redirect` de volta. Usar antes de: `handleFilterClick`, `handleUpscaleClick`, `handleContinue` |
-| `src/hooks/useCustomize.tsx` | No draft restore, manter restauração de sessionStorage para anônimos; pular fetch de `pending_checkouts` se `!user` (já existe o guard na linha 105) |
-| `src/hooks/useCoins.ts` | Garantir que retorna `balance: 0` e `loading: false` quando `!user` (sem erro) |
+### Como verificar (manual no Stripe Dashboard)
 
-### Helper `requireAuth`
-```typescript
-const requireAuth = useCallback(() => {
-  if (user) return true;
-  const redirectPath = `/customize/${product?.slug || id}`;
-  navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
-  return false;
-}, [user, product?.slug, id, navigate]);
-```
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-Será chamado no início de `handleFilterClick`, `handleUpscaleClick` e `handleContinue` — se retornar `false`, a ação é interrompida.
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-### O que funciona sem login
-- Visualizar produto, upload de imagem, zoom, rotação, expandir, arrastar
-- Ver lista de filtros (mas não aplicar)
-- Salvar rascunho em sessionStorage
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-### O que exige login
-- Aplicar filtro IA (🪙 pago)
-- Upscale IA (🪙 pago)
-- Prosseguir para checkout
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

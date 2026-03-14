@@ -222,7 +222,15 @@ export function useCustomize(productId: string | undefined) {
     reader.readAsDataURL(file);
   }, [toast]);
 
+  const requireAuth = useCallback(() => {
+    if (user) return true;
+    const redirectPath = `/customize/${product?.slug || productId}`;
+    navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+    return false;
+  }, [user, product?.slug, productId, navigate]);
+
   const handleFilterClick = useCallback((filterId: string) => {
+    if (!requireAuth()) return;
     if (!image || applyingFilterId) return;
     if (activeFilterId === filterId) {
       if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
@@ -238,7 +246,7 @@ export function useCustomize(productId: string | undefined) {
       return;
     }
     setPendingFilterId(filterId);
-  }, [image, applyingFilterId, activeFilterId, originalImage, imageResolution, toast]);
+  }, [requireAuth, image, applyingFilterId, activeFilterId, originalImage, imageResolution, toast]);
 
   const handleFilterConfirm = useCallback(async () => {
     if (!pendingFilterId || !image) return;
@@ -286,9 +294,10 @@ export function useCustomize(productId: string | undefined) {
   }, [pendingFilterId, image, originalImage, navigate, toast, refreshCoins, setImageWithResolution]);
 
   const handleUpscaleClick = useCallback(() => {
+    if (!requireAuth()) return;
     if (!image || isUpscaling || isHD) return;
     setShowUpscaleDialog(true);
-  }, [image, isUpscaling, isHD]);
+  }, [requireAuth, image, isUpscaling, isHD]);
 
   const handleUpscaleConfirm = useCallback(async () => {
     if (!image) return;
@@ -335,6 +344,7 @@ export function useCustomize(productId: string | undefined) {
   }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution]);
 
   const handleContinue = useCallback(async () => {
+    if (!requireAuth()) return;
     if (!product || !image) return;
     setIsRendering(true);
     try {
@@ -398,7 +408,7 @@ export function useCustomize(productId: string | undefined) {
     } finally {
       setIsRendering(false);
     }
-  }, [product, image, rawImage, originalImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
+  }, [requireAuth, product, image, rawImage, originalImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
 
   return {
     // product
