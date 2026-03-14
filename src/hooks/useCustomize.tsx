@@ -44,6 +44,7 @@ export function useCustomize(productId: string | undefined) {
   const [filters, setFilters] = useState<AiFilter[]>([]);
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [processingMsg, setProcessingMsg] = useState<string | null>(null);
 
   const { balance: coinBalance, refresh: refreshCoins } = useCoins();
