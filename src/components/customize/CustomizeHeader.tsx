@@ -1,4 +1,5 @@
 import { ArrowLeft, Check } from "lucide-react";
+import CoinBalance from "@/components/CoinBalance";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -52,7 +53,7 @@ const CustomizeHeader = ({ productName, onBack, productImage, draftSaved }: Cust
       </span>
     </div>
 
-    <div className="w-8" />
+    <CoinBalance />
   </div>
 );
 

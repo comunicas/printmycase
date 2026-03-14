@@ -1,22 +1,37 @@
 
 
-## Adicionar saldo de moedas no header da customização
+## Verificação do Webhook Stripe Live
 
-Adicionar o componente `CoinBalance` no header da página de customização, ao lado do indicador "✓ Salvo".
+### O que o código espera
 
-### Alteração
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-| Arquivo | Mudança |
-|---|---|
-| `src/components/customize/CustomizeHeader.tsx` | Importar e renderizar `<CoinBalance />` no lado direito do header (onde está o `<div className="w-8" />` placeholder), substituindo o spacer vazio |
+### Como verificar (manual no Stripe Dashboard)
 
-### Estrutura
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-```text
-┌──────────────────────────────────────────┐
-│ ←  │ [thumb] Galaxy A56 ✓ Salvo │ 🪙 50 │
-└──────────────────────────────────────────┘
-```
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-O `CoinBalance` já trata o caso de usuário não logado (retorna `null`), então não precisa de lógica condicional extra.
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
