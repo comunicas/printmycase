@@ -294,6 +294,7 @@ export function useCustomize(productId: string | undefined) {
   }, [pendingFilterId, image, originalImage, navigate, toast, refreshCoins, setImageWithResolution]);
 
   const handleUpscaleClick = useCallback(() => {
+    if (!requireAuth()) return;
     if (!image || isUpscaling || isHD) return;
     setShowUpscaleDialog(true);
   }, [image, isUpscaling, isHD]);
