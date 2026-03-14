@@ -8,6 +8,7 @@ import AppHeader from "@/components/AppHeader";
 import PaymentBadges from "@/components/PaymentBadges";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { pixelTrackPurchase } from "@/lib/meta-pixel";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
 import logoArtisCase from "@/assets/logo-artiscase.png";
@@ -59,6 +60,8 @@ const CheckoutSuccess = () => {
         createdAt: order.created_at,
         aiFilterApplied: !!cd?.activeFilter,
       });
+
+      pixelTrackPurchase(order.total_cents / 100, order.product_id);
     };
 
     fetchOrder();

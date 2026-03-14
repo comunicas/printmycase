@@ -7,6 +7,7 @@ import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
 import { clarityEvent, clarityTag } from "@/lib/clarity";
+import { pixelEvent } from "@/lib/meta-pixel";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -132,6 +133,11 @@ const Product = () => {
 
     clarityEvent("product_viewed");
     clarityTag("product_viewed", product.slug);
+    pixelEvent("ViewContent", {
+      content_name: product.name,
+      value: product.price_cents / 100,
+      currency: "BRL",
+    });
 
     return () => {
       script?.remove();

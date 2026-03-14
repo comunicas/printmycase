@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import AddressForm, { type AddressData } from "@/components/checkout/AddressForm
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { clarityEvent } from "@/lib/clarity";
+import { pixelEvent } from "@/lib/meta-pixel";
 
 interface CustomizationData {
   rawImage: string | null;
@@ -49,6 +50,15 @@ const Checkout = () => {
     setIsAddressValid(valid);
     if (valid) clarityEvent("checkout_address_filled");
   }, []);
+
+  // Meta Pixel: InitiateCheckout
+  const pixelFired = useRef(false);
+  useEffect(() => {
+    if (product && !pixelFired.current) {
+      pixelFired.current = true;
+      pixelEvent("InitiateCheckout", { value: product.price_cents / 100, currency: "BRL" });
+    }
+  }, [product]);
 
   // Load customization from sessionStorage, fallback to DB
   useEffect(() => {

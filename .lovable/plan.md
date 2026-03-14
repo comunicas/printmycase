@@ -1,33 +1,37 @@
 
 
-## Instalar Meta Pixel (ID: 1617415106170829)
+## Verificação do Webhook Stripe Live
 
-Pixel ID recebido. Vou seguir o mesmo padrão do Clarity já existente.
+### O que o código espera
 
-### Alterações
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-| Arquivo | Mudança |
-|---|---|
-| `index.html` | Adicionar script base do Meta Pixel + noscript fallback no `<head>`, logo após o Clarity |
-| `src/lib/meta-pixel.ts` | **Novo** — helper tipado com `pixelEvent()` e `pixelTrackPurchase()` |
-| `src/pages/Product.tsx` | Disparar `ViewContent` com nome, valor e currency ao visualizar produto |
-| `src/hooks/useCustomize.tsx` | Disparar `AddToCart` no `handleContinue` (quando avança pro checkout) |
-| `src/pages/Checkout.tsx` | Disparar `InitiateCheckout` ao montar a página |
-| `src/pages/CheckoutSuccess.tsx` | Disparar `Purchase` com valor total em BRL quando o pedido é carregado |
+### Como verificar (manual no Stripe Dashboard)
 
-### Eventos
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-| Rota | Evento Meta | Parâmetros |
-|---|---|---|
-| Todas | `PageView` | Automático (script base) |
-| `/product/:slug` | `ViewContent` | `content_name`, `value`, `currency: 'BRL'` |
-| `/customize/:slug` → Finalizar | `AddToCart` | `content_name`, `value`, `currency: 'BRL'` |
-| `/checkout/:slug` | `InitiateCheckout` | `value`, `currency: 'BRL'` |
-| `/checkout/success` | `Purchase` | `value`, `currency: 'BRL'`, `content_ids` |
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-### Detalhes técnicos
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-- O script base no `index.html` carrega o SDK do Facebook e dispara `PageView` automaticamente em cada navegação
-- O helper `src/lib/meta-pixel.ts` encapsula `window.fbq` com type safety, evitando erros se o pixel não carregar
-- Cada evento é adicionado com 1-2 linhas nos pontos exatos onde o Clarity já rastreia, sem alterar lógica existente
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
