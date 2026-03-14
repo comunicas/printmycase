@@ -1,35 +1,38 @@
 
 
-## Migrar `getUser` → `getClaims` em 5 Edge Functions
+## Customização aberta sem login — login exigido para ações pagas
 
-Todas as funções abaixo usam `supabase.auth.getUser(token)` que é incompatível com tokens ES256 do Lovable Cloud, causando 401.
+### Conceito
+Remover o `AuthGuard` da rota `/customize/:id` para permitir uso anônimo da ferramenta (upload, zoom, rotação, expandir). Login será exigido apenas ao tentar usar filtros IA, upscale IA ou prosseguir para checkout.
 
 ### Alterações
 
-| Função | Mudança |
+| Arquivo | Mudança |
 |---|---|
-| `apply-ai-filter/index.ts` | `getUser(token)` → `getClaims(token)`, userId via `claims.sub` |
-| `generate-gallery-image/index.ts` | Idem |
-| `upscale-image/index.ts` | Idem |
-| `create-coin-checkout/index.ts` | Idem; email via `claims.email` em vez de `userData.user.email` |
-| `notify-order-status/index.ts` | Idem |
-| `delete-account/index.ts` | Usa `adminClient.auth.getUser(token)` → `getClaims` com client anon, depois `admin.deleteUser(userId)` com o userId extraído das claims |
+| `src/App.tsx` | Remover `<AuthGuard>` da rota `/customize/:id` |
+| `src/hooks/useCustomize.tsx` | Adicionar helper `requireAuth()` que verifica `user` e, se ausente, redireciona para login com `redirect` de volta. Usar antes de: `handleFilterClick`, `handleUpscaleClick`, `handleContinue` |
+| `src/hooks/useCustomize.tsx` | No draft restore, manter restauração de sessionStorage para anônimos; pular fetch de `pending_checkouts` se `!user` (já existe o guard na linha 105) |
+| `src/hooks/useCoins.ts` | Garantir que retorna `balance: 0` e `loading: false` quando `!user` (sem erro) |
 
-### Padrão aplicado
-
+### Helper `requireAuth`
 ```typescript
-// ANTES
-const { data: userData, error: userError } = await supabase.auth.getUser(token);
-if (userError || !userData?.user) { /* 401 */ }
-const userId = userData.user.id;
-
-// DEPOIS
-const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-if (claimsError || !claimsData?.claims) { /* 401 */ }
-const userId = claimsData.claims.sub as string;
+const requireAuth = useCallback(() => {
+  if (user) return true;
+  const redirectPath = `/customize/${product?.slug || id}`;
+  navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+  return false;
+}, [user, product?.slug, id, navigate]);
 ```
 
-Para `create-coin-checkout`, o email do usuário (`user.email`) passa a ser `claimsData.claims.email as string`.
+Será chamado no início de `handleFilterClick`, `handleUpscaleClick` e `handleContinue` — se retornar `false`, a ação é interrompida.
 
-Para `delete-account`, será criado um client anon para validar o token via `getClaims`, mantendo o `adminClient` apenas para a operação de deletar.
+### O que funciona sem login
+- Visualizar produto, upload de imagem, zoom, rotação, expandir, arrastar
+- Ver lista de filtros (mas não aplicar)
+- Salvar rascunho em sessionStorage
+
+### O que exige login
+- Aplicar filtro IA (🪙 pago)
+- Upscale IA (🪙 pago)
+- Prosseguir para checkout
 
