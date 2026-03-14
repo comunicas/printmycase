@@ -344,6 +344,7 @@ export function useCustomize(productId: string | undefined) {
   }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution]);
 
   const handleContinue = useCallback(async () => {
+    if (!requireAuth()) return;
     if (!product || !image) return;
     setIsRendering(true);
     try {
