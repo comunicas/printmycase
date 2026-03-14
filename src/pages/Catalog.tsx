@@ -157,7 +157,11 @@ const Catalog = () => {
         </div>
 
         {loading ? (
-          <LoadingSpinner />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
             <SearchX className="h-10 w-10" />
