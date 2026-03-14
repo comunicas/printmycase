@@ -246,7 +246,7 @@ export function useCustomize(productId: string | undefined) {
       return;
     }
     setPendingFilterId(filterId);
-  }, [image, applyingFilterId, activeFilterId, originalImage, imageResolution, toast]);
+  }, [requireAuth, image, applyingFilterId, activeFilterId, originalImage, imageResolution, toast]);
 
   const handleFilterConfirm = useCallback(async () => {
     if (!pendingFilterId || !image) return;
