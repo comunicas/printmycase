@@ -27,6 +27,7 @@ export function useCustomize(productId: string | undefined) {
   const { upsert: upsertPending, fetchByProduct: fetchPending, getSignedUrl } = usePendingCheckout();
 
   // --- state ---
+  const [draftSaved, setDraftSaved] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [rawImage, setRawImage] = useState<string | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -130,6 +131,9 @@ export function useCustomize(productId: string | undefined) {
       const key = `draft-customize-${product.slug}`;
       try {
         sessionStorage.setItem(key, JSON.stringify({ image: originalImage || image, scale, position, rotation }));
+        setDraftSaved(true);
+        const t = setTimeout(() => setDraftSaved(false), 2000);
+        return () => clearTimeout(t);
       } catch { /* ignore quota */ }
     }, 500);
     return () => clearTimeout(timeout);
@@ -412,7 +416,7 @@ export function useCustomize(productId: string | undefined) {
 
   return {
     // product
-    product, productLoading, productName,
+    product, productLoading, productName, draftSaved,
     // image state
     image, imageResolution, isHD,
     // transform state
