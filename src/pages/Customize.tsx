@@ -68,6 +68,8 @@ const Customize = () => {
         onContinue={c.handleContinue}
         disabled={!c.image || c.isProcessing}
         isRendering={c.isRendering}
+        productName={c.productName}
+        priceCents={c.product?.price_cents}
       />
 
       <FilterConfirmDialog
