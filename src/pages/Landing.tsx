@@ -26,10 +26,10 @@ const testimonials = [
 { name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 }];
 
 const stepColors = [
-  { gradient: "from-primary to-primary/70", badge: "from-primary to-primary/80", chevron: "text-primary/50" },
-  { gradient: "from-orange-500 to-amber-500", badge: "from-orange-500 to-amber-500", chevron: "text-orange-500/50" },
-  { gradient: "from-emerald-500 to-teal-500", badge: "from-emerald-500 to-teal-500", chevron: "text-emerald-500/50" },
-];
+{ gradient: "from-primary to-primary/70", badge: "from-primary to-primary/80", chevron: "text-primary/50" },
+{ gradient: "from-orange-500 to-amber-500", badge: "from-orange-500 to-amber-500", chevron: "text-orange-500/50" },
+{ gradient: "from-emerald-500 to-teal-500", badge: "from-emerald-500 to-teal-500", chevron: "text-emerald-500/50" }];
+
 
 const steps = [
 { icon: Smartphone, title: "Encontre seu celular no catálogo", desc: "Selecione o modelo do seu celular" },
@@ -65,8 +65,8 @@ const Landing = () => {
                 alt=""
                 fetchPriority="high"
                 decoding="async"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+                className="absolute inset-0 w-full h-full object-cover" />
+              
             </div>
 
             {/* Gradient overlay */}
@@ -110,7 +110,7 @@ const Landing = () => {
               <div className="inline-flex items-center gap-2.5 glass rounded-full px-5 py-2.5 mx-auto opacity-0 animate-fade-in" style={fadeIn(450)}>
                 <div className="flex" aria-hidden="true">
                   {Array.from({ length: 5 }).map((_, i) =>
-                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   )}
                 </div>
                 <span className="text-sm text-white/80 font-medium">Mais de 10.000 Cases criadas</span>
@@ -156,13 +156,13 @@ const Landing = () => {
           <section id="destaques" className="py-16 px-5 bg-background">
             <div className="max-w-5xl mx-auto">
               <ScrollReveal>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Modelos em Destaque</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Escolha um modelo   </h2>
               </ScrollReveal>
               {loading ?
               <LoadingSpinner /> :
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {featuredProducts.map((product, i) =>
-                  <ScrollReveal key={product.id} delay={i * 80}>
+                <ScrollReveal key={product.id} delay={i * 80}>
                     <ProductCard product={product} />
                   </ScrollReveal>
                 )}
@@ -179,37 +179,37 @@ const Landing = () => {
           </section>
 
           {/* Collections */}
-          {!collectionsLoading && collections.length > 0 && (
-            <section className="py-16 px-5 bg-muted/30">
+          {!collectionsLoading && collections.length > 0 &&
+          <section className="py-16 px-5 bg-muted/30">
               <div className="max-w-5xl mx-auto">
                 <ScrollReveal>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Coleções Exclusivas</h2>
                 </ScrollReveal>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  {collections.slice(0, 3).map((col, i) => (
-                    <ScrollReveal key={col.id} delay={i * 100}>
+                  {collections.slice(0, 3).map((col, i) =>
+                <ScrollReveal key={col.id} delay={i * 100}>
                       <Link to={`/colecao/${col.slug}`} className="group block">
                         <Card className="border-0 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                          {col.cover_image && (
-                            <div className="aspect-[4/3] overflow-hidden">
+                          {col.cover_image &&
+                      <div className="aspect-[4/3] overflow-hidden">
                               <img
-                                src={col.cover_image}
-                                alt={col.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                loading="lazy"
-                              />
+                          src={col.cover_image}
+                          alt={col.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy" />
+                        
                             </div>
-                          )}
+                      }
                           <CardContent className="p-4 text-center">
                             <h3 className="font-semibold text-foreground">{col.name}</h3>
-                            {col.description && (
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{col.description}</p>
-                            )}
+                            {col.description &&
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{col.description}</p>
+                        }
                           </CardContent>
                         </Card>
                       </Link>
                     </ScrollReveal>
-                  ))}
+                )}
                 </div>
                 <ScrollReveal delay={350}>
                   <div className="text-center mt-8">
@@ -220,7 +220,7 @@ const Landing = () => {
                 </ScrollReveal>
               </div>
             </section>
-          )}
+          }
 
           {/* AI Coins */}
           <AiCoinsSection />
@@ -326,8 +326,8 @@ const Landing = () => {
           </div>
         </footer>
       </div>
-    </>
-  );
+    </>);
+
 };
 
 export default Landing;
