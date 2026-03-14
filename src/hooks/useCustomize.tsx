@@ -225,10 +225,9 @@ export function useCustomize(productId: string | undefined) {
 
   const requireAuth = useCallback(() => {
     if (user) return true;
-    const redirectPath = `/customize/${product?.slug || productId}`;
-    navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+    setShowLoginDialog(true);
     return false;
-  }, [user, product?.slug, productId, navigate]);
+  }, [user]);
 
   const handleFilterClick = useCallback((filterId: string) => {
     if (!requireAuth()) return;
