@@ -51,12 +51,20 @@ const Checkout = () => {
     if (valid) clarityEvent("checkout_address_filled");
   }, []);
 
+  // Meta Pixel: InitiateCheckout
+  const pixelFired = useRef(false);
+  useEffect(() => {
+    if (product && !pixelFired.current) {
+      pixelFired.current = true;
+      pixelEvent("InitiateCheckout", { value: product.price_cents / 100, currency: "BRL" });
+    }
+  }, [product]);
+
   // Load customization from sessionStorage, fallback to DB
   useEffect(() => {
     const raw = sessionStorage.getItem("customization");
     if (raw) {
       setCustomization(JSON.parse(raw));
-      if (product) pixelEvent("InitiateCheckout", { value: product.price_cents / 100, currency: "BRL" });
       return;
     }
     // Fallback: recover from DB
