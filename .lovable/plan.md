@@ -1,71 +1,37 @@
 
 
-## Melhorar UX da Página de Catálogo
+## Verificação do Webhook Stripe Live
 
-### Problemas atuais
-- Ordenação por número do modelo (confusa) em vez de alfabética
-- Search bar genérica sem feedback visual rico
-- Filtros de marca sem contagem de resultados
-- Cards sem destaque visual suficiente no mobile (390px)
-- Sem indicação visual de qual filtro está ativo além da cor do botão
+### O que o código espera
 
-### Alterações
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-| Arquivo | Mudança |
-|---|---|
-| `src/pages/Catalog.tsx` | Redesign completo da seção de busca, filtros e grid |
-| `src/components/ProductCard.tsx` | Ajustes visuais nos cards para melhor hierarquia |
+### Como verificar (manual no Stripe Dashboard)
 
-### Catalog.tsx — Mudanças
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-**1. Ordenação alfabética por nome**
-Substituir sort por número do modelo → `a.name.localeCompare(b.name)` simples.
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-**2. Search bar melhorado**
-- Input maior com border mais visível e foco com anel roxo
-- Botão de limpar (X) dentro do input quando há texto digitado
-- Placeholder mais descritivo: "Buscar por modelo, ex: iPhone 16..."
-- Transição suave no ícone de busca
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-**3. Filtros de marca com contagem**
-- Cada chip de marca mostra quantidade: "Samsung (12)"
-- Chip selecionado com estilo mais destacado (primary com glow sutil)
-- Scroll horizontal com gradiente fade nas bordas para indicar mais opções
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-**4. Resultado e layout**
-- Contagem de resultados com texto mais expressivo: "Mostrando 12 de 45 capas"
-- Grid: manter 2 colunas no mobile, mas com gap menor (gap-3) para cards maiores
-- Animação de entrada nos cards (fade-in staggered via CSS)
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-**5. Paginação melhorada**
-- Mostrar botões numéricos das páginas (até 5 páginas visíveis)
-- Estilo mais claro para página ativa
-
-### ProductCard.tsx — Ajustes
-
-- Padding interno reduzido (p-2.5) para aproveitar melhor o espaço no mobile
-- Nome do produto com `text-[13px]` no mobile para caber melhor
-- Badge com preço mais destacado (fundo accent sutil)
-- Remover StarRating para simplificar o card (foco em nome + preço + CTA)
-
-### Estrutura visual (mobile 390px)
-
-```text
-┌────────────────────────────────┐
-│ 🔍 Buscar por modelo...    [X]│  ← input com clear button
-├────────────────────────────────┤
-│ [Todos(45)] [Apple(18)] [Sam→  │  ← chips com contagem + fade
-├────────────────────────────────┤
-│ Mostrando 12 de 45      Limpar│
-├───────────────┬────────────────┤
-│  ┌─────────┐  │  ┌─────────┐  │
-│  │  img     │  │  │  img     │ │
-│  │ iPhone16 │  │  │ GalaxyA │ │
-│  │ R$69,90  │  │  │ R$69,90 │ │
-│  │[Customi] │  │  │[Customi]│ │
-│  └─────────┘  │  └─────────┘  │
-├───────────────┴────────────────┤
-│      ‹  1  [2]  3  4  ›       │  ← paginação numérica
-└────────────────────────────────┘
-```
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
