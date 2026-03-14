@@ -1,4 +1,5 @@
 import { ArrowLeft, Check } from "lucide-react";
+import CoinBalance from "@/components/CoinBalance";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
