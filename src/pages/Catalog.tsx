@@ -5,7 +5,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import { ChevronLeft, ChevronRight, Search, SearchX, X } from "lucide-react";
 
 const PAGE_SIZE = 12;
