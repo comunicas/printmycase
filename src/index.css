@@ -110,6 +110,10 @@
   box-shadow: 0 0 20px hsl(265 83% 57% / 0.45), 0 0 60px hsl(265 83% 57% / 0.15);
 }
 
+.glow-orange {
+  box-shadow: 0 0 20px hsl(25 95% 53% / 0.45), 0 0 60px hsl(25 95% 53% / 0.15);
+}
+
 /* Utility: parallax background */
 .parallax-bg {
   background-size: cover;
