@@ -44,6 +44,7 @@ export function useCustomize(productId: string | undefined) {
   const [filters, setFilters] = useState<AiFilter[]>([]);
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [processingMsg, setProcessingMsg] = useState<string | null>(null);
 
   const { balance: coinBalance, refresh: refreshCoins } = useCoins();
@@ -224,10 +225,9 @@ export function useCustomize(productId: string | undefined) {
 
   const requireAuth = useCallback(() => {
     if (user) return true;
-    const redirectPath = `/customize/${product?.slug || productId}`;
-    navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+    setShowLoginDialog(true);
     return false;
-  }, [user, product?.slug, productId, navigate]);
+  }, [user]);
 
   const handleFilterClick = useCallback((filterId: string) => {
     if (!requireAuth()) return;
@@ -421,6 +421,7 @@ export function useCustomize(productId: string | undefined) {
     filters, activeFilterId, applyingFilterId, pendingFilterId, filteredImage,
     // dialog state
     showUpscaleDialog, setShowUpscaleDialog, setPendingFilterId,
+    showLoginDialog, setShowLoginDialog,
     // costs
     coinBalance, aiFilterCost, aiUpscaleCost,
     // flags
