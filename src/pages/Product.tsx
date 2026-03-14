@@ -62,6 +62,8 @@ const Product = () => {
     setMeta("property", "og:image", image);
     setMeta("property", "og:url", url);
     setMeta("property", "og:type", "product");
+    setMeta("property", "product:price:amount", String(product.price_cents / 100));
+    setMeta("property", "product:price:currency", "BRL");
     setMeta("name", "twitter:card", "summary_large_image");
     setMeta("name", "twitter:title", title);
     setMeta("name", "twitter:description", desc);
@@ -84,6 +86,7 @@ const Product = () => {
           image,
           url,
           description: desc,
+          category: "Capas para Celular",
           brand: { "@type": "Brand", name: brandName },
           offers: {
             "@type": "Offer",
@@ -91,11 +94,6 @@ const Product = () => {
             priceCurrency: "BRL",
             availability: "https://schema.org/InStock",
             url,
-          },
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: product.rating,
-            reviewCount: product.review_count,
           },
         },
         {
@@ -132,12 +130,13 @@ const Product = () => {
     }
     script.textContent = JSON.stringify(jsonLd);
 
+    clarityEvent("product_viewed");
+    clarityTag("product_viewed", product.slug);
+
     return () => {
       script?.remove();
       canonical?.remove();
     };
-    clarityEvent("product_viewed");
-    clarityTag("product_viewed", product.slug);
   }, [product]);
 
   if (loading) {
