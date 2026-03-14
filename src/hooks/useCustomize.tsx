@@ -297,7 +297,7 @@ export function useCustomize(productId: string | undefined) {
     if (!requireAuth()) return;
     if (!image || isUpscaling || isHD) return;
     setShowUpscaleDialog(true);
-  }, [image, isUpscaling, isHD]);
+  }, [requireAuth, image, isUpscaling, isHD]);
 
   const handleUpscaleConfirm = useCallback(async () => {
     if (!image) return;
