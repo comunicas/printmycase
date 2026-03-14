@@ -1,37 +1,22 @@
 
 
-## Verificação do Webhook Stripe Live
+## Adicionar valor e nome do produto no botão Finalizar
 
-### O que o código espera
+### Alterações
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+| Arquivo | Mudança |
+|---|---|
+| `src/components/customize/ContinueBar.tsx` | Adicionar props `productName` e `priceCents`. Exibir nome do modelo e preço formatado no botão: "Finalizar · Galaxy A56 · R$ 69,90 →". No mobile, versão compacta: "Finalizar · R$ 69,90 →" |
+| `src/pages/Customize.tsx` | Passar `productName={c.productName}` e `priceCents={c.product?.price_cents}` ao `ContinueBar` |
 
-### Como verificar (manual no Stripe Dashboard)
+### Estrutura do botão
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+```text
+Mobile:  [↺]                    [Finalizar · R$ 69,90 →]
+Desktop: [    Finalizar · Galaxy A56 · R$ 69,90 →    ]
+```
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
-
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
-
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
-
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+- Texto do botão muda de "Continuar" para "Finalizar"
+- Preço formatado com `formatPrice` de `src/lib/types.ts`
+- No desktop mostra nome do modelo; no mobile omite para caber
 
