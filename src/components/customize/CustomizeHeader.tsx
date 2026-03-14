@@ -53,7 +53,7 @@ const CustomizeHeader = ({ productName, onBack, productImage, draftSaved }: Cust
       </span>
     </div>
 
-    <div className="w-8" />
+    <CoinBalance />
   </div>
 );
 
