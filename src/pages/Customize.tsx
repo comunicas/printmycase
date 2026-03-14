@@ -77,6 +77,11 @@ const Customize = () => {
         onConfirm={c.handleFilterConfirm}
       />
 
+      <LoginDialog
+        open={c.showLoginDialog}
+        onOpenChange={c.setShowLoginDialog}
+      />
+
       <UpscaleConfirmDialog
         balance={c.coinBalance}
         cost={c.aiUpscaleCost}

@@ -421,6 +421,7 @@ export function useCustomize(productId: string | undefined) {
     filters, activeFilterId, applyingFilterId, pendingFilterId, filteredImage,
     // dialog state
     showUpscaleDialog, setShowUpscaleDialog, setPendingFilterId,
+    showLoginDialog, setShowLoginDialog,
     // costs
     coinBalance, aiFilterCost, aiUpscaleCost,
     // flags
