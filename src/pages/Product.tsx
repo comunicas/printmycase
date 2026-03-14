@@ -133,6 +133,11 @@ const Product = () => {
 
     clarityEvent("product_viewed");
     clarityTag("product_viewed", product.slug);
+    pixelEvent("ViewContent", {
+      content_name: product.name,
+      value: product.price_cents / 100,
+      currency: "BRL",
+    });
 
     return () => {
       script?.remove();
