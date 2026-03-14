@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import StarRating from "@/components/StarRating";
 import { type Product, formatPrice } from "@/lib/types";
 
 interface ProductInfoProps {
@@ -15,8 +14,6 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
-
-      <StarRating rating={product.rating} reviewCount={product.review_count} starSize="w-4 h-4" showText />
 
       <p className="text-3xl font-bold text-foreground">
         {formatPrice(product.price_cents / 100)}

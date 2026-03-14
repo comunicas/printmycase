@@ -1,31 +1,37 @@
 
 
-## Ajustar SEO e remover avaliações da página de produto
+## Verificação do Webhook Stripe Live
 
-### Problemas identificados
+### O que o código espera
 
-1. **aggregateRating no JSON-LD** — Está incluindo `rating` e `review_count` mesmo quando os valores são 0, o que gera erros no Google Rich Results (rating/reviewCount inválidos)
-2. **Avaliações visíveis** — O `StarRating` é exibido no `ProductInfo` mas o usuário quer remover
-3. **Código morto** — As linhas 139-140 (clarityEvent/clarityTag) nunca executam pois estão após o `return` do cleanup
-4. **Meta tags `product:` ausentes** — Faltam tags Open Graph específicas de produto (`product:price:amount`, `product:price:currency`)
-5. **Categoria no schema** — Falta `category` no schema Product
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Alterações
+### Como verificar (manual no Stripe Dashboard)
 
-| Arquivo | Mudança |
-|---|---|
-| `src/pages/Product.tsx` | Remover `aggregateRating` do JSON-LD; adicionar `category: "Capas para Celular"`; adicionar metas OG de produto; corrigir código morto do Clarity (mover antes do return) |
-| `src/components/ProductInfo.tsx` | Remover `StarRating` e sua importação |
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### JSON-LD corrigido (sem aggregateRating, com category)
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-```json
-{
-  "@type": "Product",
-  "name": "...",
-  "category": "Capas para Celular",
-  "brand": { "@type": "Brand", "name": "..." },
-  "offers": { "@type": "Offer", ... }
-}
-```
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
