@@ -1,37 +1,36 @@
 
 
-## Verificação do Webhook Stripe Live
+## Diagnóstico
 
-### O que o código espera
+O problema tem duas causas raiz:
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+1. **Signup com verificação de email**: O `emailRedirectTo` no LoginDialog aponta para `window.location.origin` (ou seja, `/`). Após confirmar o email, o usuário cai na landing page em vez de voltar para `/customize/:id`. O rascunho no sessionStorage pode até existir, mas o usuário não é direcionado de volta.
 
-### Como verificar (manual no Stripe Dashboard)
+2. **Google OAuth**: O `redirect_uri` também aponta para `window.location.origin`, fazendo o mesmo — após autenticar com Google, o usuário cai em `/` e perde o contexto da customização.
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+3. **Login com senha**: Esse caso já funciona — o LoginDialog fecha, o estado permanece em memória no componente.
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+## Solução
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+| Arquivo | Mudança |
+|---|---|
+| `src/components/customize/LoginDialog.tsx` | Aceitar prop `redirectUrl?: string`. Usar como `emailRedirectTo` no signup e como `redirect_uri` no Google OAuth. Fallback para `window.location.origin`. |
+| `src/pages/Customize.tsx` | Passar `window.location.href` como `redirectUrl` para o LoginDialog, garantindo que após verificação de email ou OAuth o usuário volte para `/customize/:id`. |
+| `src/hooks/useCustomize.tsx` | No efeito de draft restore, remover a guarda `draftRestored.current` para o caso do sessionStorage (que é idempotente), permitindo restauração mesmo após mudança de estado de auth. Alternativamente, re-triggerar quando `user` muda. |
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+### Fluxo corrigido
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+**Signup com email:**
+1. Usuário customiza → clica "Finalizar" → LoginDialog abre
+2. Preenche signup → "Verifique seu email"
+3. Confirma email → link redireciona para `/customize/:slug`
+4. Página carrega → sessionStorage tem o rascunho → restaurado automaticamente
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+**Google OAuth:**
+1. Usuário customiza → LoginDialog → clica "Google"
+2. Redireciona para Google → retorna para `/customize/:slug`
+3. sessionStorage tem o rascunho → restaurado automaticamente
+
+**Login com senha:**
+4. Já funciona — dialog fecha, estado em memória preservado.
 
