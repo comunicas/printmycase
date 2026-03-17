@@ -188,6 +188,7 @@ const Checkout = () => {
           original_image_url: originalImageUrl,
           edited_image_url: editedImageUrl,
           shipping_cents: shipping.priceCents,
+          initiate_checkout_event_id: initiateCheckoutEventId.current,
           address_id: addressData.selectedAddressId,
           address_inline: addressData.selectedAddressId ? undefined : {
             street: addressData.street,

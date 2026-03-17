@@ -62,6 +62,7 @@ const DesignPage = () => {
           product_id: selectedProductId,
           design_id: design.id,
           shipping_cents: shipping.priceCents,
+          initiate_checkout_event_id: initiateCheckoutEventId.current,
           address_id: addressData.selectedAddressId,
           address_inline: addressData.selectedAddressId ? undefined : {
             street: addressData.street,

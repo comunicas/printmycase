@@ -22,10 +22,27 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate internal call via CRON_SECRET
-    const authHeader = req.headers.get("x-cron-secret");
+    // Authenticate via CRON_SECRET (internal) or JWT (client)
+    const cronHeader = req.headers.get("x-cron-secret");
     const cronSecret = Deno.env.get("CRON_SECRET");
-    if (!cronSecret || authHeader !== cronSecret) {
+    const authHeader = req.headers.get("Authorization");
+    let authenticated = false;
+
+    if (cronSecret && cronHeader === cronSecret) {
+      authenticated = true;
+    } else if (authHeader?.startsWith("Bearer ")) {
+      const { createClient } = await import("jsr:@supabase/supabase-js@2");
+      const sb = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const token = authHeader.replace("Bearer ", "");
+      const { error } = await sb.auth.getClaims(token);
+      if (!error) authenticated = true;
+    }
+
+    if (!authenticated) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
