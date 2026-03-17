@@ -51,12 +51,13 @@ const Checkout = () => {
     if (valid) clarityEvent("checkout_address_filled");
   }, []);
 
-  // Meta Pixel: InitiateCheckout
+  // Meta Pixel: InitiateCheckout (with event_id for CAPI dedup)
   const pixelFired = useRef(false);
+  const initiateCheckoutEventId = useRef(generateEventId());
   useEffect(() => {
     if (product && !pixelFired.current) {
       pixelFired.current = true;
-      pixelEvent("InitiateCheckout", { content_ids: [product.id], content_type: "product", value: product.price_cents / 100, currency: "BRL" });
+      pixelEvent("InitiateCheckout", { content_ids: [product.id], content_type: "product", value: product.price_cents / 100, currency: "BRL" }, initiateCheckoutEventId.current);
     }
   }, [product]);
 
