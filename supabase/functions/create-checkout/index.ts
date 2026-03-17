@@ -226,6 +226,25 @@ Deno.serve(async (req) => {
         .eq("product_id", product_id);
     }
 
+    // Fire InitiateCheckout CAPI event for deduplication with browser pixel
+    if (initiate_checkout_event_id) {
+      const userEmail = claimsData.claims.email as string | undefined;
+      const capiBody: Record<string, unknown> = {
+        event_name: "InitiateCheckout",
+        event_id: initiate_checkout_event_id,
+        event_time: Math.floor(Date.now() / 1000),
+        event_source_url: origin,
+        user_data: { ...(userEmail ? { em: userEmail } : {}) },
+        custom_data: { content_ids: [product_id], content_type: "product", value: itemPriceCents / 100, currency: "BRL" },
+      };
+      const capiUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/meta-capi`;
+      fetch(capiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("CRON_SECRET") || "" },
+        body: JSON.stringify(capiBody),
+      }).catch((e) => console.error("CAPI InitiateCheckout error:", e.message));
+    }
+
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
