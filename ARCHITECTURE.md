@@ -16,6 +16,7 @@
 | Ícones | Lucide React |
 | Backend | Supabase (DB + Auth + Storage + Edge Functions) |
 | Pagamentos | Stripe (Checkout Sessions) |
+| Analytics | Meta Pixel + Conversions API (CAPI) + Microsoft Clarity |
 
 ## Hierarquia de URLs
 
@@ -28,6 +29,15 @@
 /checkout/success    → Confirmação de pedido
 /orders              → Histórico de pedidos do usuário [auth]
 /profile             → Perfil do usuário (dados + avatar + endereços) [auth]
+/coins               → Loja de moedas AI [auth]
+/collections         → Lista de coleções de designs prontos
+/collections/:slug   → Página de coleção individual
+/design/:slug        → Página de design de coleção
+/knowledge-base      → Central de ajuda (categorias)
+/knowledge-base/:cat → Categoria de artigos
+/knowledge-base/:cat/:slug → Artigo individual
+/legal/:slug         → Documentos legais (termos, privacidade)
+/request-model       → Solicitar modelo de celular não disponível
 /admin               → Painel admin (produtos + pedidos) [auth + admin]
 /login               → Login
 /signup              → Cadastro
@@ -49,8 +59,15 @@ src/
 ├── components/
 │   ├── ui/              # Componentes base shadcn/ui
 │   ├── admin/           # ProductsTable, ProductFormDialog, BulkPriceDialog,
-│   │                    # AiFiltersManager, ModelRequestsManager, DeviceImageUpload
+│   │                    # AiFiltersManager, ModelRequestsManager, DeviceImageUpload,
+│   │                    # CollectionsManager, CollectionDesignsManager, CoinsManager,
+│   │                    # FaqManager, KbCategoriesManager, KbArticlesManager,
+│   │                    # LegalDocsManager, GalleryImagesManager, AiGenerationsManager,
+│   │                    # OrdersManager, OrderImagesPreviewer
 │   ├── checkout/        # AddressForm, OrderSummary
+│   ├── customize/       # AdjustmentsPanel, AiFiltersList, ContinueBar,
+│   │                    # CustomizeHeader, FilterConfirmDialog, ImageControls,
+│   │                    # LoginDialog, UpscaleConfirmDialog
 │   ├── forms/           # FormCard, SubmitButton
 │   ├── AppHeader.tsx
 │   ├── AuthGuard.tsx
@@ -69,32 +86,46 @@ src/
 │   ├── useAuth.ts       # Re-exporta useAuthContext
 │   ├── useAdmin.ts      # Verifica role admin via has_role()
 │   ├── useProducts.ts   # Query de produtos com limite opcional
+│   ├── useCoins.ts      # Saldo e transações de moedas AI
+│   ├── useCoinSettings.ts # Configurações de custo das moedas
+│   ├── useCollections.ts  # Query de coleções e designs
+│   ├── useCustomize.tsx   # Lógica completa do editor de customização
+│   ├── usePendingCheckout.ts # Gerenciamento de checkouts pendentes
 │   └── use-toast.ts
 ├── integrations/
 │   └── supabase/        # Client e types gerados automaticamente
 ├── lib/
 │   ├── types.ts         # Product, ProductColor, ProductSpec, formatPrice
 │   ├── constants.ts     # Constantes da aplicação
+│   ├── clarity.ts       # Helpers para Microsoft Clarity
+│   ├── meta-pixel.ts    # Helpers para Meta Pixel (pixelEvent, pixelTrackPurchase)
+│   ├── customize-types.ts # Tipos do editor de customização
+│   ├── image-utils.ts   # Utilitários de processamento de imagem
 │   ├── masks.ts         # Máscaras de input (CEP, telefone)
 │   ├── shipping.ts      # Cálculo de frete
 │   ├── products.ts      # Helpers de produto
 │   └── utils.ts         # cn() (clsx + tailwind-merge)
-├── pages/               # 13 páginas (7 com lazy loading)
+├── pages/               # 20+ páginas (maioria com lazy loading)
 ├── App.tsx              # Router + AuthProvider + Suspense
 ├── main.tsx
 └── index.css            # Design tokens + Tailwind config
 
 supabase/
 └── functions/
-    ├── _shared/          # Templates de email (signup, recovery, etc.)
+    ├── _shared/              # Templates de email (signup, recovery, etc.)
     ├── admin-sync-stripe/    # Sincroniza produto individual com Stripe
     ├── apply-ai-filter/      # Aplica filtro IA via Fal.ai (style transfer)
     ├── auth-email-hook/      # Hook de email customizado (templates React)
     ├── bulk-sync-stripe/     # Sincroniza todos os produtos com Stripe
+    ├── cleanup-pending-checkouts/ # Limpa checkouts pendentes expirados
     ├── create-checkout/      # Cria Stripe Checkout Session
+    ├── create-coin-checkout/ # Cria Stripe Checkout Session para compra de moedas
     ├── delete-account/       # Deleta conta + avatar + cascade
+    ├── generate-gallery-image/ # Gera imagens para galeria via IA
+    ├── meta-capi/            # Envia eventos server-side para Meta Conversions API
     ├── notify-order-status/  # Envia email de atualização de status
-    └── stripe-webhook/       # Processa eventos do Stripe (payment_intent)
+    ├── stripe-webhook/       # Processa eventos do Stripe (payment + Purchase CAPI)
+    └── upscale-image/        # Upscale de imagem via IA
 ```
 
 ## Modelo de Dados
@@ -116,6 +147,7 @@ interface Product {
   active: boolean;
   stripe_price_id: string | null;
   stripe_product_id: string | null;
+  device_image: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -126,18 +158,30 @@ interface Product {
 | Tabela | Descrição |
 |--------|-----------|
 | `products` | Catálogo de produtos com integração Stripe |
+| `product_gallery_images` | Imagens compartilhadas da galeria de produtos |
 | `orders` | Pedidos com status pipeline (pending → delivered) |
+| `pending_checkouts` | Checkouts em andamento (imagens + dados de customização) |
 | `addresses` | Endereços de entrega dos usuários |
-| `profiles` | Dados adicionais do usuário (nome, avatar, telefone) |
+| `profiles` | Dados adicionais do usuário (nome, avatar, telefone, referral_code) |
 | `user_roles` | RBAC — roles `admin` e `user` |
 | `ai_filters` | Filtros IA configuráveis (modelo Fal.ai, prompt, imagem de estilo) |
+| `ai_generated_images` | Imagens geradas por IA (prompt, seed, URLs) |
+| `coin_settings` | Configurações do sistema de moedas (custos, bônus) |
+| `coin_transactions` | Histórico de transações de moedas por usuário |
+| `collections` | Coleções de designs prontos |
+| `collection_designs` | Designs individuais dentro de coleções (com Stripe) |
+| `referrals` | Registro de indicações entre usuários |
 | `model_requests` | Solicitações de modelos de celular não disponíveis |
 | `faqs` | Perguntas frequentes gerenciáveis pelo admin |
+| `kb_categories` | Categorias da base de conhecimento |
+| `kb_articles` | Artigos da base de conhecimento |
+| `legal_documents` | Documentos legais (termos, privacidade) |
 
 ### Enums
 
 - `app_role`: `admin`, `user`
 - `order_status`: `pending`, `paid`, `analyzing`, `customizing`, `producing`, `shipped`, `delivered`, `cancelled`
+- `coin_transaction_type`: `signup_bonus`, `referral_bonus`, `purchase_bonus`, `coin_purchase`, `ai_usage`, `admin_adjustment`
 
 ### Storage Buckets
 
@@ -159,8 +203,8 @@ Interface: `{ user, profile, loading, signOut, refetchProfile }`
 ### Lazy Loading de Rotas
 
 Páginas pesadas usam `React.lazy()` com `Suspense` + `LoadingSpinner`:
-- **Lazy**: `Admin`, `Catalog`, `Product`, `Customize`, `Checkout`, `Orders`, `Profile`
-- **Estáticas**: `Landing`, `Login`, `Signup`, `ResetPassword`, `CheckoutSuccess`, `NotFound`
+- **Lazy**: `Admin`, `Catalog`, `Product`, `Customize`, `Checkout`, `Orders`, `Profile`, `Collections`, `CollectionPage`, `DesignPage`, `Coins`, `KnowledgeBase`, `KbCategory`, `KbArticle`
+- **Estáticas**: `Landing`, `Login`, `Signup`, `ResetPassword`, `CheckoutSuccess`, `NotFound`, `RequestModel`, `LegalDocument`
 
 ### Filtros IA
 
@@ -173,31 +217,61 @@ O sistema de filtros IA permite aplicar estilos artísticos (style transfer) às
 4. A imagem filtrada retorna e é exibida com **crossfade de 350ms** (duas camadas sobrepostas)
 5. Clicar no filtro ativo reverte para a imagem original (toggle)
 
-**Componentes envolvidos:**
-- `PhonePreview.tsx` — crossfade entre imagens via duas camadas com opacity transition
-- `Customize.tsx` — UI dos filtros (chips com thumbnails, scroll horizontal)
-- `AiFiltersManager.tsx` — CRUD de filtros no painel admin
-- `apply-ai-filter/` — edge function que processa via Fal.ai (aspecto 9:16, 720×1280px)
+### Sistema de Moedas AI
+
+Moedas virtuais para uso de recursos de IA (filtros, upscale). Bônus concedido no cadastro, indicação e compra de pedidos. Configurações gerenciadas via `coin_settings`.
 
 ### Edge Functions
 
-| Function | JWT | Descrição |
-|----------|-----|-----------|
-| `create-checkout` | Não | Cria Stripe Checkout Session para o pedido |
-| `stripe-webhook` | Não | Processa webhooks do Stripe (pagamento confirmado) |
-| `delete-account` | Não* | Deleta conta do usuário (valida JWT manualmente) |
-| `admin-sync-stripe` | Não* | Sincroniza produto com Stripe (valida admin server-side) |
-| `bulk-sync-stripe` | — | Sincroniza todos os produtos com Stripe |
-| `notify-order-status` | — | Envia email ao atualizar status do pedido |
-| `auth-email-hook` | Não | Hook de email customizado com templates React |
-| `apply-ai-filter` | Não | Aplica filtro IA via Fal.ai (style transfer / image-to-image) |
+| Function | Descrição |
+|----------|-----------|
+| `create-checkout` | Cria Stripe Checkout Session para pedido |
+| `create-coin-checkout` | Cria Stripe Checkout Session para compra de moedas |
+| `stripe-webhook` | Processa webhooks Stripe + dispara Purchase via Meta CAPI |
+| `meta-capi` | Envia eventos server-side para Meta Conversions API |
+| `apply-ai-filter` | Aplica filtro IA via Fal.ai (style transfer) |
+| `upscale-image` | Upscale de imagem via IA |
+| `generate-gallery-image` | Gera imagens para galeria via IA |
+| `delete-account` | Deleta conta + avatar + cascade |
+| `admin-sync-stripe` | Sincroniza produto com Stripe (valida admin) |
+| `bulk-sync-stripe` | Sincroniza todos os produtos com Stripe |
+| `notify-order-status` | Envia email ao atualizar status do pedido |
+| `auth-email-hook` | Hook de email customizado (templates React) |
+| `cleanup-pending-checkouts` | Limpa checkouts pendentes expirados |
 
-\* Validação de JWT feita manualmente dentro da function.
+## Analytics e Rastreamento
+
+### Meta Pixel (Browser)
+
+ID: `1617415106170829` — script base carregado no `index.html`.
+
+Helper tipado em `src/lib/meta-pixel.ts` com duas funções:
+- `pixelEvent(name, params)` — disparo simples sem deduplicação
+- `pixelTrackPurchase(value, contentId, eventId)` — Purchase com `eventID` para deduplicação com CAPI
+
+### Meta Conversions API (Server)
+
+Edge function `meta-capi` recebe eventos do `stripe-webhook` e envia para a Graph API do Meta com hashing SHA-256 dos dados do usuário (email, nome, telefone). Autenticada via `CRON_SECRET`.
+
+### Funil de Eventos
+
+| Evento | Tipo | Onde dispara | Dados |
+|--------|------|-------------|-------|
+| `PageView` | Browser | index.html (automático) | — |
+| `ViewContent` | Browser | Product.tsx | `content_name`, `content_ids`, `content_type`, `value`, `currency` |
+| `AddToCart` | Browser | useCustomize.tsx | `content_name`, `content_ids`, `content_type`, `value`, `currency` |
+| `InitiateCheckout` | Browser | Checkout.tsx | `content_ids`, `content_type`, `value`, `currency` |
+| `Purchase` | Browser + Server | CheckoutSuccess.tsx + stripe-webhook | `value`, `currency`, `content_ids` — deduplicado via `event_id` |
+| `CompleteRegistration` | Browser | Signup.tsx + LoginDialog.tsx | — |
+
+### Microsoft Clarity
+
+Rastreamento de sessão e heatmaps. Helpers em `src/lib/clarity.ts` para eventos customizados (`clarityEvent`) e tags (`clarityTag`).
 
 ## SEO e Dados Estruturados
 
 - **Meta tags**: title, description, Open Graph, Twitter Cards
-- **JSON-LD**: Organization, WebSite, ItemList (produtos)
+- **JSON-LD**: Organization, WebSite, ItemList (produtos), Product (detalhe), BreadcrumbList
 - **Canonical URL**: dinâmica via `window.location.origin`
 - **Lazy loading**: imagens do catálogo
 - **Semantic HTML**: `<main>`, `<section>`, `<header>`, `<footer>`, `<nav>`
@@ -208,7 +282,7 @@ O sistema de filtros IA permite aplicar estilos artísticos (style transfer) às
 - **RLS**: Todas as tabelas possuem Row Level Security habilitado
 - **RBAC**: Roles gerenciadas via tabela `user_roles` + função `has_role()` (SECURITY DEFINER)
 - **Admin**: Validação dupla — RLS no banco + verificação server-side nas edge functions
-- **Auth**: Email + senha com confirmação de email obrigatória
+- **Auth**: Email + senha com confirmação de email obrigatória; login social (Google)
 - **Storage**: Bucket `customizations` privado; `avatars`, `email-assets` e `product-assets` públicos
 
 ## Convenções de Código
