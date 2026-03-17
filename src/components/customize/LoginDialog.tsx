@@ -21,7 +21,7 @@ interface LoginDialogProps {
 
 type Tab = "login" | "signup";
 
-const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
+const LoginDialog = ({ open, onOpenChange, redirectUrl }: LoginDialogProps) => {
   const [tab, setTab] = useState<Tab>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
