@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trigger_signup_bonus ON public.profiles;
