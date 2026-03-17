@@ -1,37 +1,31 @@
 
 
-## Verificação do Webhook Stripe Live
+## Correção retroativa de bônus duplicados
 
-### O que o código espera
+### Problema
+Usuários cadastrados enquanto os dois triggers estavam ativos receberam 2x `signup_bonus` de 50 moedas cada (total 100). Precisamos remover uma das transações duplicadas para cada usuário afetado.
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### Solução
 
-### Como verificar (manual no Stripe Dashboard)
+Uma única query SQL via insert tool (operação de dados, não schema):
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+```sql
+DELETE FROM coin_transactions
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id,
+           ROW_NUMBER() OVER (PARTITION BY user_id, type ORDER BY created_at) AS rn
+    FROM coin_transactions
+    WHERE type = 'signup_bonus'
+  ) sub
+  WHERE rn > 1
+);
+```
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+**Lógica**: Para cada `user_id` com tipo `signup_bonus`, mantém apenas a primeira transação (ordenada por `created_at`) e remove as duplicatas.
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
-
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
-
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+### Impacto
+- Usuários afetados terão saldo reduzido em 50 moedas
+- Nenhuma alteração de código necessária
+- Operação irreversível — os registros duplicados serão apagados
 
