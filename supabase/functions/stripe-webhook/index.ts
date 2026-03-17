@@ -165,9 +165,7 @@ Deno.serve(async (req) => {
               event_time: Math.floor(Date.now() / 1000),
               event_id: metadata.event_id || null,
               event_source_url: metadata.origin_url || "https://artiscase-v2.lovable.app",
-              user_data: {
-                ...(userEmail ? { em: userEmail } : {}),
-              },
+              user_data: userEmail ? { em: userEmail } : {},
               custom_data: {
                 currency: "BRL",
                 value: (order.total_cents / 100).toFixed(2),
