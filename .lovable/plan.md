@@ -1,55 +1,37 @@
 
 
-## Adicionar InitiateCheckout e AddToCart via CAPI Server-Side
+## Verificação do Webhook Stripe Live
 
-### Contexto
+### O que o código espera
 
-Atualmente apenas o evento `Purchase` é enviado via CAPI (server-side). Os eventos `AddToCart` e `InitiateCheckout` são apenas browser-side (Pixel), o que reduz o match rate no Meta Events Manager. A solução é enviar esses eventos também via CAPI, com deduplicação por `event_id`.
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Estratégia
+### Como verificar (manual no Stripe Dashboard)
 
-| Evento | Browser (Pixel) | Server (CAPI) | Ponto de disparo server-side |
-|---|---|---|---|
-| AddToCart | `useCustomize.tsx` | `meta-capi` via chamada direta do client | No momento do "Finalizar" (antes do upload) |
-| InitiateCheckout | `Checkout.tsx` | `meta-capi` via `create-checkout` | Dentro da edge function, após criar a sessão Stripe |
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Alterações
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-**1. `src/lib/meta-pixel.ts`** — Adicionar suporte a `eventID` em `pixelEvent` para deduplicação genérica:
-- `pixelEvent(name, params, eventId?)` passa `{ eventID: id }` ao `fbq`
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-**2. `supabase/functions/meta-capi/index.ts`** — Aceitar autenticação via JWT (além de CRON_SECRET):
-- Verificar `Authorization: Bearer <token>` como alternativa ao `x-cron-secret`
-- Permite chamadas autenticadas do client para AddToCart
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-**3. `src/hooks/useCustomize.tsx`** — No `handleFinalize`, gerar `event_id`, enviar Pixel com ele, e chamar `meta-capi` via `supabase.functions.invoke` com dados do evento AddToCart
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-**4. `supabase/functions/create-checkout/index.ts`** — Após criar a sessão Stripe e o pedido, disparar InitiateCheckout via `meta-capi` (mesmo padrão do Purchase no stripe-webhook):
-- Usar o email do usuário (via claims) para hashing
-- Enviar `event_id` gerado (já existe no código)
-- Incluir `content_ids`, `value`, `currency`
-
-**5. `src/pages/Checkout.tsx`** — Passar `event_id` no Pixel de InitiateCheckout para deduplicação com o CAPI que será enviado pelo `create-checkout`
-
-**6. `src/pages/DesignPage.tsx`** — Mesmo tratamento: gerar `event_id` e enviá-lo ao `create-checkout` para CAPI do InitiateCheckout
-
-### Fluxo de deduplicação
-
-```text
-AddToCart:
-  Browser: pixelEvent("AddToCart", params, eventId)
-  Server:  supabase.functions.invoke("meta-capi", { body: { event_name: "AddToCart", event_id: eventId, ... } })
-
-InitiateCheckout:
-  Browser: pixelEvent("InitiateCheckout", params, eventId)  ← Checkout.tsx gera eventId
-  Server:  create-checkout chama meta-capi com mesmo eventId ← recebido via body do request
-```
-
-### Segurança do meta-capi
-
-A edge function passará a aceitar dois modos de autenticação:
-1. `x-cron-secret` (para chamadas internas entre edge functions)
-2. `Authorization: Bearer <jwt>` (para chamadas do client, validando via `getClaims`)
-
-Isso evita criar uma nova edge function e mantém centralizado.
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

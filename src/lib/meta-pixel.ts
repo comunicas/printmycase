@@ -8,8 +8,12 @@ export function generateEventId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-export function pixelEvent(name: string, params?: Record<string, unknown>) {
-  window.fbq?.("track", name, params);
+export function pixelEvent(name: string, params?: Record<string, unknown>, eventId?: string) {
+  if (eventId) {
+    window.fbq?.("track", name, params, { eventID: eventId });
+  } else {
+    window.fbq?.("track", name, params);
+  }
 }
 
 export function pixelTrackPurchase(

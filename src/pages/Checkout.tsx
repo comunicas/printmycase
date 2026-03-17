@@ -14,7 +14,7 @@ import AddressForm, { type AddressData } from "@/components/checkout/AddressForm
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { clarityEvent } from "@/lib/clarity";
-import { pixelEvent } from "@/lib/meta-pixel";
+import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
 
 interface CustomizationData {
   rawImage: string | null;
@@ -51,12 +51,13 @@ const Checkout = () => {
     if (valid) clarityEvent("checkout_address_filled");
   }, []);
 
-  // Meta Pixel: InitiateCheckout
+  // Meta Pixel: InitiateCheckout (with event_id for CAPI dedup)
   const pixelFired = useRef(false);
+  const initiateCheckoutEventId = useRef(generateEventId());
   useEffect(() => {
     if (product && !pixelFired.current) {
       pixelFired.current = true;
-      pixelEvent("InitiateCheckout", { content_ids: [product.id], content_type: "product", value: product.price_cents / 100, currency: "BRL" });
+      pixelEvent("InitiateCheckout", { content_ids: [product.id], content_type: "product", value: product.price_cents / 100, currency: "BRL" }, initiateCheckoutEventId.current);
     }
   }, [product]);
 
@@ -187,6 +188,7 @@ const Checkout = () => {
           original_image_url: originalImageUrl,
           edited_image_url: editedImageUrl,
           shipping_cents: shipping.priceCents,
+          initiate_checkout_event_id: initiateCheckoutEventId.current,
           address_id: addressData.selectedAddressId,
           address_inline: addressData.selectedAddressId ? undefined : {
             street: addressData.street,

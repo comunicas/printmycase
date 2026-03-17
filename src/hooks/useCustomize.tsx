@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { clarityEvent } from "@/lib/clarity";
-import { pixelEvent } from "@/lib/meta-pixel";
+import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
 import { useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
@@ -352,7 +352,20 @@ export function useCustomize(productId: string | undefined) {
     if (!requireAuth()) return;
     if (!product || !image) return;
     setIsRendering(true);
-    pixelEvent("AddToCart", { content_name: product.name, content_ids: [product.id], content_type: "product", value: product.price_cents / 100, currency: "BRL" });
+    const addToCartEventId = generateEventId();
+    pixelEvent("AddToCart", { content_name: product.name, content_ids: [product.id], content_type: "product", value: product.price_cents / 100, currency: "BRL" }, addToCartEventId);
+
+    // Fire server-side CAPI AddToCart (fire-and-forget)
+    supabase.functions.invoke("meta-capi", {
+      body: {
+        event_name: "AddToCart",
+        event_id: addToCartEventId,
+        event_source_url: window.location.href,
+        user_data: { client_user_agent: navigator.userAgent },
+        custom_data: { content_ids: [product.id], content_type: "product", value: product.price_cents / 100, currency: "BRL" },
+      },
+    }).catch(() => {});
+
     try {
       const finalImage = await renderSnapshot(image, scale, position, rotation);
       const customData = { rawImage, image, editedImage: finalImage, imageFileName, scale, position, rotation };

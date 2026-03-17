@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
 import { type ShippingResult } from "@/lib/shipping";
+import { generateEventId } from "@/lib/meta-pixel";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
@@ -30,6 +31,7 @@ const DesignPage = () => {
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const initiateCheckoutEventId = useRef(generateEventId());
 
   // Auto-select first product
   useEffect(() => {
@@ -60,6 +62,7 @@ const DesignPage = () => {
           product_id: selectedProductId,
           design_id: design.id,
           shipping_cents: shipping.priceCents,
+          initiate_checkout_event_id: initiateCheckoutEventId.current,
           address_id: addressData.selectedAddressId,
           address_inline: addressData.selectedAddressId ? undefined : {
             street: addressData.street,
