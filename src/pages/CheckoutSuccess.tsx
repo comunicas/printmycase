@@ -63,7 +63,7 @@ const CheckoutSuccess = () => {
         aiFilterApplied: !!cd?.activeFilter,
       });
 
-      pixelTrackPurchase(order.total_cents / 100, order.product_id);
+      pixelTrackPurchase(order.total_cents / 100, order.product_id, eventId || undefined);
     };
 
     fetchOrder();

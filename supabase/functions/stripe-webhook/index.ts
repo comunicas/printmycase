@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
                 body: JSON.stringify(capiPayload),
               }
             );
-            const capiResult = await capiRes.text();
+            await capiRes.text();
             console.log(`Meta CAPI Purchase response: ${capiRes.status}`);
           } catch (capiErr) {
             // Log but don't block the webhook flow
