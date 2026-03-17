@@ -16,6 +16,7 @@ import { Coins } from "lucide-react";
 interface LoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  redirectUrl?: string;
 }
 
 type Tab = "login" | "signup";
