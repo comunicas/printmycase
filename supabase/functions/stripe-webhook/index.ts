@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
 
         const { data: order } = await supabaseAdmin
           .from("orders")
-          .select("user_id")
+          .select("user_id, total_cents")
           .eq("stripe_session_id", session.id)
           .single();
 
@@ -153,6 +153,45 @@ Deno.serve(async (req) => {
               description: "Bônus por compra de case",
             });
           console.log(`Credited ${bonusAmount} bonus coins to ${order.user_id}`);
+
+          // Send server-side Purchase event to Meta CAPI
+          try {
+            // Get user email for hashing
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(order.user_id);
+            const userEmail = userData?.user?.email;
+
+            const capiPayload = {
+              event_name: "Purchase",
+              event_time: Math.floor(Date.now() / 1000),
+              event_id: metadata.event_id || null,
+              event_source_url: metadata.origin_url || "https://artiscase-v2.lovable.app",
+              user_data: {
+                ...(userEmail ? { em: userEmail } : {}),
+              },
+              custom_data: {
+                currency: "BRL",
+                value: (order.total_cents / 100).toFixed(2),
+                content_ids: [metadata.product_id],
+              },
+            };
+
+            const capiRes = await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/meta-capi`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-cron-secret": Deno.env.get("CRON_SECRET") || "",
+                },
+                body: JSON.stringify(capiPayload),
+              }
+            );
+            const capiResult = await capiRes.text();
+            console.log(`Meta CAPI Purchase response: ${capiRes.status}`);
+          } catch (capiErr) {
+            // Log but don't block the webhook flow
+            console.error("Meta CAPI error (non-blocking):", (capiErr as Error).message);
+          }
         }
       }
     } else if (event.type === "checkout.session.expired") {

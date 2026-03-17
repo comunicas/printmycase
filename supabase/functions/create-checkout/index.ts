@@ -173,10 +173,15 @@ Deno.serve(async (req) => {
       params.append("line_items[1][quantity]", "1");
     }
 
-    params.append("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
+    // Generate event_id for Meta CAPI deduplication
+    const eventId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+
+    params.append("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&eid=${eventId}`);
     params.append("cancel_url", `${origin}/customize/${product.slug}`);
     params.append("metadata[user_id]", userId);
     params.append("metadata[product_id]", product_id);
+    params.append("metadata[event_id]", eventId);
+    params.append("metadata[origin_url]", origin);
 
     const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
