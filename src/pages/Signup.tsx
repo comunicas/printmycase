@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import logoArtisCase from "@/assets/logo-artiscase.png";
 import GoogleIcon from "@/components/GoogleIcon";
 import { clarityEvent } from "@/lib/clarity";
+import { pixelEvent } from "@/lib/meta-pixel";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
@@ -47,6 +48,7 @@ const Signup = () => {
       toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
     } else {
       clarityEvent("auth_signup");
+      pixelEvent("CompleteRegistration");
       setSent(true);
     }
     setLoading(false);

@@ -10,6 +10,7 @@ import SubmitButton from "@/components/forms/SubmitButton";
 import { useToast } from "@/hooks/use-toast";
 import GoogleIcon from "@/components/GoogleIcon";
 import { clarityEvent } from "@/lib/clarity";
+import { pixelEvent } from "@/lib/meta-pixel";
 import { Coins } from "lucide-react";
 
 interface LoginDialogProps {
@@ -67,6 +68,7 @@ const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
       toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
     } else {
       clarityEvent("auth_signup");
+      pixelEvent("CompleteRegistration");
       setSent(true);
     }
     setLoading(false);
