@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { clarityEvent } from "@/lib/clarity";
-import { pixelEvent } from "@/lib/meta-pixel";
+import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
 import { useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
