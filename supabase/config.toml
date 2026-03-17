@@ -25,3 +25,5 @@ project_id = "gfsbsgwxylvhnwbpcodj"
     verify_jwt = false
   [functions.generate-gallery-image]
     verify_jwt = false
+  [functions.meta-capi]
+    verify_jwt = false

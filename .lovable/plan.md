@@ -1,63 +1,37 @@
 
 
-## API de Conversões do Meta (Server-Side)
+## Verificação do Webhook Stripe Live
 
-A Conversions API (CAPI) envia eventos diretamente do servidor para o Meta, complementando o Pixel do navegador. Isso melhora a precisão do rastreamento (especialmente com bloqueadores de anúncios e ITP do Safari).
+### O que o código espera
 
-### Pré-requisito: Token de Acesso
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-Você precisará de um **Meta Access Token** gerado no Meta Business Manager:
-1. Acesse **Events Manager → Settings → Conversions API**
-2. Gere um token de acesso permanente
-3. Eu solicitarei que você o insira como segredo do projeto
+### Como verificar (manual no Stripe Dashboard)
 
-### Alterações
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-| Arquivo | Mudança |
-|---|---|
-| **Segredo** `META_ACCESS_TOKEN` | Novo segredo a ser configurado |
-| `supabase/functions/meta-capi/index.ts` | **Nova** edge function genérica para enviar eventos ao endpoint `graph.facebook.com/v21.0/{PIXEL_ID}/events` |
-| `supabase/functions/stripe-webhook/index.ts` | Após confirmar pagamento, chamar `meta-capi` internamente para enviar evento `Purchase` server-side com `event_id` para deduplicação |
-| `src/lib/meta-pixel.ts` | Gerar `event_id` único por evento e passá-lo tanto ao `fbq()` (browser) quanto ao servidor, permitindo deduplicação automática pelo Meta |
-| `src/pages/CheckoutSuccess.tsx` | Enviar `event_id` junto com o evento Purchase do Pixel para que o Meta deduplicar com o evento server-side |
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-### Arquitetura
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-```text
-Navegador (Pixel)                     Servidor (CAPI)
-─────────────────                     ───────────────
-fbq('Purchase', {event_id: X})  ──┐
-                                  ├──▶ Meta deduplica por event_id
-stripe-webhook ──▶ meta-capi ────┘
-  (Purchase server-side, event_id: X)
-```
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-### Evento Purchase server-side (mais importante)
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-O `stripe-webhook` já processa `checkout.session.completed`. Após atualizar o pedido, ele chamará a edge function `meta-capi` com:
-- `event_name`: "Purchase"
-- `event_time`: timestamp Unix
-- `user_data`: email hasheado (SHA-256) do perfil do usuário
-- `custom_data`: `{ currency: "BRL", value: total/100 }`
-- `event_id`: gerado no momento da criação do checkout e salvo no metadata do Stripe session
-
-### Edge function `meta-capi`
-
-- Recebe eventos via POST com `event_name`, `event_time`, `user_data`, `custom_data`, `event_id`, `event_source_url`
-- Envia para `https://graph.facebook.com/v21.0/1617415106170829/events`
-- Usa `META_ACCESS_TOKEN` dos segredos
-- Pixel ID hardcoded (já público no index.html)
-- `verify_jwt = false` (chamada interna do stripe-webhook)
-- Autenticação via `CRON_SECRET` para chamadas internas
-
-### Deduplicação
-
-O Meta usa `event_id` para deduplicar eventos idênticos enviados pelo Pixel (browser) e pela CAPI (servidor). O `event_id` será gerado no `create-checkout` e armazenado no metadata da session Stripe, garantindo que o mesmo ID seja usado em ambos os canais.
-
-### Detalhes técnicos
-
-- Hash SHA-256 do email do usuário conforme exigido pela API do Meta
-- `action_source`: "website" para todos os eventos
-- O token de acesso nunca é exposto ao cliente
-- Erros na CAPI são logados mas não bloqueiam o fluxo principal do webhook
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 

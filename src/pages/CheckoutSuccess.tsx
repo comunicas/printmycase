@@ -9,6 +9,7 @@ import PaymentBadges from "@/components/PaymentBadges";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { pixelTrackPurchase } from "@/lib/meta-pixel";
+
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
 import logoArtisCase from "@/assets/logo-artiscase.png";
@@ -22,6 +23,7 @@ const CheckoutSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const eventId = searchParams.get("eid");
   const { user, loading } = useAuth();
 
   const [orderInfo, setOrderInfo] = useState<{
@@ -61,7 +63,7 @@ const CheckoutSuccess = () => {
         aiFilterApplied: !!cd?.activeFilter,
       });
 
-      pixelTrackPurchase(order.total_cents / 100, order.product_id);
+      pixelTrackPurchase(order.total_cents / 100, order.product_id, eventId || undefined);
     };
 
     fetchOrder();
