@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import logoArtisCase from "@/assets/logo-artiscase.png";
 import GoogleIcon from "@/components/GoogleIcon";
 import { clarityEvent } from "@/lib/clarity";
+import { pixelEvent } from "@/lib/meta-pixel";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
