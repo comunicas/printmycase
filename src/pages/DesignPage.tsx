@@ -31,6 +31,7 @@ const DesignPage = () => {
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const initiateCheckoutEventId = useRef(generateEventId());
 
   // Auto-select first product
   useEffect(() => {
