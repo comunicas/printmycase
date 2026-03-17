@@ -135,6 +135,8 @@ const Product = () => {
     clarityTag("product_viewed", product.slug);
     pixelEvent("ViewContent", {
       content_name: product.name,
+      content_ids: [product.id],
+      content_type: "product",
       value: product.price_cents / 100,
       currency: "BRL",
     });
