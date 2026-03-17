@@ -24,7 +24,7 @@ export function useCustomize(productId: string | undefined) {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const draftRestored = useRef(false);
+  
   const { upsert: upsertPending, fetchByProduct: fetchPending, getSignedUrl } = usePendingCheckout();
 
   // --- state ---
