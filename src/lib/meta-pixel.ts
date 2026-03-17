@@ -12,16 +12,6 @@ export function pixelEvent(name: string, params?: Record<string, unknown>) {
   window.fbq?.("track", name, params);
 }
 
-export function pixelEventWithId(
-  name: string,
-  params?: Record<string, unknown>,
-  eventId?: string
-) {
-  const id = eventId || generateEventId();
-  window.fbq?.("track", name, params, { eventID: id });
-  return id;
-}
-
 export function pixelTrackPurchase(
   valueBRL: number,
   contentId?: string,
@@ -34,7 +24,7 @@ export function pixelTrackPurchase(
     {
       value: valueBRL,
       currency: "BRL",
-      ...(contentId ? { content_ids: [contentId] } : {}),
+      ...(contentId ? { content_ids: [contentId], content_type: "product" } : {}),
     },
     { eventID: id }
   );

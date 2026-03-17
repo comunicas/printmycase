@@ -56,7 +56,7 @@ const Checkout = () => {
   useEffect(() => {
     if (product && !pixelFired.current) {
       pixelFired.current = true;
-      pixelEvent("InitiateCheckout", { value: product.price_cents / 100, currency: "BRL" });
+      pixelEvent("InitiateCheckout", { content_ids: [product.id], content_type: "product", value: product.price_cents / 100, currency: "BRL" });
     }
   }, [product]);
 

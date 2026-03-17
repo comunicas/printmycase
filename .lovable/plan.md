@@ -1,41 +1,37 @@
 
 
-## Revisão de Eventos Meta Pixel + CAPI e Documentação
+## Verificação do Webhook Stripe Live
 
-### Problemas Identificados
+### O que o código espera
 
-1. **Função `pixelEventWithId` nunca é usada** — foi criada mas nenhum evento a utiliza; é redundante com `pixelTrackPurchase`
-2. **Eventos sem `content_ids`** — ViewContent e AddToCart não enviam `content_ids` (product ID), prejudicando atribuição no Meta
-3. **Sem `content_type`** — eventos de catálogo não informam `content_type: "product"`, exigido para melhor match
-4. **ARCHITECTURE.md desatualizado** — não menciona Meta Pixel, CAPI, Clarity, nem várias edge functions recentes (`meta-capi`, `generate-gallery-image`, `upscale-image`, `create-coin-checkout`, `cleanup-pending-checkouts`)
-5. **Tabelas faltando na documentação** — `coin_transactions`, `coin_settings`, `referrals`, `collections`, `collection_designs`, `product_gallery_images`, `ai_generated_images`, `legal_documents`, `kb_categories`, `kb_articles`, `pending_checkouts`
+O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
+1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
+2. **`checkout.session.expired`** — cancela o pedido
 
-### Alterações Planejadas
+### Como verificar (manual no Stripe Dashboard)
 
-| Arquivo | Mudança |
-|---|---|
-| `src/lib/meta-pixel.ts` | Remover `pixelEventWithId` (não usada). Simplificar para 2 funções: `pixelEvent` (sem dedup) e `pixelTrackPurchase` (com dedup). Manter `generateEventId`. |
-| `src/pages/Product.tsx` | Adicionar `content_ids: [product.id]` e `content_type: "product"` ao ViewContent |
-| `src/hooks/useCustomize.tsx` | Adicionar `content_ids: [product.id]` e `content_type: "product"` ao AddToCart |
-| `src/pages/Checkout.tsx` | Adicionar `content_ids: [product.id]` e `content_type: "product"` ao InitiateCheckout |
-| `ARCHITECTURE.md` | Atualizar seções: edge functions (adicionar 6 faltantes), tabelas (adicionar 11 faltantes), analytics (nova seção para Pixel + CAPI + Clarity), rotas (adicionar collections, coins, knowledge base, legal) |
+Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
 
-### Detalhes da Otimização de Eventos
+1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
+2. Confirme que existe um endpoint apontando para:
+   ```
+   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
+   ```
+3. Confirme que os eventos selecionados incluem:
+   - `checkout.session.completed`
+   - `checkout.session.expired`
+4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
 
-Eventos atuais e suas correções:
+### Status atual dos segredos
+- `STRIPE_SECRET_KEY` ✅ configurado
+- `STRIPE_WEBHOOK_SECRET` ✅ configurado
 
-| Evento | Onde dispara | Correção |
-|---|---|---|
-| `PageView` | index.html (automático) | Nenhuma — correto |
-| `ViewContent` | Product.tsx | Adicionar `content_ids`, `content_type` |
-| `AddToCart` | useCustomize.tsx | Adicionar `content_ids`, `content_type` |
-| `InitiateCheckout` | Checkout.tsx | Adicionar `content_ids`, `content_type` |
-| `Purchase` | CheckoutSuccess.tsx (browser) + stripe-webhook (CAPI) | Já correto com deduplicação via `event_id` |
-| `CompleteRegistration` | Signup.tsx + LoginDialog.tsx | Correto — são caminhos distintos de cadastro |
+### Evidência de funcionamento
+Os logs mostram que o webhook **já processou com sucesso** um evento recente:
+> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
 
-### Não há duplicidade real
+Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
 
-- Cada evento dispara em um único ponto do funil (exceto CompleteRegistration que cobre 2 formulários de signup distintos — correto)
-- Purchase é o único com CAPI server-side, corretamente deduplicado
-- `pixelEventWithId` será removida por ser dead code
+### Conclusão
+O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
 
