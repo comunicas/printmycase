@@ -62,7 +62,7 @@ const LoginDialog = ({ open, onOpenChange, redirectUrl }: LoginDialogProps) => {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: redirectUrl || window.location.origin,
       },
     });
     if (error) {
