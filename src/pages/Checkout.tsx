@@ -14,7 +14,7 @@ import AddressForm, { type AddressData } from "@/components/checkout/AddressForm
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { clarityEvent } from "@/lib/clarity";
-import { pixelEvent } from "@/lib/meta-pixel";
+import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
 
 interface CustomizationData {
   rawImage: string | null;
