@@ -24,7 +24,7 @@ export function useCustomize(productId: string | undefined) {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const draftRestored = useRef(false);
+  
   const { upsert: upsertPending, fetchByProduct: fetchPending, getSignedUrl } = usePendingCheckout();
 
   // --- state ---
@@ -86,26 +86,34 @@ export function useCustomize(productId: string | undefined) {
   }, []);
 
   // --- draft restore ---
+  // Track which sources have been restored to avoid duplicates
+  const sessionRestored = useRef(false);
+  const pendingRestored = useRef(false);
+
+  // Restore from sessionStorage (runs on mount and when user changes after OAuth/signup)
   useEffect(() => {
-    if (!product?.slug || !product?.id || draftRestored.current) return;
-    draftRestored.current = true;
+    if (!product?.slug || sessionRestored.current) return;
     const key = `draft-customize-${product.slug}`;
     const raw = sessionStorage.getItem(key);
-    if (raw) {
-      try {
-        const d = JSON.parse(raw);
-        if (d.image) {
-          setOriginalImage(d.image);
-          setImageWithResolution(d.image);
-        }
-        if (d.scale != null) setScale(d.scale);
-        if (d.position) setPosition(d.position);
-        if (d.rotation != null) setRotation(d.rotation);
-        toast({ title: "Rascunho restaurado" });
-      } catch { /* ignore */ }
-      return;
-    }
-    if (!user) return;
+    if (!raw) return;
+    sessionRestored.current = true;
+    try {
+      const d = JSON.parse(raw);
+      if (d.image) {
+        setOriginalImage(d.image);
+        setImageWithResolution(d.image);
+      }
+      if (d.scale != null) setScale(d.scale);
+      if (d.position) setPosition(d.position);
+      if (d.rotation != null) setRotation(d.rotation);
+      toast({ title: "Rascunho restaurado" });
+    } catch { /* ignore */ }
+  }, [product?.slug, user, toast, setImageWithResolution]);
+
+  // Restore from pending_checkouts (server-side, only if no sessionStorage draft)
+  useEffect(() => {
+    if (!product?.slug || !product?.id || !user || pendingRestored.current || sessionRestored.current) return;
+    pendingRestored.current = true;
     (async () => {
       const pending = await fetchPending(product.id);
       if (!pending) return;

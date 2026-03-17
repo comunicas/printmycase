@@ -16,11 +16,12 @@ import { Coins } from "lucide-react";
 interface LoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  redirectUrl?: string;
 }
 
 type Tab = "login" | "signup";
 
-const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
+const LoginDialog = ({ open, onOpenChange, redirectUrl }: LoginDialogProps) => {
   const [tab, setTab] = useState<Tab>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,7 +62,7 @@ const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: redirectUrl || window.location.origin,
       },
     });
     if (error) {
@@ -76,7 +77,7 @@ const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
 
   const handleGoogle = async () => {
     const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: redirectUrl || window.location.origin,
     });
     if (error) {
       toast({ title: "Erro ao entrar com Google", description: String(error), variant: "destructive" });
