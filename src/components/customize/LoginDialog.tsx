@@ -68,6 +68,7 @@ const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
       toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
     } else {
       clarityEvent("auth_signup");
+      pixelEvent("CompleteRegistration");
       setSent(true);
     }
     setLoading(false);
