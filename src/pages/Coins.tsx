@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCoins } from "@/hooks/useCoins";
 import { useAuth } from "@/hooks/useAuth";
+import { useCoinSettings } from "@/hooks/useCoinSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -43,6 +44,7 @@ const Coins = () => {
   const basePricePerCoin = packages.length > 0 ? packages[0].price_cents / packages[0].coins : 1;
 
   const { profile } = useAuth();
+  const { getSetting } = useCoinSettings();
   const { balance, transactions, loading, refresh } = useCoins();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -175,7 +177,7 @@ const Coins = () => {
               <div>
                 <h2 className="font-semibold text-base">Convide e ganhe!</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Você ganha <strong className="text-foreground">50 moedas</strong> e seu amigo também ganha <strong className="text-foreground">50 moedas</strong> ao se cadastrar.
+                  Você ganha <strong className="text-foreground">{getSetting("referral_bonus_amount", 50)} moedas</strong> e seu amigo também ganha <strong className="text-foreground">{getSetting("signup_bonus_amount", 50)} moedas</strong> ao se cadastrar.
                 </p>
               </div>
             </div>
