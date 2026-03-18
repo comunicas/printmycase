@@ -173,10 +173,11 @@ const CoinPackagesManager = () => {
 
       <ConfirmDialog
         open={!!deleteId}
-        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
         title="Excluir pacote?"
         description="Esta ação não pode ser desfeita."
-        onConfirm={handleDelete}
+        destructive
       />
     </div>
   );

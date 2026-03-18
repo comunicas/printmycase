@@ -112,15 +112,20 @@ const Coins = () => {
         {/* ── Pacotes ── */}
         <div className="space-y-3">
           <h2 className="font-semibold">Comprar moedas</h2>
+          {packagesLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : (
           <div className="grid grid-cols-2 gap-3">
-            {PACKAGES.map((pkg) => {
-              const perCoin = pkg.priceCents / pkg.coins;
+            {packages.map((pkg) => {
+              const perCoin = pkg.price_cents / pkg.coins;
               const discount = Math.round((1 - perCoin / basePricePerCoin) * 100);
               const isPopular = pkg.badge === "Mais popular";
+              const label = pkg.coins >= 1000 ? `${(pkg.coins / 1000).toFixed(pkg.coins % 1000 === 0 ? 0 : 1).replace(".", ",")}k` : String(pkg.coins);
+              const priceFormatted = `R$ ${(pkg.price_cents / 100).toFixed(2).replace(".", ",")}`;
 
               return (
                 <button
-                  key={pkg.coins}
+                  key={pkg.id}
                   onClick={() => handleBuyCoins(pkg.coins)}
                   disabled={buyingPackage !== null}
                   className={`relative rounded-xl border p-4 text-left transition-all hover:shadow-md disabled:opacity-60 ${
@@ -143,8 +148,8 @@ const Coins = () => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-xl font-bold">🪙 {pkg.label}</p>
-                      <p className="text-base font-semibold text-foreground mt-1">{pkg.price}</p>
+                      <p className="text-xl font-bold">🪙 {label}</p>
+                      <p className="text-base font-semibold text-foreground mt-1">{priceFormatted}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         R$ {(perCoin / 100).toFixed(2).replace(".", ",")}/moeda
                         {discount > 0 && (
@@ -157,6 +162,7 @@ const Coins = () => {
               );
             })}
           </div>
+          )}
         </div>
 
         {/* ── Referral ── */}
