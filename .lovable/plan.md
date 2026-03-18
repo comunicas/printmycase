@@ -1,37 +1,31 @@
 
 
-## Verificação do Webhook Stripe Live
+## Plano: Atualizar saldo de coins em tempo real + simplificar botão
 
-### O que o código espera
+### Problema
+O `CoinBalance` no header e o `useCoins()` dentro do `useCustomize` são instâncias separadas do hook. Quando `refreshCoins()` é chamado após filtro/upscale, apenas a instância do hook interno atualiza — o saldo visível no header permanece desatualizado.
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+### Alterações
 
-### Como verificar (manual no Stripe Dashboard)
+**1. `src/hooks/useCoins.ts` — Sincronização global via custom event**
+- Após `refresh()`, disparar `window.dispatchEvent(new Event("coins-updated"))`
+- Adicionar listener no hook para que todas as instâncias reajam ao evento e re-fetch automaticamente
+- Isso garante que o `CoinBalance` no header atualize quando `refreshCoins()` é chamado no useCustomize
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+**2. `src/hooks/useCustomize.tsx` — Estimular compra quando saldo ficar baixo**
+- Após filtro/upscale bem-sucedido, verificar se o saldo resultante é menor que o custo mínimo (filtro ou upscale)
+- Se sim, exibir toast com ação incentivando compra de moedas ou indicação:
+  - Título: "Suas moedas estão acabando!"
+  - Descrição: "Compre mais ou indique amigos para ganhar moedas grátis."
+  - Ações: links para `/coins` (compra) e seção de indicação
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+**3. `src/components/customize/ContinueBar.tsx` — Simplificar botão**
+- Remover `productName` e `priceCents` do conteúdo do botão
+- Manter apenas "Finalizar" com a seta
+- Props `productName` e `priceCents` podem ser removidas da interface
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
-
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
-
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+### Arquivos alterados
+- `src/hooks/useCoins.ts`
+- `src/hooks/useCustomize.tsx`
+- `src/components/customize/ContinueBar.tsx`
 
