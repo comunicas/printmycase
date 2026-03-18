@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Database } from "@/integrations/supabase/types";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import CoinPackagesManager from "@/components/admin/CoinPackagesManager";
 
 interface Transaction {
   id: string;

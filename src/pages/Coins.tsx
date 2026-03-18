@@ -9,14 +9,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const PACKAGES = [
-  { coins: 100, priceCents: 990, label: "100", price: "R$ 9,90" },
-  { coins: 500, priceCents: 3990, label: "500", price: "R$ 39,90", badge: "Mais popular" },
-  { coins: 1500, priceCents: 9990, label: "1.500", price: "R$ 99,90" },
-  { coins: 5000, priceCents: 24990, label: "5.000", price: "R$ 249,90", badge: "Melhor valor" },
-];
-
-const basePricePerCoin = PACKAGES[0].priceCents / PACKAGES[0].coins;
+interface CoinPackage {
+  id: string;
+  coins: number;
+  price_cents: number;
+  badge: string | null;
+  sort_order: number;
+  active: boolean;
+}
 
 const typeLabels: Record<string, { label: string; icon: typeof Gift }> = {
   signup_bonus: { label: "Bônus de cadastro", icon: Gift },

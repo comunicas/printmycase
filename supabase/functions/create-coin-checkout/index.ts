@@ -24,13 +24,6 @@ function getSafeOrigin(req: Request): string {
   return DEFAULT_ORIGIN;
 }
 
-const COIN_PACKAGES: Record<number, number> = {
-  100: 990,
-  500: 3990,
-  1500: 9990,
-  5000: 24990,
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -63,8 +56,15 @@ Deno.serve(async (req) => {
     const user = userData.user;
     const { coinAmount } = await req.json();
 
-    const priceCents = COIN_PACKAGES[coinAmount];
-    if (!priceCents) {
+    // Validate against database packages
+    const { data: pkg, error: pkgError } = await supabase
+      .from("coin_packages")
+      .select("coins, price_cents")
+      .eq("coins", coinAmount)
+      .eq("active", true)
+      .maybeSingle();
+
+    if (pkgError || !pkg) {
       return new Response(JSON.stringify({ error: "Invalid package" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -85,8 +85,8 @@ Deno.serve(async (req) => {
         {
           price_data: {
             currency: "brl",
-            product_data: { name: `${coinAmount} Moedas ArtisCase` },
-            unit_amount: priceCents,
+            product_data: { name: `${pkg.coins} Moedas ArtisCase` },
+            unit_amount: pkg.price_cents,
           },
           quantity: 1,
         },
@@ -94,10 +94,10 @@ Deno.serve(async (req) => {
       mode: "payment",
       metadata: {
         user_id: user.id,
-        coin_amount: String(coinAmount),
+        coin_amount: String(pkg.coins),
         type: "coin_purchase",
       },
-      success_url: `${getSafeOrigin(req)}/coins?purchased=${coinAmount}`,
+      success_url: `${getSafeOrigin(req)}/coins?purchased=${pkg.coins}`,
       cancel_url: `${getSafeOrigin(req)}/coins`,
     });
 
