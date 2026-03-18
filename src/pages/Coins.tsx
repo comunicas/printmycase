@@ -177,7 +177,7 @@ const Coins = () => {
               <div>
                 <h2 className="font-semibold text-base">Convide e ganhe!</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Você ganha <strong className="text-foreground">50 moedas</strong> e seu amigo também ganha <strong className="text-foreground">50 moedas</strong> ao se cadastrar.
+                  Você ganha <strong className="text-foreground">{getSetting("referral_bonus_amount", 50)} moedas</strong> e seu amigo também ganha <strong className="text-foreground">{getSetting("signup_bonus_amount", 50)} moedas</strong> ao se cadastrar.
                 </p>
               </div>
             </div>
