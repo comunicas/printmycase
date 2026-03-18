@@ -1,37 +1,29 @@
 
 
-## Verificação do Webhook Stripe Live
+## Análise: `ai_generated_images` é conteúdo exclusivo de admin
 
-### O que o código espera
+Ao investigar o código, a tabela `ai_generated_images` é usada **apenas por admins**:
+- A edge function `generate-gallery-image` verifica `has_role(admin)` antes de inserir
+- O componente `AiGenerationsManager` está dentro do painel admin
+- Nenhum usuário comum gera ou visualiza essas imagens
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+Portanto, adicionar `user_id` por usuário não faz sentido neste caso. O problema real é a política RLS `"Anyone can view ai generated images" USING (true)` que expõe todas as gerações publicamente.
 
-### Como verificar (manual no Stripe Dashboard)
+### Plano
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+**1. Migração SQL — Restringir SELECT para admins**
+- Remover a política `"Anyone can view ai generated images"` (SELECT para public com `USING (true)`)
+- A política existente `"Admins can manage ai generated images"` (ALL para authenticated) já cobre SELECT para admins
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+```sql
+DROP POLICY "Anyone can view ai generated images" ON public.ai_generated_images;
+```
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+Uma única migração. Nenhum código frontend precisa mudar — o `AiGenerationsManager` já roda autenticado como admin e a política ALL existente cobre o SELECT.
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+**2. Dismiss do finding de segurança**
+- Marcar `PUBLIC_USER_GENERATED_CONTENT` como resolvido
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
-
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+### Arquivos alterados
+- Nenhum arquivo de código — apenas migração SQL e dismiss do finding
 
