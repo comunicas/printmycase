@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCoins } from "@/hooks/useCoins";
 import { useAuth } from "@/hooks/useAuth";
+import { useCoinSettings } from "@/hooks/useCoinSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
