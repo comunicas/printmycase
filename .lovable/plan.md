@@ -1,31 +1,23 @@
 
 
-## Correção retroativa de bônus duplicados
+## Otimizar imagens ai-showcase (1-5)
 
-### Problema
-Usuários cadastrados enquanto os dois triggers estavam ativos receberam 2x `signup_bonus` de 50 moedas cada (total 100). Precisamos remover uma das transações duplicadas para cada usuário afetado.
+As 5 imagens `ai-showcase-{1-5}-sm.webp` estão em 1024x1024px mas são exibidas em no maximo 176x176px, resultando em ~6MB desperdicados.
 
-### Solução
+### Plano
 
-Uma única query SQL via insert tool (operação de dados, não schema):
+1. Usar um script com `sharp` (ou `magick`/`vipsthumbnail` se disponivel) para redimensionar cada imagem de 1024x1024 para 352x352px (2x para retina) com compressao WebP quality 80
+2. Sobrescrever os arquivos originais em `public/lovable-uploads/`
+3. Verificar o tamanho resultante (esperado: ~15-30KB cada vs ~1MB atual)
 
-```sql
-DELETE FROM coin_transactions
-WHERE id IN (
-  SELECT id FROM (
-    SELECT id,
-           ROW_NUMBER() OVER (PARTITION BY user_id, type ORDER BY created_at) AS rn
-    FROM coin_transactions
-    WHERE type = 'signup_bonus'
-  ) sub
-  WHERE rn > 1
-);
-```
+Arquivos afetados:
+- `public/lovable-uploads/ai-showcase-1-sm.webp`
+- `public/lovable-uploads/ai-showcase-2-sm.webp`
+- `public/lovable-uploads/ai-showcase-3-sm.webp`
+- `public/lovable-uploads/ai-showcase-4-sm.webp`
+- `public/lovable-uploads/ai-showcase-5-sm.webp`
 
-**Lógica**: Para cada `user_id` com tipo `signup_bonus`, mantém apenas a primeira transação (ordenada por `created_at`) e remove as duplicatas.
+Nenhuma alteracao de codigo necessaria — os caminhos permanecem os mesmos.
 
-### Impacto
-- Usuários afetados terão saldo reduzido em 50 moedas
-- Nenhuma alteração de código necessária
-- Operação irreversível — os registros duplicados serão apagados
+**Economia estimada: ~5-6MB no carregamento da landing page.**
 
