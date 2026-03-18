@@ -97,8 +97,8 @@ Deno.serve(async (req) => {
         coin_amount: String(coinAmount),
         type: "coin_purchase",
       },
-      success_url: `${req.headers.get("origin")}/coins?purchased=${coinAmount}`,
-      cancel_url: `${req.headers.get("origin")}/coins`,
+      success_url: `${getSafeOrigin(req)}/coins?purchased=${coinAmount}`,
+      cancel_url: `${getSafeOrigin(req)}/coins`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
