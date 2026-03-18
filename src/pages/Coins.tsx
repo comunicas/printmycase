@@ -44,6 +44,7 @@ const Coins = () => {
   const basePricePerCoin = packages.length > 0 ? packages[0].price_cents / packages[0].coins : 1;
 
   const { profile } = useAuth();
+  const { getSetting } = useCoinSettings();
   const { balance, transactions, loading, refresh } = useCoins();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
