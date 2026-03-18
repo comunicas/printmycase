@@ -30,6 +30,18 @@ const typeLabels: Record<string, { label: string; icon: typeof Gift }> = {
 const HISTORY_PAGE_SIZE = 10;
 
 const Coins = () => {
+  const [packages, setPackages] = useState<CoinPackage[]>([]);
+  const [packagesLoading, setPackagesLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from("coin_packages").select("*").eq("active", true).order("sort_order").then(({ data }) => {
+      setPackages((data as CoinPackage[]) ?? []);
+      setPackagesLoading(false);
+    });
+  }, []);
+
+  const basePricePerCoin = packages.length > 0 ? packages[0].price_cents / packages[0].coins : 1;
+
   const { profile } = useAuth();
   const { balance, transactions, loading, refresh } = useCoins();
   const { toast } = useToast();
