@@ -7,6 +7,23 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const ALLOWED_ORIGINS = [
+  "https://studio.artiscase.com",
+  "https://artiscase.com",
+];
+const DEFAULT_ORIGIN = "https://studio.artiscase.com";
+
+function getSafeOrigin(req: Request): string {
+  const raw = req.headers.get("origin") || req.headers.get("referer") || "";
+  try {
+    const url = new URL(raw);
+    const origin = url.origin;
+    if (ALLOWED_ORIGINS.includes(origin)) return origin;
+    if (origin.endsWith(".lovable.app")) return origin;
+  } catch { /* invalid URL */ }
+  return DEFAULT_ORIGIN;
+}
+
 const COIN_PACKAGES: Record<number, number> = {
   100: 990,
   500: 3990,
@@ -80,8 +97,8 @@ Deno.serve(async (req) => {
         coin_amount: String(coinAmount),
         type: "coin_purchase",
       },
-      success_url: `${req.headers.get("origin")}/coins?purchased=${coinAmount}`,
-      cancel_url: `${req.headers.get("origin")}/coins`,
+      success_url: `${getSafeOrigin(req)}/coins?purchased=${coinAmount}`,
+      cancel_url: `${getSafeOrigin(req)}/coins`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

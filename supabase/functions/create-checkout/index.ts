@@ -6,6 +6,23 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const ALLOWED_ORIGINS = [
+  "https://studio.artiscase.com",
+  "https://artiscase.com",
+];
+const DEFAULT_ORIGIN = "https://studio.artiscase.com";
+
+function getSafeOrigin(req: Request): string {
+  const raw = req.headers.get("origin") || req.headers.get("referer") || "";
+  try {
+    const url = new URL(raw);
+    const origin = url.origin;
+    if (ALLOWED_ORIGINS.includes(origin)) return origin;
+    if (origin.endsWith(".lovable.app")) return origin;
+  } catch { /* invalid URL */ }
+  return DEFAULT_ORIGIN;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -140,7 +157,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const origin = req.headers.get("origin") || req.headers.get("referer") || "https://studio.artiscase.com";
+    const origin = getSafeOrigin(req);
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
     const shippingValue = shipping_cents ? Number(shipping_cents) : 0;
     const itemPriceCents = isCollectionPurchase ? design!.price_cents : product.price_cents;
