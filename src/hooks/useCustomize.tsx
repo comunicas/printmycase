@@ -357,6 +357,17 @@ export function useCustomize(productId: string | undefined) {
       setActiveFilterId(null);
       refreshCoins();
       toast({ title: "Upscale concluído!", description: `Nova resolução: ${data.width}×${data.height}px` });
+      // Check low balance
+      const newBalance = coinBalance - aiUpscaleCost;
+      if (newBalance < Math.min(aiFilterCost, aiUpscaleCost)) {
+        setTimeout(() => {
+          toast({
+            title: "Suas moedas estão acabando! 🪙",
+            description: "Compre mais ou indique amigos para ganhar moedas grátis.",
+            action: <ToastAction altText="Comprar moedas" onClick={() => navigate("/coins")}>Comprar moedas</ToastAction>,
+          });
+        }, 3000);
+      }
     } catch {
       toast({ title: "Erro no upscale", variant: "destructive" });
     } finally {
