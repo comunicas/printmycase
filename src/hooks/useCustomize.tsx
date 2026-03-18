@@ -297,7 +297,16 @@ export function useCustomize(productId: string | undefined) {
       setFilteredImage(resultImage);
       setActiveFilterId(filterId);
       clarityEvent("customize_filter_applied");
-      refreshCoins();
+      await refreshCoins();
+      // Check low balance
+      const newBalance = coinBalance - aiFilterCost;
+      if (newBalance < Math.min(aiFilterCost, aiUpscaleCost)) {
+        toast({
+          title: "Suas moedas estão acabando! 🪙",
+          description: "Compre mais ou indique amigos para ganhar moedas grátis.",
+          action: <ToastAction altText="Comprar moedas" onClick={() => navigate("/coins")}>Comprar moedas</ToastAction>,
+        });
+      }
     } catch {
       toast({ title: "Erro ao aplicar filtro", variant: "destructive" });
     } finally {
