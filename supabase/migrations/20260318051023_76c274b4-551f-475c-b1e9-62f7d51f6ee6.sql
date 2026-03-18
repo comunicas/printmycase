@@ -1,0 +1,1 @@
+DROP POLICY "Anyone can view ai generated images" ON public.ai_generated_images;
