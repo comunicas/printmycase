@@ -1,37 +1,65 @@
 
 
-## Verificação do Webhook Stripe Live
+## Situacao atual
 
-### O que o código espera
+Os pacotes de moedas estao **hardcoded** em dois lugares:
+- `src/pages/Coins.tsx` — array `PACKAGES` com coins, preco, label e badge
+- `supabase/functions/create-coin-checkout/index.ts` — objeto `COIN_PACKAGES` com coins → preco em centavos
 
-O arquivo `supabase/functions/stripe-webhook/index.ts` processa dois eventos:
-1. **`checkout.session.completed`** — atualiza pedido para "analyzing" e credita coins bônus
-2. **`checkout.session.expired`** — cancela o pedido
+Nao existe nenhuma interface admin para editar pacotes. Para alterar precos ou quantidades, seria necessario editar codigo.
 
-### Como verificar (manual no Stripe Dashboard)
+## Plano: Tornar pacotes editaveis via admin
 
-Não é possível listar webhooks programaticamente pelas ferramentas disponíveis. Você precisa verificar no **Stripe Dashboard**:
+**1. Migração SQL — Criar tabela `coin_packages`**
+```sql
+CREATE TABLE public.coin_packages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  coins integer NOT NULL,
+  price_cents integer NOT NULL,
+  badge text, -- ex: "Mais popular", "Melhor valor"
+  sort_order integer NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-1. Acesse: **Developers → Webhooks** (em modo Live, não Test)
-2. Confirme que existe um endpoint apontando para:
-   ```
-   https://gfsbsgwxylvhnwbpcodj.supabase.co/functions/v1/stripe-webhook
-   ```
-3. Confirme que os eventos selecionados incluem:
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-4. Confirme que o **Signing Secret** desse endpoint corresponde ao valor configurado como `STRIPE_WEBHOOK_SECRET`
+ALTER TABLE public.coin_packages ENABLE ROW LEVEL SECURITY;
 
-### Status atual dos segredos
-- `STRIPE_SECRET_KEY` ✅ configurado
-- `STRIPE_WEBHOOK_SECRET` ✅ configurado
+-- Admins gerenciam
+CREATE POLICY "Admins can manage coin packages"
+  ON public.coin_packages FOR ALL TO authenticated
+  USING (has_role(auth.uid(), 'admin'::app_role))
+  WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 
-### Evidência de funcionamento
-Os logs mostram que o webhook **já processou com sucesso** um evento recente:
-> `Credited 30 bonus coins to 8ade2db7-...` (timestamp: poucos minutos atrás)
+-- Qualquer um pode ver pacotes ativos
+CREATE POLICY "Anyone can view active coin packages"
+  ON public.coin_packages FOR SELECT TO public
+  USING (active = true);
 
-Isso confirma que o webhook está recebendo eventos `checkout.session.completed` e processando corretamente.
+-- Seed com os pacotes atuais
+INSERT INTO public.coin_packages (coins, price_cents, badge, sort_order) VALUES
+  (100, 990, NULL, 0),
+  (500, 3990, 'Mais popular', 1),
+  (1500, 9990, NULL, 2),
+  (5000, 24990, 'Melhor valor', 3);
+```
 
-### Conclusão
-O webhook **já está funcionando em produção**. A única verificação pendente é confirmar no Stripe Dashboard que `checkout.session.expired` também está na lista de eventos — mas o fluxo principal de compra está operacional.
+**2. `src/components/admin/CoinPackagesManager.tsx` — CRUD de pacotes**
+- Listar pacotes com campos: moedas, preco (centavos), badge, ordem, ativo
+- Adicionar/editar/excluir pacotes
+- Integrar como sub-aba dentro da aba "Moedas" do admin
+
+**3. `src/pages/Coins.tsx` — Carregar pacotes do banco**
+- Substituir array `PACKAGES` hardcoded por query a `coin_packages` ordenada por `sort_order`
+- Manter mesma lógica de calculo de desconto e renderizacao
+
+**4. `supabase/functions/create-coin-checkout/index.ts` — Validar contra o banco**
+- Substituir `COIN_PACKAGES` hardcoded por query a `coin_packages` para buscar `price_cents` pelo `coins` recebido
+- Rejeitar se pacote nao existir ou estiver inativo
+
+### Arquivos alterados
+- Migracao SQL (nova tabela)
+- `src/components/admin/CoinPackagesManager.tsx` (novo)
+- `src/components/admin/CoinsManager.tsx` (adicionar sub-aba de pacotes)
+- `src/pages/Coins.tsx` (query dinamica)
+- `supabase/functions/create-coin-checkout/index.ts` (validacao dinamica)
 
