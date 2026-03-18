@@ -18,7 +18,7 @@ import AiCoinsSection from "@/components/AiCoinsSection";
 import WhyArtisCase from "@/components/WhyArtisCase";
 import FaqSection from "@/components/FaqSection";
 import PaymentBadges from "@/components/PaymentBadges";
-import logoArtisCase from "@/assets/logo-artiscase.png";
+import logoArtisCase from "@/assets/logo-artiscase.webp";
 
 const testimonials = [
 { name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
@@ -286,7 +286,7 @@ const Landing = () => {
         <footer className="border-t bg-card py-10 px-5">
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
             <div className="space-y-3">
-              <img src={logoArtisCase} alt="ArtisCase" className="h-8 w-auto" />
+              <img src={logoArtisCase} alt="ArtisCase" className="h-8 w-auto" width={149} height={32} loading="lazy" />
               <p className="text-muted-foreground leading-relaxed">
                 Capas personalizadas com tecnologia de impressão profissional. Qualidade premium direto na sua porta.
               </p>

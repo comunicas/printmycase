@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ScrollReveal from "@/components/ScrollReveal";
-import logoEpson from "@/assets/logo-epson.png";
-import logoPrecisionCore from "@/assets/logo-precisioncore.png";
+import logoEpson from "@/assets/logo-epson.webp";
+import logoPrecisionCore from "@/assets/logo-precisioncore.webp";
 import parallaxBg from "@/assets/printmycase-hero-optimized.webp";
 
 const features = [
