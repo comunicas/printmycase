@@ -90,7 +90,20 @@ const Admin = () => {
           </TabsContent>
           <TabsContent value="requests"><ModelRequestsManager /></TabsContent>
           <TabsContent value="ai-filters"><AiFiltersManager /></TabsContent>
-          <TabsContent value="coins"><CoinsManager /></TabsContent>
+          <TabsContent value="coins">
+            <Tabs defaultValue="coins-transactions" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="coins-transactions" className="gap-1.5">
+                  <Coins className="w-4 h-4" /> Transações
+                </TabsTrigger>
+                <TabsTrigger value="coins-packages" className="gap-1.5">
+                  <Settings className="w-4 h-4" /> Pacotes
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="coins-transactions"><CoinsManager /></TabsContent>
+              <TabsContent value="coins-packages"><CoinPackagesManager /></TabsContent>
+            </Tabs>
+          </TabsContent>
           <TabsContent value="gallery">
             <Tabs defaultValue="gallery-illustrations" className="w-full">
               <TabsList className="mb-4">
