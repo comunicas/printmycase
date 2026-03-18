@@ -8,27 +8,21 @@ interface ContinueBarProps {
   onContinue: () => void;
   disabled: boolean;
   isRendering: boolean;
-  productName?: string;
-  priceCents?: number;
 }
 
-const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, productName, priceCents }: ContinueBarProps) => {
-  const price = priceCents != null ? formatPrice(priceCents / 100) : null;
-
+const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering }: ContinueBarProps) => {
   const resetButton = isModified && (
     <Button variant="ghost" size="icon" onClick={onReset} className="shrink-0 text-muted-foreground h-10 w-10">
       <RotateCcw className="w-4 h-4" />
     </Button>
   );
 
-  const renderButtonContent = (showName: boolean) =>
+  const renderButtonContent = () =>
     isRendering ? (
       <><Loader2 className="w-4 h-4 animate-spin" /> Gerando preview...</>
     ) : (
       <>
         Finalizar
-        {showName && productName && <span className="opacity-70">· {productName}</span>}
-        {price && <span className="opacity-70">· {price}</span>}
         <ArrowRight className="w-4 h-4" />
       </>
     );
