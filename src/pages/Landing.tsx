@@ -286,7 +286,7 @@ const Landing = () => {
         <footer className="border-t bg-card py-10 px-5">
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
             <div className="space-y-3">
-              <img src={logoArtisCase} alt="ArtisCase" className="h-8 w-auto" />
+              <img src={logoArtisCase} alt="ArtisCase" className="h-8 w-auto" width={149} height={32} loading="lazy" />
               <p className="text-muted-foreground leading-relaxed">
                 Capas personalizadas com tecnologia de impressão profissional. Qualidade premium direto na sua porta.
               </p>
