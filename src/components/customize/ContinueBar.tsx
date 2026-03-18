@@ -33,7 +33,7 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering }:
       <div className="hidden lg:flex items-center gap-2 w-full max-w-sm mx-auto py-3">
         {resetButton}
         <Button className="flex-1 gap-1.5" onClick={onContinue} disabled={disabled}>
-          {renderButtonContent(true)}
+          {renderButtonContent()}
         </Button>
       </div>
 
@@ -43,7 +43,7 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering }:
           {resetButton}
           <div className="flex-1" />
           <Button className="gap-1.5 shrink-0" onClick={onContinue} disabled={disabled}>
-            {renderButtonContent(false)}
+            {renderButtonContent()}
           </Button>
         </div>
       </div>
