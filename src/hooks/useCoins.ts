@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+const COINS_UPDATED_EVENT = "coins-updated";
+
 export interface CoinTransaction {
   id: string;
   user_id: string;
@@ -39,7 +41,20 @@ export function useCoins() {
     setLoading(true);
     await Promise.all([fetchBalance(), fetchTransactions()]);
     setLoading(false);
+    // Notify all other hook instances
+    window.dispatchEvent(new Event(COINS_UPDATED_EVENT));
   }, [fetchBalance, fetchTransactions]);
+
+  // Listen for updates from other instances
+  useEffect(() => {
+    if (!user) return;
+    const handler = async () => {
+      const { data, error } = await supabase.rpc("get_coin_balance", { _user_id: user.id });
+      if (!error && data != null) setBalance(data as number);
+    };
+    window.addEventListener(COINS_UPDATED_EVENT, handler);
+    return () => window.removeEventListener(COINS_UPDATED_EVENT, handler);
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) refresh();
