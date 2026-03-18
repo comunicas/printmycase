@@ -128,6 +128,36 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_packages: {
+        Row: {
+          active: boolean
+          badge: string | null
+          coins: number
+          created_at: string
+          id: string
+          price_cents: number
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          badge?: string | null
+          coins: number
+          created_at?: string
+          id?: string
+          price_cents: number
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          badge?: string | null
+          coins?: number
+          created_at?: string
+          id?: string
+          price_cents?: number
+          sort_order?: number
+        }
+        Relationships: []
+      }
       coin_settings: {
         Row: {
           description: string | null

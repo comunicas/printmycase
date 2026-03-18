@@ -9,14 +9,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const PACKAGES = [
-  { coins: 100, priceCents: 990, label: "100", price: "R$ 9,90" },
-  { coins: 500, priceCents: 3990, label: "500", price: "R$ 39,90", badge: "Mais popular" },
-  { coins: 1500, priceCents: 9990, label: "1.500", price: "R$ 99,90" },
-  { coins: 5000, priceCents: 24990, label: "5.000", price: "R$ 249,90", badge: "Melhor valor" },
-];
-
-const basePricePerCoin = PACKAGES[0].priceCents / PACKAGES[0].coins;
+interface CoinPackage {
+  id: string;
+  coins: number;
+  price_cents: number;
+  badge: string | null;
+  sort_order: number;
+  active: boolean;
+}
 
 const typeLabels: Record<string, { label: string; icon: typeof Gift }> = {
   signup_bonus: { label: "Bônus de cadastro", icon: Gift },
@@ -30,6 +30,18 @@ const typeLabels: Record<string, { label: string; icon: typeof Gift }> = {
 const HISTORY_PAGE_SIZE = 10;
 
 const Coins = () => {
+  const [packages, setPackages] = useState<CoinPackage[]>([]);
+  const [packagesLoading, setPackagesLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from("coin_packages").select("*").eq("active", true).order("sort_order").then(({ data }) => {
+      setPackages((data as CoinPackage[]) ?? []);
+      setPackagesLoading(false);
+    });
+  }, []);
+
+  const basePricePerCoin = packages.length > 0 ? packages[0].price_cents / packages[0].coins : 1;
+
   const { profile } = useAuth();
   const { balance, transactions, loading, refresh } = useCoins();
   const { toast } = useToast();
@@ -100,15 +112,20 @@ const Coins = () => {
         {/* ── Pacotes ── */}
         <div className="space-y-3">
           <h2 className="font-semibold">Comprar moedas</h2>
+          {packagesLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : (
           <div className="grid grid-cols-2 gap-3">
-            {PACKAGES.map((pkg) => {
-              const perCoin = pkg.priceCents / pkg.coins;
+            {packages.map((pkg) => {
+              const perCoin = pkg.price_cents / pkg.coins;
               const discount = Math.round((1 - perCoin / basePricePerCoin) * 100);
               const isPopular = pkg.badge === "Mais popular";
+              const label = pkg.coins >= 1000 ? `${(pkg.coins / 1000).toFixed(pkg.coins % 1000 === 0 ? 0 : 1).replace(".", ",")}k` : String(pkg.coins);
+              const priceFormatted = `R$ ${(pkg.price_cents / 100).toFixed(2).replace(".", ",")}`;
 
               return (
                 <button
-                  key={pkg.coins}
+                  key={pkg.id}
                   onClick={() => handleBuyCoins(pkg.coins)}
                   disabled={buyingPackage !== null}
                   className={`relative rounded-xl border p-4 text-left transition-all hover:shadow-md disabled:opacity-60 ${
@@ -131,8 +148,8 @@ const Coins = () => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-xl font-bold">🪙 {pkg.label}</p>
-                      <p className="text-base font-semibold text-foreground mt-1">{pkg.price}</p>
+                      <p className="text-xl font-bold">🪙 {label}</p>
+                      <p className="text-base font-semibold text-foreground mt-1">{priceFormatted}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         R$ {(perCoin / 100).toFixed(2).replace(".", ",")}/moeda
                         {discount > 0 && (
@@ -145,6 +162,7 @@ const Coins = () => {
               );
             })}
           </div>
+          )}
         </div>
 
         {/* ── Referral ── */}

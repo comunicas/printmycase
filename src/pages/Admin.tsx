@@ -1,4 +1,4 @@
-import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette } from "lucide-react";
+import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette, Settings } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductsManager from "@/components/admin/ProductsManager";
@@ -12,6 +12,7 @@ import KbArticlesManager from "@/components/admin/KbArticlesManager";
 import FaqManager from "@/components/admin/FaqManager";
 import GalleryImagesManager from "@/components/admin/GalleryImagesManager";
 import AiGenerationsManager from "@/components/admin/AiGenerationsManager";
+import CoinPackagesManager from "@/components/admin/CoinPackagesManager";
 import CollectionsManager from "@/components/admin/CollectionsManager";
 import CollectionDesignsManager from "@/components/admin/CollectionDesignsManager";
 
@@ -89,7 +90,20 @@ const Admin = () => {
           </TabsContent>
           <TabsContent value="requests"><ModelRequestsManager /></TabsContent>
           <TabsContent value="ai-filters"><AiFiltersManager /></TabsContent>
-          <TabsContent value="coins"><CoinsManager /></TabsContent>
+          <TabsContent value="coins">
+            <Tabs defaultValue="coins-transactions" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="coins-transactions" className="gap-1.5">
+                  <Coins className="w-4 h-4" /> Transações
+                </TabsTrigger>
+                <TabsTrigger value="coins-packages" className="gap-1.5">
+                  <Settings className="w-4 h-4" /> Pacotes
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="coins-transactions"><CoinsManager /></TabsContent>
+              <TabsContent value="coins-packages"><CoinPackagesManager /></TabsContent>
+            </Tabs>
+          </TabsContent>
           <TabsContent value="gallery">
             <Tabs defaultValue="gallery-illustrations" className="w-full">
               <TabsList className="mb-4">
