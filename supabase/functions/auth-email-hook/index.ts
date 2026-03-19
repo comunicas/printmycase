@@ -16,12 +16,12 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirme sua conta ArtisCase',
-  invite: 'Convite ArtisCase',
-  magiclink: 'Acesse sua conta ArtisCase',
-  recovery: 'Redefinir senha — ArtisCase',
-  email_change: 'Confirme a troca de email — ArtisCase',
-  reauthentication: 'Código de verificação — ArtisCase',
+  signup: 'Confirme sua conta PrintMyCase',
+  invite: 'Convite PrintMyCase',
+  magiclink: 'Acesse sua conta PrintMyCase',
+  recovery: 'Redefinir senha — PrintMyCase',
+  email_change: 'Confirme a troca de email — PrintMyCase',
+  reauthentication: 'Código de verificação — PrintMyCase',
 }
 
 // Template mapping
