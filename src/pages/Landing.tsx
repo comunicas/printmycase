@@ -18,7 +18,7 @@ import AiCoinsSection from "@/components/AiCoinsSection";
 import WhyPrintMyCase from "@/components/WhyPrintMyCase";
 import FaqSection from "@/components/FaqSection";
 import PaymentBadges from "@/components/PaymentBadges";
-import logoArtisCase from "@/assets/logo-artiscase.webp";
+import logoPrintMyCase from "@/assets/logo-printmycase.png";
 
 const testimonials = [
 { name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
