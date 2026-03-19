@@ -11,7 +11,8 @@
 - ✅ Social images: og:image e twitter:image configurados no index.html
 - ✅ Código: todas as referências "ArtisCase"/"ArtisCoins" removidas
 - ✅ ARCHITECTURE.md atualizado para PrintMyCase
+- ✅ Upload do logo `logo-printmycase.png` no bucket `email-assets`
 
 ### Pendências
 
-- **Upload do logo**: `logo-printmycase.png` precisa ser carregado no bucket `email-assets` para os emails transacionais
+Nenhuma — migração 100% concluída.
