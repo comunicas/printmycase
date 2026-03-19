@@ -182,7 +182,7 @@ const Landing = () => {
           <AiCoinsSection />
 
           {/* Benefits + Print Tech */}
-          <WhyArtisCase />
+          <WhyPrintMyCase />
 
           {/* Collections */}
           {!collectionsLoading && collections.length > 0 &&
