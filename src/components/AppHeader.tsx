@@ -45,7 +45,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
           <Link to="/" className="flex-shrink-0">
             <img
               alt="PrintMyCase"
-              className="h-10 sm:h-12 w-auto transition-all duration-300"
+              className="h-14 sm:h-16 w-auto transition-all duration-300"
               src="/lovable-uploads/logo-printmycase.png"
               fetchPriority="high"
             />
