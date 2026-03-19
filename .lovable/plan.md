@@ -1,18 +1,23 @@
 
-## Migração PrintMyCase — Status Final
 
-### Fases concluídas
+## Conceder privilégios admin para rafael@comunicas.com.br
 
-- ✅ Fase 1: `STRIPE_SECRET_KEY` adicionado aos secrets
-- ✅ Fase 2: Edge Functions atualizadas (domínio, marca, origins) e redeployadas
-- ✅ Fase 3: 6 email templates atualizados (logo URL, marca)
-- ✅ Fase 4: Frontend atualizado (SEO, marca, contato, componentes)
-- ✅ Fase 5: Domínio `studio.printmycase.com.br` configurado
-- ✅ Social images: og:image e twitter:image configurados no index.html
-- ✅ Código: todas as referências "ArtisCase"/"ArtisCoins" removidas
-- ✅ ARCHITECTURE.md atualizado para PrintMyCase
-- ✅ Upload do logo `logo-printmycase.png` no bucket `email-assets`
+O usuário foi encontrado no banco:
+- **Email**: rafael@comunicas.com.br
+- **ID**: `ea5c41e2-c588-4ca5-8c8d-bd24ed014bf2`
+- **Roles atuais**: nenhuma
 
-### Pendências
+### Ação
 
-Nenhuma — migração 100% concluída.
+Inserir um registro na tabela `user_roles` com role `admin` para este usuário usando uma migration SQL:
+
+```sql
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('ea5c41e2-c588-4ca5-8c8d-bd24ed014bf2', 'admin')
+ON CONFLICT (user_id, role) DO NOTHING;
+```
+
+Após isso, o usuário terá acesso ao painel `/admin` e a todas as operações protegidas por `has_role(uid, 'admin')`.
+
+Nenhuma alteração de código necessária.
+
