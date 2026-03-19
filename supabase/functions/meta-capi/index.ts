@@ -4,7 +4,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PIXEL_ID = "1617415106170829";
+const PIXEL_ID = "772617998947470";
 const API_VERSION = "v21.0";
 
 async function sha256Hash(value: string): Promise<string> {
