@@ -161,16 +161,31 @@ const CoinsManager = () => {
             {/* Bônus */}
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Bônus</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {settings.filter((s) => s.key.includes("bonus")).map((s) => (
-                  <div key={s.key} className="space-y-1">
-                    <label className="text-xs text-muted-foreground">{settingLabels[s.key] || s.key}</label>
-                    <Input
-                      type="number"
-                      value={editedSettings[s.key] ?? s.value}
-                      onChange={(e) => setEditedSettings((prev) => ({ ...prev, [s.key]: parseInt(e.target.value) || 0 }))}
-                      className="h-8 text-sm"
-                    />
+              <div className="space-y-2">
+                {[
+                  { amount: "purchase_bonus_amount", days: "purchase_bonus_days", label: "Compra" },
+                  { amount: "referral_bonus_amount", days: "referral_bonus_days", label: "Indicação" },
+                  { amount: "signup_bonus_amount", days: "signup_bonus_days", label: "Cadastro" },
+                ].map(({ amount, days, label }) => (
+                  <div key={amount} className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Bônus {label} (moedas)</label>
+                      <Input
+                        type="number"
+                        value={editedSettings[amount] ?? ""}
+                        onChange={(e) => setEditedSettings((prev) => ({ ...prev, [amount]: parseInt(e.target.value) || 0 }))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Validade (dias)</label>
+                      <Input
+                        type="number"
+                        value={editedSettings[days] ?? ""}
+                        onChange={(e) => setEditedSettings((prev) => ({ ...prev, [days]: parseInt(e.target.value) || 0 }))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
