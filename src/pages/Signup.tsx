@@ -69,7 +69,7 @@ const Signup = () => {
         <AppHeader />
         <main className="flex-1 flex items-center justify-center p-5">
           <div className="w-full max-w-sm text-center space-y-4">
-            <img src={logoPrintMyCase} alt="PrintMyCase" className="h-14 mx-auto mb-2" />
+            <img src={logoPrintMyCase} alt="PrintMyCase" className="h-16 mx-auto mb-2" />
             <h1 className="text-2xl font-bold tracking-tight">Verifique seu email</h1>
             <p className="text-sm text-muted-foreground">
               Enviamos um link de confirmação para <strong>{email}</strong>. Clique no link para ativar sua conta.
