@@ -1,37 +1,18 @@
 
+## Migração PrintMyCase — Status Final
 
-## Plano: Remover custo geração IA e reorganizar layout de bônus
+### Fases concluídas
 
-### Alterações
+- ✅ Fase 1: `STRIPE_SECRET_KEY` adicionado aos secrets
+- ✅ Fase 2: Edge Functions atualizadas (domínio, marca, origins) e redeployadas
+- ✅ Fase 3: 6 email templates atualizados (logo URL, marca)
+- ✅ Fase 4: Frontend atualizado (SEO, marca, contato, componentes)
+- ✅ Fase 5: Domínio `studio.printmycase.com.br` configurado
+- ✅ Social images: og:image e twitter:image configurados no index.html
+- ✅ Código: todas as referências "ArtisCase"/"ArtisCoins" removidas
+- ✅ ARCHITECTURE.md atualizado para PrintMyCase
+- ✅ Upload do logo `logo-printmycase.png` no bucket `email-assets`
 
-#### 1. Banco de dados
-Remover o registro `ai_generation_cost` da tabela `coin_settings`:
-```sql
-DELETE FROM public.coin_settings WHERE key = 'ai_generation_cost';
-```
+### Pendências
 
-#### 2. `src/components/admin/CoinsManager.tsx`
-
-**a) Remover label** `ai_generation_cost` do mapa `settingLabels` (linha 43).
-
-**b) Reorganizar seção Bônus** — substituir o grid genérico que lista todos os settings com "bonus" por 3 pares explícitos em linha (amount + days lado a lado):
-
-```text
-┌─────────────────────┬──────────────────────┐
-│ Bônus compra (moedas)│ Validade (dias)      │
-├─────────────────────┼──────────────────────┤
-│ Bônus indicação     │ Validade (dias)       │
-├─────────────────────┼──────────────────────┤
-│ Bônus cadastro      │ Validade (dias)       │
-└─────────────────────┴──────────────────────┘
-```
-
-Cada linha será um `grid grid-cols-2 gap-3` com o par amount/days agrupado, em vez do grid 3-colunas atual que mistura amounts e days sem ordem lógica.
-
-#### Arquivos alterados
-
-| Arquivo | Alteração |
-|---------|-----------|
-| Banco de dados | DELETE `ai_generation_cost` |
-| `src/components/admin/CoinsManager.tsx` | Remover label + reorganizar bônus em pares |
-
+Nenhuma — migração 100% concluída.
