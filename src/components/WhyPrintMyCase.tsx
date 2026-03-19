@@ -25,7 +25,7 @@ const features = [
   },
 ];
 
-const WhyArtisCase = () => {
+const WhyPrintMyCase = () => {
   return (
     <section
       id="beneficios"
