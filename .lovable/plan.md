@@ -1,20 +1,4 @@
 
-
-## Plano: Atualizar `.lovable/plan.md` com status final
-
-O arquivo está desatualizado. Vou atualizá-lo refletindo:
-- Domínio correto: `studio.printmycase.com.br` (já configurado ✅)
-- Social images já configuradas ✅
-- Referências ArtisCase/ArtisCoins removidas do código ✅
-- ARCHITECTURE.md atualizado ✅
-- Pendência restante: upload do logo no bucket `email-assets`
-
-### Arquivo alterado
-- `.lovable/plan.md` — reescrita completa com checklist atualizado
-
-### Conteúdo proposto
-
-```markdown
 ## Migração PrintMyCase — Status Final
 
 ### Fases concluídas
@@ -31,5 +15,3 @@ O arquivo está desatualizado. Vou atualizá-lo refletindo:
 ### Pendências
 
 - **Upload do logo**: `logo-printmycase.png` precisa ser carregado no bucket `email-assets` para os emails transacionais
-```
-
