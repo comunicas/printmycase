@@ -65,7 +65,7 @@ function buildEmailHtml(params: {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
     <!-- Logo -->
     <tr><td align="center" style="padding-bottom:32px;">
-      <img src="${logoUrl}" alt="ArtisCase" height="40" style="height:40px;width:auto;" />
+      <img src="${logoUrl}" alt="PrintMyCase" height="40" style="height:40px;width:auto;" />
     </td></tr>
     <!-- Greeting -->
     <tr><td>
