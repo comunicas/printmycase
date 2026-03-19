@@ -78,11 +78,19 @@ Deno.serve(async (req) => {
     if (user_data?.ph) {
       hashedUserData.ph = await sha256Hash(user_data.ph);
     }
+    // client_ip_address: prefer provided value, otherwise extract from request headers
     if (user_data?.client_ip_address) {
       hashedUserData.client_ip_address = user_data.client_ip_address;
+    } else {
+      const forwarded = req.headers.get("x-forwarded-for");
+      const ip = forwarded ? forwarded.split(",")[0].trim() : req.headers.get("x-real-ip") || "0.0.0.0";
+      hashedUserData.client_ip_address = ip;
     }
+    // client_user_agent: prefer provided value, otherwise extract from request
     if (user_data?.client_user_agent) {
       hashedUserData.client_user_agent = user_data.client_user_agent;
+    } else {
+      hashedUserData.client_user_agent = req.headers.get("user-agent") || "unknown";
     }
 
     const payload = {
