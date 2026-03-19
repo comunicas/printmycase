@@ -89,7 +89,7 @@ const Landing = () => {
                 <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">personalizada</span>{" "}
                 e receba casa.
               </h1>
-              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Selecione seu modelo, envie sua foto ou arte e receba em casa uma case de policarbonato exclusiva com impressão premium.</p>
+              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>  Busque o modelo do smartphone, envie sua foto e pronto!  </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={fadeIn(300)}>
                 <Button size="lg" className="gap-2 text-base bg-orange-500 hover:bg-orange-600 text-white glow-orange" onClick={() => navigate("/catalog")}>
@@ -286,7 +286,7 @@ const Landing = () => {
         <footer className="border-t bg-card py-10 px-5">
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
             <div className="space-y-3">
-              <img src={logoPrintMyCase} alt="PrintMyCase" className="h-16 w-auto" loading="lazy" />
+              <img src={logoPrintMyCase} alt="PrintMyCase" className="h-12 w-auto" loading="lazy" />
               <p className="text-muted-foreground leading-relaxed">
                 Capas personalizadas com tecnologia de impressão profissional. Qualidade premium direto na sua porta.
               </p>
