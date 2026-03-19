@@ -1,4 +1,4 @@
-# ArtisCase — Documentação Estrutural
+# PrintMyCase — Documentação Estrutural
 
 ## Visão Geral
 
