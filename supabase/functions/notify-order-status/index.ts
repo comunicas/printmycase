@@ -94,7 +94,7 @@ function buildEmailHtml(params: {
     </td></tr>
     <!-- Footer -->
     <tr><td align="center" style="padding-top:24px;border-top:1px solid #eee;">
-      <p style="margin:0;font-size:12px;color:#aaa;">ArtisCase — Capas personalizadas</p>
+      <p style="margin:0;font-size:12px;color:#aaa;">PrintMyCase — Capas personalizadas</p>
     </td></tr>
   </table>
 </td></tr>
