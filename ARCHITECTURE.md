@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-**ArtisCase** é uma plataforma de e-commerce para capas de celular personalizadas. O usuário escolhe um modelo, envia uma foto, ajusta posição/filtros e finaliza o pedido com pagamento via Stripe. A aplicação possui backend completo com autenticação, banco de dados, storage e edge functions.
+**PrintMyCase** é uma plataforma de e-commerce para capas de celular personalizadas. O usuário escolhe um modelo, envia uma foto, ajusta posição/filtros e finaliza o pedido com pagamento via Stripe. A aplicação possui backend completo com autenticação, banco de dados, storage e edge functions.
 
 ## Stack Tecnológica
 
