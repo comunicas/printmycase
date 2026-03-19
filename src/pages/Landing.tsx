@@ -33,7 +33,7 @@ const stepColors = [
 
 const steps = [
 { icon: Smartphone, title: "Encontre seu celular no catálogo", desc: "Selecione o modelo do seu celular" },
-{ icon: Upload, title: "Personalize com sua foto ou IA", desc: "Faça upload e aplique filtros artísticos com ArtisCoins" },
+{ icon: Upload, title: "Personalize com sua foto ou IA", desc: "Faça upload e aplique filtros artísticos com moedas" },
 { icon: Package, title: "Receba sua Case em casa", desc: "Produção em 48h e envio rápido" }];
 
 const fadeIn = (delayMs: number): React.CSSProperties => ({
