@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         {
           price_data: {
             currency: "brl",
-            product_data: { name: `${pkg.coins} Moedas ArtisCase` },
+            product_data: { name: `${pkg.coins} Moedas PrintMyCase` },
             unit_amount: pkg.price_cents,
           },
           quantity: 1,

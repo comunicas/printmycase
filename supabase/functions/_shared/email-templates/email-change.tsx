@@ -30,13 +30,13 @@ export const EmailChangeEmail = ({
 }: EmailChangeEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirme a troca de email — ArtisCase</Preview>
+    <Preview>Confirme a troca de email — PrintMyCase</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={logoUrl} alt="ArtisCase" width="140" height="auto" style={logo} />
+        <Img src={logoUrl} alt="PrintMyCase" width="140" height="auto" style={logo} />
         <Heading style={h1}>Confirme a troca de email</Heading>
         <Text style={text}>
-          Você solicitou a troca do email da sua conta ArtisCase de{' '}
+          Você solicitou a troca do email da sua conta PrintMyCase de{' '}
           <Link href={`mailto:${email}`} style={link}>{email}</Link>{' '}
           para{' '}
           <Link href={`mailto:${newEmail}`} style={link}>{newEmail}</Link>.
@@ -50,7 +50,7 @@ export const EmailChangeEmail = ({
         <Text style={footer}>
           Se você não solicitou esta troca, proteja sua conta imediatamente.
         </Text>
-        <Text style={brand}>ArtisCase — Cases personalizadas</Text>
+        <Text style={brand}>PrintMyCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>
@@ -58,7 +58,7 @@ export const EmailChangeEmail = ({
 
 export default EmailChangeEmail
 
-const logoUrl = 'https://gfsbsgwxylvhnwbpcodj.supabase.co/storage/v1/object/public/email-assets/logo-artiscase.png'
+const logoUrl = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
 const container = { padding: '40px 25px', maxWidth: '520px', margin: '0 auto' }
 const logo = { margin: '0 auto 32px', display: 'block' as const }

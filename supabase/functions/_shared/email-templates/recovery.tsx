@@ -25,13 +25,13 @@ export const RecoveryEmail = ({
 }: RecoveryEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Redefinir senha — ArtisCase</Preview>
+    <Preview>Redefinir senha — PrintMyCase</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={logoUrl} alt="ArtisCase" width="140" height="auto" style={logo} />
+        <Img src={logoUrl} alt="PrintMyCase" width="140" height="auto" style={logo} />
         <Heading style={h1}>Redefinir senha</Heading>
         <Text style={text}>
-          Recebemos um pedido para redefinir sua senha na ArtisCase. Clique no botão abaixo para criar uma nova.
+          Recebemos um pedido para redefinir sua senha na PrintMyCase. Clique no botão abaixo para criar uma nova.
         </Text>
         <Button style={button} href={confirmationUrl}>
           Criar Nova Senha
@@ -39,7 +39,7 @@ export const RecoveryEmail = ({
         <Text style={footer}>
           Se você não solicitou a redefinição de senha, pode ignorar este email. Sua senha permanecerá a mesma.
         </Text>
-        <Text style={brand}>ArtisCase — Cases personalizadas</Text>
+        <Text style={brand}>PrintMyCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>
@@ -47,7 +47,7 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const logoUrl = 'https://gfsbsgwxylvhnwbpcodj.supabase.co/storage/v1/object/public/email-assets/logo-artiscase.png'
+const logoUrl = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
 const container = { padding: '40px 25px', maxWidth: '520px', margin: '0 auto' }
 const logo = { margin: '0 auto 32px', display: 'block' as const }

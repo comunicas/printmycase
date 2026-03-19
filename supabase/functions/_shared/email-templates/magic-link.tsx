@@ -25,13 +25,13 @@ export const MagicLinkEmail = ({
 }: MagicLinkEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Acesse sua conta ArtisCase</Preview>
+    <Preview>Acesse sua conta PrintMyCase</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={logoUrl} alt="ArtisCase" width="140" height="auto" style={logo} />
+        <Img src={logoUrl} alt="PrintMyCase" width="140" height="auto" style={logo} />
         <Heading style={h1}>Acesse sua conta</Heading>
         <Text style={text}>
-          Clique no botão abaixo para entrar na sua conta ArtisCase. Este link expira em breve.
+          Clique no botão abaixo para entrar na sua conta PrintMyCase. Este link expira em breve.
         </Text>
         <Button style={button} href={confirmationUrl}>
           Entrar na Conta
@@ -39,7 +39,7 @@ export const MagicLinkEmail = ({
         <Text style={footer}>
           Se você não solicitou este link, pode ignorar este email.
         </Text>
-        <Text style={brand}>ArtisCase — Cases personalizadas</Text>
+        <Text style={brand}>PrintMyCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>
@@ -47,7 +47,7 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-const logoUrl = 'https://gfsbsgwxylvhnwbpcodj.supabase.co/storage/v1/object/public/email-assets/logo-artiscase.png'
+const logoUrl = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
 const container = { padding: '40px 25px', maxWidth: '520px', margin: '0 auto' }
 const logo = { margin: '0 auto 32px', display: 'block' as const }

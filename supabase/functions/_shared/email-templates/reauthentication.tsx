@@ -20,17 +20,17 @@ interface ReauthenticationEmailProps {
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Código de verificação — ArtisCase</Preview>
+    <Preview>Código de verificação — PrintMyCase</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={logoUrl} alt="ArtisCase" width="140" height="auto" style={logo} />
+        <Img src={logoUrl} alt="PrintMyCase" width="140" height="auto" style={logo} />
         <Heading style={h1}>Código de verificação</Heading>
         <Text style={text}>Use o código abaixo para confirmar sua identidade:</Text>
         <Text style={codeStyle}>{token}</Text>
         <Text style={footer}>
           Este código expira em breve. Se você não solicitou, pode ignorar este email.
         </Text>
-        <Text style={brand}>ArtisCase — Cases personalizadas</Text>
+        <Text style={brand}>PrintMyCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>
@@ -38,7 +38,7 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
 
 export default ReauthenticationEmail
 
-const logoUrl = 'https://gfsbsgwxylvhnwbpcodj.supabase.co/storage/v1/object/public/email-assets/logo-artiscase.png'
+const logoUrl = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
 const container = { padding: '40px 25px', maxWidth: '520px', margin: '0 auto' }
 const logo = { margin: '0 auto 32px', display: 'block' as const }

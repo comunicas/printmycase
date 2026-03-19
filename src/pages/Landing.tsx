@@ -309,9 +309,9 @@ const Landing = () => {
                 Dúvidas ou sugestões? Entre em contato:
               </p>
               <a
-                href="mailto:sac@artiscase.com"
+                href="mailto:sac@printmycase.com.br"
                 className="inline-block text-primary hover:text-primary/80 font-medium transition-colors">
-                sac@artiscase.com
+                sac@printmycase.com.br
               </a>
             </div>
           </div>

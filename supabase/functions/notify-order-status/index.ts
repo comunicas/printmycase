@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
     const appUrl = Deno.env.get("APP_URL") || "https://printmycase.com.br";
 
     // Logo from public email-assets bucket
-    const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/email-assets/logo-artiscase.png`;
+    const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/email-assets/logo-printmycase.png`;
 
     const html = buildEmailHtml({
       userName,
