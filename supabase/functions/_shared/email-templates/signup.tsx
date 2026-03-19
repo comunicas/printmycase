@@ -30,15 +30,15 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirme sua conta ArtisCase</Preview>
+    <Preview>Confirme sua conta PrintMyCase</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={logoUrl} alt="ArtisCase" width="140" height="auto" style={logo} />
+        <Img src={logoUrl} alt="PrintMyCase" width="140" height="auto" style={logo} />
         <Heading style={h1}>Olá! 👋</Heading>
         <Text style={text}>
           Bem-vindo à{' '}
           <Link href={siteUrl} style={link}>
-            <strong>ArtisCase</strong>
+            <strong>PrintMyCase</strong>
           </Link>
           ! Estamos felizes em ter você por aqui.
         </Text>
@@ -53,9 +53,9 @@ export const SignupEmail = ({
           Confirmar Email
         </Button>
         <Text style={footer}>
-          Se você não criou uma conta na ArtisCase, pode ignorar este email.
+          Se você não criou uma conta na PrintMyCase, pode ignorar este email.
         </Text>
-        <Text style={brand}>ArtisCase — Cases personalizadas</Text>
+        <Text style={brand}>PrintMyCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>
@@ -63,7 +63,7 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const logoUrl = 'https://gfsbsgwxylvhnwbpcodj.supabase.co/storage/v1/object/public/email-assets/logo-artiscase.png'
+const logoUrl = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
 const container = { padding: '40px 25px', maxWidth: '520px', margin: '0 auto' }
 const logo = { margin: '0 auto 32px', display: 'block' as const }

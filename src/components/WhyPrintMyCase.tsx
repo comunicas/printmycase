@@ -25,7 +25,7 @@ const features = [
   },
 ];
 
-const WhyArtisCase = () => {
+const WhyPrintMyCase = () => {
   return (
     <section
       id="beneficios"
@@ -75,4 +75,4 @@ const WhyArtisCase = () => {
   );
 };
 
-export default WhyArtisCase;
+export default WhyPrintMyCase;

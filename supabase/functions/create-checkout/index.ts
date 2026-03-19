@@ -7,10 +7,9 @@ const corsHeaders = {
 };
 
 const ALLOWED_ORIGINS = [
-  "https://studio.artiscase.com",
-  "https://artiscase.com",
+  "https://printmycase.com.br",
 ];
-const DEFAULT_ORIGIN = "https://studio.artiscase.com";
+const DEFAULT_ORIGIN = "https://printmycase.com.br";
 
 function getSafeOrigin(req: Request): string {
   const raw = req.headers.get("origin") || req.headers.get("referer") || "";

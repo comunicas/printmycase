@@ -7,8 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SENDER_DOMAIN = "studio.artiscase.com";
-const FROM = "ArtisCase <noreply@studio.artiscase.com>";
+const SENDER_DOMAIN = "printmycase.com.br";
+const FROM = "PrintMyCase <noreply@printmycase.com.br>";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
@@ -65,7 +65,7 @@ function buildEmailHtml(params: {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
     <!-- Logo -->
     <tr><td align="center" style="padding-bottom:32px;">
-      <img src="${logoUrl}" alt="ArtisCase" height="40" style="height:40px;width:auto;" />
+      <img src="${logoUrl}" alt="PrintMyCase" height="40" style="height:40px;width:auto;" />
     </td></tr>
     <!-- Greeting -->
     <tr><td>
@@ -94,7 +94,7 @@ function buildEmailHtml(params: {
     </td></tr>
     <!-- Footer -->
     <tr><td align="center" style="padding-top:24px;border-top:1px solid #eee;">
-      <p style="margin:0;font-size:12px;color:#aaa;">ArtisCase — Capas personalizadas</p>
+      <p style="margin:0;font-size:12px;color:#aaa;">PrintMyCase — Capas personalizadas</p>
     </td></tr>
   </table>
 </td></tr>
@@ -197,10 +197,10 @@ Deno.serve(async (req) => {
 
     const userName = profileRes.data?.full_name || userRes.data.user.email.split("@")[0];
     const productName = productRes.data?.name ?? order.product_id;
-    const appUrl = Deno.env.get("APP_URL") || "https://studio.artiscase.com";
+    const appUrl = Deno.env.get("APP_URL") || "https://printmycase.com.br";
 
     // Logo from public email-assets bucket
-    const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/email-assets/logo-artiscase.png`;
+    const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/email-assets/logo-printmycase.png`;
 
     const html = buildEmailHtml({
       userName,

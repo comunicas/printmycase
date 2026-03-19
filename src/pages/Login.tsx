@@ -9,7 +9,7 @@ import SubmitButton from "@/components/forms/SubmitButton";
 import AppHeader from "@/components/AppHeader";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import logoArtisCase from "@/assets/logo-artiscase.png";
+import logoPrintMyCase from "@/assets/logo-artiscase.png";
 import GoogleIcon from "@/components/GoogleIcon";
 import { clarityEvent } from "@/lib/clarity";
 
@@ -57,7 +57,7 @@ const Login = () => {
       <main className="flex-1 flex items-center justify-center p-5">
         <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-1">
-            <img src={logoArtisCase} alt="ArtisCase" className="h-12 mx-auto" />
+            <img src={logoPrintMyCase} alt="PrintMyCase" className="h-12 mx-auto" />
             <h1 className="text-2xl font-bold tracking-tight">Entrar</h1>
             <p className="text-sm text-muted-foreground">Acesse sua conta para continuar</p>
           </div>

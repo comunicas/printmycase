@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
               event_name: "Purchase",
               event_time: Math.floor(Date.now() / 1000),
               event_id: metadata.event_id || null,
-              event_source_url: metadata.origin_url || "https://artiscase-v2.lovable.app",
+              event_source_url: metadata.origin_url || "https://printmycase.com.br",
               user_data: userEmail ? { em: userEmail } : {},
               custom_data: {
                 currency: "BRL",

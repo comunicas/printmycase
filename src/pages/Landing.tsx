@@ -15,7 +15,7 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import AiCoinsSection from "@/components/AiCoinsSection";
-import WhyArtisCase from "@/components/WhyArtisCase";
+import WhyPrintMyCase from "@/components/WhyPrintMyCase";
 import FaqSection from "@/components/FaqSection";
 import PaymentBadges from "@/components/PaymentBadges";
 import logoArtisCase from "@/assets/logo-artiscase.webp";
@@ -33,7 +33,7 @@ const stepColors = [
 
 const steps = [
 { icon: Smartphone, title: "Encontre seu celular no catálogo", desc: "Selecione o modelo do seu celular" },
-{ icon: Upload, title: "Personalize com sua foto ou IA", desc: "Faça upload e aplique filtros artísticos com ArtisCoins" },
+{ icon: Upload, title: "Personalize com sua foto ou IA", desc: "Faça upload e aplique filtros artísticos com moedas" },
 { icon: Package, title: "Receba sua Case em casa", desc: "Produção em 48h e envio rápido" }];
 
 const fadeIn = (delayMs: number): React.CSSProperties => ({
@@ -182,7 +182,7 @@ const Landing = () => {
           <AiCoinsSection />
 
           {/* Benefits + Print Tech */}
-          <WhyArtisCase />
+          <WhyPrintMyCase />
 
           {/* Collections */}
           {!collectionsLoading && collections.length > 0 &&
@@ -286,7 +286,7 @@ const Landing = () => {
         <footer className="border-t bg-card py-10 px-5">
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
             <div className="space-y-3">
-              <img src={logoArtisCase} alt="ArtisCase" className="h-8 w-auto" width={149} height={32} loading="lazy" />
+              <img src={logoArtisCase} alt="PrintMyCase" className="h-8 w-auto" width={149} height={32} loading="lazy" />
               <p className="text-muted-foreground leading-relaxed">
                 Capas personalizadas com tecnologia de impressão profissional. Qualidade premium direto na sua porta.
               </p>
@@ -309,9 +309,9 @@ const Landing = () => {
                 Dúvidas ou sugestões? Entre em contato:
               </p>
               <a
-                href="mailto:sac@artiscase.com"
+                href="mailto:sac@printmycase.com.br"
                 className="inline-block text-primary hover:text-primary/80 font-medium transition-colors">
-                sac@artiscase.com
+                sac@printmycase.com.br
               </a>
             </div>
           </div>
