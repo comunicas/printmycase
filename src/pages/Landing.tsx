@@ -32,7 +32,7 @@ const stepColors = [
 
 
 const steps = [
-{ icon: Smartphone, title: "Selecione o modelo", desc: "Mais de 70 modelos disponiveis" },
+{ icon: Smartphone, title: "Selecione o smartphone", desc: "Mais de 70 modelos disponiveis" },
 { icon: Upload, title: "Envie sua foto", desc: "Aplique filtros artísticos com IA" },
 { icon: Package, title: "Receba sua Case em casa", desc: "Produção em 48h e envio rápido" }];
 
