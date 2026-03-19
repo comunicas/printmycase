@@ -1,16 +1,21 @@
 
-## Migração PrintMyCase — Concluída
 
-### Fases executadas
+## Plano: Aumentar logo em 50% em todos os dispositivos
 
-- ✅ Fase 1: `STRIPE_SECRET_KEY` adicionado aos secrets
-- ✅ Fase 2: Edge Functions atualizadas (domínio, marca, origins)
-- ✅ Fase 3: 6 email templates atualizados (logo URL, marca)
-- ✅ Fase 4: Frontend atualizado (SEO, marca, contato, componentes)
-- ✅ Deploy: 5 Edge Functions redeployadas
+Valores atuais e novos (aumento de ~50%):
 
-### Pendências
+| Arquivo | Atual | Novo (50% maior) |
+|---------|-------|-------------------|
+| `AppHeader.tsx` | `h-10 sm:h-12` (40px/48px) | `h-14 sm:h-16` (56px/64px) |
+| `Landing.tsx` (footer) | `h-12` (48px) | `h-16` (64px) |
+| `Login.tsx` | `h-16` (64px) | `h-24` (96px) |
+| `Signup.tsx` (2 ocorrências) | `h-16` (64px) | `h-24` (96px) |
+| `CheckoutSuccess.tsx` | `h-14` (56px) | `h-20` (80px) |
 
-- **Upload do novo logo**: `logo-printmycase.png` precisa ser carregado no bucket `email-assets` e substituir os assets locais (`src/assets/logo-artiscase.*`)
-- **Fase 5**: Configurar domínio customizado `printmycase.com.br` em Settings → Domains
-- **Social images**: Atualizar og:image/twitter:image com novas imagens da marca
+### Arquivos alterados
+- `src/components/AppHeader.tsx` — linha 48
+- `src/pages/Landing.tsx` — linha 289
+- `src/pages/Login.tsx` — linha 60
+- `src/pages/Signup.tsx` — linhas 72 e 92
+- `src/pages/CheckoutSuccess.tsx` — linha 81
+
