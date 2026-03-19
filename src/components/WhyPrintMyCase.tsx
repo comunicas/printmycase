@@ -75,4 +75,4 @@ const WhyPrintMyCase = () => {
   );
 };
 
-export default WhyArtisCase;
+export default WhyPrintMyCase;
