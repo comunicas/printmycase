@@ -24,7 +24,7 @@ const Admin = () => {
         <h1 className="text-3xl font-bold mb-6">Painel Admin</h1>
 
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="mb-6 w-full overflow-x-auto justify-start">
+          <TabsList className="mb-6 w-full flex-wrap h-auto gap-1 justify-start">
             <TabsTrigger value="products" className="gap-1.5">
               <Package className="w-4 h-4" /> Produtos
             </TabsTrigger>

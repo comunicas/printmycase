@@ -39,6 +39,7 @@ const settingLabels: Record<string, string> = {
   purchase_bonus_amount: "Bônus compra (moedas)",
   purchase_bonus_days: "Validade bônus compra (dias)",
   ai_filter_cost: "Custo filtro IA (moedas)",
+  ai_upscale_cost: "Custo upscale IA (moedas)",
 };
 
 const CoinsManager = () => {
@@ -144,7 +145,7 @@ const CoinsManager = () => {
       <h2 className="text-2xl font-bold">Moedas</h2>
 
       {/* Settings */}
-      <div className="border rounded-xl p-4 bg-card space-y-3">
+      <div className="border rounded-xl p-4 bg-card space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-sm">Configurações de valores</h2>
           <Button size="sm" onClick={handleSaveSettings} disabled={savingSettings || !hasSettingChanges}>
@@ -155,18 +156,41 @@ const CoinsManager = () => {
         {settingsLoading ? (
           <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {settings.map((s) => (
-              <div key={s.key} className="space-y-1">
-                <label className="text-xs text-muted-foreground">{settingLabels[s.key] || s.key}</label>
-                <Input
-                  type="number"
-                  value={editedSettings[s.key] ?? s.value}
-                  onChange={(e) => setEditedSettings((prev) => ({ ...prev, [s.key]: parseInt(e.target.value) || 0 }))}
-                  className="h-8 text-sm"
-                />
+          <div className="space-y-4">
+            {/* Bônus */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Bônus</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {settings.filter((s) => s.key.includes("bonus")).map((s) => (
+                  <div key={s.key} className="space-y-1">
+                    <label className="text-xs text-muted-foreground">{settingLabels[s.key] || s.key}</label>
+                    <Input
+                      type="number"
+                      value={editedSettings[s.key] ?? s.value}
+                      onChange={(e) => setEditedSettings((prev) => ({ ...prev, [s.key]: parseInt(e.target.value) || 0 }))}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            {/* Custos IA */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Custos IA</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {settings.filter((s) => s.key.includes("cost")).map((s) => (
+                  <div key={s.key} className="space-y-1">
+                    <label className="text-xs text-muted-foreground">{settingLabels[s.key] || s.key}</label>
+                    <Input
+                      type="number"
+                      value={editedSettings[s.key] ?? s.value}
+                      onChange={(e) => setEditedSettings((prev) => ({ ...prev, [s.key]: parseInt(e.target.value) || 0 }))}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
