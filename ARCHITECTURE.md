@@ -243,7 +243,7 @@ Moedas virtuais para uso de recursos de IA (filtros, upscale). Bônus concedido 
 
 ### Meta Pixel (Browser)
 
-ID: `1617415106170829` — script base carregado no `index.html`.
+ID: `772617998947470` — script base carregado no `index.html`.
 
 Helper tipado em `src/lib/meta-pixel.ts` com duas funções:
 - `pixelEvent(name, params)` — disparo simples sem deduplicação

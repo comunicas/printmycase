@@ -1,14 +1,18 @@
 
+## Migração PrintMyCase — Status Final
 
-## Plano: Atualizar Pixel ID da Meta
+### Fases concluídas
 
-O Pixel ID atual (`1617415106170829`) precisa ser substituído pelo novo (`772617998947470`) em 3 arquivos:
+- ✅ Fase 1: `STRIPE_SECRET_KEY` adicionado aos secrets
+- ✅ Fase 2: Edge Functions atualizadas (domínio, marca, origins) e redeployadas
+- ✅ Fase 3: 6 email templates atualizados (logo URL, marca)
+- ✅ Fase 4: Frontend atualizado (SEO, marca, contato, componentes)
+- ✅ Fase 5: Domínio `studio.printmycase.com.br` configurado
+- ✅ Social images: og:image e twitter:image configurados no index.html
+- ✅ Código: todas as referências "ArtisCase"/"ArtisCoins" removidas
+- ✅ ARCHITECTURE.md atualizado para PrintMyCase
+- ✅ Upload do logo `logo-printmycase.png` no bucket `email-assets`
 
-### Alterações
+### Pendências
 
-1. **`index.html`** — Atualizar o ID no `fbq('init', ...)` e no `<noscript>` fallback
-2. **`supabase/functions/meta-capi/index.ts`** — Atualizar a constante `PIXEL_ID`
-3. **`ARCHITECTURE.md`** — Atualizar a referência de documentação
-
-Todas as alterações são simples substituições de string do ID antigo pelo novo.
-
+Nenhuma — migração 100% concluída.
