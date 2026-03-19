@@ -110,7 +110,7 @@ const LoginDialog = ({ open, onOpenChange, redirectUrl }: LoginDialogProps) => {
               <Coins className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-semibold text-sm leading-tight">🎁 Ganhe 50 ArtisCoins grátis!</p>
+              <p className="font-semibold text-sm leading-tight">🎁 Ganhe 50 moedas grátis!</p>
               <p className="text-xs text-white/85 leading-tight mt-0.5">Crie sua conta e use em filtros IA, upscale e mais</p>
             </div>
           </div>

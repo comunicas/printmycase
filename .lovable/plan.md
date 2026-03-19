@@ -1,21 +1,16 @@
 
+## Migração PrintMyCase — Concluída
 
-## Plano: Documentos Legais e Referências Pendentes
+### Fases executadas
 
-### Situação atual
-A tabela `legal_documents` está **vazia** — não há conteúdo para substituir "ArtisCase" por "PrintMyCase". Os documentos precisam ser **criados** primeiro pelo admin no painel (aba "Documentos Legais").
+- ✅ Fase 1: `STRIPE_SECRET_KEY` adicionado aos secrets
+- ✅ Fase 2: Edge Functions atualizadas (domínio, marca, origins)
+- ✅ Fase 3: 6 email templates atualizados (logo URL, marca)
+- ✅ Fase 4: Frontend atualizado (SEO, marca, contato, componentes)
+- ✅ Deploy: 5 Edge Functions redeployadas
 
-### Correção encontrada no código
-Existe **1 referência residual** a "ArtisCoins" no código:
+### Pendências
 
-| Arquivo | Texto atual | Texto novo |
-|---------|-------------|------------|
-| `src/components/customize/LoginDialog.tsx` (linha 113) | `🎁 Ganhe 50 ArtisCoins grátis!` | `🎁 Ganhe 50 moedas grátis!` |
-
-### Ações
-1. Corrigir a referência "ArtisCoins" em `LoginDialog.tsx`
-2. Os documentos legais devem ser criados via painel admin — não há dados existentes para migrar
-
-### Arquivos alterados
-- `src/components/customize/LoginDialog.tsx`
-
+- **Upload do novo logo**: `logo-printmycase.png` precisa ser carregado no bucket `email-assets` e substituir os assets locais (`src/assets/logo-artiscase.*`)
+- **Fase 5**: Configurar domínio customizado `printmycase.com.br` em Settings → Domains
+- **Social images**: Atualizar og:image/twitter:image com novas imagens da marca
