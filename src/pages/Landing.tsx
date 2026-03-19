@@ -15,7 +15,7 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import AiCoinsSection from "@/components/AiCoinsSection";
-import WhyArtisCase from "@/components/WhyArtisCase";
+import WhyPrintMyCase from "@/components/WhyPrintMyCase";
 import FaqSection from "@/components/FaqSection";
 import PaymentBadges from "@/components/PaymentBadges";
 import logoArtisCase from "@/assets/logo-artiscase.webp";
