@@ -1,16 +1,14 @@
 
-## Migração PrintMyCase — Concluída
 
-### Fases executadas
+## Plano: Atualizar ARCHITECTURE.md para marca PrintMyCase
 
-- ✅ Fase 1: `STRIPE_SECRET_KEY` adicionado aos secrets
-- ✅ Fase 2: Edge Functions atualizadas (domínio, marca, origins)
-- ✅ Fase 3: 6 email templates atualizados (logo URL, marca)
-- ✅ Fase 4: Frontend atualizado (SEO, marca, contato, componentes)
-- ✅ Deploy: 5 Edge Functions redeployadas
+Substituição direta de todas as referências "ArtisCase" por "PrintMyCase" no arquivo. São 2 ocorrências:
 
-### Pendências
+| Linha | Atual | Novo |
+|-------|-------|------|
+| 1 | `# ArtisCase — Documentação Estrutural` | `# PrintMyCase — Documentação Estrutural` |
+| 5 | `**ArtisCase** é uma plataforma...` | `**PrintMyCase** é uma plataforma...` |
 
-- **Upload do novo logo**: `logo-printmycase.png` precisa ser carregado no bucket `email-assets` e substituir os assets locais (`src/assets/logo-artiscase.*`)
-- **Fase 5**: Configurar domínio customizado `printmycase.com.br` em Settings → Domains
-- **Social images**: Atualizar og:image/twitter:image com novas imagens da marca
+### Arquivos alterados
+- `ARCHITECTURE.md` — linhas 1 e 5
+
