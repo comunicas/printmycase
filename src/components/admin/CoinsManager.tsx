@@ -40,6 +40,7 @@ const settingLabels: Record<string, string> = {
   purchase_bonus_days: "Validade bônus compra (dias)",
   ai_filter_cost: "Custo filtro IA (moedas)",
   ai_upscale_cost: "Custo upscale IA (moedas)",
+  ai_generation_cost: "Custo geração IA (moedas)",
 };
 
 const CoinsManager = () => {
