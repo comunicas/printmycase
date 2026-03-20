@@ -104,9 +104,12 @@ Deno.serve(async (req) => {
     } else if (isPhotographyEffects) {
       falBody = { image_url: imageBase64, effect_type: filter.prompt, aspect_ratio: { ratio: "9:16" } };
     } else if (isStyleTransfer) {
-      falBody = filter.style_image_url
-        ? { image_url: imageBase64, style_reference_image_url: filter.style_image_url, aspect_ratio: { ratio: "9:16" } }
-        : { image_url: imageBase64, target_style: filter.prompt, aspect_ratio: { ratio: "9:16" } };
+      falBody = {
+        image_url: imageBase64,
+        target_style: filter.prompt,
+        ...(filter.style_image_url && { style_reference_image_url: filter.style_image_url }),
+        aspect_ratio: { ratio: "9:16" },
+      };
     } else {
       falBody = {
         image_url: imageBase64,
