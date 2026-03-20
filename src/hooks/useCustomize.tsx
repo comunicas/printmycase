@@ -30,6 +30,7 @@ export function useCustomize(productId: string | undefined) {
   // --- state ---
   const [draftSaved, setDraftSaved] = useState(false);
   const [image, setImage] = useState<string | null>(null);
+  // rawImage: stores the unmodified upload data URL; used only for storage upload (pending_raw path)
   const [rawImage, setRawImage] = useState<string | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [filteredImage, setFilteredImage] = useState<string | null>(null);
@@ -75,13 +76,13 @@ export function useCustomize(productId: string | undefined) {
 
   // --- load AI filters ---
   useEffect(() => {
-    (supabase as any)
+    supabase
       .from("ai_filters")
       .select("id, name, style_image_url")
       .eq("active", true)
       .order("sort_order", { ascending: true })
-      .then(({ data }: { data: AiFilter[] | null }) => {
-        if (data) setFilters(data);
+      .then(({ data }) => {
+        if (data) setFilters(data as AiFilter[]);
       });
   }, []);
 
@@ -313,7 +314,7 @@ export function useCustomize(productId: string | undefined) {
       setApplyingFilterId(null);
       setProcessingMsg(null);
     }
-  }, [pendingFilterId, image, originalImage, navigate, toast, refreshCoins, setImageWithResolution]);
+  }, [pendingFilterId, image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
   const handleUpscaleClick = useCallback(() => {
     if (!requireAuth()) return;
@@ -374,7 +375,7 @@ export function useCustomize(productId: string | undefined) {
       setIsUpscaling(false);
       setProcessingMsg(null);
     }
-  }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution]);
+  }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
   const handleContinue = useCallback(async () => {
     if (!requireAuth()) return;
