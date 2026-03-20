@@ -25,43 +25,87 @@ const Customize = () => {
         draftSaved={c.draftSaved}
       />
 
-      <main className="flex-1 flex flex-col items-center justify-center gap-2 lg:gap-3 px-4 overflow-hidden">
-        <PhonePreview
-          image={c.image}
-          scale={c.scale}
-          position={c.position}
-          rotation={c.rotation}
-          onPositionChange={c.setPosition}
-          onScaleChange={c.setScale}
-          onImageUpload={c.handleImageUpload}
-          imageResolution={c.imageResolution}
-          isProcessing={c.isProcessing}
-          processingMessage={c.processingMsg || undefined}
-          onUpscaleClick={!c.isHD && c.image ? c.handleUpscaleClick : undefined}
-        />
+      <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-0 px-4 lg:px-0 overflow-hidden">
+        {/* Preview — left side on desktop */}
+        <div className="flex items-center justify-center lg:w-1/2 lg:h-full">
+          <PhonePreview
+            image={c.image}
+            scale={c.scale}
+            position={c.position}
+            rotation={c.rotation}
+            onPositionChange={c.setPosition}
+            onScaleChange={c.setScale}
+            onImageUpload={c.handleImageUpload}
+            imageResolution={c.imageResolution}
+            isProcessing={c.isProcessing}
+            processingMessage={c.processingMsg || undefined}
+            onUpscaleClick={!c.isHD && c.image ? c.handleUpscaleClick : undefined}
+          />
+        </div>
 
-        <ImageControls
-          hasImage={!!c.image}
-          scale={c.scale}
-          rotation={c.rotation}
-          onScaleChange={c.setScale}
-          onRotate={c.handleRotate}
-          onExpand={c.handleExpand}
-          onUpscale={c.handleUpscaleClick}
-          isHD={c.isHD}
-          upscaleCost={c.aiUpscaleCost}
-          isUpscaling={c.isUpscaling}
-          filters={c.filters}
-          activeFilterId={c.activeFilterId}
-          applyingFilterId={c.applyingFilterId}
-          filterCost={c.aiFilterCost}
-          onFilterClick={c.handleFilterClick}
-          onCompareStart={c.handleCompareStart}
-          onCompareEnd={c.handleCompareEnd}
-          onRemoveFilter={c.handleRemoveFilter}
-        />
+        {/* Mobile controls */}
+        <div className="lg:hidden w-full flex justify-center">
+          <ImageControls
+            hasImage={!!c.image}
+            scale={c.scale}
+            rotation={c.rotation}
+            onScaleChange={c.setScale}
+            onRotate={c.handleRotate}
+            onExpand={c.handleExpand}
+            onUpscale={c.handleUpscaleClick}
+            isHD={c.isHD}
+            upscaleCost={c.aiUpscaleCost}
+            isUpscaling={c.isUpscaling}
+            filters={c.filters}
+            activeFilterId={c.activeFilterId}
+            applyingFilterId={c.applyingFilterId}
+            filterCost={c.aiFilterCost}
+            onFilterClick={c.handleFilterClick}
+            onCompareStart={c.handleCompareStart}
+            onCompareEnd={c.handleCompareEnd}
+            onRemoveFilter={c.handleRemoveFilter}
+          />
+        </div>
+
+        {/* Desktop sidebar — right side */}
+        <aside className="hidden lg:flex flex-col gap-4 lg:w-1/2 h-full px-8 py-6 overflow-y-auto">
+          <h2 className="text-lg font-semibold text-foreground">Personalize sua Case</h2>
+
+          <ImageControls
+            hasImage={!!c.image}
+            scale={c.scale}
+            rotation={c.rotation}
+            onScaleChange={c.setScale}
+            onRotate={c.handleRotate}
+            onExpand={c.handleExpand}
+            onUpscale={c.handleUpscaleClick}
+            isHD={c.isHD}
+            upscaleCost={c.aiUpscaleCost}
+            isUpscaling={c.isUpscaling}
+            filters={c.filters}
+            activeFilterId={c.activeFilterId}
+            applyingFilterId={c.applyingFilterId}
+            filterCost={c.aiFilterCost}
+            onFilterClick={c.handleFilterClick}
+            onCompareStart={c.handleCompareStart}
+            onCompareEnd={c.handleCompareEnd}
+            onRemoveFilter={c.handleRemoveFilter}
+          />
+
+          <div className="mt-auto">
+            <ContinueBar
+              isModified={c.isModified}
+              onReset={c.handleReset}
+              onContinue={c.handleContinue}
+              disabled={!c.image || c.isProcessing}
+              isRendering={c.isRendering}
+              inline
+            />
+          </div>
+        </aside>
       </main>
 
+      {/* Mobile ContinueBar */}
       <ContinueBar
         isModified={c.isModified}
         onReset={c.handleReset}

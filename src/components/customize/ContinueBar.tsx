@@ -7,9 +7,10 @@ interface ContinueBarProps {
   onContinue: () => void;
   disabled: boolean;
   isRendering: boolean;
+  inline?: boolean;
 }
 
-const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering }: ContinueBarProps) => {
+const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, inline }: ContinueBarProps) => {
   const resetButton = isModified && (
     <Button variant="ghost" size="icon" onClick={onReset} className="shrink-0 text-muted-foreground h-10 w-10">
       <RotateCcw className="w-4 h-4" />
@@ -26,10 +27,21 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering }:
       </>
     );
 
+  if (inline) {
+    return (
+      <div className="flex items-center gap-2 w-full py-3">
+        {resetButton}
+        <Button className="flex-1 gap-1.5" onClick={onContinue} disabled={disabled}>
+          {renderButtonContent()}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* Desktop */}
-      <div className="hidden lg:flex items-center gap-2 w-full max-w-sm mx-auto py-3">
+      {/* Desktop — hidden when inline is used in aside */}
+      <div className="hidden lg:hidden items-center gap-2 w-full max-w-sm mx-auto py-3">
         {resetButton}
         <Button className="flex-1 gap-1.5" onClick={onContinue} disabled={disabled}>
           {renderButtonContent()}
