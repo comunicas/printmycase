@@ -31,7 +31,7 @@ const ImageControls = ({
   filters, activeFilterId, applyingFilterId, filterCost, onFilterClick,
   onCompareStart, onCompareEnd, onRemoveFilter,
 }: ImageControlsProps) => (
-  <div className={`w-full max-w-xs ${!hasImage ? "opacity-50 pointer-events-none" : ""}`}>
+  <div className={`w-full max-w-xs sm:max-w-sm ${!hasImage ? "opacity-50 pointer-events-none" : ""}`}>
     <Tabs defaultValue="ajustes">
       <TabsList className="grid w-full grid-cols-2 h-9">
         <TabsTrigger value="ajustes" className="gap-1.5 text-xs">
