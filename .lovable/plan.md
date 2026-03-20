@@ -1,28 +1,28 @@
 
 
-## Importar 73 Produtos do CSV para o Banco
+## Download de Imagem com Filtro IA
 
 ### Objetivo
-Inserir/atualizar todos os 73 produtos do arquivo CSV de referência na tabela `products`, preservando todos os dados: id, slug, name, description, price_cents, stripe IDs, images, specs, colors, rating, review_count, active e device_image.
+Adicionar um botão de download da imagem filtrada em alta resolução, visível apenas quando um filtro IA está ativo.
 
-### Execução
+### Alterações
 
-**1. Script Python para parsing e upsert**
-- Ler o CSV (separador `;`) com pandas
-- Para cada linha, gerar um `INSERT ... ON CONFLICT (id) DO UPDATE` que atualiza todos os campos
-- Tratar corretamente os campos JSONB (specs, colors) e array (images)
-- Preservar valores nulos (device_image vazio = NULL)
-- Executar via `psql`
+**1. `src/components/customize/ContinueBar.tsx`**
+- Adicionar props: `onDownload?: () => void` e `showDownload?: boolean`
+- Quando `showDownload` for true, renderizar um botão com ícone `Download` ao lado do botão "Finalizar" (tanto no modo inline/desktop quanto no mobile)
+- Botão com `variant="outline"` e tooltip "Baixar imagem"
 
-### Dados preservados por produto
-- IDs originais (uuid) e Stripe IDs
-- Specs com material, peso, dimensões, compatibilidade, proteção, acabamento
-- Colors (4 cores padrão)
-- Rating e review_count
-- Status active (true/false conforme CSV)
-- device_image URLs do storage
+**2. `src/hooks/useCustomize.tsx`**
+- Criar `handleDownload` que:
+  - Pega a imagem filtrada atual (`filteredImage` ou `image`)
+  - Cria um link `<a>` com `download` attribute e dispara o download
+  - Nome do arquivo: `printmycase-{productName}.jpg`
+- Exportar `handleDownload` no retorno do hook
+
+**3. `src/pages/Customize.tsx`**
+- Passar `onDownload={c.handleDownload}` e `showDownload={!!c.activeFilterId}` para ambos os `ContinueBar` (mobile e desktop/inline)
 
 ### Resultado
-- 73 produtos inseridos/atualizados no banco
-- O ModelSelector na página de customização passará a listar todos os produtos ativos
+- Botão de download aparece apenas quando filtro IA está aplicado
+- Baixa a imagem filtrada em resolução original (sem crop/frame do preview)
 
