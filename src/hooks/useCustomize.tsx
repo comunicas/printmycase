@@ -205,7 +205,7 @@ export function useCustomize(productId: string | undefined) {
     toast({ title: "Imagem enquadrada" });
   }, [imageResolution, image, toast]);
 
-  const handleImageUpload = useCallback((file: File) => {
+  const processImageFile = useCallback((file: File) => {
     setImageFileName(file.name);
     setIsCompressing(true);
     setActiveFilterId(null);
@@ -238,6 +238,24 @@ export function useCustomize(productId: string | undefined) {
     };
     reader.readAsDataURL(file);
   }, [toast]);
+
+  const handleImageUpload = useCallback((file: File) => {
+    if (localStorage.getItem("pmc_terms_accepted") === "true") {
+      processImageFile(file);
+    } else {
+      setPendingFile(file);
+      setShowTermsDialog(true);
+    }
+  }, [processImageFile]);
+
+  const handleTermsAccept = useCallback(() => {
+    localStorage.setItem("pmc_terms_accepted", "true");
+    setShowTermsDialog(false);
+    if (pendingFile) {
+      processImageFile(pendingFile);
+      setPendingFile(null);
+    }
+  }, [pendingFile, processImageFile]);
 
   const requireAuth = useCallback(() => {
     if (user) return true;
