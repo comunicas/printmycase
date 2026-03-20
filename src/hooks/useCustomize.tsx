@@ -76,13 +76,13 @@ export function useCustomize(productId: string | undefined) {
 
   // --- load AI filters ---
   useEffect(() => {
-    (supabase as any)
+    supabase
       .from("ai_filters")
       .select("id, name, style_image_url")
       .eq("active", true)
       .order("sort_order", { ascending: true })
-      .then(({ data }: { data: AiFilter[] | null }) => {
-        if (data) setFilters(data);
+      .then(({ data }) => {
+        if (data) setFilters(data as AiFilter[]);
       });
   }, []);
 
