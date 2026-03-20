@@ -62,7 +62,7 @@ const ImageControls = ({
       </TabsContent>
 
       {filters.length > 0 && (
-        <TabsContent value="filtros" className="mt-2 max-h-[30vh] overflow-y-auto">
+        <TabsContent value="filtros" className="mt-2 max-h-[30vh] overflow-y-auto lg:max-h-none lg:overflow-visible">
           <AiFiltersList
             filters={filters}
             activeFilterId={activeFilterId}

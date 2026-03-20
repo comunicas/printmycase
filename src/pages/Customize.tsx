@@ -23,11 +23,12 @@ const Customize = () => {
         onBack={() => navigate(c.product ? `/product/${c.product.slug}` : "/catalog")}
         productImage={c.product?.images?.[0] || c.product?.device_image}
         draftSaved={c.draftSaved}
+        currentSlug={c.product?.slug}
       />
 
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-0 px-4 lg:px-0 overflow-hidden">
         {/* Preview — left side on desktop */}
-        <div className="flex items-center justify-center lg:w-1/2 lg:h-full">
+        <div className="flex items-center justify-center lg:flex-1 lg:h-full">
           <PhonePreview
             image={c.image}
             scale={c.scale}
@@ -68,7 +69,7 @@ const Customize = () => {
         </div>
 
         {/* Desktop sidebar — right side */}
-        <aside className="hidden lg:flex flex-col gap-4 lg:w-1/2 h-full px-8 py-6 overflow-y-auto">
+        <aside className="hidden lg:flex flex-col gap-4 lg:w-[420px] lg:flex-shrink-0 h-full px-8 py-6 overflow-y-auto">
           <h2 className="text-lg font-semibold text-foreground">Personalize sua Case</h2>
 
           <ImageControls
