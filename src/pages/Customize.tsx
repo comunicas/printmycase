@@ -23,6 +23,7 @@ const Customize = () => {
         onBack={() => navigate(c.product ? `/product/${c.product.slug}` : "/catalog")}
         productImage={c.product?.images?.[0] || c.product?.device_image}
         draftSaved={c.draftSaved}
+        currentSlug={c.product?.slug}
       />
 
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-0 px-4 lg:px-0 overflow-hidden">
