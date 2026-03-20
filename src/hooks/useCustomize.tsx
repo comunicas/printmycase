@@ -314,7 +314,7 @@ export function useCustomize(productId: string | undefined) {
       setApplyingFilterId(null);
       setProcessingMsg(null);
     }
-  }, [pendingFilterId, image, originalImage, navigate, toast, refreshCoins, setImageWithResolution]);
+  }, [pendingFilterId, image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
   const handleUpscaleClick = useCallback(() => {
     if (!requireAuth()) return;
