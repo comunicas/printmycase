@@ -30,6 +30,7 @@ export function useCustomize(productId: string | undefined) {
   // --- state ---
   const [draftSaved, setDraftSaved] = useState(false);
   const [image, setImage] = useState<string | null>(null);
+  // rawImage: stores the unmodified upload data URL; used only for storage upload (pending_raw path)
   const [rawImage, setRawImage] = useState<string | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [filteredImage, setFilteredImage] = useState<string | null>(null);
