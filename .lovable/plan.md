@@ -1,44 +1,19 @@
 
 
-## Fluxo de Customização sem Produto Selecionado
+## Redirecionar todos os links de produto para customização
 
-### Problema atual
-A rota `/customize/:id` exige um slug de produto. CTAs genéricos (ex: "Criar Minha Case" na Landing) levam para `/catalog`, forçando o usuário a navegar pelo catálogo antes de customizar. Não existe rota `/customize` sem slug.
+### Problema
+O `ProductCard` tem dois comportamentos: clicar no card leva para `/product/{slug}` (página de produto/SEO) e o botão "Customizar" leva para `/customize/{slug}`. Para a experiência do app, queremos que **todo clique** leve direto para `/customize/{slug}`, reduzindo navegação desnecessária. A página `/product/{slug}` continua existindo para SEO (acesso orgânico), mas não é linkada internamente.
 
-### Solução
-Criar uma rota `/customize` (sem `:id`) que exibe uma tela de seleção de modelo antes de qualquer interação de customização.
+### Alteração
 
-### Alterações
+**1. `src/components/ProductCard.tsx`**
+- Alterar o `onClick` do Card de `/product/${slug}` para `/customize/${slug}`
+- Remover o botão "Customizar" separado (agora redundante — o card inteiro já leva para customizar)
+- Resultado: card mais limpo, um único clique = customizar
 
-**1. Nova página `src/pages/SelectModel.tsx`**
-- Tela fullscreen com título "Selecione seu modelo" 
-- Reutiliza `useProducts()` para listar todos os produtos ativos
-- Barra de busca + filtro por marca (reutilizando a lógica do Catalog: `extractBrand`, filtros por marca)
-- Grid de cards simplificados (thumbnail + nome + preço) — ao clicar, navega para `/customize/{slug}`
-- Header minimalista com botão voltar
-
-**2. `src/App.tsx`**
-- Adicionar rota `/customize` (sem param) apontando para `SelectModel`
-- Manter rota `/customize/:id` apontando para `Customize`
-
-**3. Atualizar CTAs da Landing (`src/pages/Landing.tsx`)**
-- Botão "Criar Minha Case" → navega para `/customize` (sem slug) ao invés de `/catalog`
-- Botão "Comece Agora" (CTA final) → idem, `/customize`
-
-**4. Fallback no `src/pages/Customize.tsx`**
-- Se `useProduct(id)` retornar produto não encontrado (não loading, mas null), redirecionar para `/customize` (tela de seleção)
-
-### Fluxo resultante
-
-```text
-Landing CTA (sem produto) → /customize → Selecionar Modelo → /customize/{slug}
-Catalog/Card "Customizar"  → /customize/{slug} (direto, já tem produto)
-Product page CTA           → /customize/{slug} (direto, já tem produto)
-```
-
-### Detalhes da UI (SelectModel)
-- Mesmo estilo visual do Catalog (busca, filtros de marca, grid)
-- Cards mais compactos: thumbnail (device_image ou images[0]), nome do modelo (sem "Capa"), preço
-- Mobile-first: 2 colunas, desktop 3-4 colunas
-- Sem paginação (scroll contínuo, são ~60 produtos ativos)
+### Impacto
+- Landing (vitrine), Catalog, Collections — todos usam `ProductCard`, então todos passam a levar direto para customização
+- A rota `/product/:id` permanece no `App.tsx` para tráfego orgânico/SEO
+- Nenhuma outra alteração necessária
 
