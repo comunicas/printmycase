@@ -375,7 +375,7 @@ export function useCustomize(productId: string | undefined) {
       setIsUpscaling(false);
       setProcessingMsg(null);
     }
-  }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution]);
+  }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
   const handleContinue = useCallback(async () => {
     if (!requireAuth()) return;
