@@ -15,6 +15,7 @@ const Customize = () => {
   const c = useCustomize(id);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
+  if (!c.product && !c.productLoading) { navigate("/customize", { replace: true }); return null; }
 
   return (
     <div className="h-dvh w-full bg-background flex flex-col overflow-hidden">

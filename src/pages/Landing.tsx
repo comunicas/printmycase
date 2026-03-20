@@ -267,7 +267,7 @@ const Landing = () => {
                 <span className="text-sm text-white/80">Não encontrou seu modelo? Solicite e avisaremos!</span>
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold" onClick={() => navigate("/catalog")}>
+                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold" onClick={() => navigate("/customize")}>
                   Comece Agora <ArrowRight className="w-4 h-4" />
                 </Button>
                 <Button
