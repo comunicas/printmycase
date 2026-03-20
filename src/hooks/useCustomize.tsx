@@ -501,6 +501,7 @@ export function useCustomize(productId: string | undefined) {
     // dialog state
     showUpscaleDialog, setShowUpscaleDialog, setPendingFilterId,
     showLoginDialog, setShowLoginDialog,
+    showTermsDialog, setShowTermsDialog, handleTermsAccept,
     // costs
     coinBalance, aiFilterCost, aiUpscaleCost,
     // flags
