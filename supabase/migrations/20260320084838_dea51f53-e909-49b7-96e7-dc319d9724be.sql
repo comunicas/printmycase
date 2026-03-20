@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_filters ADD COLUMN send_style_image boolean NOT NULL DEFAULT true;

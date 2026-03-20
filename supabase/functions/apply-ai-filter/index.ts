@@ -53,17 +53,26 @@ Deno.serve(async (req) => {
     // Fetch filter
     const { data: filter, error: filterError } = await serviceClient
       .from("ai_filters")
-      .select("prompt, model_url, style_image_url")
+      .select("prompt, model_url, style_image_url, send_style_image")
       .eq("id", filterId)
       .eq("active", true)
       .single();
 
     if (filterError || !filter) {
+      console.error("[filter] not found", { filterId, error: filterError?.message });
       return new Response(JSON.stringify({ error: "Filter not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("[filter]", JSON.stringify({
+      id: filterId,
+      prompt: filter.prompt,
+      model_url: filter.model_url,
+      has_style_image: !!filter.style_image_url,
+      send_style_image: filter.send_style_image,
+    }));
 
     // Fetch ai_filter_cost from coin_settings
     const { data: costSetting } = await serviceClient
@@ -104,10 +113,11 @@ Deno.serve(async (req) => {
     } else if (isPhotographyEffects) {
       falBody = { image_url: imageBase64, effect_type: filter.prompt, aspect_ratio: { ratio: "9:16" } };
     } else if (isStyleTransfer) {
+      const shouldSendStyleImage = filter.send_style_image && !!filter.style_image_url;
       falBody = {
         image_url: imageBase64,
         target_style: filter.prompt,
-        ...(filter.style_image_url && { style_reference_image_url: filter.style_image_url }),
+        ...(shouldSendStyleImage && { style_reference_image_url: filter.style_image_url }),
         aspect_ratio: { ratio: "9:16" },
       };
     } else {
@@ -123,7 +133,8 @@ Deno.serve(async (req) => {
     }
 
     // Sanitized log — never log base64 payloads
-    console.log("Fal.ai request:", JSON.stringify({ modelUrl, isStyleTransfer, isPhotographyEffects, isLightingRestoration }));
+    const bodyKeys = Object.keys(falBody).filter(k => k !== "image_url" && k !== "image_urls");
+    console.log("[fal-request]", JSON.stringify({ model: modelUrl, body_keys: bodyKeys, target_style: falBody.target_style, effect_type: falBody.effect_type, prompt: falBody.prompt }));
 
     const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
       method: "POST",
@@ -151,6 +162,8 @@ Deno.serve(async (req) => {
     }
 
     const falResult = await falResponse.json();
+    console.log("[fal-response]", JSON.stringify({ status: falResponse.status, images_count: falResult?.images?.length ?? 0 }));
+
     const outputImage = falResult?.images?.[0];
     const outputUrl = outputImage?.url;
     if (!outputUrl) {
@@ -170,6 +183,8 @@ Deno.serve(async (req) => {
         expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         description: "Filtro IA aplicado",
       });
+
+    console.log("[coins]", JSON.stringify({ userId, cost: AI_FILTER_COST, previous_balance: coinBalance }));
 
     // Return URL directly instead of downloading + converting to base64
     return new Response(JSON.stringify({ imageUrl: outputUrl, coinsUsed: AI_FILTER_COST }), {
