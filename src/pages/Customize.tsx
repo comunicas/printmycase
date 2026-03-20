@@ -7,6 +7,7 @@ import ContinueBar from "@/components/customize/ContinueBar";
 import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
 import UpscaleConfirmDialog from "@/components/customize/UpscaleConfirmDialog";
 import LoginDialog from "@/components/customize/LoginDialog";
+import TermsDialog from "@/components/customize/TermsDialog";
 import { useCustomize } from "@/hooks/useCustomize.tsx";
 
 const Customize = () => {
