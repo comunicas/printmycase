@@ -69,7 +69,7 @@ const Customize = () => {
         </div>
 
         {/* Desktop sidebar — right side */}
-        <aside className="hidden lg:flex flex-col gap-4 lg:w-1/2 h-full px-8 py-6 overflow-y-auto">
+        <aside className="hidden lg:flex flex-col gap-4 lg:w-[420px] lg:flex-shrink-0 h-full px-8 py-6 overflow-y-auto">
           <h2 className="text-lg font-semibold text-foreground">Personalize sua Case</h2>
 
           <ImageControls
