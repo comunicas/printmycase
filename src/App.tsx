@@ -31,6 +31,7 @@ const KbArticle = lazy(() => import("./pages/KbArticle"));
 const Collections = lazy(() => import("./pages/Collections"));
 const CollectionPage = lazy(() => import("./pages/CollectionPage"));
 const DesignPage = lazy(() => import("./pages/DesignPage"));
+const SelectModel = lazy(() => import("./pages/SelectModel"));
 
 const App = () => (
   <AuthProvider>
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/catalog" element={<Catalog />} />
             <Route path="/product/:id" element={<Product />} />
+            <Route path="/customize" element={<SelectModel />} />
             <Route path="/customize/:id" element={<Customize />} />
             <Route path="/checkout/:id" element={<AuthGuard><Checkout /></AuthGuard>} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
