@@ -53,17 +53,26 @@ Deno.serve(async (req) => {
     // Fetch filter
     const { data: filter, error: filterError } = await serviceClient
       .from("ai_filters")
-      .select("prompt, model_url, style_image_url")
+      .select("prompt, model_url, style_image_url, send_style_image")
       .eq("id", filterId)
       .eq("active", true)
       .single();
 
     if (filterError || !filter) {
+      console.error("[filter] not found", { filterId, error: filterError?.message });
       return new Response(JSON.stringify({ error: "Filter not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("[filter]", JSON.stringify({
+      id: filterId,
+      prompt: filter.prompt,
+      model_url: filter.model_url,
+      has_style_image: !!filter.style_image_url,
+      send_style_image: filter.send_style_image,
+    }));
 
     // Fetch ai_filter_cost from coin_settings
     const { data: costSetting } = await serviceClient
