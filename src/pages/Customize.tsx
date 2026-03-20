@@ -142,6 +142,12 @@ const Customize = () => {
         onOpenChange={c.setShowUpscaleDialog}
         onConfirm={c.handleUpscaleConfirm}
       />
+
+      <TermsDialog
+        open={c.showTermsDialog}
+        onOpenChange={c.setShowTermsDialog}
+        onAccept={c.handleTermsAccept}
+      />
     </div>
   );
 };
