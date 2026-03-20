@@ -300,6 +300,17 @@ const AiFiltersManager = () => {
             <FormField label="Imagem de referência de estilo (opcional)" id="filter-style-image">
               <StyleImageUpload value={styleImageUrl} onChange={setStyleImageUrl} />
             </FormField>
+            {styleImageUrl && (
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={sendStyleImage}
+                  onChange={(e) => setSendStyleImage(e.target.checked)}
+                  className="h-4 w-4 rounded border-input accent-primary"
+                />
+                <span className="text-sm text-foreground">Enviar imagem de referência ao fal.ai</span>
+              </label>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>

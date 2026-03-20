@@ -162,6 +162,8 @@ Deno.serve(async (req) => {
     }
 
     const falResult = await falResponse.json();
+    console.log("[fal-response]", JSON.stringify({ status: falResponse.status, images_count: falResult?.images?.length ?? 0 }));
+
     const outputImage = falResult?.images?.[0];
     const outputUrl = outputImage?.url;
     if (!outputUrl) {
@@ -181,6 +183,8 @@ Deno.serve(async (req) => {
         expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         description: "Filtro IA aplicado",
       });
+
+    console.log("[coins]", JSON.stringify({ userId, cost: AI_FILTER_COST, previous_balance: coinBalance }));
 
     // Return URL directly instead of downloading + converting to base64
     return new Response(JSON.stringify({ imageUrl: outputUrl, coinsUsed: AI_FILTER_COST }), {
