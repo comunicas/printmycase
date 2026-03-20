@@ -28,7 +28,7 @@ const Customize = () => {
 
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-0 px-4 lg:px-0 overflow-hidden">
         {/* Preview — left side on desktop */}
-        <div className="flex items-center justify-center lg:w-1/2 lg:h-full">
+        <div className="flex items-center justify-center lg:flex-1 lg:h-full">
           <PhonePreview
             image={c.image}
             scale={c.scale}
