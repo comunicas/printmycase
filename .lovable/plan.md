@@ -1,32 +1,28 @@
 
 
-## Layout Side-by-Side + ModelSelector + Revisão de Largura/Rolagem
+## Importar 73 Produtos do CSV para o Banco
 
-### Alterações
+### Objetivo
+Inserir/atualizar todos os 73 produtos do arquivo CSV de referência na tabela `products`, preservando todos os dados: id, slug, name, description, price_cents, stripe IDs, images, specs, colors, rating, review_count, active e device_image.
 
-**1. `src/components/customize/ModelSelector.tsx`** (novo)
-- DropdownMenu acionado ao clicar na imagem+nome do produto no header
-- Lista produtos ativos via `useProducts()` com thumbnail (`device_image`), nome (sem "Capa ") e preço
-- Produto atual destacado (bold/check)
-- Ao selecionar, navega para `/customize/{slug}`
-- ChevronDown ao lado do nome indica interatividade
+### Execução
 
-**2. `src/components/customize/CustomizeHeader.tsx`**
-- Substituir bloco estático imagem+nome por `<ModelSelector currentSlug={slug} productName={...} productImage={...} />`
-- Receber `currentSlug` como nova prop (passado de Customize.tsx via `c.product?.slug`)
+**1. Script Python para parsing e upsert**
+- Ler o CSV (separador `;`) com pandas
+- Para cada linha, gerar um `INSERT ... ON CONFLICT (id) DO UPDATE` que atualiza todos os campos
+- Tratar corretamente os campos JSONB (specs, colors) e array (images)
+- Preservar valores nulos (device_image vazio = NULL)
+- Executar via `psql`
 
-**3. `src/pages/Customize.tsx`**
-- Passar `currentSlug={c.product?.slug}` para CustomizeHeader
-- Sidebar desktop: trocar `lg:w-1/2` por `lg:w-[420px] lg:flex-shrink-0` — largura fixa mais adequada para os controles
-- Preview: trocar `lg:w-1/2` por `lg:flex-1` — ocupa o restante
+### Dados preservados por produto
+- IDs originais (uuid) e Stripe IDs
+- Specs com material, peso, dimensões, compatibilidade, proteção, acabamento
+- Colors (4 cores padrão)
+- Rating e review_count
+- Status active (true/false conforme CSV)
+- device_image URLs do storage
 
-**4. `src/components/customize/ImageControls.tsx`**
-- No desktop, filtros tab: trocar `max-h-[30vh]` por `lg:max-h-none lg:overflow-visible` — no desktop o aside já tem `overflow-y-auto`, scroll duplo é desnecessário
-- Mobile mantém `max-h-[30vh] overflow-y-auto`
-
-### Arquivos alterados
-1. `src/components/customize/ModelSelector.tsx` — novo
-2. `src/components/customize/CustomizeHeader.tsx` — integrar ModelSelector
-3. `src/pages/Customize.tsx` — passar slug, ajustar larguras sidebar/preview
-4. `src/components/customize/ImageControls.tsx` — corrigir scroll filtros desktop
+### Resultado
+- 73 produtos inseridos/atualizados no banco
+- O ModelSelector na página de customização passará a listar todos os produtos ativos
 
