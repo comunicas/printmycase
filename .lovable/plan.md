@@ -1,19 +1,33 @@
 
 
-## Redirecionar todos os links de produto para customização
+## Corrigir envio do `target_style` no Style Transfer
 
 ### Problema
-O `ProductCard` tem dois comportamentos: clicar no card leva para `/product/{slug}` (página de produto/SEO) e o botão "Customizar" leva para `/customize/{slug}`. Para a experiência do app, queremos que **todo clique** leve direto para `/customize/{slug}`, reduzindo navegação desnecessária. A página `/product/{slug}` continua existindo para SEO (acesso orgânico), mas não é linkada internamente.
+Na edge function `apply-ai-filter`, quando o filtro Style Transfer tem uma `style_image_url`, o código envia apenas `style_reference_image_url` e **omite** o `target_style`. A lógica atual é excludente (ou um ou outro), mas a API fal.ai aceita ambos simultaneamente e o `target_style` é o parâmetro principal que define o estilo.
 
-### Alteração
+Código atual (linhas 107-109):
+```text
+if style_image_url → envia style_reference_image_url (sem target_style)
+else              → envia target_style (sem style_reference_image_url)
+```
 
-**1. `src/components/ProductCard.tsx`**
-- Alterar o `onClick` do Card de `/product/${slug}` para `/customize/${slug}`
-- Remover o botão "Customizar" separado (agora redundante — o card inteiro já leva para customizar)
-- Resultado: card mais limpo, um único clique = customizar
+### Correção
+
+**`supabase/functions/apply-ai-filter/index.ts`** (linhas 107-109)
+- Sempre enviar `target_style: filter.prompt` para Style Transfer
+- Adicionalmente enviar `style_reference_image_url` quando `style_image_url` existir
+- Resultado: ambos os parâmetros são enviados juntos quando disponíveis
+
+```text
+style_transfer → {
+  image_url,
+  target_style: filter.prompt,        // sempre presente
+  style_reference_image_url?,          // quando houver imagem de referência
+  aspect_ratio
+}
+```
 
 ### Impacto
-- Landing (vitrine), Catalog, Collections — todos usam `ProductCard`, então todos passam a levar direto para customização
-- A rota `/product/:id` permanece no `App.tsx` para tráfego orgânico/SEO
-- Nenhuma outra alteração necessária
+- Filtros como "3D mascot" (Cartoon 3D + imagem de referência) passarão a enviar o estilo correto
+- Filtros sem imagem de referência continuam funcionando normalmente
 
