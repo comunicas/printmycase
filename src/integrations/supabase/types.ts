@@ -67,6 +67,7 @@ export type Database = {
           model_url: string
           name: string
           prompt: string
+          send_style_image: boolean
           sort_order: number
           style_image_url: string | null
         }
@@ -77,6 +78,7 @@ export type Database = {
           model_url?: string
           name: string
           prompt: string
+          send_style_image?: boolean
           sort_order?: number
           style_image_url?: string | null
         }
@@ -87,6 +89,7 @@ export type Database = {
           model_url?: string
           name?: string
           prompt?: string
+          send_style_image?: boolean
           sort_order?: number
           style_image_url?: string | null
         }
