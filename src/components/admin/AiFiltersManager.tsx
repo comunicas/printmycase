@@ -173,7 +173,7 @@ const AiFiltersManager = () => {
     if (editing) {
       const { error } = await supabase
         .from("ai_filters")
-        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null })
+        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage } as any)
         .eq("id", editing.id);
       if (error) toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
       else toast({ title: "Filtro atualizado" });
@@ -181,7 +181,7 @@ const AiFiltersManager = () => {
       const maxOrder = filters.length > 0 ? Math.max(...filters.map((f) => f.sort_order)) : 0;
       const { error } = await supabase
         .from("ai_filters")
-        .insert({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, sort_order: maxOrder + 1 });
+        .insert({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, sort_order: maxOrder + 1 } as any);
       if (error) toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       else toast({ title: "Filtro criado" });
     }
