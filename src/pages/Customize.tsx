@@ -7,6 +7,7 @@ import ContinueBar from "@/components/customize/ContinueBar";
 import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
 import UpscaleConfirmDialog from "@/components/customize/UpscaleConfirmDialog";
 import LoginDialog from "@/components/customize/LoginDialog";
+import TermsDialog from "@/components/customize/TermsDialog";
 import { useCustomize } from "@/hooks/useCustomize.tsx";
 
 const Customize = () => {
@@ -140,6 +141,12 @@ const Customize = () => {
         open={c.showUpscaleDialog}
         onOpenChange={c.setShowUpscaleDialog}
         onConfirm={c.handleUpscaleConfirm}
+      />
+
+      <TermsDialog
+        open={c.showTermsDialog}
+        onOpenChange={c.setShowTermsDialog}
+        onAccept={c.handleTermsAccept}
       />
     </div>
   );

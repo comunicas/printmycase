@@ -48,6 +48,8 @@ export function useCustomize(productId: string | undefined) {
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showTermsDialog, setShowTermsDialog] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [processingMsg, setProcessingMsg] = useState<string | null>(null);
 
   const { balance: coinBalance, refresh: refreshCoins } = useCoins();
@@ -203,7 +205,7 @@ export function useCustomize(productId: string | undefined) {
     toast({ title: "Imagem enquadrada" });
   }, [imageResolution, image, toast]);
 
-  const handleImageUpload = useCallback((file: File) => {
+  const processImageFile = useCallback((file: File) => {
     setImageFileName(file.name);
     setIsCompressing(true);
     setActiveFilterId(null);
@@ -236,6 +238,24 @@ export function useCustomize(productId: string | undefined) {
     };
     reader.readAsDataURL(file);
   }, [toast]);
+
+  const handleImageUpload = useCallback((file: File) => {
+    if (localStorage.getItem("pmc_terms_accepted") === "true") {
+      processImageFile(file);
+    } else {
+      setPendingFile(file);
+      setShowTermsDialog(true);
+    }
+  }, [processImageFile]);
+
+  const handleTermsAccept = useCallback(() => {
+    localStorage.setItem("pmc_terms_accepted", "true");
+    setShowTermsDialog(false);
+    if (pendingFile) {
+      processImageFile(pendingFile);
+      setPendingFile(null);
+    }
+  }, [pendingFile, processImageFile]);
 
   const requireAuth = useCallback(() => {
     if (user) return true;
@@ -481,6 +501,7 @@ export function useCustomize(productId: string | undefined) {
     // dialog state
     showUpscaleDialog, setShowUpscaleDialog, setPendingFilterId,
     showLoginDialog, setShowLoginDialog,
+    showTermsDialog, setShowTermsDialog, handleTermsAccept,
     // costs
     coinBalance, aiFilterCost, aiUpscaleCost,
     // flags
