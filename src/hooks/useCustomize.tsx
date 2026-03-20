@@ -377,6 +377,17 @@ export function useCustomize(productId: string | undefined) {
     }
   }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
+  const handleDownload = useCallback(() => {
+    const src = filteredImage || image;
+    if (!src) return;
+    const a = document.createElement("a");
+    a.href = src;
+    a.download = `printmycase-${productName.toLowerCase().replace(/\s+/g, "-")}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, [filteredImage, image, productName]);
+
   const handleContinue = useCallback(async () => {
     if (!requireAuth()) return;
     if (!product || !image) return;
