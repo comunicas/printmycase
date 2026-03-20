@@ -101,6 +101,8 @@ const Customize = () => {
               disabled={!c.image || c.isProcessing}
               isRendering={c.isRendering}
               inline
+              showDownload={!!c.activeFilterId}
+              onDownload={c.handleDownload}
             />
           </div>
         </aside>
