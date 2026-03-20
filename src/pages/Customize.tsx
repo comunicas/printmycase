@@ -115,6 +115,8 @@ const Customize = () => {
         onContinue={c.handleContinue}
         disabled={!c.image || c.isProcessing}
         isRendering={c.isRendering}
+        showDownload={!!c.activeFilterId}
+        onDownload={c.handleDownload}
       />
 
       <FilterConfirmDialog

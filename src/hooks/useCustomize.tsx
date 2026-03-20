@@ -491,6 +491,6 @@ export function useCustomize(productId: string | undefined) {
     handleFilterClick, handleFilterConfirm, handleRemoveFilter,
     handleCompareStart, handleCompareEnd,
     handleUpscaleClick, handleUpscaleConfirm,
-    handleContinue,
+    handleContinue, handleDownload,
   };
 }
