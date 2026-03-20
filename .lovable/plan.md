@@ -1,42 +1,31 @@
 
 
-## Refatoracao: Filtros IA (Grid Thumbnails) + Code Review Fixes
+## Layout Side-by-Side Desktop — Página de Customização
 
-### 1. Redesign AiFiltersList — Grid de Thumbnails
+### Alterações
 
-**`src/components/customize/AiFiltersList.tsx`**
+**1. `src/pages/Customize.tsx`**
+- `<main>`: adicionar `lg:flex-row` para side-by-side no desktop
+- Lado esquerdo: PhonePreview centralizado (`lg:w-1/2 lg:items-center lg:justify-center`)
+- Lado direito: `<aside className="hidden lg:flex flex-col ...">`  com título "Personalize sua Case", ImageControls e ContinueBar inline
+- Mobile ImageControls permanece dentro do main (visível apenas mobile via `lg:hidden`)
+- Mobile ContinueBar permanece fora do main (como já está com `lg:hidden`)
 
-Substituir layout de botoes pill por grid visual:
-- Grid `grid-cols-3 gap-2` com cards visuais
-- Cada card: thumbnail `aspect-square rounded-lg` com `style_image_url` como background `object-cover`
-- Nome do filtro abaixo em `text-[10px] text-center`
-- Badge `🪙{cost}` no canto superior direito
-- Ativo: `ring-2 ring-primary ring-offset-1`
-- Processando: overlay escuro + spinner centralizado
-- Fallback (sem `style_image_url`): gradiente + icone `Wand2`
-- Botoes comparar/remover permanecem acima sem alteracao
+**2. `src/components/PhonePreview.tsx`**
+- Trocar `lg:w-[260px] lg:h-[532px] lg:aspect-auto` por `lg:h-[70vh] lg:w-auto lg:aspect-[260/532]`
+- Manter aspect-ratio via CSS, altura flexível no desktop
 
-### 2. ImageControls — Ajustes de layout
+**3. `src/components/customize/ContinueBar.tsx`**
+- Adicionar prop `inline?: boolean`
+- Quando `inline`, renderizar apenas os botões sem wrapper fixo (sem border-t, sem backdrop)
+- Desktop standalone (hidden lg:flex) já existente permanece para o aside
 
-**`src/components/customize/ImageControls.tsx`**
-
-- Container: `max-w-xs` -> `max-w-sm` (acomodar grid 3 colunas)
-- Filtros tab content: adicionar `max-h-[30vh] overflow-y-auto` para scroll em mobile
-
-### 3. Code Review Fixes em useCustomize
-
-**`src/hooks/useCustomize.tsx`**
-
-- **Linha 78**: remover `(supabase as any)` — usar tipagem correta do client
-- **`handleFilterConfirm` (linha 316)**: adicionar `coinBalance`, `aiFilterCost`, `aiUpscaleCost` nas deps do `useCallback`
-- **`handleUpscaleConfirm` (linha 377)**: adicionar `coinBalance`, `aiFilterCost`, `aiUpscaleCost` nas deps do `useCallback`
-- Adicionar comentario no `rawImage` state explicando seu uso
+**4. `src/components/customize/ImageControls.tsx`**
+- Adicionar `lg:max-w-none` para ocupar largura total do painel lateral no desktop
 
 ### Arquivos alterados
-1. `src/components/customize/AiFiltersList.tsx` — redesign completo para grid
-2. `src/components/customize/ImageControls.tsx` — max-width + scroll
-3. `src/hooks/useCustomize.tsx` — fix deps, remover `as any`, comentario
-
-### Arquivos revisados sem alteracao
-- `src/pages/Customize.tsx`, `src/components/PhonePreview.tsx`, `src/components/customize/AdjustmentsPanel.tsx`, `src/lib/customize-types.ts`, `src/lib/image-utils.ts`
+1. `src/pages/Customize.tsx` — layout flex-row desktop + aside
+2. `src/components/PhonePreview.tsx` — sizing flexível
+3. `src/components/customize/ContinueBar.tsx` — modo inline
+4. `src/components/customize/ImageControls.tsx` — remover max-width desktop
 
