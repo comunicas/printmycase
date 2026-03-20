@@ -69,8 +69,8 @@ export function useCustomize(productId: string | undefined) {
   // --- redirect if product not found ---
   useEffect(() => {
     if (!productLoading && !product) {
-      toast({ title: "Produto não encontrado", description: "Redirecionando ao catálogo.", variant: "destructive" });
-      navigate("/catalog", { replace: true });
+      toast({ title: "Produto não encontrado", description: "Selecione um modelo para continuar.", variant: "destructive" });
+      navigate("/customize", { replace: true });
     }
   }, [product, productLoading, navigate, toast]);
 
