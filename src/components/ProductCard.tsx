@@ -16,7 +16,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
       <Card
         ref={ref}
         className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden"
-        onClick={() => navigate(`/product/${product.slug}`)}
+        onClick={() => navigate(`/customize/${product.slug}`)}
       >
         <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
           {(product.device_image || product.images[0]) ? (
@@ -37,16 +37,6 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
           <span className="inline-block mt-1.5 text-sm font-bold text-foreground bg-accent/60 px-2 py-0.5 rounded-md">
             {formatPrice(product.price_cents / 100)}
           </span>
-          <Button
-            size="sm"
-            className="w-full mt-2 text-xs h-8"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/customize/${product.slug}`);
-            }}
-          >
-            Customizar
-          </Button>
         </CardContent>
       </Card>
     );
