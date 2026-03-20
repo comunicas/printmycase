@@ -113,10 +113,11 @@ Deno.serve(async (req) => {
     } else if (isPhotographyEffects) {
       falBody = { image_url: imageBase64, effect_type: filter.prompt, aspect_ratio: { ratio: "9:16" } };
     } else if (isStyleTransfer) {
+      const shouldSendStyleImage = filter.send_style_image && !!filter.style_image_url;
       falBody = {
         image_url: imageBase64,
         target_style: filter.prompt,
-        ...(filter.style_image_url && { style_reference_image_url: filter.style_image_url }),
+        ...(shouldSendStyleImage && { style_reference_image_url: filter.style_image_url }),
         aspect_ratio: { ratio: "9:16" },
       };
     } else {
@@ -132,7 +133,8 @@ Deno.serve(async (req) => {
     }
 
     // Sanitized log — never log base64 payloads
-    console.log("Fal.ai request:", JSON.stringify({ modelUrl, isStyleTransfer, isPhotographyEffects, isLightingRestoration }));
+    const bodyKeys = Object.keys(falBody).filter(k => k !== "image_url" && k !== "image_urls");
+    console.log("[fal-request]", JSON.stringify({ model: modelUrl, body_keys: bodyKeys, target_style: falBody.target_style, effect_type: falBody.effect_type, prompt: falBody.prompt }));
 
     const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
       method: "POST",
