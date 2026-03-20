@@ -159,11 +159,11 @@ const AiFiltersManager = () => {
   const noPromptNeeded = isLightingRestoration;
 
   const openNew = () => {
-    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setDialogOpen(true);
+    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setDialogOpen(true);
   };
 
   const openEdit = (filter: AiFilter) => {
-    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setDialogOpen(true);
+    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage((filter as any).send_style_image ?? true); setDialogOpen(true);
   };
 
   const handleSave = async () => {
