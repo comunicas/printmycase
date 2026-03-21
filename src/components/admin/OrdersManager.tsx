@@ -101,7 +101,7 @@ const OrdersManager = () => {
       fetchOrders();
       supabase.functions.invoke("notify-order-status", {
         body: { order_id: orderId, new_status: "shipped" },
-      }).catch(() => {});
+      }).catch((err) => console.warn("[notify] email error:", err));
     }
   };
 
