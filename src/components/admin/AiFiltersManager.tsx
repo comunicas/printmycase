@@ -164,7 +164,7 @@ const AiFiltersManager = () => {
   };
 
   const openEdit = (filter: AiFilter) => {
-    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage((filter as any).send_style_image ?? true); setDialogOpen(true);
+    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage(filter.send_style_image ?? true); setDialogOpen(true);
   };
 
   const handleSave = async () => {
