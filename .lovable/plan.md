@@ -1,74 +1,54 @@
 
 
-## Correção robusta: Crédito de moedas + fallback pós-pagamento
+## Análise: Emails de Compra e Status do Pedido
 
-### Diagnóstico
+### Estado Atual
 
-**O webhook Stripe NÃO está recebendo eventos.** Os logs da function `stripe-webhook` estão completamente vazios (nenhum `checkout.session.completed` processado). Evidências:
-- Nenhuma transação `coin_purchase` na tabela `coin_transactions`
-- Nenhuma transação `purchase_bonus` (bônus pós-compra de case também não creditou)
-- O pedido está em status `delivered` (mudado manualmente pelo admin), mas deveria ter passado por `analyzing` via webhook
-- A function está deployada e responde (testamos e recebeu "Missing signature" corretamente)
+**O que existe:**
+- Edge function `notify-order-status` — envia email ao cliente quando o admin muda o status do pedido
+- Chamada pelo `OrdersManager.tsx` em 2 pontos: mudança de status e salvamento de código de rastreio
+- Template HTML bonito com badge de status colorido, tracking link (para status "shipped"), logo e CTA
 
-**Causa provável**: O webhook no painel do Stripe não está apontando para a URL correta (`https://iqnqpwnbdqzvqssxcxgb.supabase.co/functions/v1/stripe-webhook`), ou o `STRIPE_WEBHOOK_SECRET` não corresponde ao endpoint configurado.
+**Problemas identificados:**
 
-### Plano de correção
+1. **Nenhum email de confirmação de compra** — Quando o pagamento é confirmado pelo Stripe (`checkout.session.completed`), o webhook atualiza o status para "analyzing" e credita moedas bônus, mas NÃO envia email de confirmação ao cliente.
 
-**1. Verificação imediata do webhook (manual)**
-- Você precisa verificar no painel do Stripe se o webhook endpoint está configurado para `https://iqnqpwnbdqzvqssxcxgb.supabase.co/functions/v1/stripe-webhook`
-- Se não estiver, criar/atualizar o endpoint com os eventos `checkout.session.completed` e `checkout.session.expired`
-- Copiar o Signing Secret do webhook e atualizar o secret `STRIPE_WEBHOOK_SECRET` se necessário
+2. **Sem domínio de email configurado** — O workspace não tem nenhum domínio de email configurado. A function `notify-order-status` usa `sender_domain: "printmycase.com.br"` e `from: "noreply@printmycase.com.br"`, mas sem domínio verificado os emails provavelmente estão falhando silenciosamente (`.catch(() => {})` no frontend engole o erro).
 
-**2. Fallback no frontend: verificação pós-pagamento para moedas** (`src/pages/Coins.tsx`)
-- Quando o usuário retorna com `?purchased=X`, chamar uma nova edge function `verify-coin-purchase` que:
-  - Recebe o `session_id` do Stripe (adicionado à success_url)
-  - Verifica no Stripe se a session foi paga (`session.payment_status === 'paid'`)
-  - Verifica se já existe transação `coin_purchase` para esse `session_id` (idempotência)
-  - Se pago e não creditado → insere `coin_transaction` e retorna sucesso
-  - Se já creditado → retorna sucesso sem duplicar
+3. **Logs zerados** — `notify-order-status` não tem NENHUM log, o que sugere que a function nunca foi chamada com sucesso ou nunca foi deployada.
 
-**3. Nova edge function `verify-coin-purchase`** (`supabase/functions/verify-coin-purchase/index.ts`)
-- Autenticada (JWT do usuário)
-- Recebe `{ sessionId: string }`
-- Usa Stripe SDK para buscar a session e validar:
-  - `payment_status === 'paid'`
-  - `metadata.type === 'coin_purchase'`
-  - `metadata.user_id` === usuário autenticado
-- Verifica idempotência: busca `coin_transactions` com `description LIKE '%session_id%'` ou adiciona coluna `stripe_session_id`
-- Se não creditado → insere transação
+4. **Erro silencioso no frontend** — As chamadas à function usam `.catch(() => {})`, escondendo qualquer falha.
 
-**4. Coluna de idempotência** (`coin_transactions`)
-- Migração: `ALTER TABLE coin_transactions ADD COLUMN stripe_session_id text;`
-- Unique constraint parcial: `CREATE UNIQUE INDEX idx_coin_tx_stripe_session ON coin_transactions(stripe_session_id) WHERE stripe_session_id IS NOT NULL;`
-- Webhook e verify-function usam essa coluna para evitar crédito duplo
+### Plano de Correção
 
-**5. Atualizar `create-coin-checkout`** 
-- Adicionar `session_id` na success_url: `/coins?purchased={coins}&session_id={CHECKOUT_SESSION_ID}`
+**Passo 1 — Configurar domínio de email**
+- Necessário configurar um domínio de email para que os envios funcionem
+- Sem isso, nenhum email transacional será entregue
 
-**6. Atualizar `stripe-webhook`**
-- Inserir `stripe_session_id` na transação de moedas para idempotência
+**Passo 2 — Email de confirmação de compra (novo)**
+- Adicionar envio de email no `stripe-webhook` quando `checkout.session.completed` for recebido para compras de case
+- Template: "Pedido confirmado! #XXXXX — Em Análise", com dados do produto, valor, prazo estimado
 
-**7. Creditar manualmente a compra que ficou sem crédito**
-- Inserir 50 moedas para o usuário `ea5c41e2-c588-4ca5-8c8d-bd24ed014bf2` via insert tool
+**Passo 3 — Corrigir `notify-order-status`**
+- Atualizar `sender_domain` para usar o subdomínio correto após configuração
+- Adicionar logs detalhados: `[notify] Start`, `[notify] Email sent`, `[notify] Error`
+- Deploy da function
 
-### Arquivos afetados
-| Arquivo | Alteração |
-|---------|-----------|
-| `supabase/functions/verify-coin-purchase/index.ts` | **Novo** — verificação pós-pagamento |
-| `supabase/functions/create-coin-checkout/index.ts` | Adicionar `session_id` na success_url |
-| `supabase/functions/stripe-webhook/index.ts` | Adicionar `stripe_session_id` no insert |
-| `src/pages/Coins.tsx` | Chamar verify-coin-purchase no retorno do pagamento |
-| Migração SQL | Adicionar coluna `stripe_session_id` + unique index |
+**Passo 4 — Melhorar resiliência no frontend**
+- Remover `.catch(() => {})` e logar erros no console ou mostrar toast de warning
 
-### Fluxo resultante
-```text
-Pagamento → Stripe checkout → [webhook credita moedas]
-                             ↓
-                        Usuário volta para /coins?purchased=50&session_id=cs_xxx
-                             ↓
-                        Frontend chama verify-coin-purchase
-                             ↓
-                        Se webhook não creditou → credita agora (idempotente)
-                        Se já creditou → ignora (unique constraint)
-```
+**Passo 5 — Email de cancelamento/expiração**
+- No webhook, quando `checkout.session.expired` → enviar email informando cancelamento
+
+### Resultado esperado: emails em cada etapa
+
+| Evento | Email | Responsável |
+|--------|-------|-------------|
+| Pagamento confirmado | "Pedido Confirmado — Em Análise" | `stripe-webhook` (novo) |
+| Admin muda status | "Atualização de Status — {status}" | `notify-order-status` (existente) |
+| Admin adiciona rastreio | "Pedido Enviado + Código de Rastreio" | `notify-order-status` (existente) |
+| Session expirada | "Pedido Cancelado" | `stripe-webhook` (novo) |
+
+### Pré-requisito crítico
+Antes de implementar, é necessário configurar o domínio de email. Sem isso, nenhum email será enviado.
 
