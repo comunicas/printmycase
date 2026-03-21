@@ -23,6 +23,7 @@ interface AiFilter {
   sort_order: number;
   active: boolean;
   style_image_url: string | null;
+  send_style_image: boolean;
 }
 
 const MODEL_OPTIONS = [
