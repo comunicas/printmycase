@@ -1,51 +1,74 @@
 
 
-## Logs e Correções nas Integrações Stripe
+## Correção robusta: Crédito de moedas + fallback pós-pagamento
 
-### Problemas Encontrados
+### Diagnóstico
 
-**1. Falta de logs detalhados em todas as 3 functions Stripe**
-- `create-checkout`: só loga erros do Stripe e do catch final
-- `create-coin-checkout`: só loga no catch final
-- `stripe-webhook`: tem logs básicos mas não loga metadata/session_id recebidos
-- Nenhuma function loga o payload enviado ao Stripe, IDs criados, ou resultados de operações no banco
+**O webhook Stripe NÃO está recebendo eventos.** Os logs da function `stripe-webhook` estão completamente vazios (nenhum `checkout.session.completed` processado). Evidências:
+- Nenhuma transação `coin_purchase` na tabela `coin_transactions`
+- Nenhuma transação `purchase_bonus` (bônus pós-compra de case também não creditou)
+- O pedido está em status `delivered` (mudado manualmente pelo admin), mas deveria ter passado por `analyzing` via webhook
+- A function está deployada e responde (testamos e recebeu "Missing signature" corretamente)
 
-**2. `ALLOWED_ORIGINS` desatualizado**
-- Ambas `create-checkout` e `create-coin-checkout` usam `printmycase.com.br` como origem permitida
-- O domínio real da aplicação é `studio.printmycase.com.br`
-- Resultado: redirects de sucesso/cancelamento vão para o domínio errado (sem `studio.`)
+**Causa provável**: O webhook no painel do Stripe não está apontando para a URL correta (`https://iqnqpwnbdqzvqssxcxgb.supabase.co/functions/v1/stripe-webhook`), ou o `STRIPE_WEBHOOK_SECRET` não corresponde ao endpoint configurado.
 
-**3. `create-coin-checkout` usa Stripe SDK (npm import) vs `create-checkout` usa REST API**
-- Inconsistência de abordagem, mas funcional. O SDK importa ~500KB desnecessários
+### Plano de correção
 
-**4. Webhook não loga erros de operações no banco**
-- `insert` e `update` no banco não verificam retorno de erro
-- Se o insert de `coin_transactions` falhar, o webhook retorna 200 sem saber que falhou
+**1. Verificação imediata do webhook (manual)**
+- Você precisa verificar no painel do Stripe se o webhook endpoint está configurado para `https://iqnqpwnbdqzvqssxcxgb.supabase.co/functions/v1/stripe-webhook`
+- Se não estiver, criar/atualizar o endpoint com os eventos `checkout.session.completed` e `checkout.session.expired`
+- Copiar o Signing Secret do webhook e atualizar o secret `STRIPE_WEBHOOK_SECRET` se necessário
 
-### Plano de Correções
+**2. Fallback no frontend: verificação pós-pagamento para moedas** (`src/pages/Coins.tsx`)
+- Quando o usuário retorna com `?purchased=X`, chamar uma nova edge function `verify-coin-purchase` que:
+  - Recebe o `session_id` do Stripe (adicionado à success_url)
+  - Verifica no Stripe se a session foi paga (`session.payment_status === 'paid'`)
+  - Verifica se já existe transação `coin_purchase` para esse `session_id` (idempotência)
+  - Se pago e não creditado → insere `coin_transaction` e retorna sucesso
+  - Se já creditado → retorna sucesso sem duplicar
 
-**1. `supabase/functions/create-checkout/index.ts`**
-- Adicionar `studio.printmycase.com.br` ao `ALLOWED_ORIGINS`
-- Logs: `[checkout] userId, productId, designId, isCollection, totalCents`
-- Log após criar sessão Stripe: `[stripe-session] id, url`
-- Log após inserir order: `[order] orderId`
-- Log de erros do banco com detalhes
+**3. Nova edge function `verify-coin-purchase`** (`supabase/functions/verify-coin-purchase/index.ts`)
+- Autenticada (JWT do usuário)
+- Recebe `{ sessionId: string }`
+- Usa Stripe SDK para buscar a session e validar:
+  - `payment_status === 'paid'`
+  - `metadata.type === 'coin_purchase'`
+  - `metadata.user_id` === usuário autenticado
+- Verifica idempotência: busca `coin_transactions` com `description LIKE '%session_id%'` ou adiciona coluna `stripe_session_id`
+- Se não creditado → insere transação
 
-**2. `supabase/functions/create-coin-checkout/index.ts`**
-- Adicionar `studio.printmycase.com.br` ao `ALLOWED_ORIGINS`
-- Logs: `[coin-checkout] userId, coins, priceCents`
-- Log após criar sessão: `[stripe-session] id`
-- Verificar erro do Stripe session e logar
+**4. Coluna de idempotência** (`coin_transactions`)
+- Migração: `ALTER TABLE coin_transactions ADD COLUMN stripe_session_id text;`
+- Unique constraint parcial: `CREATE UNIQUE INDEX idx_coin_tx_stripe_session ON coin_transactions(stripe_session_id) WHERE stripe_session_id IS NOT NULL;`
+- Webhook e verify-function usam essa coluna para evitar crédito duplo
 
-**3. `supabase/functions/stripe-webhook/index.ts`**
-- Log ao receber evento: `[webhook] event.type, session.id`
-- Log de metadata: `[metadata] type, userId, productId, coinAmount`
-- Verificar e logar erros das operações no banco (insert/update)
-- Log após cada operação: `[db] order updated, coins credited`
-- Log no caso `checkout.session.expired`: `[expired] session.id`
+**5. Atualizar `create-coin-checkout`** 
+- Adicionar `session_id` na success_url: `/coins?purchased={coins}&session_id={CHECKOUT_SESSION_ID}`
 
-### Resultado
-- Logs estruturados em todas as 3 functions para rastrear fluxo completo
-- URLs de redirect corretas para `studio.printmycase.com.br`
-- Erros silenciosos no webhook detectados e logados
+**6. Atualizar `stripe-webhook`**
+- Inserir `stripe_session_id` na transação de moedas para idempotência
+
+**7. Creditar manualmente a compra que ficou sem crédito**
+- Inserir 50 moedas para o usuário `ea5c41e2-c588-4ca5-8c8d-bd24ed014bf2` via insert tool
+
+### Arquivos afetados
+| Arquivo | Alteração |
+|---------|-----------|
+| `supabase/functions/verify-coin-purchase/index.ts` | **Novo** — verificação pós-pagamento |
+| `supabase/functions/create-coin-checkout/index.ts` | Adicionar `session_id` na success_url |
+| `supabase/functions/stripe-webhook/index.ts` | Adicionar `stripe_session_id` no insert |
+| `src/pages/Coins.tsx` | Chamar verify-coin-purchase no retorno do pagamento |
+| Migração SQL | Adicionar coluna `stripe_session_id` + unique index |
+
+### Fluxo resultante
+```text
+Pagamento → Stripe checkout → [webhook credita moedas]
+                             ↓
+                        Usuário volta para /coins?purchased=50&session_id=cs_xxx
+                             ↓
+                        Frontend chama verify-coin-purchase
+                             ↓
+                        Se webhook não creditou → credita agora (idempotente)
+                        Se já creditou → ignora (unique constraint)
+```
 
