@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
@@ -11,12 +12,12 @@ interface ProductDetailsProps {
   product: Product;
 }
 
-const ProductDetails = ({ product }: ProductDetailsProps) => {
+const ProductDetails = forwardRef<HTMLDivElement, ProductDetailsProps>(({ product }, ref) => {
   const hasDescription = !!product.description;
   const defaultTab = hasDescription ? "description" : "specs";
 
   return (
-    <div>
+    <div ref={ref}>
       <h2 className="text-lg font-semibold text-foreground mb-3">Detalhes do Produto</h2>
       <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="w-full">
@@ -59,6 +60,8 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
       </Tabs>
     </div>
   );
-};
+});
+
+ProductDetails.displayName = "ProductDetails";
 
 export default ProductDetails;

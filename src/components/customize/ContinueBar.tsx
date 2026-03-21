@@ -57,15 +57,6 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
 
   return (
     <>
-      {/* Desktop — hidden when inline is used in aside */}
-      <div className="hidden lg:hidden items-center gap-2 w-full max-w-sm mx-auto py-3">
-        {resetButton}
-        {downloadButton}
-        <Button className="flex-1 gap-1.5" onClick={onContinue} disabled={disabled}>
-          {renderButtonContent()}
-        </Button>
-      </div>
-
       {/* Mobile */}
       <div className="flex-shrink-0 lg:hidden border-t border-border bg-background/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center gap-3 px-3 py-2">

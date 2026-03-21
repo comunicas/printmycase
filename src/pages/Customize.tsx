@@ -21,7 +21,7 @@ const Customize = () => {
     <div className="h-dvh w-full bg-background flex flex-col overflow-hidden">
       <CustomizeHeader
         productName={c.productName}
-        onBack={() => navigate(c.product ? `/product/${c.product.slug}` : "/catalog")}
+        onBack={() => navigate("/customize")}
         productImage={c.product?.images?.[0] || c.product?.device_image}
         draftSaved={c.draftSaved}
         currentSlug={c.product?.slug}

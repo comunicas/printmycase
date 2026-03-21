@@ -92,6 +92,18 @@ export function useCustomize(productId: string | undefined) {
   // Track which sources have been restored to avoid duplicates
   const sessionRestored = useRef(false);
   const pendingRestored = useRef(false);
+  const prevSlugRef = useRef<string | undefined>(undefined);
+
+  // Reset restore refs when product slug changes
+  useEffect(() => {
+    if (product?.slug && product.slug !== prevSlugRef.current) {
+      if (prevSlugRef.current !== undefined) {
+        sessionRestored.current = false;
+        pendingRestored.current = false;
+      }
+      prevSlugRef.current = product.slug;
+    }
+  }, [product?.slug]);
 
   // Restore from sessionStorage (runs on mount and when user changes after OAuth/signup)
   useEffect(() => {

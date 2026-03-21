@@ -23,6 +23,7 @@ interface AiFilter {
   sort_order: number;
   active: boolean;
   style_image_url: string | null;
+  send_style_image: boolean;
 }
 
 const MODEL_OPTIONS = [
@@ -163,7 +164,7 @@ const AiFiltersManager = () => {
   };
 
   const openEdit = (filter: AiFilter) => {
-    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage((filter as any).send_style_image ?? true); setDialogOpen(true);
+    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage(filter.send_style_image ?? true); setDialogOpen(true);
   };
 
   const handleSave = async () => {
@@ -173,7 +174,7 @@ const AiFiltersManager = () => {
     if (editing) {
       const { error } = await supabase
         .from("ai_filters")
-        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage } as any)
+        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage })
         .eq("id", editing.id);
       if (error) toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
       else toast({ title: "Filtro atualizado" });
@@ -181,7 +182,7 @@ const AiFiltersManager = () => {
       const maxOrder = filters.length > 0 ? Math.max(...filters.map((f) => f.sort_order)) : 0;
       const { error } = await supabase
         .from("ai_filters")
-        .insert({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, sort_order: maxOrder + 1 } as any);
+        .insert({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, sort_order: maxOrder + 1 });
       if (error) toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       else toast({ title: "Filtro criado" });
     }
