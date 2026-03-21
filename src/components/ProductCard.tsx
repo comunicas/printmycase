@@ -1,7 +1,6 @@
 import { forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { type Product, formatPrice } from "@/lib/types";
 
 interface ProductCardProps {
@@ -25,6 +24,8 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
+              width="300"
+              height="300"
             />
           ) : (
             <span className="text-muted-foreground text-xs">Sem imagem</span>

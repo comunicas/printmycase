@@ -9,7 +9,7 @@ import SubmitButton from "@/components/forms/SubmitButton";
 import AppHeader from "@/components/AppHeader";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import logoPrintMyCase from "@/assets/logo-printmycase.png";
+import logoPrintMyCase from "@/assets/logo-printmycase-sm.webp";
 import GoogleIcon from "@/components/GoogleIcon";
 import { clarityEvent } from "@/lib/clarity";
 import { pixelEvent } from "@/lib/meta-pixel";
