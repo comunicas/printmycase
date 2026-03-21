@@ -23,7 +23,6 @@ async function verifyStripeSignature(
 
   if (!timestamp || !sig) return false;
 
-  // Check timestamp tolerance (5 minutes)
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - parseInt(timestamp)) > 300) return false;
 
@@ -48,7 +47,6 @@ async function verifyStripeSignature(
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  // Timing-safe comparison
   if (computed.length !== sig.length) return false;
   let mismatch = 0;
   for (let i = 0; i < computed.length; i++) {
@@ -68,7 +66,7 @@ Deno.serve(async (req) => {
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
     if (!webhookSecret) {
-      console.error("STRIPE_WEBHOOK_SECRET not configured");
+      console.error("[webhook] STRIPE_WEBHOOK_SECRET not configured");
       return new Response(JSON.stringify({ error: "Webhook not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -76,7 +74,7 @@ Deno.serve(async (req) => {
     }
 
     if (!signature) {
-      console.error("Missing Stripe signature header");
+      console.error("[webhook] Missing Stripe signature header");
       return new Response(JSON.stringify({ error: "Missing signature" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -85,7 +83,7 @@ Deno.serve(async (req) => {
 
     const valid = await verifyStripeSignature(body, signature, webhookSecret);
     if (!valid) {
-      console.error("Invalid Stripe webhook signature");
+      console.error("[webhook] Invalid Stripe webhook signature");
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -93,6 +91,11 @@ Deno.serve(async (req) => {
     }
 
     const event = JSON.parse(body);
+
+    console.log("[webhook] Event received:", JSON.stringify({
+      type: event.type,
+      sessionId: event.data?.object?.id,
+    }));
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -103,9 +106,17 @@ Deno.serve(async (req) => {
       const session = event.data.object;
       const metadata = session.metadata || {};
 
+      console.log("[webhook] Metadata:", JSON.stringify({
+        type: metadata.type,
+        userId: metadata.user_id,
+        productId: metadata.product_id,
+        coinAmount: metadata.coin_amount,
+        eventId: metadata.event_id,
+      }));
+
       if (metadata.type === "coin_purchase" && metadata.user_id && metadata.coin_amount) {
         // Credit purchased coins (365 days expiry)
-        await supabaseAdmin
+        const { error: coinError } = await supabaseAdmin
           .from("coin_transactions")
           .insert({
             user_id: metadata.user_id,
@@ -114,13 +125,24 @@ Deno.serve(async (req) => {
             expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
             description: `Compra de ${metadata.coin_amount} moedas`,
           });
-        console.log(`Credited ${metadata.coin_amount} coins to ${metadata.user_id}`);
+
+        if (coinError) {
+          console.error("[webhook] CRITICAL: coin_transactions insert failed:", coinError.message);
+        } else {
+          console.log("[db] Coins credited:", metadata.coin_amount, "to user:", metadata.user_id);
+        }
       } else {
         // Regular case purchase — update order + credit dynamic bonus coins
-        await supabaseAdmin
+        const { error: orderUpdateError } = await supabaseAdmin
           .from("orders")
           .update({ status: "analyzing" })
           .eq("stripe_session_id", session.id);
+
+        if (orderUpdateError) {
+          console.error("[webhook] Order update failed:", orderUpdateError.message, "session:", session.id);
+        } else {
+          console.log("[db] Order updated to analyzing, session:", session.id);
+        }
 
         // Fetch bonus settings
         const { data: bonusAmountRow } = await supabaseAdmin
@@ -136,14 +158,18 @@ Deno.serve(async (req) => {
         const bonusAmount = bonusAmountRow?.value ?? 100;
         const bonusDays = bonusDaysRow?.value ?? 30;
 
-        const { data: order } = await supabaseAdmin
+        const { data: order, error: orderFetchError } = await supabaseAdmin
           .from("orders")
           .select("user_id, total_cents")
           .eq("stripe_session_id", session.id)
           .single();
 
+        if (orderFetchError) {
+          console.error("[webhook] Order fetch failed:", orderFetchError.message, "session:", session.id);
+        }
+
         if (order?.user_id) {
-          await supabaseAdmin
+          const { error: bonusError } = await supabaseAdmin
             .from("coin_transactions")
             .insert({
               user_id: order.user_id,
@@ -152,11 +178,15 @@ Deno.serve(async (req) => {
               expires_at: new Date(Date.now() + bonusDays * 24 * 60 * 60 * 1000).toISOString(),
               description: "Bônus por compra de case",
             });
-          console.log(`Credited ${bonusAmount} bonus coins to ${order.user_id}`);
+
+          if (bonusError) {
+            console.error("[webhook] Bonus insert failed:", bonusError.message, "user:", order.user_id);
+          } else {
+            console.log("[db] Bonus credited:", bonusAmount, "coins to user:", order.user_id);
+          }
 
           // Send server-side Purchase event to Meta CAPI
           try {
-            // Get user email for hashing
             const { data: userData } = await supabaseAdmin.auth.admin.getUserById(order.user_id);
             const userEmail = userData?.user?.email;
 
@@ -164,7 +194,7 @@ Deno.serve(async (req) => {
               event_name: "Purchase",
               event_time: Math.floor(Date.now() / 1000),
               event_id: metadata.event_id || null,
-              event_source_url: metadata.origin_url || "https://printmycase.com.br",
+              event_source_url: metadata.origin_url || "https://studio.printmycase.com.br",
               user_data: userEmail ? { em: userEmail } : {},
               custom_data: {
                 currency: "BRL",
@@ -185,26 +215,35 @@ Deno.serve(async (req) => {
               }
             );
             await capiRes.text();
-            console.log(`Meta CAPI Purchase response: ${capiRes.status}`);
+            console.log("[capi] Purchase response:", capiRes.status);
           } catch (capiErr) {
-            // Log but don't block the webhook flow
-            console.error("Meta CAPI error (non-blocking):", (capiErr as Error).message);
+            console.error("[capi] Purchase error (non-blocking):", (capiErr as Error).message);
           }
         }
       }
     } else if (event.type === "checkout.session.expired") {
       const session = event.data.object;
-      await supabaseAdmin
+      console.log("[webhook] Session expired:", session.id);
+
+      const { error: expireError } = await supabaseAdmin
         .from("orders")
         .update({ status: "cancelled" })
         .eq("stripe_session_id", session.id);
+
+      if (expireError) {
+        console.error("[webhook] Expire update failed:", expireError.message, "session:", session.id);
+      } else {
+        console.log("[db] Order cancelled for expired session:", session.id);
+      }
+    } else {
+      console.log("[webhook] Unhandled event type:", event.type);
     }
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("stripe-webhook error:", err);
+    console.error("[webhook] Unhandled error:", (err as Error).message, (err as Error).stack);
     return new Response(
       JSON.stringify({ error: "An error occurred processing the webhook" }),
       {

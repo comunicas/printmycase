@@ -8,8 +8,9 @@ const corsHeaders = {
 
 const ALLOWED_ORIGINS = [
   "https://printmycase.com.br",
+  "https://studio.printmycase.com.br",
 ];
-const DEFAULT_ORIGIN = "https://printmycase.com.br";
+const DEFAULT_ORIGIN = "https://studio.printmycase.com.br";
 
 function getSafeOrigin(req: Request): string {
   const raw = req.headers.get("origin") || req.headers.get("referer") || "";
@@ -30,6 +31,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
+      console.warn("[checkout] Missing or invalid Authorization header");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -45,6 +47,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
     if (claimsError || !claimsData?.claims?.sub) {
+      console.warn("[checkout] Auth claims error:", claimsError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -54,15 +57,26 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub as string;
     const { product_id, design_id, customization_data, raw_image_url, original_image_url, edited_image_url, shipping_cents, address_id, address_inline, save_address, initiate_checkout_event_id } = await req.json();
 
+    const isCollectionPurchase = !!design_id;
+
+    console.log("[checkout] Start:", JSON.stringify({
+      userId,
+      productId: product_id,
+      designId: design_id || null,
+      isCollection: isCollectionPurchase,
+      shippingCents: shipping_cents || 0,
+      addressId: address_id || null,
+      hasInlineAddress: !!address_inline,
+      saveAddress: !!save_address,
+    }));
+
     if (!product_id) {
+      console.warn("[checkout] Missing product_id");
       return new Response(JSON.stringify({ error: "product_id is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // If design_id is provided, this is a collection purchase (no customization needed)
-    const isCollectionPurchase = !!design_id;
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -77,6 +91,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (productError || !product) {
+      console.error("[checkout] Product not found:", product_id, productError?.message);
       return new Response(JSON.stringify({ error: "Product not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -93,6 +108,7 @@ Deno.serve(async (req) => {
         .eq("active", true)
         .single();
       if (designError || !designData) {
+        console.error("[checkout] Design not found:", design_id, designError?.message);
         return new Response(JSON.stringify({ error: "Design not found" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -106,7 +122,6 @@ Deno.serve(async (req) => {
     let resolvedAddressId = address_id || null;
 
     if (address_id) {
-      // Use saved address - verify ownership
       const { data: addr } = await supabaseAdmin
         .from("addresses")
         .select("*")
@@ -114,20 +129,18 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .single();
       if (!addr) {
+        console.warn("[checkout] Address not found or access denied:", address_id);
         return new Response(JSON.stringify({ error: "Address not found or access denied" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      {
-        shippingAddress = {
-          street: addr.street, number: addr.number, complement: addr.complement,
-          neighborhood: addr.neighborhood, city: addr.city, state: addr.state,
-          zip_code: addr.zip_code, label: addr.label,
-        };
-      }
+      shippingAddress = {
+        street: addr.street, number: addr.number, complement: addr.complement,
+        neighborhood: addr.neighborhood, city: addr.city, state: addr.state,
+        zip_code: addr.zip_code, label: addr.label,
+      };
     } else if (address_inline) {
-      // Use inline address from form
       shippingAddress = {
         street: address_inline.street, number: address_inline.number,
         complement: address_inline.complement, neighborhood: address_inline.neighborhood,
@@ -135,9 +148,8 @@ Deno.serve(async (req) => {
         zip_code: address_inline.zip_code, label: address_inline.label || "Casa",
       };
 
-      // Save address if requested
       if (save_address) {
-        const { data: newAddr } = await supabaseAdmin
+        const { data: newAddr, error: addrError } = await supabaseAdmin
           .from("addresses")
           .insert({
             user_id: userId,
@@ -152,7 +164,12 @@ Deno.serve(async (req) => {
           })
           .select("id")
           .single();
-        if (newAddr) resolvedAddressId = newAddr.id;
+        if (addrError) {
+          console.error("[checkout] Failed to save address:", addrError.message);
+        } else if (newAddr) {
+          resolvedAddressId = newAddr.id;
+          console.log("[checkout] Address saved:", newAddr.id);
+        }
       }
     }
 
@@ -164,6 +181,13 @@ Deno.serve(async (req) => {
     const itemName = isCollectionPurchase
       ? `Capa ${design!.name} - ${product.name}`
       : `Capa Personalizada - ${product.name}`;
+
+    console.log("[checkout] Price:", JSON.stringify({
+      itemPriceCents,
+      shippingValue,
+      totalCents,
+      origin,
+    }));
 
     const params = new URLSearchParams();
     params.append("payment_method_types[0]", "card");
@@ -189,7 +213,6 @@ Deno.serve(async (req) => {
       params.append("line_items[1][quantity]", "1");
     }
 
-    // Generate event_id for Meta CAPI deduplication
     const eventId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 
     params.append("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&eid=${eventId}`);
@@ -211,11 +234,13 @@ Deno.serve(async (req) => {
     const session = await stripeRes.json();
 
     if (!stripeRes.ok) {
-      console.error("Stripe API error:", session);
+      console.error("[checkout] Stripe API error:", JSON.stringify(session.error));
       throw new Error(session.error?.message || "Stripe API error");
     }
 
-    await supabaseAdmin.from("orders").insert({
+    console.log("[stripe-session] Created:", JSON.stringify({ id: session.id, url: session.url?.slice(0, 60) }));
+
+    const { data: orderData, error: orderError } = await supabaseAdmin.from("orders").insert({
       user_id: userId,
       product_id,
       design_id: design_id || null,
@@ -231,18 +256,27 @@ Deno.serve(async (req) => {
         edited_image_url: edited_image_url || null,
       },
       status: "pending",
-    });
+    }).select("id").single();
+
+    if (orderError) {
+      console.error("[checkout] Order insert failed:", orderError.message);
+    } else {
+      console.log("[order] Created:", orderData?.id);
+    }
 
     // Clean up pending checkout draft (only for customizable orders)
     if (!isCollectionPurchase) {
-      await supabaseAdmin
+      const { error: deleteError } = await supabaseAdmin
         .from("pending_checkouts")
         .delete()
         .eq("user_id", userId)
         .eq("product_id", product_id);
+      if (deleteError) {
+        console.warn("[checkout] Failed to clean pending_checkouts:", deleteError.message);
+      }
     }
 
-    // Fire InitiateCheckout CAPI event for deduplication with browser pixel
+    // Fire InitiateCheckout CAPI event
     if (initiate_checkout_event_id) {
       const userEmail = claimsData.claims.email as string | undefined;
       const capiBody: Record<string, unknown> = {
@@ -258,14 +292,16 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("CRON_SECRET") || "" },
         body: JSON.stringify(capiBody),
-      }).catch((e) => console.error("CAPI InitiateCheckout error:", e.message));
+      }).catch((e) => console.error("[capi] InitiateCheckout error:", e.message));
     }
+
+    console.log("[checkout] Complete for user:", userId);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("create-checkout error:", err);
+    console.error("[checkout] Unhandled error:", (err as Error).message, (err as Error).stack);
     return new Response(
       JSON.stringify({ error: "An error occurred processing your request" }),
       {
