@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,11 +9,11 @@ interface ProductInfoProps {
   product: Product;
 }
 
-const ProductInfo = ({ product }: ProductInfoProps) => {
+const ProductInfo = forwardRef<HTMLDivElement, ProductInfoProps>(({ product }, ref) => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={ref} className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
 
       <p className="text-3xl font-bold text-foreground">
@@ -33,6 +34,8 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       </div>
     </div>
   );
-};
+});
+
+ProductInfo.displayName = "ProductInfo";
 
 export default ProductInfo;
