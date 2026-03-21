@@ -52,10 +52,27 @@ const Coins = () => {
   const [historyPage, setHistoryPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
 
-  // Feedback de compra bem-sucedida
+  // Feedback de compra bem-sucedida + fallback de crédito
   useEffect(() => {
     const purchased = searchParams.get("purchased");
-    if (purchased) {
+    const sessionId = searchParams.get("session_id");
+    if (purchased && sessionId) {
+      // Call verify-coin-purchase to ensure coins are credited (idempotent)
+      supabase.functions.invoke("verify-coin-purchase", {
+        body: { sessionId },
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error("[verify-coin] Error:", error.message);
+        } else {
+          console.log("[verify-coin] Result:", data);
+        }
+        toast({ title: "Compra realizada! 🎉", description: `${purchased} moedas adicionadas ao seu saldo.` });
+        refresh();
+      });
+      searchParams.delete("purchased");
+      searchParams.delete("session_id");
+      setSearchParams(searchParams, { replace: true });
+    } else if (purchased) {
       toast({ title: "Compra realizada! 🎉", description: `${purchased} moedas adicionadas ao seu saldo.` });
       searchParams.delete("purchased");
       setSearchParams(searchParams, { replace: true });

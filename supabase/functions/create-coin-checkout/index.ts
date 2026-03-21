@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
         coin_amount: String(pkg.coins),
         type: "coin_purchase",
       },
-      success_url: `${getSafeOrigin(req)}/coins?purchased=${pkg.coins}`,
+      success_url: `${getSafeOrigin(req)}/coins?purchased=${pkg.coins}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${getSafeOrigin(req)}/coins`,
     });
 

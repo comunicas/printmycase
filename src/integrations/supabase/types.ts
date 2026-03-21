@@ -186,6 +186,7 @@ export type Database = {
           description: string | null
           expires_at: string
           id: string
+          stripe_session_id: string | null
           type: Database["public"]["Enums"]["coin_transaction_type"]
           user_id: string
         }
@@ -195,6 +196,7 @@ export type Database = {
           description?: string | null
           expires_at: string
           id?: string
+          stripe_session_id?: string | null
           type: Database["public"]["Enums"]["coin_transaction_type"]
           user_id: string
         }
@@ -204,6 +206,7 @@ export type Database = {
           description?: string | null
           expires_at?: string
           id?: string
+          stripe_session_id?: string | null
           type?: Database["public"]["Enums"]["coin_transaction_type"]
           user_id?: string
         }

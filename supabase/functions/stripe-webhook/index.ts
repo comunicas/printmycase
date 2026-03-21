@@ -124,6 +124,7 @@ Deno.serve(async (req) => {
             type: "coin_purchase",
             expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
             description: `Compra de ${metadata.coin_amount} moedas`,
+            stripe_session_id: session.id,
           });
 
         if (coinError) {
