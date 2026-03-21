@@ -1,5 +1,4 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { sendLovableEmail } from "npm:@lovable.dev/email-js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,8 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SENDER_DOMAIN = "printmycase.com.br";
-const FROM = "PrintMyCase <noreply@printmycase.com.br>";
+const SENDER_DOMAIN = "notify.printmycase.com.br";
+const FROM = "PrintMyCase <noreply@notify.printmycase.com.br>";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
@@ -63,18 +62,15 @@ function buildEmailHtml(params: {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;">
 <tr><td align="center" style="padding:40px 16px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-    <!-- Logo -->
     <tr><td align="center" style="padding-bottom:32px;">
       <img src="${logoUrl}" alt="PrintMyCase" height="40" style="height:40px;width:auto;" />
     </td></tr>
-    <!-- Greeting -->
     <tr><td>
       <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#1a1a1a;">Olá, ${userName}!</h1>
       <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.5;">
         Seu pedido <strong>#${shortId}</strong> teve uma atualização de status.
       </p>
     </td></tr>
-    <!-- Status badge -->
     <tr><td>
       <table role="presentation" cellpadding="0" cellspacing="0" style="background:#f9fafb;border-radius:12px;width:100%;">
         <tr><td style="padding:20px;">
@@ -88,11 +84,9 @@ function buildEmailHtml(params: {
       </table>
     </td></tr>
     ${trackingSection}
-    <!-- CTA -->
     <tr><td align="center" style="padding:32px 0;">
       <a href="${appUrl}/orders" target="_blank" style="display:inline-block;padding:14px 32px;background:hsl(265,83%,57%);color:#fff;font-size:14px;font-weight:600;text-decoration:none;border-radius:1.5rem;">Ver Meus Pedidos</a>
     </td></tr>
-    <!-- Footer -->
     <tr><td align="center" style="padding-top:24px;border-top:1px solid #eee;">
       <p style="margin:0;font-size:12px;color:#aaa;">PrintMyCase — Capas personalizadas</p>
     </td></tr>
@@ -109,17 +103,19 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log("[notify] Start");
+
     // --- Auth: verify caller is admin ---
     const authHeader = req.headers.get("authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
     if (!token) {
+      console.error("[notify] Missing authorization token");
       return new Response(
         JSON.stringify({ error: "Missing authorization token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // User-context client to validate JWT claims via signing-keys
     const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
@@ -129,24 +125,24 @@ Deno.serve(async (req) => {
     const { data: userData, error: authError } = await supabaseUser.auth.getUser(token);
     const callerUserId = userData?.user?.id;
     if (authError || !callerUserId) {
+      console.error("[notify] Invalid token:", authError?.message);
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Service-role client for admin operations
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check admin role
     const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
       _user_id: callerUserId,
       _role: "admin",
     });
     if (!isAdmin) {
+      console.error("[notify] Forbidden: not admin, userId:", callerUserId);
       return new Response(
         JSON.stringify({ error: "Forbidden: admin role required" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -162,6 +158,8 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log("[notify] Processing:", JSON.stringify({ order_id, new_status }));
+
     // Fetch order
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
@@ -170,13 +168,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (orderError || !order) {
+      console.error("[notify] Order not found:", orderError?.message);
       return new Response(
         JSON.stringify({ error: "Order not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Fetch user email + profile in parallel
+    // Fetch user email + profile + product in parallel
     const [userRes, profileRes, productRes] = await Promise.all([
       supabaseAdmin.auth.admin.getUserById(order.user_id),
       supabaseAdmin.from("profiles").select("full_name").eq("id", order.user_id).single(),
@@ -189,17 +188,17 @@ Deno.serve(async (req) => {
     ]);
 
     if (userRes.error || !userRes.data?.user?.email) {
+      console.error("[notify] User not found:", userRes.error?.message);
       return new Response(
         JSON.stringify({ error: "User not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userName = profileRes.data?.full_name || userRes.data.user.email.split("@")[0];
+    const userEmail = userRes.data.user.email;
+    const userName = profileRes.data?.full_name || userEmail.split("@")[0];
     const productName = productRes.data?.name ?? order.product_id;
-    const appUrl = Deno.env.get("APP_URL") || "https://printmycase.com.br";
-
-    // Logo from public email-assets bucket
+    const appUrl = Deno.env.get("APP_URL") || "https://studio.printmycase.com.br";
     const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/email-assets/logo-printmycase.png`;
 
     const html = buildEmailHtml({
@@ -213,38 +212,48 @@ Deno.serve(async (req) => {
       logoUrl,
     });
 
-    // --- Send via @lovable.dev/email-js ---
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) {
+    const statusLabel = statusLabels[new_status] ?? new_status;
+    const shortId = order_id.slice(0, 8);
+
+    // --- Enqueue email via pgmq ---
+    const payload = {
+      to: userEmail,
+      from: FROM,
+      sender_domain: SENDER_DOMAIN,
+      subject: `Pedido #${shortId} — ${statusLabel}`,
+      html,
+      purpose: "transactional",
+    };
+
+    const { data: msgId, error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload,
+    });
+
+    if (enqueueError) {
+      console.error("[notify] Enqueue failed:", enqueueError.message);
       return new Response(
-        JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
+        JSON.stringify({ error: "Failed to enqueue email" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const statusLabel = statusLabels[new_status] ?? new_status;
-    const shortId = order_id.slice(0, 8);
+    // Log to email_send_log
+    await supabaseAdmin.from("email_send_log").insert({
+      recipient_email: userEmail,
+      template_name: "order_status_update",
+      status: "pending",
+      metadata: { order_id, new_status, msg_id: msgId },
+    });
 
-    const result = await sendLovableEmail(
-      {
-        to: userRes.data.user.email,
-        from: FROM,
-        sender_domain: SENDER_DOMAIN,
-        subject: `Pedido #${shortId} — ${statusLabel}`,
-        html,
-        purpose: "transactional",
-      },
-      { apiKey }
-    );
-
-    console.log("Email sent successfully", { message_id: result.message_id, order_id });
+    console.log("[notify] Enqueued successfully:", JSON.stringify({ msgId, to: userEmail, status: new_status }));
 
     return new Response(
-      JSON.stringify({ success: true, message_id: result.message_id }),
+      JSON.stringify({ success: true, msg_id: msgId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("notify-order-status error:", err);
+    console.error("[notify] Unhandled error:", (err as Error).message);
     return new Response(
       JSON.stringify({ error: "An error occurred processing your request" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
