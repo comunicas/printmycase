@@ -83,7 +83,7 @@ const OrdersManager = () => {
       setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: newStatus as Database["public"]["Enums"]["order_status"] } : o));
       supabase.functions.invoke("notify-order-status", {
         body: { order_id: orderId, new_status: newStatus },
-      }).catch(() => {});
+      }).catch((err) => console.warn("[notify] email error:", err));
     }
   };
 
