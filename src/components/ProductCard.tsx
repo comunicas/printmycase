@@ -25,6 +25,8 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
+              width="300"
+              height="300"
             />
           ) : (
             <span className="text-muted-foreground text-xs">Sem imagem</span>

@@ -48,6 +48,8 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
               className="h-14 sm:h-16 w-auto transition-all duration-300"
               src="/lovable-uploads/logo-printmycase.png"
               fetchPriority="high"
+              width="64"
+              height="64"
             />
           </Link>
           {breadcrumbs && breadcrumbs.length > 0 && (
