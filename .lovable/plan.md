@@ -1,83 +1,63 @@
 
 
-## Code Review: Home, Customização e Admin
+## Converter device images PNG → WebP no Storage
 
-### Problemas Encontrados
+### Contexto
+- 63 produtos com `device_image` em PNG (~500KB cada = ~31MB total)
+- 6 já em JPG
+- As imagens são 900x900 mas exibidas em 242x242 na home e ~160x160 em outros pontos
+- As URLs estão salvas diretamente na coluna `device_image` da tabela `products`
 
----
+### Abordagem
+Criar uma edge function `convert-device-images` que:
 
-#### HOME (`Landing.tsx`)
+1. Busca todos os produtos com `device_image` terminando em `.png`
+2. Para cada imagem:
+   - Faz download da PNG do Storage
+   - Converte para WebP (qualidade 80, resize para 512x512 — suficiente para 2x do maior display)
+   - Faz upload do arquivo `device.webp` na mesma pasta do produto no bucket `product-assets`
+   - Atualiza a coluna `device_image` no banco com a nova URL `.webp`
+3. Usa a lib `sharp` via Deno-compatible approach — na verdade, como estamos em Deno (edge functions), usaremos canvas/ImageMagick não disponível. **Alternativa**: usar a API de transformação de imagens do Supabase Storage (`/render/image`) para servir em WebP sem converter os arquivos originais.
 
-1. **Botão "Voltar" da header na Landing redireciona para `/product/{slug}`** — O `CustomizeHeader` tem `onBack` apontando para `/product/${slug}`, mas a página de produto não é mais linkada internamente. Deveria voltar para `/customize` (seleção de modelo) ou `/catalog`.
+### Solução mais simples: Supabase Image Transformation
+O Supabase Storage suporta transformação de imagens on-the-fly via URL params. Em vez de converter e re-upload, basta alterar como as imagens são renderizadas no frontend:
 
-2. **Console warnings: forwardRef** — Os logs mostram warnings em `ProductGallery`, `ProductInfo` e `ProductDetails` recebendo refs sem `forwardRef`. Não é crítico, mas polui o console na página de produto (SEO).
+```
+{url}?width=512&quality=80&format=webp
+```
 
-3. **Hero `heroBg` importado como asset** — Funciona, mas o import estático pesa no bundle. Considerar lazy loading ou `<link rel="preload">`.
+**Alterações no código:**
 
-4. **Vitrine limitada a 4 produtos** — `useProducts(4)` traz os 4 mais recentes. Seria melhor trazer os mais populares ou com maior rating.
+**1. Utilitário `src/lib/image-utils.ts`**
+- Adicionar função `optimizeStorageUrl(url, width)` que detecta URLs do Supabase Storage e appenda `?width={w}&format=origin` (preserva formato original para evitar problemas de compatibilidade, ou usa resize apenas)
 
----
+**Problema**: Image Transformation é um recurso pago do Supabase e pode não estar disponível no projeto Cloud.
 
-#### CUSTOMIZAÇÃO (`Customize.tsx` + `useCustomize.tsx`)
+### Solução definitiva: Script de conversão via edge function
 
-5. **Back button aponta para página de produto** (linha 24) — `onBack={() => navigate(c.product ? `/product/${c.product.slug}` : "/catalog")}` deveria ser `/customize` (SelectModel) ou `-1`, já que a página de produto não é mais o fluxo principal.
+**1. Nova edge function `supabase/functions/convert-device-images/index.ts`**
+- Endpoint admin-only (verifica role)
+- Lista produtos com device_image `.png`
+- Para cada um: baixa a imagem, usa canvas API (OffscreenCanvas no Deno) ou envia para um serviço externo de conversão
+- **Problema**: Deno no edge functions não tem `sharp` nem `OffscreenCanvas` nativamente
 
-6. **ModelSelector carrega TODOS os produtos a cada render** — `useProducts()` sem limit faz fetch de ~73 produtos toda vez que o dropdown é montado. Deveria ter cache ou usar o mesmo hook com memoização.
+### Solução prática: Script Python via lov-exec
 
-7. **Mobile ContinueBar duplicado** — O `ContinueBar` sem `inline` renderiza um bloco `hidden lg:hidden` (nunca visível) + mobile. O bloco desktop sem inline é deadcode (linha 61: `hidden lg:hidden`).
+**1. Script Python que:**
+- Conecta ao banco via `psql` env vars
+- Baixa cada PNG do Storage via URL pública
+- Converte para WebP com Pillow (resize 512x512, quality 80)
+- Re-upload via Supabase Storage REST API (usando service role key)
+- Atualiza `device_image` no banco
 
-8. **`useCustomize` é um hook gigante (517 linhas)** — Concentra estado de imagem, filtros, upscale, draft, checkout, termos. Difícil de manter. Candidato a split em hooks menores.
+**2. Resultado esperado:**
+- ~63 PNGs convertidos de ~500KB → ~30KB WebP cada
+- Economia total: ~29MB no storage, ~1.8MB por pageview na home
 
-9. **`processImageFile` usa `useCallback` sem `user` nas deps** — Referencia `setShowLoginDialog` e `setShowUpscaleDialog` dentro do toast action, mas o `user` vem de closures que podem ficar stale.
+### Alterações
 
-10. **Restauração de draft com refs (`sessionRestored`, `pendingRestored`)** — Lógica frágil: se o usuário trocar de produto (slug muda), os refs não resetam e o draft do produto anterior não é restaurado.
-
-11. **`coinBalance` stale no cálculo de low balance** — Linhas 323/382 usam `coinBalance` do momento do render, não o saldo atualizado pós-dedução.
-
----
-
-#### ADMIN (`Admin.tsx` + `AiFiltersManager.tsx`)
-
-12. **`AiFiltersManager` usa `as any` para contornar tipos** — Linhas 166, 176, 184 fazem cast `as any` para `send_style_image`. Os tipos gerados provavelmente já incluem esse campo; vale verificar se o cast é necessário.
-
-13. **Falta de `send_style_image` na interface local `AiFilter`** — A interface na linha 18-26 não inclui `send_style_image`, forçando os casts.
-
-14. **Admin não tem paginação** — Tabs de Pedidos e Transações carregam tudo de uma vez. Com crescimento, ficará lento.
-
-15. **Admin não tem busca de filtros** — Com muitos filtros cadastrados, não há como pesquisar.
-
----
-
-### Plano de Correções (Priorizado)
-
-**P0 — Bugs funcionais**
-
-| # | Arquivo | Correção |
-|---|---------|----------|
-| 5 | `Customize.tsx` | Alterar `onBack` de `/product/${slug}` para `/customize` |
-| 7 | `ContinueBar.tsx` | Remover bloco deadcode `hidden lg:hidden` (linhas 60-67) |
-| 10 | `useCustomize.tsx` | Resetar `sessionRestored.current` e `pendingRestored.current` quando `product.slug` mudar |
-
-**P1 — Qualidade de código**
-
-| # | Arquivo | Correção |
-|---|---------|----------|
-| 12-13 | `AiFiltersManager.tsx` | Adicionar `send_style_image` à interface local e remover `as any` |
-| 2 | `ProductGallery.tsx`, `ProductInfo.tsx`, `ProductDetails.tsx` | Envolver com `forwardRef` para eliminar warnings |
-
-**P2 — Performance / UX**
-
-| # | Arquivo | Correção |
-|---|---------|----------|
-| 6 | `ModelSelector.tsx` | Considerar mover `useProducts()` para um contexto ou memoizar |
-| 11 | `useCustomize.tsx` | Usar `refreshCoins()` retornando o saldo atualizado em vez de calcular com valor stale |
-
-### Arquivos afetados
-1. `src/pages/Customize.tsx` — fix back navigation
-2. `src/components/customize/ContinueBar.tsx` — remove deadcode
-3. `src/hooks/useCustomize.tsx` — reset refs on slug change, fix stale balance
-4. `src/components/admin/AiFiltersManager.tsx` — fix interface + remove `as any`
-5. `src/components/ProductGallery.tsx` — add forwardRef
-6. `src/components/ProductInfo.tsx` — add forwardRef
-7. `src/components/ProductDetails.tsx` — add forwardRef
+| Passo | Ação |
+|-------|------|
+| 1 | Script Python: download PNGs, convert WebP (Pillow), upload, update DB |
+| 2 | Nenhuma alteração de código frontend necessária (URLs mudam no banco) |
 
