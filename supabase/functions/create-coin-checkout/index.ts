@@ -9,8 +9,9 @@ const corsHeaders = {
 
 const ALLOWED_ORIGINS = [
   "https://printmycase.com.br",
+  "https://studio.printmycase.com.br",
 ];
-const DEFAULT_ORIGIN = "https://printmycase.com.br";
+const DEFAULT_ORIGIN = "https://studio.printmycase.com.br";
 
 function getSafeOrigin(req: Request): string {
   const raw = req.headers.get("origin") || req.headers.get("referer") || "";
@@ -31,6 +32,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
+      console.warn("[coin-checkout] Missing or invalid Authorization header");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -46,6 +48,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
     if (userError || !userData.user) {
+      console.warn("[coin-checkout] Auth error:", userError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -54,6 +57,12 @@ Deno.serve(async (req) => {
 
     const user = userData.user;
     const { coinAmount } = await req.json();
+
+    console.log("[coin-checkout] Start:", JSON.stringify({
+      userId: user.id,
+      email: user.email,
+      coinAmount,
+    }));
 
     // Validate against database packages
     const { data: pkg, error: pkgError } = await supabase
@@ -64,11 +73,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (pkgError || !pkg) {
+      console.warn("[coin-checkout] Invalid package:", coinAmount, pkgError?.message);
       return new Response(JSON.stringify({ error: "Invalid package" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("[coin-checkout] Package found:", JSON.stringify({ coins: pkg.coins, priceCents: pkg.price_cents }));
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
       apiVersion: "2025-08-27.basil",
@@ -76,6 +88,8 @@ Deno.serve(async (req) => {
 
     const customers = await stripe.customers.list({ email: user.email!, limit: 1 });
     const customerId = customers.data.length > 0 ? customers.data[0].id : undefined;
+
+    console.log("[coin-checkout] Stripe customer:", customerId || "new");
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -100,11 +114,13 @@ Deno.serve(async (req) => {
       cancel_url: `${getSafeOrigin(req)}/coins`,
     });
 
+    console.log("[stripe-session] Created:", JSON.stringify({ id: session.id, url: session.url?.slice(0, 60) }));
+
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    console.error("create-coin-checkout error:", err);
+    console.error("[coin-checkout] Unhandled error:", err.message, err.stack);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
