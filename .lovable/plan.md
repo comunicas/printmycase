@@ -1,48 +1,48 @@
 
 
-## Implementar emails transacionais no fluxo Stripe + corrigir notify-order-status
+## Redesenhar seção "Como funciona" — inspirado na referência
 
-### Contexto
-- `notify-order-status` usa envio direto (`sendLovableEmail`) em vez da fila de emails (`enqueue_email`), perdendo retry/rate-limit
-- Sender domain está como `printmycase.com.br` mas o domínio configurado é `notify.printmycase.com.br`
-- `stripe-webhook` não envia nenhum email (confirmação de compra ou cancelamento)
-- Frontend engole erros com `.catch(() => {})`
+### Análise da referência vs. atual
 
-### Alterações
+**Referência (imagem enviada):**
+- 4 passos horizontais (4 colunas)
+- Badges numerados em círculo colorido (teal/cyan)
+- Títulos em uppercase bold
+- Descrições curtas abaixo
+- Ilustrações line-art grandes abaixo do texto (smartphone, capa, câmera, caminhão)
+- CTA centralizado no final
+- Fundo limpo, sem cards
 
-**1. `supabase/functions/notify-order-status/index.ts` — Migrar para fila de emails**
-- Trocar `sendLovableEmail` por `supabaseAdmin.rpc('enqueue_email', ...)` para usar a fila com retry
-- Atualizar `SENDER_DOMAIN` para `notify.printmycase.com.br`
-- Atualizar `FROM` para `PrintMyCase <noreply@notify.printmycase.com.br>`
-- Adicionar logs estruturados: `[notify] Start`, `[notify] Enqueued`, `[notify] Error`
-- Manter toda a lógica de auth/admin e template HTML existente
+**Atual:**
+- 3 passos com grid 5 colunas (3 cards + 2 separadores chevron)
+- Ícones Lucide pequenos dentro de círculos gradient
+- Cards com background `bg-muted/30`
+- Conectores dashed entre passos (visíveis só em desktop)
 
-**2. `supabase/functions/stripe-webhook/index.ts` — Adicionar emails de confirmação e cancelamento**
-- Após `checkout.session.completed` para compra de case (não moedas): buscar dados do usuário/produto e enfileirar email "Pedido Confirmado — Em Análise"
-- Após `checkout.session.expired`: enfileirar email "Pedido Cancelado"
-- Reutilizar o mesmo template HTML do `notify-order-status` (copiar a função `buildEmailHtml`)
-- Usar `supabaseAdmin.rpc('enqueue_email', ...)` para enfileirar
-- Envio é non-blocking (try/catch com log, não impede o 200 do webhook)
+### Minha opinião
 
-**3. `src/components/admin/OrdersManager.tsx` — Remover catch silencioso**
-- Trocar `.catch(() => {})` por `.catch((err) => console.warn("[notify] email error:", err))`
-- Nas linhas 84-86 e 102-104
+A referência é mais intuitiva por 3 motivos:
+1. **Ilustrações grandes** tornam cada passo visualmente auto-explicativo — o usuário entende antes de ler
+2. **Layout mais limpo** sem cards/backgrounds reduz ruído visual
+3. **4 passos** detalham melhor o fluxo (escolher modelo → selecionar capa → enviar foto → receber)
 
-### Template de email reutilizado
-O mesmo `buildEmailHtml` será extraído para uma função compartilhada inline em ambas as functions (edge functions não podem compartilhar imports facilmente entre si, então duplicamos a função helper).
+Porém, recomendo **manter 3 passos** por consistência com o fluxo real da PrintMyCase (não temos etapa separada de "selecionar capa/material") e para evitar confusão. Os 3 passos atuais mapeiam exatamente o funil: modelo → foto com IA → entrega.
 
-### Emails resultantes
+### Plano de implementação
 
-| Evento | Subject | Trigger |
-|--------|---------|---------|
-| Pagamento confirmado | "Pedido #XXXX — Confirmado ✓" | `stripe-webhook` |
-| Admin muda status | "Pedido #XXXX — {Status}" | `notify-order-status` |
-| Session expirada | "Pedido #XXXX — Cancelado" | `stripe-webhook` |
+**Mudanças no `Landing.tsx` — seção "Como funciona":**
 
-### Arquivos modificados
-1. `supabase/functions/notify-order-status/index.ts`
-2. `supabase/functions/stripe-webhook/index.ts`
-3. `src/components/admin/OrdersManager.tsx`
+1. **Remover cards** com background — usar layout aberto e limpo
+2. **Aumentar ícones** — trocar de 14x14 para ilustrações maiores (ícones Lucide ~48px dentro de containers ~80px, com stroke fino para simular line-art)
+3. **Badges numerados** no topo de cada passo (círculo primary com número)
+4. **Títulos uppercase** em `font-bold tracking-wide`
+5. **Separadores** entre passos: trocar chevrons dashed por linha com seta, ou remover (referência não tem)
+6. **Grid simplificado**: `grid-cols-1 md:grid-cols-3` sem colunas de separadores
+7. **CTA "Criar Minha Capinha"** centralizado abaixo dos passos (como na referência)
+8. **Ícones line-art**: usar `strokeWidth={1}` ou `strokeWidth={1.5}` nos ícones Lucide para visual mais leve
 
-Deploy necessário: `notify-order-status` e `stripe-webhook`
+**Sem novos assets** — uso dos ícones Lucide existentes (Smartphone, Upload/Camera, Package/Truck) com estilo line-art.
+
+### Arquivo afetado
+- `src/pages/Landing.tsx` — seção "Como funciona" (linhas 121-150) + constantes `steps`/`stepColors`
 
