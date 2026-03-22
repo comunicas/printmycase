@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import PhonePreview from "@/components/PhonePreview";
+import { formatPrice } from "@/lib/types";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import CustomizeHeader from "@/components/customize/CustomizeHeader";
 import ImageControls from "@/components/customize/ImageControls";
@@ -70,7 +71,22 @@ const Customize = () => {
         </div>
 
         {/* Desktop sidebar — right side */}
-        <aside className="hidden lg:flex flex-col gap-4 lg:w-[420px] lg:flex-shrink-0 h-full px-8 py-6 overflow-y-auto">
+        <aside className="hidden lg:flex flex-col gap-4 lg:w-[420px] lg:flex-shrink-0 h-full px-8 py-6 overflow-y-auto bg-muted/40 border-l border-border">
+          {/* Product summary */}
+          <div className="flex items-center gap-3 pb-4 border-b border-border">
+            <img
+              src={c.product?.device_image || c.product?.images?.[0] || "/placeholder.svg"}
+              alt={c.productName}
+              className="w-16 h-16 object-contain rounded-lg bg-background"
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">{c.productName}</p>
+              <p className="text-sm text-primary font-medium">
+                {c.product?.price_cents ? formatPrice(c.product.price_cents / 100) : ""}
+              </p>
+            </div>
+          </div>
+
           <h2 className="text-lg font-semibold text-foreground">Personalize sua Case</h2>
 
           <ImageControls
