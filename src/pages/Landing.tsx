@@ -25,10 +25,10 @@ const testimonials = [
 { name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 }];
 
 const steps = [
-  { icon: Smartphone, title: "Escolha o Modelo", desc: "Mais de 70 smartphones disponíveis" },
-  { icon: Upload, title: "Envie sua Foto", desc: "Aplique filtros artísticos com IA" },
-  { icon: Package, title: "Receba em Casa", desc: "Produção em 48h e envio rápido" },
-];
+{ icon: Smartphone, title: "Escolha o Modelo", desc: "Mais de 70 smartphones disponíveis" },
+{ icon: Upload, title: "Envie sua Foto", desc: "Aplique filtros artísticos com IA" },
+{ icon: Package, title: "Receba em Casa", desc: "Produção em 48h e envio rápido" }];
+
 
 const fadeIn = (delayMs: number): React.CSSProperties => ({
   animationDelay: `${delayMs}ms`,
@@ -116,14 +116,14 @@ const Landing = () => {
           <section id="como-funciona" className="py-20 px-5 bg-background">
             <div className="max-w-4xl mx-auto">
               <ScrollReveal>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-4">Como funciona</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-4">Como criar sua capinha personalizada!
+</h2>
                 <p className="text-center text-muted-foreground max-w-xl mx-auto mb-14">
                   Em apenas 3 passos simples, sua capinha personalizada sai do zero e chega na sua porta.
                 </p>
               </ScrollReveal>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
-                {steps.map((s, i) => (
-                  <ScrollReveal key={s.title} delay={i * 150}>
+                {steps.map((s, i) => <ScrollReveal key={s.title} delay={i * 150}>
                     <div className="flex flex-col items-center text-center space-y-4">
                       {/* Number badge */}
                       <span className="w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center">
@@ -138,7 +138,7 @@ const Landing = () => {
                       <p className="text-sm text-muted-foreground max-w-[220px]">{s.desc}</p>
                     </div>
                   </ScrollReveal>
-                ))}
+                )}
               </div>
               <ScrollReveal delay={500}>
                 <div className="text-center mt-12">
