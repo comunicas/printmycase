@@ -51,6 +51,7 @@ export function useCustomize(productId: string | undefined) {
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [processingMsg, setProcessingMsg] = useState<string | null>(null);
+  const termsAccepted = useRef(false);
 
   const { balance: coinBalance, refresh: refreshCoins } = useCoins();
   const { getSetting } = useCoinSettings();
