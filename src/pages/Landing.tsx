@@ -25,16 +25,11 @@ const testimonials = [
 { name: "Lucas M.", text: "Surpreendeu demais. O acabamento soft-touch é muito premium. Já pedi a segunda!", rating: 5 },
 { name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 }];
 
-const stepColors = [
-{ gradient: "from-primary to-primary/70", badge: "from-primary to-primary/80", chevron: "text-primary/50" },
-{ gradient: "from-orange-500 to-amber-500", badge: "from-orange-500 to-amber-500", chevron: "text-orange-500/50" },
-{ gradient: "from-emerald-500 to-teal-500", badge: "from-emerald-500 to-teal-500", chevron: "text-emerald-500/50" }];
-
-
 const steps = [
-{ icon: Smartphone, title: "Selecione o smartphone", desc: "Mais de 70 modelos disponiveis" },
-{ icon: Upload, title: "Envie sua foto", desc: "Aplique filtros artísticos com IA" },
-{ icon: Package, title: "Receba sua Case em casa", desc: "Produção em 48h e envio rápido" }];
+  { icon: Smartphone, title: "Escolha o Modelo", desc: "Mais de 70 smartphones disponíveis" },
+  { icon: Upload, title: "Envie sua Foto", desc: "Aplique filtros artísticos com IA" },
+  { icon: Package, title: "Receba em Casa", desc: "Produção em 48h e envio rápido" },
+];
 
 const fadeIn = (delayMs: number): React.CSSProperties => ({
   animationDelay: `${delayMs}ms`,
