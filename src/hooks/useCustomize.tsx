@@ -51,6 +51,7 @@ export function useCustomize(productId: string | undefined) {
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [processingMsg, setProcessingMsg] = useState<string | null>(null);
+  const termsAccepted = useRef(false);
 
   const { balance: coinBalance, refresh: refreshCoins } = useCoins();
   const { getSetting } = useCoinSettings();
@@ -252,7 +253,7 @@ export function useCustomize(productId: string | undefined) {
   }, [toast]);
 
   const handleImageUpload = useCallback((file: File) => {
-    if (localStorage.getItem("pmc_terms_accepted") === "true") {
+    if (termsAccepted.current) {
       processImageFile(file);
     } else {
       setPendingFile(file);
@@ -261,7 +262,7 @@ export function useCustomize(productId: string | undefined) {
   }, [processImageFile]);
 
   const handleTermsAccept = useCallback(() => {
-    localStorage.setItem("pmc_terms_accepted", "true");
+    termsAccepted.current = true;
     setShowTermsDialog(false);
     if (pendingFile) {
       processImageFile(pendingFile);
