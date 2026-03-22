@@ -59,7 +59,7 @@ const SelectModel = () => {
       {/* Minimal header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b px-4 py-3 flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/")}
           className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
           aria-label="Voltar"
         >
