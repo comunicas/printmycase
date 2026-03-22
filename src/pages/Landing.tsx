@@ -114,36 +114,40 @@ const Landing = () => {
           </section>
 
           {/* How it works */}
-          <section id="como-funciona" className="py-16 px-5 bg-background">
-            <div className="max-w-5xl mx-auto">
+          <section id="como-funciona" className="py-20 px-5 bg-background">
+            <div className="max-w-4xl mx-auto">
               <ScrollReveal>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Como funciona</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-4">Como funciona</h2>
+                <p className="text-center text-muted-foreground max-w-xl mx-auto mb-14">
+                  Em apenas 3 passos simples, sua capinha personalizada sai do zero e chega na sua porta.
+                </p>
               </ScrollReveal>
-              <div className="grid md:grid-cols-5 gap-4 items-center">
-                {steps.map((s, i) =>
-                <Fragment key={s.title}>
-                  <ScrollReveal delay={i * 150}>
-                    <div className="flex flex-col items-center text-center space-y-3 bg-muted/30 rounded-2xl p-6 hover:bg-muted/50 transition-colors duration-300">
-                      <div className={`relative w-14 h-14 rounded-full bg-gradient-to-br ${stepColors[i].gradient} flex items-center justify-center`}>
-                        <s.icon className="w-6 h-6 text-white" />
-                        <span className={`absolute -top-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br ${stepColors[i].badge} text-white text-xs font-bold flex items-center justify-center ring-2 ring-background`}>
-                          {i + 1}
-                        </span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
+                {steps.map((s, i) => (
+                  <ScrollReveal key={s.title} delay={i * 150}>
+                    <div className="flex flex-col items-center text-center space-y-4">
+                      {/* Number badge */}
+                      <span className="w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center">
+                        {i + 1}
+                      </span>
+                      {/* Icon */}
+                      <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <s.icon className="w-10 h-10 text-primary" strokeWidth={1.2} />
                       </div>
-                      <h3 className="text-lg font-semibold text-foreground">{s.title}</h3>
-                      <p className="text-sm text-muted-foreground">{s.desc}</p>
+                      {/* Text */}
+                      <h3 className="text-base font-bold uppercase tracking-wide text-foreground">{s.title}</h3>
+                      <p className="text-sm text-muted-foreground max-w-[220px]">{s.desc}</p>
                     </div>
                   </ScrollReveal>
-                  {i < steps.length - 1 &&
-                  <div className="hidden md:flex items-center justify-center">
-                    <div className="w-full border-t-2 border-dashed border-primary/30 relative">
-                      <ChevronRight className={`w-5 h-5 ${stepColors[i].chevron} absolute -right-2.5 -top-2.5`} />
-                    </div>
-                  </div>
-                  }
-                </Fragment>
-                )}
+                ))}
               </div>
+              <ScrollReveal delay={500}>
+                <div className="text-center mt-12">
+                  <Button size="lg" className="gap-2 text-base bg-primary hover:bg-primary/90" onClick={() => navigate("/customize")}>
+                    Criar Minha Capinha <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </ScrollReveal>
             </div>
           </section>
 
