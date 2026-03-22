@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Smartphone, Upload, Package, Star, ArrowRight, ChevronRight } from
