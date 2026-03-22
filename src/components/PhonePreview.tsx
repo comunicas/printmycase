@@ -140,8 +140,8 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
         const dx = ((e.touches[0].clientX - startPos.current.x) / rect.width) * sensitivity;
         const dy = ((e.touches[0].clientY - startPos.current.y) / rect.height) * sensitivity;
         onPositionChangeRef.current({
-          x: clamp(startOffset.current.x - dx),
-          y: clamp(startOffset.current.y - dy),
+          x: clamp(startOffset.current.x + dx),
+          y: clamp(startOffset.current.y + dy),
         });
       }
     };
