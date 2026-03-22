@@ -262,7 +262,7 @@ export function useCustomize(productId: string | undefined) {
   }, [processImageFile]);
 
   const handleTermsAccept = useCallback(() => {
-    localStorage.setItem("pmc_terms_accepted", "true");
+    termsAccepted.current = true;
     setShowTermsDialog(false);
     if (pendingFile) {
       processImageFile(pendingFile);
