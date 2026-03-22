@@ -253,7 +253,7 @@ export function useCustomize(productId: string | undefined) {
   }, [toast]);
 
   const handleImageUpload = useCallback((file: File) => {
-    if (localStorage.getItem("pmc_terms_accepted") === "true") {
+    if (termsAccepted.current) {
       processImageFile(file);
     } else {
       setPendingFile(file);
