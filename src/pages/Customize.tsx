@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import PhonePreview from "@/components/PhonePreview";
+import { formatPrice } from "@/lib/types";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import CustomizeHeader from "@/components/customize/CustomizeHeader";
 import ImageControls from "@/components/customize/ImageControls";
