@@ -1,86 +1,62 @@
 
 
-## Adicionar categorias aos filtros IA
+## Ajustar filtros IA para 9:16 em alta resolução + corrigir modelos
 
-### Visão geral
-Criar tabela `ai_filter_categories` com CRUD completo no admin, adicionar `category_id` aos filtros existentes, e agrupar filtros por categoria na UI de customização.
+### Análise dos logs e modelos
 
-### 1. Migração SQL
+**Modelos em uso e suporte a 9:16:**
 
-```sql
--- Tabela de categorias
-CREATE TABLE public.ai_filter_categories (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  sort_order integer NOT NULL DEFAULT 0,
-  active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+| Modelo | Suporte 9:16 | Status |
+|--------|-------------|--------|
+| `fal-ai/image-apps-v2/style-transfer` | `aspect_ratio: { ratio: "9:16" }` → 4K | OK |
+| `fal-ai/image-apps-v2/photography-effects` | `aspect_ratio: { ratio: "9:16" }` → 4K | OK |
+| `fal-ai/flux-pro/kontext` | `aspect_ratio: "9:16"` (string direto) | Precisa fix — está caindo no else genérico com params inválidos (`strength`, `num_inference_steps`, `image_size`) |
 
-ALTER TABLE public.ai_filter_categories ENABLE ROW LEVEL SECURITY;
+**Problema encontrado**: O modelo `kontext` cai no branch `else` do edge function e recebe params que não aceita (`strength`, `num_inference_steps`, `image_size`). Funciona por acaso porque fal.ai ignora params extras, mas `image_size` pode conflitar com `aspect_ratio`.
 
-CREATE POLICY "Admins can manage filter categories" ON public.ai_filter_categories
-  FOR ALL TO authenticated
-  USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
+**Filtro "Cartoon"** usa `target_style: "cartoon_animation"` que não existe no enum do style-transfer. Valores válidos incluem `cartoon_3d`, `hand_drawn_animation`, `claymation`, `anime_character` etc. — precisa corrigir para um valor válido.
 
-CREATE POLICY "Anyone can view active filter categories" ON public.ai_filter_categories
-  FOR SELECT TO public USING (active = true);
+### Alterações
 
--- Inserir categorias iniciais
-INSERT INTO public.ai_filter_categories (name, sort_order) VALUES
-  ('Estilo', 1),
-  ('Qualidade', 2);
+**1. `supabase/functions/apply-ai-filter/index.ts`** — Adicionar branch para `kontext`
 
--- Adicionar FK na tabela ai_filters
-ALTER TABLE public.ai_filters ADD COLUMN category_id uuid REFERENCES public.ai_filter_categories(id) ON DELETE SET NULL;
+```
+const isKontext = modelUrl.includes("kontext");
+
+if (isKontext) {
+  falBody = {
+    image_url: imageBase64,
+    prompt: filter.prompt,
+    aspect_ratio: "9:16",
+    output_format: "jpeg",
+  };
+}
 ```
 
-### 2. Admin — CRUD de categorias
+Garantir que todos os branches enviam 9:16:
+- `style-transfer`: já tem `aspect_ratio: { ratio: "9:16" }` ✓
+- `photography-effects`: já tem `aspect_ratio: { ratio: "9:16" }` ✓
+- `kontext`: novo branch com `aspect_ratio: "9:16"` ✓
+- `else` (fallback genérico): manter `image_size: { width: 720, height: 1280 }` + `aspect_ratio: "9:16"` para modelos flux genéricos
 
-**Novo arquivo `src/components/admin/AiFilterCategoriesManager.tsx`**
-- Lista com reordenação (ChevronUp/Down), toggle ativo/inativo, editar, excluir
-- Dialog para criar/editar (campo: nome)
-- Mesmo padrão visual dos outros managers (CollectionsManager, etc.)
+**2. Corrigir filtro "Cartoon"** — UPDATE no banco
+- Mudar `prompt` de `cartoon_animation` para `claymation` (valor válido mais próximo do conceito "cartoon")
 
-### 3. Admin — Filtros com seletor de categoria
+**3. Adicionar novos estilos disponíveis** como opção
 
-**`src/components/admin/AiFiltersManager.tsx`**
-- Carregar categorias no mount
-- Adicionar select de categoria no dialog de criar/editar filtro
-- Mostrar nome da categoria no card do filtro na lista
+Estilos do `style-transfer` que ainda não são filtros e podem ser adicionados:
+- `dark_academia`, `y2k`, `vaporwave`, `synthwave`, `outrun`, `concept_art`, `hyperrealistic`, `digital_art`
 
-### 4. Admin page — nova tab
+Efeitos do `photography-effects` disponíveis:
+- `vintage_film`, `portrait_photography`, `fashion_photography`, `street_photography`, `sepia_tone`, `light_leaks`, `vignette_effect`, `instant_camera`, `golden_hour`, `dramatic_lighting`, `soft_focus`, `bokeh_effect`
 
-**`src/pages/Admin.tsx`**
-- Adicionar tab "Categorias Filtros" ou incluir o manager de categorias dentro da tab "Filtros IA" como sub-seção
+Vou adicionar alguns dos mais populares como filtros inativos para o admin ativar depois.
 
-### 5. Frontend — Agrupar filtros por categoria
+### Arquivos/ações afetados
 
-**`src/lib/customize-types.ts`**
-- Adicionar `category_id: string | null` ao tipo `AiFilter`
-
-**`src/hooks/useCustomize.tsx`**
-- Incluir `category_id` no select dos filtros
-- Carregar categorias ativas (nova query)
-- Expor `filterCategories` no retorno do hook
-
-**`src/components/customize/AiFiltersList.tsx`**
-- Receber `categories` como prop
-- Agrupar filtros por `category_id` e renderizar com header de categoria
-- Filtros sem categoria aparecem no final
-
-**`src/components/customize/ImageControls.tsx`**
-- Passar `categories` para `AiFiltersList`
-
-### Arquivos afetados
-| Arquivo | Alteração |
-|---------|-----------|
-| Migração SQL | Nova tabela + FK |
-| `src/components/admin/AiFilterCategoriesManager.tsx` | Novo — CRUD categorias |
-| `src/components/admin/AiFiltersManager.tsx` | Select de categoria |
-| `src/pages/Admin.tsx` | Sub-seção ou tab de categorias |
-| `src/lib/customize-types.ts` | `category_id` no tipo |
-| `src/hooks/useCustomize.tsx` | Select + query categorias |
-| `src/components/customize/AiFiltersList.tsx` | Agrupamento visual |
-| `src/components/customize/ImageControls.tsx` | Props passthrough |
+| Ação | Detalhe |
+|------|---------|
+| `supabase/functions/apply-ai-filter/index.ts` | Branch `kontext` dedicado com params corretos |
+| UPDATE `ai_filters` (Cartoon) | Corrigir `prompt` para `claymation` |
+| INSERT `ai_filters` | Novos filtros inativos: `dark_academia`, `vaporwave`, `synthwave`, `golden_hour`, `bokeh_effect`, `dramatic_lighting` |
 
