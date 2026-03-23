@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/AppHeader";
 import { useCollection } from "@/hooks/useCollections";
@@ -5,24 +6,13 @@ import { formatPrice } from "@/lib/types";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 
+const SITE_NAME = "PrintMyCase";
+const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 const CollectionPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { collection, designs, loading } = useCollection(slug);
   const navigate = useNavigate();
-
-  if (loading) return <LoadingSpinner variant="fullPage" />;
-
-  if (!collection) {
-    return (
-      <div className="min-h-screen bg-background">
-        <AppHeader breadcrumbs={[{ label: "Coleções", to: "/colecoes" }, { label: "Não encontrada" }]} />
-        <main className="max-w-5xl mx-auto px-5 py-16 text-center">
-          <p className="text-muted-foreground">Coleção não encontrada.</p>
-        </main>
-      </div>
-    );
-  }
 
   useEffect(() => {
     if (!collection) return;
@@ -30,15 +20,12 @@ const CollectionPage = () => {
     const desc = collection.description || `Coleção ${collection.name} — designs exclusivos para capas de celular.`;
     const image = collection.cover_image || "";
     const url = `${SITE_URL}/colecao/${slug}`;
-
     document.title = title;
-
     const setMeta = (attr: string, key: string, content: string) => {
       let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
       if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
       el.setAttribute("content", content);
     };
-
     setMeta("name", "description", desc);
     setMeta("property", "og:title", title);
     setMeta("property", "og:description", desc);
@@ -48,11 +35,9 @@ const CollectionPage = () => {
     setMeta("name", "twitter:title", title);
     setMeta("name", "twitter:description", desc);
     if (image) setMeta("name", "twitter:image", image);
-
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!canonical) { canonical = document.createElement("link"); canonical.setAttribute("rel", "canonical"); document.head.appendChild(canonical); }
     canonical.setAttribute("href", url);
-
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
@@ -78,17 +63,27 @@ const CollectionPage = () => {
         },
       } : {}),
     };
-
     let script = document.querySelector('script[data-seo="collection-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "collection-jsonld"); document.head.appendChild(script); }
     script.textContent = JSON.stringify(jsonLd);
-
     return () => { script?.remove(); canonical?.remove(); };
   }, [collection, designs, slug]);
 
+  if (loading) return <LoadingSpinner variant="fullPage" />;
+
+  if (!collection) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader breadcrumbs={[{ label: "Coleções", to: "/colecoes" }, { label: "Não encontrada" }]} />
+        <main className="max-w-5xl mx-auto px-5 py-16 text-center">
+          <p className="text-muted-foreground">Coleção não encontrada.</p>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      
       <AppHeader breadcrumbs={[{ label: "Coleções", to: "/colecoes" }, { label: collection.name }]} />
       <main className="max-w-5xl mx-auto px-5 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-2">{collection.name}</h1>
