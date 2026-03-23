@@ -45,6 +45,7 @@ export function useCustomize(productId: string | undefined) {
   const [position, setPosition] = useState(DEFAULTS.position);
   const [rotation, setRotation] = useState(DEFAULTS.rotation);
   const [filters, setFilters] = useState<AiFilter[]>([]);
+  const [filterCategories, setFilterCategories] = useState<AiFilterCategory[]>([]);
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
