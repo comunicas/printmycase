@@ -113,10 +113,12 @@ const Customize = () => {
             activeFilterId={c.activeFilterId}
             applyingFilterId={c.applyingFilterId}
             filterCost={c.aiFilterCost}
+            filterHistory={c.filterHistory}
             onFilterClick={c.handleFilterClick}
             onCompareStart={c.handleCompareStart}
             onCompareEnd={c.handleCompareEnd}
             onRemoveFilter={c.handleRemoveFilter}
+            onUndoLastFilter={c.handleUndoLastFilter}
             onPreviewStart={setPreviewImageUrl}
             onPreviewEnd={() => setPreviewImageUrl(null)}
           />
