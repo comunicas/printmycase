@@ -16,7 +16,7 @@ const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const c = useCustomize(id);
-  const [previewCssFilter, setPreviewCssFilter] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
