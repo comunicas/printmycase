@@ -197,7 +197,7 @@ export function useCustomize(productId: string | undefined) {
     setScale(DEFAULTS.scale);
     setPosition(DEFAULTS.position);
     setRotation(DEFAULTS.rotation);
-    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
+    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); setFilterHistory([]); }
     if (product?.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
   }, [product?.slug, originalImage]);
 
