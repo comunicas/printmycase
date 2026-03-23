@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SITE_URL = "https://printmycase.com.br";
+const SITE_URL = "https://studio.printmycase.com.br";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
