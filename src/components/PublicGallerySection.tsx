@@ -48,26 +48,30 @@ const PublicGallerySection = () => {
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          {images.map((img, i) => (
-            <ScrollReveal key={img.id} delay={i * 80}>
-              <div className="group relative aspect-square rounded-xl overflow-hidden bg-muted">
-                <img
-                  src={img.image_url}
-                  alt={img.filter_name || "Geração IA"}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
-                  {img.filter_name && (
-                    <span className="text-xs font-medium text-white bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                      {img.filter_name}
-                    </span>
-                  )}
+        <div className="columns-2 md:columns-4 gap-3 md:gap-4 space-y-3 md:space-y-4">
+          {images.map((img, i) => {
+            const aspects = ["aspect-[3/4]", "aspect-square", "aspect-[4/5]", "aspect-[2/3]"];
+            const aspect = aspects[i % aspects.length];
+            return (
+              <ScrollReveal key={img.id} delay={i * 80}>
+                <div className={`group relative ${aspect} rounded-xl overflow-hidden bg-muted break-inside-avoid`}>
+                  <img
+                    src={img.image_url}
+                    alt={img.filter_name || "Geração IA"}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+                    {img.filter_name && (
+                      <span className="text-xs font-medium text-white bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                        {img.filter_name}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </ScrollReveal>
-          ))}
+              </ScrollReveal>
+            );
+          })}
         </div>
 
         <ScrollReveal delay={400}>
