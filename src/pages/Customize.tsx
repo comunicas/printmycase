@@ -45,7 +45,7 @@ const Customize = () => {
             isProcessing={c.isProcessing}
             processingMessage={c.processingMsg || undefined}
             onUpscaleClick={!c.isHD && c.image ? c.handleUpscaleClick : undefined}
-            cssFilter={previewCssFilter}
+            previewImageUrl={previewImageUrl}
           />
         </div>
 
