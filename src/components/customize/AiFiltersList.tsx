@@ -32,11 +32,11 @@ const AiFiltersList = ({
   }, []);
 
   const handlePointerDown = useCallback((filter: AiFilter) => {
-    if (!filter.preview_css || !onPreviewStart) return;
+    if (!filter.style_image_url || !onPreviewStart) return;
     isPreviewing.current = false;
     timerRef.current = setTimeout(() => {
       isPreviewing.current = true;
-      onPreviewStart(filter.preview_css!);
+      onPreviewStart(filter.style_image_url!);
     }, LONG_PRESS_MS);
   }, [onPreviewStart]);
 
@@ -136,7 +136,7 @@ const AiFiltersList = ({
         })}
       </div>
 
-      {filters.some(f => f.preview_css) && !activeFilterId && (
+      {filters.some(f => f.style_image_url) && !activeFilterId && (
         <p className="text-[10px] text-muted-foreground/50 text-center">
           Segure p/ prévia
         </p>

@@ -14,12 +14,12 @@ interface PhonePreviewProps {
   isProcessing?: boolean;
   processingMessage?: string;
   onUpscaleClick?: () => void;
-  cssFilter?: string | null;
+  previewImageUrl?: string | null;
 }
 
 const CROSSFADE_MS = 200;
 
-const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, cssFilter }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -214,13 +214,22 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
               style={{
                 ...buildImageStyle(displayImage),
                 transform: `rotate(${rotation}deg)`,
-                filter: cssFilter || undefined,
                 opacity: prevImage ? (fadeIn ? 1 : 0) : 1,
                 transition: isSnapping
-                  ? `background-position 0.2s ease-out, transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out, filter 0.2s ease`
-                  : `transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out, filter 0.2s ease`,
+                  ? `background-position 0.2s ease-out, transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out`
+                  : `transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out`,
               }}
             />
+          )}
+          {/* Preview overlay for filter style image */}
+          {previewImageUrl && (
+            <div className="absolute inset-0 z-20 pointer-events-none">
+              <img
+                src={previewImageUrl}
+                alt="Prévia do filtro"
+                className="w-full h-full object-cover animate-in fade-in duration-200"
+              />
+            </div>
           )}
           <div
             ref={containerRef}

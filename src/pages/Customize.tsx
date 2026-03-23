@@ -16,7 +16,7 @@ const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const c = useCustomize(id);
-  const [previewCssFilter, setPreviewCssFilter] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
@@ -45,7 +45,7 @@ const Customize = () => {
             isProcessing={c.isProcessing}
             processingMessage={c.processingMsg || undefined}
             onUpscaleClick={!c.isHD && c.image ? c.handleUpscaleClick : undefined}
-            cssFilter={previewCssFilter}
+            previewImageUrl={previewImageUrl}
           />
         </div>
 
@@ -70,8 +70,8 @@ const Customize = () => {
             onCompareStart={c.handleCompareStart}
             onCompareEnd={c.handleCompareEnd}
             onRemoveFilter={c.handleRemoveFilter}
-            onPreviewStart={setPreviewCssFilter}
-            onPreviewEnd={() => setPreviewCssFilter(null)}
+            onPreviewStart={setPreviewImageUrl}
+            onPreviewEnd={() => setPreviewImageUrl(null)}
           />
         </div>
 
@@ -113,8 +113,8 @@ const Customize = () => {
             onCompareStart={c.handleCompareStart}
             onCompareEnd={c.handleCompareEnd}
             onRemoveFilter={c.handleRemoveFilter}
-            onPreviewStart={setPreviewCssFilter}
-            onPreviewEnd={() => setPreviewCssFilter(null)}
+            onPreviewStart={setPreviewImageUrl}
+            onPreviewEnd={() => setPreviewImageUrl(null)}
           />
 
           <div className="mt-auto">
