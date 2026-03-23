@@ -2,7 +2,7 @@ import { SlidersHorizontal, Wand2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AdjustmentsPanel from "./AdjustmentsPanel";
 import AiFiltersList from "./AiFiltersList";
-import type { AiFilter, AiFilterCategory } from "@/lib/customize-types";
+import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
 
 interface ImageControlsProps {
   hasImage: boolean;
@@ -20,10 +20,12 @@ interface ImageControlsProps {
   activeFilterId: string | null;
   applyingFilterId: string | null;
   filterCost: number;
+  filterHistory: FilterHistoryEntry[];
   onFilterClick: (filterId: string) => void;
   onCompareStart: () => void;
   onCompareEnd: () => void;
   onRemoveFilter: () => void;
+  onUndoLastFilter: () => void;
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
 }
@@ -31,8 +33,8 @@ interface ImageControlsProps {
 const ImageControls = ({
   hasImage, scale, rotation, onScaleChange, onRotate, onExpand, onUpscale,
   isHD, upscaleCost, isUpscaling,
-  filters, filterCategories, activeFilterId, applyingFilterId, filterCost, onFilterClick,
-  onCompareStart, onCompareEnd, onRemoveFilter,
+  filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory, onFilterClick,
+  onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
 }: ImageControlsProps) => (
   <div className={`w-full max-w-xs sm:max-w-sm lg:max-w-none ${!hasImage ? "opacity-50 pointer-events-none" : ""}`}>
@@ -74,10 +76,12 @@ const ImageControls = ({
             applyingFilterId={applyingFilterId}
             disabled={!hasImage}
             filterCost={filterCost}
+            filterHistory={filterHistory}
             onFilterClick={onFilterClick}
             onCompareStart={onCompareStart}
             onCompareEnd={onCompareEnd}
             onRemoveFilter={onRemoveFilter}
+            onUndoLastFilter={onUndoLastFilter}
             onPreviewStart={onPreviewStart}
             onPreviewEnd={onPreviewEnd}
           />
