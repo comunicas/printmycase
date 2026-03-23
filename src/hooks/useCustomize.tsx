@@ -35,6 +35,7 @@ export function useCustomize(productId: string | undefined) {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [filteredImage, setFilteredImage] = useState<string | null>(null);
   const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
+  const [filterHistory, setFilterHistory] = useState<FilterHistoryEntry[]>([]);
   const [imageFileName, setImageFileName] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
