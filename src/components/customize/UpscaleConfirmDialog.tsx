@@ -18,13 +18,15 @@ interface UpscaleConfirmDialogProps {
   onConfirm: () => void;
 }
 
-const UpscaleConfirmDialog = ({
+import { forwardRef } from "react";
+
+const UpscaleConfirmDialog = forwardRef<HTMLDivElement, UpscaleConfirmDialogProps>(({
   balance,
   cost,
   open,
   onOpenChange,
   onConfirm,
-}: UpscaleConfirmDialogProps) => {
+}, _ref) => {
   const hasEnough = balance >= cost;
 
   return (
@@ -67,6 +69,8 @@ const UpscaleConfirmDialog = ({
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+UpscaleConfirmDialog.displayName = "UpscaleConfirmDialog";
 
 export default UpscaleConfirmDialog;

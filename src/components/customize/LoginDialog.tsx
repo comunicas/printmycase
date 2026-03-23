@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -21,7 +21,7 @@ interface LoginDialogProps {
 
 type Tab = "login" | "signup";
 
-const LoginDialog = ({ open, onOpenChange, redirectUrl }: LoginDialogProps) => {
+const LoginDialog = forwardRef<HTMLDivElement, LoginDialogProps>(({ open, onOpenChange, redirectUrl }, _ref) => {
   const [tab, setTab] = useState<Tab>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -252,6 +252,8 @@ const LoginDialog = ({ open, onOpenChange, redirectUrl }: LoginDialogProps) => {
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+LoginDialog.displayName = "LoginDialog";
 
 export default LoginDialog;
