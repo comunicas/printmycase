@@ -176,11 +176,11 @@ const AiFiltersManager = () => {
   const noPromptNeeded = isLightingRestoration;
 
   const openNew = () => {
-    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setPreviewCss(""); setDialogOpen(true);
+    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setPreviewCss(""); setCategoryId(""); setDialogOpen(true);
   };
 
   const openEdit = (filter: AiFilter) => {
-    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage(filter.send_style_image ?? true); setPreviewCss(filter.preview_css || ""); setDialogOpen(true);
+    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage(filter.send_style_image ?? true); setPreviewCss(filter.preview_css || ""); setCategoryId(filter.category_id || ""); setDialogOpen(true);
   };
 
   const handleSave = async () => {
