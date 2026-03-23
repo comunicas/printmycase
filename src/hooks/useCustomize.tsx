@@ -9,10 +9,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory } from "@/lib/customize-types";
 import {
   compressImage,
-  compressForAI,
   urlToDataUrl,
   renderSnapshot,
   getImageResolution,
+  uploadForAI,
 } from "@/lib/image-utils";
 import { useCoins } from "@/hooks/useCoins";
 import { useCoinSettings } from "@/hooks/useCoinSettings";
