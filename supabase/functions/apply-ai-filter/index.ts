@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    const { imageBase64, imageUrl, filterId } = await req.json();
+    const { imageBase64, imageUrl, filterId, step_number, session_id } = await req.json();
     const inputImage = imageUrl || imageBase64;
 
     if (!inputImage || !filterId) {
