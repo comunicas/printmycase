@@ -81,7 +81,7 @@ export function useCustomize(productId: string | undefined) {
   useEffect(() => {
     supabase
       .from("ai_filters")
-      .select("id, name, style_image_url")
+      .select("id, name, style_image_url, preview_css")
       .eq("active", true)
       .order("sort_order", { ascending: true })
       .then(({ data }) => {
