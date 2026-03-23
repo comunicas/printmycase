@@ -1,42 +1,21 @@
 
 
-## Sitemap.xml dinâmico via Edge Function
+## Corrigir URL do Sitemap
 
-### Abordagem
+### Problema
 
-Um sitemap estático no `public/` não incluiria páginas dinâmicas (produtos, coleções, artigos). Melhor criar um edge function que gera o sitemap.xml dinamicamente, consultando o banco para listar todas as URLs de produtos, coleções, designs e artigos.
+O `robots.txt` aponta para `https://printmycase.com.br/sitemap.xml`, mas o sitemap é um edge function — não existe arquivo estático nesse path. O Google Search Console mostra o domínio `studio.printmycase.com.br`, então a URL precisa apontar para o edge function.
+
+Além disso, o `SITE_URL` dentro do edge function usa `printmycase.com.br`, mas as URLs do sitemap devem usar o domínio correto do site.
 
 ### Alterações
 
 | # | Arquivo | Alteração |
 |---|---------|-----------|
-| 1 | `supabase/functions/sitemap/index.ts` | **Novo** — Edge function que gera XML do sitemap. Consulta `products`, `collections`, `collection_designs`, `kb_categories`, `kb_articles` e combina com rotas estáticas |
-| 2 | `public/robots.txt` | Adicionar `Sitemap: https://printmycase.com.br/sitemap.xml` |
-| 3 | `vite.config.ts` | Adicionar proxy `/sitemap.xml` → edge function (para dev). Em produção, configurar redirect no hosting ou acessar direto via URL da function |
+| 1 | `public/robots.txt` | Trocar URL do Sitemap para: `https://iqnqpwnbdqzvqssxcxgb.supabase.co/functions/v1/sitemap` |
+| 2 | `supabase/functions/sitemap/index.ts` | Trocar `SITE_URL` de `https://printmycase.com.br` para `https://studio.printmycase.com.br` |
 
-### Rotas no sitemap
+### Nota
 
-**Estáticas** (prioridade alta):
-- `/`, `/catalog`, `/customize`, `/colecoes`, `/ajuda`, `/solicitar-modelo`, `/termos`, `/privacidade`, `/compras`
-
-**Dinâmicas** (do banco):
-- `/product/{slug}` — todos os produtos ativos
-- `/colecao/{slug}` — todas as coleções ativas
-- `/colecao/{collSlug}/{designSlug}` — todos os designs ativos
-- `/ajuda/{catSlug}` — categorias do KB
-- `/ajuda/{catSlug}/{artSlug}` — artigos do KB
-
-**Excluídas** (autenticadas/admin):
-- `/orders`, `/profile`, `/coins`, `/admin`, `/minhas-geracoes`, `/login`, `/signup`, `/reset-password`
-
-### Formato de saída
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://printmycase.com.br/</loc><priority>1.0</priority><changefreq>daily</changefreq></url>
-  <url><loc>https://printmycase.com.br/product/iphone-15</loc><priority>0.8</priority></url>
-  ...
-</urlset>
-```
+Após a aprovação, será necessário **publicar** o app para que o Google Search Console consiga acessar o `robots.txt` atualizado e o sitemap via edge function.
 
