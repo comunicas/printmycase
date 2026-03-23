@@ -42,9 +42,9 @@ export function compressImage(
 /** Compress image with smaller limits optimized for AI processing (filters/upscale) */
 export function compressForAI(
   dataUrl: string,
-  maxW = 800,
-  maxH = 1600,
-  quality = 0.80
+  maxW = 640,
+  maxH = 1136,
+  quality = 0.70
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new window.Image();
