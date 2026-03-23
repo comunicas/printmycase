@@ -356,12 +356,7 @@ export function useCustomize(productId: string | undefined) {
         return;
       }
       setProcessingMsg("Finalizando...");
-      let resultImage: string;
-      if (data.imageUrl) {
-        try { resultImage = await urlToDataUrl(data.imageUrl); } catch (e) { console.warn("[urlToDataUrl] fallback to raw URL:", e); resultImage = data.imageUrl; }
-      } else {
-        resultImage = data.image;
-      }
+      const resultImage = data.imageUrl || data.image;
       if (!originalImage) setOriginalImage(image);
       await setImageWithResolution(resultImage);
       setFilteredImage(resultImage);
