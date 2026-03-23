@@ -90,7 +90,20 @@ const Admin = () => {
             </Tabs>
           </TabsContent>
           <TabsContent value="requests"><ModelRequestsManager /></TabsContent>
-          <TabsContent value="ai-filters"><AiFiltersManager /></TabsContent>
+          <TabsContent value="ai-filters">
+            <Tabs defaultValue="af-list" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="af-list" className="gap-1.5">
+                  <Wand2 className="w-4 h-4" /> Filtros
+                </TabsTrigger>
+                <TabsTrigger value="af-categories" className="gap-1.5">
+                  <Layers className="w-4 h-4" /> Categorias
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="af-list"><AiFiltersManager /></TabsContent>
+              <TabsContent value="af-categories"><AiFilterCategoriesManager /></TabsContent>
+            </Tabs>
+          </TabsContent>
           <TabsContent value="coins">
             <Tabs defaultValue="coins-transactions" className="w-full">
               <TabsList className="mb-4">

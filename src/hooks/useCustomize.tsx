@@ -546,7 +546,7 @@ export function useCustomize(productId: string | undefined) {
     // transform state
     scale, position, rotation, setScale, setPosition,
     // filter state
-    filters, activeFilterId, applyingFilterId, pendingFilterId, filteredImage,
+    filters, filterCategories, activeFilterId, applyingFilterId, pendingFilterId, filteredImage,
     // dialog state
     showUpscaleDialog, setShowUpscaleDialog, setPendingFilterId,
     showLoginDialog, setShowLoginDialog,
