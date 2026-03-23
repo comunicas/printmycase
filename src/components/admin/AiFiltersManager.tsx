@@ -133,6 +133,7 @@ const StyleImageUpload = ({ value, onChange }: { value: string; onChange: (url: 
 
 const AiFiltersManager = () => {
   const [filters, setFilters] = useState<AiFilter[]>([]);
+  const [categories, setCategories] = useState<FilterCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AiFilter | null>(null);
@@ -142,6 +143,7 @@ const AiFiltersManager = () => {
   const [styleImageUrl, setStyleImageUrl] = useState("");
   const [sendStyleImage, setSendStyleImage] = useState(true);
   const [previewCss, setPreviewCss] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AiFilter | null>(null);
   const { toast } = useToast();
