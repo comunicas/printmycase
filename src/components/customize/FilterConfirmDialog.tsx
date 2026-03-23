@@ -29,7 +29,6 @@ const FilterConfirmDialog = ({
   onConfirm,
 }: FilterConfirmDialogProps) => {
   const hasEnough = balance >= cost;
-  const remaining = balance - cost;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
