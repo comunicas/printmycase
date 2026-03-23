@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { ArrowRight, Check, Download, Loader2, RotateCcw } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
 interface ContinueBarProps {
