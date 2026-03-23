@@ -476,6 +476,7 @@ export function useCustomize(productId: string | undefined) {
           let rawPath: string | null = null;
           let optimizedPath: string | null = null;
           let finalPath: string | null = null;
+          let filteredPath: string | null = null;
 
           // 1. Raw image (original upload, never changes)
           const rawSrc = rawImage || originalImage || image;
@@ -504,9 +505,17 @@ export function useCustomize(productId: string | undefined) {
             finalPath = path;
           }
 
+          // 4. Filtered image (AI-generated result)
+          if (filteredImage) {
+            const blob = await fetch(filteredImage).then(r => r.blob());
+            const path = `${user.id}/pending_filtered_${ts}.jpg`;
+            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
+            filteredPath = path;
+          }
+
           await upsertPending(
             product.id,
-            { scale, position, rotation, activeFilter: activeFilterId },
+            { scale, position, rotation, activeFilter: activeFilterId, filteredImagePath: filteredPath },
             optimizedPath,
             finalPath,
             rawPath,
