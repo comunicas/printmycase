@@ -202,16 +202,31 @@ export function useCustomize(productId: string | undefined) {
   }, [product?.slug, originalImage]);
 
   const handleCompareStart = useCallback(() => {
-    if (originalImage && activeFilterId) setImage(originalImage);
-  }, [originalImage, activeFilterId]);
+    if (originalImage && (activeFilterId || filterHistory.length > 0)) setImage(originalImage);
+  }, [originalImage, activeFilterId, filterHistory]);
 
   const handleCompareEnd = useCallback(() => {
-    if (filteredImage && activeFilterId) setImage(filteredImage);
-  }, [filteredImage, activeFilterId]);
+    if (filteredImage && (activeFilterId || filterHistory.length > 0)) setImage(filteredImage);
+  }, [filteredImage, activeFilterId, filterHistory]);
 
   const handleRemoveFilter = useCallback(() => {
-    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
+    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); setFilterHistory([]); }
   }, [originalImage]);
+
+  const handleUndoLastFilter = useCallback(() => {
+    if (filterHistory.length <= 1) {
+      // Only one or zero entries — remove all
+      if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); setFilterHistory([]); }
+      return;
+    }
+    // Pop last entry, revert to previous
+    const newHistory = filterHistory.slice(0, -1);
+    const prev = newHistory[newHistory.length - 1];
+    setFilterHistory(newHistory);
+    setImage(prev.image);
+    setFilteredImage(prev.image);
+    setActiveFilterId(prev.filterId);
+  }, [filterHistory, originalImage]);
 
   const handleRotate = useCallback(() => {
     setRotation((prev) => (prev + 90) % 360);
