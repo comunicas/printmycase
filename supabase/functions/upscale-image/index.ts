@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         image_url: imageBase64,
-        upscaling_factor: 4,
+        upscaling_factor: 2,
         overlapping_tiles: true,
       }),
       signal: controller.signal,
