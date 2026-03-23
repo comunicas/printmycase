@@ -341,7 +341,7 @@ export function useCustomize(productId: string | undefined) {
       setProcessingMsg("Finalizando...");
       let resultImage: string;
       if (data.imageUrl) {
-        try { resultImage = await urlToDataUrl(data.imageUrl); } catch { resultImage = data.imageUrl; }
+        try { resultImage = await urlToDataUrl(data.imageUrl); } catch (e) { console.warn("[urlToDataUrl] fallback to raw URL:", e); resultImage = data.imageUrl; }
       } else {
         resultImage = data.image;
       }
@@ -400,7 +400,7 @@ export function useCustomize(productId: string | undefined) {
       setProcessingMsg("Finalizando...");
       let resultImage: string;
       if (data.imageUrl) {
-        try { resultImage = await urlToDataUrl(data.imageUrl); } catch { resultImage = data.imageUrl; }
+        try { resultImage = await urlToDataUrl(data.imageUrl); } catch (e) { console.warn("[urlToDataUrl] fallback to raw URL:", e); resultImage = data.imageUrl; }
       } else {
         resultImage = data.image;
       }
