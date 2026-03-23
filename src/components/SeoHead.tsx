@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useProducts } from "@/hooks/useProducts";
+import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import type { Product } from "@/lib/types";
 
 const SITE_NAME = "PrintMyCase";
@@ -61,9 +62,12 @@ const SeoHead = ({ products: productsProp }: SeoHeadProps) => {
                 item: {
                   "@type": "Product",
                   name: p.name,
+                  description: p.description ?? `Capa personalizada para ${p.name}. Proteção premium com acabamento soft-touch.`,
+                  sku: p.slug,
+                  brand: BRAND,
                   url: `${SITE_URL}/product/${p.slug}`,
                   image: p.images[0],
-                  offers: { "@type": "Offer", price: p.price_cents / 100, priceCurrency: "BRL", availability: "https://schema.org/InStock" },
+                  offers: merchantOffer(p.price_cents / 100, `${SITE_URL}/product/${p.slug}`),
                   aggregateRating: { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: p.review_count },
                 },
               })),

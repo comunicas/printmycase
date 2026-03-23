@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/AppHeader";
 import { useCollection } from "@/hooks/useCollections";
 import { formatPrice } from "@/lib/types";
+import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -55,9 +56,12 @@ const CollectionPage = () => {
             item: {
               "@type": "Product",
               name: d.name,
+              description: `Capa com design "${d.name}" da coleção ${collection.name}.`,
+              sku: d.slug,
+              brand: BRAND,
               image: d.image_url,
               url: `${SITE_URL}/colecao/${slug}/${d.slug}`,
-              offers: { "@type": "Offer", price: d.price_cents / 100, priceCurrency: "BRL", availability: "https://schema.org/InStock" },
+              offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${slug}/${d.slug}`),
             },
           })),
         },

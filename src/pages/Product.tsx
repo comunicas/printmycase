@@ -6,6 +6,7 @@ import ProductDetails from "@/components/ProductDetails";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
+import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import { clarityEvent, clarityTag } from "@/lib/clarity";
 import { pixelEvent } from "@/lib/meta-pixel";
 import LoadingSpinner from "@/components/ui/loading-spinner";
@@ -87,15 +88,13 @@ const Product = () => {
           image,
           url,
           description: desc,
+          sku: product.slug,
           category: "Capas para Celular",
-          brand: { "@type": "Brand", name: brandName },
-          offers: {
-            "@type": "Offer",
-            price: product.price_cents / 100,
-            priceCurrency: "BRL",
-            availability: "https://schema.org/InStock",
-            url,
-          },
+          brand: BRAND,
+          offers: merchantOffer(product.price_cents / 100, url),
+          ...(product.rating && product.review_count
+            ? { aggregateRating: { "@type": "AggregateRating", ratingValue: product.rating, reviewCount: product.review_count } }
+            : {}),
         },
         {
           "@type": "BreadcrumbList",

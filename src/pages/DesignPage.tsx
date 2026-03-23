@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
+import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import { type ShippingResult } from "@/lib/shipping";
 import { generateEventId } from "@/lib/meta-pixel";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
@@ -126,14 +127,10 @@ const DesignPage = () => {
       image,
       url,
       description: desc,
+      sku: design.slug,
       category: "Capas para Celular",
-      offers: {
-        "@type": "Offer",
-        price: design.price_cents / 100,
-        priceCurrency: "BRL",
-        availability: "https://schema.org/InStock",
-        url,
-      },
+      brand: BRAND,
+      offers: merchantOffer(design.price_cents / 100, url),
     };
     let script = document.querySelector('script[data-seo="design-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "design-jsonld"); document.head.appendChild(script); }
