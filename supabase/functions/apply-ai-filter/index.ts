@@ -136,11 +136,17 @@ Deno.serve(async (req) => {
     const bodyKeys = Object.keys(falBody).filter(k => k !== "image_url" && k !== "image_urls");
     console.log("[fal-request]", JSON.stringify({ model: modelUrl, body_keys: bodyKeys, target_style: falBody.target_style, effect_type: falBody.effect_type, prompt: falBody.prompt }));
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 50_000);
+
     const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
       method: "POST",
       headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify(falBody),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     if (!falResponse.ok) {
       const errText = await falResponse.text();

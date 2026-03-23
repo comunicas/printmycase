@@ -77,6 +77,9 @@ Deno.serve(async (req) => {
 
     // Call fal-ai/aura-sr for 4x super-resolution
     console.log("Calling fal-ai/aura-sr for upscale");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 50_000);
+
     const falResponse = await fetch("https://fal.run/fal-ai/aura-sr", {
       method: "POST",
       headers: {
@@ -88,7 +91,10 @@ Deno.serve(async (req) => {
         upscaling_factor: 4,
         overlapping_tiles: true,
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     if (!falResponse.ok) {
       const errText = await falResponse.text();

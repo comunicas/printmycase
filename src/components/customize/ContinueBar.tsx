@@ -21,9 +21,10 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
   );
 
   const downloadButton = showDownload && onDownload && (
-    <Button variant="outline" onClick={onDownload} className="shrink-0 gap-1.5">
+    <Button variant="outline" onClick={onDownload} className="shrink-0 gap-1.5 whitespace-nowrap text-sm">
       <Download className="w-4 h-4" />
-      Baixar imagem
+      <span className="hidden sm:inline">Baixar imagem</span>
+      <span className="sm:hidden">Baixar</span>
     </Button>
   );
 
