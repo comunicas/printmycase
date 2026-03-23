@@ -59,9 +59,34 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_filter_categories: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       ai_filters: {
         Row: {
           active: boolean
+          category_id: string | null
           created_at: string
           id: string
           model_url: string
@@ -74,6 +99,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          category_id?: string | null
           created_at?: string
           id?: string
           model_url?: string
@@ -86,6 +112,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          category_id?: string | null
           created_at?: string
           id?: string
           model_url?: string
@@ -96,7 +123,15 @@ export type Database = {
           sort_order?: number
           style_image_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ai_filters_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "ai_filter_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_generated_images: {
         Row: {
