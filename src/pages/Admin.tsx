@@ -15,6 +15,7 @@ import AiGenerationsManager from "@/components/admin/AiGenerationsManager";
 import CoinPackagesManager from "@/components/admin/CoinPackagesManager";
 import CollectionsManager from "@/components/admin/CollectionsManager";
 import CollectionDesignsManager from "@/components/admin/CollectionDesignsManager";
+import AiFilterCategoriesManager from "@/components/admin/AiFilterCategoriesManager";
 
 const Admin = () => {
   return (
