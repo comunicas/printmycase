@@ -214,10 +214,11 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
               style={{
                 ...buildImageStyle(displayImage),
                 transform: `rotate(${rotation}deg)`,
+                filter: cssFilter || undefined,
                 opacity: prevImage ? (fadeIn ? 1 : 0) : 1,
                 transition: isSnapping
-                  ? `background-position 0.2s ease-out, transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out`
-                  : `transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out`,
+                  ? `background-position 0.2s ease-out, transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out, filter 0.2s ease`
+                  : `transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out, filter 0.2s ease`,
               }}
             />
           )}
