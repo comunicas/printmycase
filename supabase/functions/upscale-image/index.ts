@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    const { imageBase64, imageUrl } = await req.json();
+    const { imageBase64, imageUrl, step_number, session_id } = await req.json();
     const inputImage = imageUrl || imageBase64;
     if (!inputImage) {
       return new Response(JSON.stringify({ error: "imageUrl (or imageBase64) is required" }), {
