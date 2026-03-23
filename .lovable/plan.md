@@ -1,30 +1,59 @@
 
 
-## Meta tags dinâmicas para páginas de coleção, design e catálogo
+## Corrigir "Listagens do comerciante" inválidas no Google Search Console
 
-### Estado atual
+### Problema
 
-- **Product.tsx**: Já possui SEO completo (title, description, og:image, canonical, JSON-LD) ✅
-- **CollectionPage.tsx**: Sem meta tags ❌
-- **DesignPage.tsx**: Sem meta tags ❌
-- **Catalog.tsx**: Sem meta tags ❌
+O Google Search Console detectou 4 itens inválidos em "Listagens do comerciante" (Merchant Listings). Isso ocorre porque o structured data `Product` está faltando campos obrigatórios para merchant listings: `description`, `brand`, `sku`/`gtin`/`mpn` (ou `identifier_exists: false`), e `shippingDetails`.
 
 ### Alterações
 
 | # | Arquivo | Alteração |
 |---|---------|-----------|
-| 1 | `src/pages/CollectionPage.tsx` | Adicionar useEffect com SEO: title, description, og:title/description/image (cover_image), canonical, JSON-LD (CollectionPage com ItemList dos designs) |
-| 2 | `src/pages/DesignPage.tsx` | Adicionar useEffect com SEO: title, description, og:image (design.image_url), product JSON-LD, canonical |
-| 3 | `src/pages/Catalog.tsx` | Adicionar useEffect com SEO: title "Catálogo de Capas", description, canonical `/catalog` |
-| 4 | `src/pages/Collections.tsx` | Adicionar useEffect com SEO: title "Coleções Exclusivas", description, canonical `/colecoes` |
+| 1 | `src/components/SeoHead.tsx` | Adicionar campos obrigatórios ao Product no ItemList: `description`, `brand`, `sku` (usar slug), `hasMerchantReturnPolicy`, `shippingDetails` |
+| 2 | `src/pages/Product.tsx` | Adicionar ao JSON-LD do Product: `sku` (slug), `aggregateRating`, `hasMerchantReturnPolicy`, `shippingDetails` |
+| 3 | `src/pages/DesignPage.tsx` | Mesmos campos adicionais ao JSON-LD Product |
+| 4 | `src/pages/CollectionPage.tsx` | Mesmos campos adicionais ao Product dentro do ItemList |
 
-### Padrão de implementação
+### Campos adicionados em todos os Product schemas
 
-Reutilizar o mesmo padrão `setMeta` + `canonical` + `JSON-LD` já usado em `Product.tsx`. Cada página define seu próprio `useEffect` com cleanup (remove script/canonical no unmount).
+```json
+{
+  "@type": "Product",
+  "name": "...",
+  "description": "Capa personalizada para ...",
+  "image": "...",
+  "sku": "slug-do-produto",
+  "brand": { "@type": "Brand", "name": "PrintMyCase" },
+  "offers": {
+    "@type": "Offer",
+    "price": 69.90,
+    "priceCurrency": "BRL",
+    "availability": "https://schema.org/InStock",
+    "url": "...",
+    "seller": { "@type": "Organization", "name": "PrintMyCase" },
+    "shippingDetails": {
+      "@type": "OfferShippingDetails",
+      "shippingDestination": {
+        "@type": "DefinedRegion",
+        "addressCountry": "BR"
+      },
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 3, "unitCode": "d" },
+        "transitTime": { "@type": "QuantitativeValue", "minValue": 5, "maxValue": 15, "unitCode": "d" }
+      }
+    },
+    "hasMerchantReturnPolicy": {
+      "@type": "MerchantReturnPolicy",
+      "applicableCountry": "BR",
+      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+      "merchantReturnDays": 7,
+      "returnMethod": "https://schema.org/ReturnByMail"
+    }
+  }
+}
+```
 
-**CollectionPage** — JSON-LD `CollectionPage` com `ItemList` dos designs, og:image da `cover_image`.
-
-**DesignPage** — JSON-LD `Product` com preço, og:image do `design.image_url`.
-
-**Catalog/Collections** — Apenas meta tags básicas (title, description, og, canonical), sem JSON-LD dinâmico.
+Isso resolve os 4 itens inválidos adicionando os campos que o Google exige para merchant listings.
 
