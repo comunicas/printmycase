@@ -181,7 +181,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
   const offset = -(oversize - 100) / 2;
 
   const buildImageStyle = (src: string) => ({
-    backgroundImage: `url(${src})`,
+    backgroundImage: `url("${src}")`,
     backgroundSize: `${scale * (100 / oversize)}%`,
     backgroundPosition: `${position.x}% ${position.y}%`,
     backgroundRepeat: "no-repeat" as const,
