@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     if (err?.name === "AbortError") {
-      console.error("apply-ai-filter error: timeout after 50s");
+      console.error("apply-ai-filter error: timeout after 120s");
       return new Response(JSON.stringify({ error: "Tempo limite excedido. Tente novamente." }), {
         status: 504,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
