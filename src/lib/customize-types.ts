@@ -20,3 +20,9 @@ export interface AiFilterCategory {
   sort_order: number;
 }
 
+export interface FilterHistoryEntry {
+  filterId: string;
+  image: string;
+  filterName?: string;
+}
+
