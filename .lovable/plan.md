@@ -1,44 +1,51 @@
 
 
-## Fix CORS, Download e Responsividade da Customização
+## Análise completa e correções do fluxo de customização
 
-### Problema raiz: CORS em URLs fal.ai
+### Estado atual
 
-O edge function retorna `imageUrl` do fal.ai (URL temporária). O frontend tenta `urlToDataUrl(fetch())` que falha por CORS. O fallback usa a URL crua — funciona para `background-image` (sem CORS) mas falha para `handleDownload` (usa `fetch()`).
+Os logs confirmam que o fluxo básico funciona: filtro aplicado com sucesso (style-transfer pixel_art, 200 OK, moedas debitadas, resultado salvo no storage). Os edge functions estão otimizados com URLs.
 
-**Solução**: O edge function deve baixar o resultado do fal.ai e fazer upload para o Supabase Storage, retornando uma URL pública do storage. Isso resolve CORS para display E download.
+### Problemas encontrados
 
-### Alterações
+| # | Problema | Impacto |
+|---|---------|---------|
+| 1 | `compressForAI` não define `img.crossOrigin = "anonymous"` | **Crítico**: No segundo filtro sequencial, o source é uma URL do storage (signed URL). O canvas fica "tainted" e `toDataURL()` lança erro. O fluxo sequencial **quebra silenciosamente**. |
+| 2 | `compressForAI` não tem `img.onerror` | Se a URL falhar, a Promise nunca resolve (fica pendurada para sempre) |
+| 3 | `uploadForAI` re-comprime e re-upload desnecessariamente | No segundo filtro, a imagem já está no storage em 720x1280 (saída do fal.ai). Comprimir para 640x1136 degrada qualidade sem necessidade. Deveria passar a signed URL direto. |
+| 4 | Warnings de ref em `LoginDialog` e `UpscaleConfirmDialog` | Componentes funcionais recebendo ref sem `forwardRef` — não quebra mas polui o console |
 
-| # | Arquivo | Alteração |
-|---|---------|-----------|
-| 1 | `supabase/functions/apply-ai-filter/index.ts` | Após receber resultado do fal.ai: fetch imagem → upload para `customizations/{userId}/filter_{ts}.jpg` → retornar `signedUrl` do storage (válida por 1h) |
-| 2 | `supabase/functions/upscale-image/index.ts` | Mesma lógica: download resultado → upload storage → retornar signed URL |
-| 3 | `src/hooks/useCustomize.tsx` | Simplificar `handleFilterConfirm`: remover try/catch de `urlToDataUrl` — a URL retornada já é do storage (sem CORS). Remover import `urlToDataUrl` se não usado em outro lugar |
-| 4 | `src/lib/image-utils.ts` | Remover `urlToDataUrl` (não mais necessário — todas as URLs vêm do storage) |
-| 5 | `src/components/customize/AiFiltersList.tsx` | Responsividade: chips de histórico com scroll horizontal em vez de wrap; botões de ação menores no mobile |
-| 6 | `src/pages/Customize.tsx` | Mobile: ajustar `max-h` da área de controles para não comprimir o preview |
+### Plano de correção
 
-### Detalhes técnicos
+**1. `src/lib/image-utils.ts` — `compressForAI` + `uploadForAI`**
 
-**Edge function — upload resultado para storage** (items 1-2):
+- Adicionar `img.crossOrigin = "anonymous"` em `compressForAI`
+- Adicionar `img.onerror` com reject
+- Em `uploadForAI`: detectar se `dataUrl` já é uma URL HTTP (signed URL do storage). Se sim, pular compress+upload e retornar a URL diretamente (já está pronta para o fal.ai)
+
 ```typescript
-// Após receber outputUrl do fal.ai:
-const imgRes = await fetch(outputUrl);
-const imgBlob = await imgRes.arrayBuffer();
-const path = `${userId}/filter_${Date.now()}.jpg`;
-await serviceClient.storage.from("customizations").upload(path, imgBlob, {
-  contentType: "image/jpeg", upsert: true
-});
-const { data: urlData } = await serviceClient.storage
-  .from("customizations")
-  .createSignedUrl(path, 3600); // 1h
-return { imageUrl: urlData.signedUrl };
+export async function uploadForAI(
+  src: string,
+  userId: string,
+  supabaseClient: ...,
+): Promise<{ path: string; signedUrl: string }> {
+  // Se já é uma URL HTTP (resultado de filtro anterior no storage), usar direto
+  if (src.startsWith("http")) {
+    return { path: "", signedUrl: src };
+  }
+  // Caso contrário, comprimir e fazer upload normalmente
+  ...
+}
 ```
 
-**Responsividade mobile** (items 5-6):
-- Chips de filtros aplicados: `overflow-x-auto flex-nowrap` com scroll horizontal
-- Botões "Comparar/Desfazer/Remover": ícones menores, sem texto no mobile (`sm:inline`)
-- Área de controles mobile: `max-h-[35vh]` com scroll para não comprimir preview
-- Grid de filtros: manter 3 colunas mas com gap menor no mobile
+**2. `src/components/customize/LoginDialog.tsx`** — Adicionar `forwardRef` ou remover ref passthrough
+
+**3. `src/components/customize/UpscaleConfirmDialog.tsx`** — Mesmo fix de ref
+
+### Arquivos afetados
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/lib/image-utils.ts` | CORS fix + onerror + skip upload para URLs HTTP |
+| `src/components/customize/LoginDialog.tsx` | Fix warning de ref |
+| `src/components/customize/UpscaleConfirmDialog.tsx` | Fix warning de ref |
 
