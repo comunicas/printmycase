@@ -52,6 +52,7 @@ const App = () => (
             <Route path="/orders" element={<AuthGuard><Orders /></AuthGuard>} />
             <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
             <Route path="/coins" element={<AuthGuard><Coins /></AuthGuard>} />
+            <Route path="/minhas-geracoes" element={<AuthGuard><MyGenerations /></AuthGuard>} />
             <Route path="/admin" element={<AuthGuard><AdminGuard><Admin /></AdminGuard></AuthGuard>} />
             <Route path="/solicitar-modelo" element={<RequestModel />} />
             <Route path="/colecoes" element={<Collections />} />
