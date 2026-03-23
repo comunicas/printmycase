@@ -24,7 +24,6 @@ interface AiFilter {
   active: boolean;
   style_image_url: string | null;
   send_style_image: boolean;
-  preview_css: string | null;
   category_id: string | null;
 }
 
@@ -142,7 +141,7 @@ const AiFiltersManager = () => {
   const [modelUrl, setModelUrl] = useState(MODEL_OPTIONS[0].value);
   const [styleImageUrl, setStyleImageUrl] = useState("");
   const [sendStyleImage, setSendStyleImage] = useState(true);
-  const [previewCss, setPreviewCss] = useState("");
+  
   const [categoryId, setCategoryId] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AiFilter | null>(null);
@@ -176,11 +175,11 @@ const AiFiltersManager = () => {
   const noPromptNeeded = isLightingRestoration;
 
   const openNew = () => {
-    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setPreviewCss(""); setCategoryId(""); setDialogOpen(true);
+    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setCategoryId(""); setDialogOpen(true);
   };
 
   const openEdit = (filter: AiFilter) => {
-    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage(filter.send_style_image ?? true); setPreviewCss(filter.preview_css || ""); setCategoryId(filter.category_id || ""); setDialogOpen(true);
+    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage(filter.send_style_image ?? true); setCategoryId(filter.category_id || ""); setDialogOpen(true);
   };
 
   const handleSave = async () => {
@@ -190,7 +189,7 @@ const AiFiltersManager = () => {
     if (editing) {
       const { error } = await supabase
         .from("ai_filters")
-        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, preview_css: previewCss.trim() || null, category_id: categoryId || null })
+        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, category_id: categoryId || null })
         .eq("id", editing.id);
       if (error) toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
       else toast({ title: "Filtro atualizado" });
@@ -198,7 +197,7 @@ const AiFiltersManager = () => {
       const maxOrder = filters.length > 0 ? Math.max(...filters.map((f) => f.sort_order)) : 0;
       const { error } = await supabase
         .from("ai_filters")
-        .insert({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, sort_order: maxOrder + 1, preview_css: previewCss.trim() || null, category_id: categoryId || null });
+        .insert({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, sort_order: maxOrder + 1, category_id: categoryId || null });
       if (error) toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       else toast({ title: "Filtro criado" });
     }
@@ -331,10 +330,6 @@ const AiFiltersManager = () => {
                 <span className="text-sm text-foreground">Enviar imagem de referência ao fal.ai</span>
               </label>
             )}
-            <FormField label="Preview CSS (prévia no celular)" id="filter-preview-css">
-              <Input id="filter-preview-css" value={previewCss} onChange={(e) => setPreviewCss(e.target.value)} placeholder="Ex: grayscale(1), sepia(0.8) saturate(1.5)" />
-              <p className="text-[11px] text-muted-foreground mt-1">Filtro CSS aplicado ao segurar o botão. Deixe vazio para desabilitar prévia.</p>
-            </FormField>
             <FormField label="Categoria" id="filter-category">
               <select id="filter-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 <option value="">Sem categoria</option>

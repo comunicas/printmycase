@@ -164,7 +164,8 @@ interface Product {
 | `addresses` | Endereços de entrega dos usuários |
 | `profiles` | Dados adicionais do usuário (nome, avatar, telefone, referral_code) |
 | `user_roles` | RBAC — roles `admin` e `user` |
-| `ai_filters` | Filtros IA configuráveis (modelo Fal.ai, prompt, imagem de estilo) |
+| `ai_filters` | Filtros IA configuráveis (modelo Fal.ai, prompt, imagem de estilo, categoria) |
+| `ai_filter_categories` | Categorias para agrupamento dos filtros IA |
 | `ai_generated_images` | Imagens geradas por IA (prompt, seed, URLs) |
 | `coin_settings` | Configurações do sistema de moedas (custos, bônus) |
 | `coin_transactions` | Histórico de transações de moedas por usuário |
