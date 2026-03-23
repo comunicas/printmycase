@@ -399,8 +399,9 @@ export function useCustomize(productId: string | undefined) {
       const sourceImage = originalImage || image;
       const { signedUrl } = await uploadForAI(sourceImage, user.id, supabase);
       setProcessingMsg("Melhorando resolução...");
+      const stepNumber = filterHistory.length + 1;
       const { data, error } = await supabase.functions.invoke("upscale-image", {
-        body: { imageUrl: signedUrl },
+        body: { imageUrl: signedUrl, step_number: stepNumber, session_id: sessionId },
       });
       if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
