@@ -374,16 +374,16 @@ export function useCustomize(productId: string | undefined) {
   }, [requireAuth, image, isUpscaling, isHD]);
 
   const handleUpscaleConfirm = useCallback(async () => {
-    if (!image) return;
+    if (!image || !user) return;
     setShowUpscaleDialog(false);
     setIsUpscaling(true);
     setProcessingMsg("Enviando imagem...");
     try {
       const sourceImage = originalImage || image;
-      const compressedSource = await compressForAI(sourceImage);
+      const { signedUrl } = await uploadForAI(sourceImage, user.id, supabase);
       setProcessingMsg("Melhorando resolução...");
       const { data, error } = await supabase.functions.invoke("upscale-image", {
-        body: { imageBase64: compressedSource },
+        body: { imageUrl: signedUrl },
       });
       if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
@@ -409,7 +409,6 @@ export function useCustomize(productId: string | undefined) {
       setActiveFilterId(null);
       refreshCoins();
       toast({ title: "Upscale concluído!", description: `Nova resolução: ${data.width}×${data.height}px` });
-      // Check low balance
       const newBalance = coinBalance - aiUpscaleCost;
       if (newBalance < Math.min(aiFilterCost, aiUpscaleCost)) {
         setTimeout(() => {
@@ -426,7 +425,7 @@ export function useCustomize(productId: string | undefined) {
       setIsUpscaling(false);
       setProcessingMsg(null);
     }
-  }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
+  }, [image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
   const handleDownload = useCallback(async () => {
     const src = filteredImage || image;
