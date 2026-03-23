@@ -162,7 +162,7 @@ const AiFiltersManager = () => {
   const noPromptNeeded = isLightingRestoration;
 
   const openNew = () => {
-    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setDialogOpen(true);
+    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setPreviewCss(""); setDialogOpen(true);
   };
 
   const openEdit = (filter: AiFilter) => {
