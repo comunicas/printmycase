@@ -78,15 +78,23 @@ export function useCustomize(productId: string | undefined) {
     }
   }, [product, productLoading, navigate, toast]);
 
-  // --- load AI filters ---
+  // --- load AI filters + categories ---
   useEffect(() => {
     supabase
       .from("ai_filters")
-      .select("id, name, style_image_url")
+      .select("id, name, style_image_url, category_id")
       .eq("active", true)
       .order("sort_order", { ascending: true })
       .then(({ data }) => {
         if (data) setFilters(data as AiFilter[]);
+      });
+    supabase
+      .from("ai_filter_categories")
+      .select("id, name, sort_order")
+      .eq("active", true)
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (data) setFilterCategories(data as AiFilterCategory[]);
       });
   }, []);
 

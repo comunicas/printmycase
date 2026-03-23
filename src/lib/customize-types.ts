@@ -11,4 +11,11 @@ export interface AiFilter {
   id: string;
   name: string;
   style_image_url: string | null;
+  category_id: string | null;
+}
+
+export interface AiFilterCategory {
+  id: string;
+  name: string;
+  sort_order: number;
 }
