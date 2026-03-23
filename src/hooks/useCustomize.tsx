@@ -578,7 +578,7 @@ export function useCustomize(productId: string | undefined) {
     processingMsg,
     // handlers
     handleReset, handleRotate, handleExpand, handleImageUpload,
-    handleFilterClick, handleFilterConfirm, handleRemoveFilter,
+    handleFilterClick, handleFilterConfirm, handleRemoveFilter, handleUndoLastFilter,
     handleCompareStart, handleCompareEnd,
     handleUpscaleClick, handleUpscaleConfirm,
     handleContinue, handleDownload,
