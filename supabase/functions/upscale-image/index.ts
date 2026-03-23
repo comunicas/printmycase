@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     if (err?.name === "AbortError") {
-      console.error("upscale-image error: timeout after 50s");
+      console.error("upscale-image error: timeout after 120s");
       return new Response(JSON.stringify({ error: "Tempo limite excedido. Tente novamente." }), {
         status: 504,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
