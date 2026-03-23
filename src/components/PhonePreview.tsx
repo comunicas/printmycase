@@ -14,7 +14,7 @@ interface PhonePreviewProps {
   isProcessing?: boolean;
   processingMessage?: string;
   onUpscaleClick?: () => void;
-  cssFilter?: string | null;
+  previewImageUrl?: string | null;
 }
 
 const CROSSFADE_MS = 200;
