@@ -164,6 +164,12 @@ const AiFiltersManager = () => {
 
   useEffect(() => { fetchFilters(); }, [fetchFilters]);
 
+  useEffect(() => {
+    supabase.from("ai_filter_categories").select("id, name").order("sort_order").then(({ data }) => {
+      if (data) setCategories(data);
+    });
+  }, []);
+
   const isStyleTransfer = modelUrl === "fal-ai/image-apps-v2/style-transfer";
   const isPhotographyEffects = modelUrl === "fal-ai/image-apps-v2/photography-effects";
   const isLightingRestoration = modelUrl === "fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration";
