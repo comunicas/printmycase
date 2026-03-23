@@ -63,7 +63,7 @@ const Customize = () => {
             upscaleCost={c.aiUpscaleCost}
             isUpscaling={c.isUpscaling}
             filters={c.filters}
-            activeFilterId={c.activeFilterId}
+            filterCategories={c.filterCategories}
             applyingFilterId={c.applyingFilterId}
             filterCost={c.aiFilterCost}
             onFilterClick={c.handleFilterClick}
