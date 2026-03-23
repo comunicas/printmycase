@@ -46,8 +46,9 @@ export function compressForAI(
   maxH = 1136,
   quality = 0.70
 ): Promise<string> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const img = new window.Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       const { naturalWidth: w, naturalHeight: h } = img;
       if (w <= maxW && h <= maxH) {
@@ -64,6 +65,7 @@ export function compressForAI(
       ctx.drawImage(img, 0, 0, nw, nh);
       resolve(canvas.toDataURL("image/jpeg", quality));
     };
+    img.onerror = () => reject(new Error("Failed to load image for compression"));
     img.src = dataUrl;
   });
 }
