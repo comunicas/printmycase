@@ -64,6 +64,7 @@ const Customize = () => {
             isUpscaling={c.isUpscaling}
             filters={c.filters}
             filterCategories={c.filterCategories}
+            activeFilterId={c.activeFilterId}
             applyingFilterId={c.applyingFilterId}
             filterCost={c.aiFilterCost}
             onFilterClick={c.handleFilterClick}
