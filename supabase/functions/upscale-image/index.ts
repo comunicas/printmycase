@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        image_url: imageBase64,
+        image_url: inputImage,
         upscaling_factor: 2,
         overlapping_tiles: true,
       }),

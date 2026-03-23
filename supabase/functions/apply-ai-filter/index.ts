@@ -111,27 +111,27 @@ Deno.serve(async (req) => {
     let falBody: Record<string, unknown>;
 
     if (isLightingRestoration) {
-      falBody = { image_urls: [imageBase64], image_size: { width: 720, height: 1280 } };
+      falBody = { image_urls: [inputImage], image_size: { width: 720, height: 1280 } };
     } else if (isPhotographyEffects) {
-      falBody = { image_url: imageBase64, effect_type: filter.prompt, aspect_ratio: { ratio: "9:16" } };
+      falBody = { image_url: inputImage, effect_type: filter.prompt, aspect_ratio: { ratio: "9:16" } };
     } else if (isStyleTransfer) {
       const shouldSendStyleImage = filter.send_style_image && !!filter.style_image_url;
       falBody = {
-        image_url: imageBase64,
+        image_url: inputImage,
         target_style: filter.prompt,
         ...(shouldSendStyleImage && { style_reference_image_url: filter.style_image_url }),
         aspect_ratio: { ratio: "9:16" },
       };
     } else if (isKontext) {
       falBody = {
-        image_url: imageBase64,
+        image_url: inputImage,
         prompt: filter.prompt,
         aspect_ratio: "9:16",
         output_format: "jpeg",
       };
     } else {
       falBody = {
-        image_url: imageBase64,
+        image_url: inputImage,
         prompt: filter.prompt,
         strength: 0.75,
         num_inference_steps: 28,
