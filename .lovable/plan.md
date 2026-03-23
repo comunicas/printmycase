@@ -1,40 +1,32 @@
 
 
-## Refatorar preview: mostrar imagem do estilo do filtro no smartphone
+## Corrigir download + recuperar imagem filtrada
 
-### O que o usuário quer
-Ao segurar (long-press) um filtro, a **imagem de estilo do filtro** (`style_image_url`) aparece dentro do smartphone em tela cheia — para o usuário ver o resultado visual que vai "comprar". Não é CSS filter na foto do usuário.
+### Problema 1: Download abre na mesma janela
+O `handleDownload` usa `a.href = src` com `a.download`, mas quando `src` é uma URL cross-origin (fal.ai), o atributo `download` é ignorado pelo navegador e a URL abre na mesma janela.
 
-### Alterações
+**Correção em `src/hooks/useCustomize.tsx` — `handleDownload` (linha 413-422)**:
+- Fazer `fetch(src)` → `.blob()` → `URL.createObjectURL(blob)` → usar no `a.href`
+- Após o click, revogar o object URL
+- Tratar erro com fallback para `window.open(src, '_blank')`
 
-**1. `src/components/PhonePreview.tsx`**
-- Remover prop `cssFilter`
-- Adicionar prop `previewImageUrl?: string | null`
-- Quando `previewImageUrl` está presente: renderizar uma camada extra (`<div>` ou `<img>`) com essa imagem cobrindo 100% do phone, com `object-fit: cover` e `z-index` acima da imagem do usuário
-- Transição suave de opacidade (fade-in 0.2s)
+### Problema 2: Não recupera a última imagem filtrada
+Quando o usuário volta à página de customização, o draft restore (linhas 130-150) carrega apenas `edited_image_path` ou `original_image_path`, mas não restaura o estado `filteredImage` nem `activeFilterId`.
 
-**2. `src/components/customize/AiFiltersList.tsx`**
-- No `handlePointerDown`: em vez de chamar `onPreviewStart(filter.preview_css)`, chamar `onPreviewStart(filter.style_image_url)` — a URL da imagem de estilo
-- A prop `onPreviewStart` passa a receber `string` (URL) em vez de CSS filter string
-- Remover dependência do campo `preview_css` na lógica de long-press
-- Condição: só ativa long-press se `filter.style_image_url` existir
+O `handleContinue` já salva `activeFilter` em `customization_data` e o `optimizedPath` é a imagem original (não a filtrada). A imagem filtrada em si não é salva separadamente no storage.
 
-**3. `src/pages/Customize.tsx`**
-- Renomear estado `previewCssFilter` → `previewImageUrl`
-- Passar como `previewImageUrl` para `PhonePreview` em vez de `cssFilter`
+**Correção em `src/hooks/useCustomize.tsx`**:
 
-**4. `src/components/customize/ImageControls.tsx`**
-- Renomear props `onPreviewStart`/`onPreviewEnd` — mantém assinatura, só muda o dado passado (URL em vez de CSS)
+1. **No `handleContinue` (linha ~472-479)**: Salvar também a imagem filtrada no storage quando `filteredImage` existe, e passar o path no `customization_data`:
+   - Upload `filteredImage` como `pending_filtered_{ts}.jpg`
+   - Incluir `filteredImagePath` no objeto passado ao `upsertPending`
 
-### Resultado
-- Long-press → imagem de referência do filtro aparece no smartphone
-- Soltar → volta à foto do usuário
-- Tap curto → modal de confirmação com custo 🪙
+2. **No restore de pending_checkouts (linhas 130-150)**: Além de restaurar a imagem base, verificar se `customization_data` contém `activeFilter` e `filteredImagePath`. Se sim:
+   - Baixar a imagem filtrada via `getSignedUrl`
+   - Setar `filteredImage`, `activeFilterId` e exibir a filtrada como imagem ativa
 
 ### Arquivos afetados
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/components/PhonePreview.tsx` | Trocar `cssFilter` por `previewImageUrl`, overlay de imagem |
-| `src/components/customize/AiFiltersList.tsx` | Passar `style_image_url` em vez de `preview_css` |
-| `src/pages/Customize.tsx` | Renomear estado |
+| `src/hooks/useCustomize.tsx` | Download com blob + restaurar filteredImage do pending |
 
