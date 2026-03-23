@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
+import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import { type ShippingResult } from "@/lib/shipping";
 import { generateEventId } from "@/lib/meta-pixel";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
