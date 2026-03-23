@@ -36,9 +36,10 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    const { imageBase64 } = await req.json();
-    if (!imageBase64) {
-      return new Response(JSON.stringify({ error: "imageBase64 is required" }), {
+    const { imageBase64, imageUrl } = await req.json();
+    const inputImage = imageUrl || imageBase64;
+    if (!inputImage) {
+      return new Response(JSON.stringify({ error: "imageUrl (or imageBase64) is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
