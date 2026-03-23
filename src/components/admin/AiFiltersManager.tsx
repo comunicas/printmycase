@@ -190,7 +190,7 @@ const AiFiltersManager = () => {
     if (editing) {
       const { error } = await supabase
         .from("ai_filters")
-        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, preview_css: previewCss.trim() || null })
+        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, preview_css: previewCss.trim() || null, category_id: categoryId || null })
         .eq("id", editing.id);
       if (error) toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
       else toast({ title: "Filtro atualizado" });
