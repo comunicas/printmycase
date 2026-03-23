@@ -141,7 +141,7 @@ const AiFiltersManager = () => {
   const [modelUrl, setModelUrl] = useState(MODEL_OPTIONS[0].value);
   const [styleImageUrl, setStyleImageUrl] = useState("");
   const [sendStyleImage, setSendStyleImage] = useState(true);
-  const [previewCss, setPreviewCss] = useState("");
+  
   const [categoryId, setCategoryId] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AiFilter | null>(null);
