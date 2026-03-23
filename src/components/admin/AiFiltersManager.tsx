@@ -314,6 +314,10 @@ const AiFiltersManager = () => {
                 <span className="text-sm text-foreground">Enviar imagem de referência ao fal.ai</span>
               </label>
             )}
+            <FormField label="Preview CSS (prévia no celular)" id="filter-preview-css">
+              <Input id="filter-preview-css" value={previewCss} onChange={(e) => setPreviewCss(e.target.value)} placeholder="Ex: grayscale(1), sepia(0.8) saturate(1.5)" />
+              <p className="text-[11px] text-muted-foreground mt-1">Filtro CSS aplicado ao segurar o botão. Deixe vazio para desabilitar prévia.</p>
+            </FormField>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
