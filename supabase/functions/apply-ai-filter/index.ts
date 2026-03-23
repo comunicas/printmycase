@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
     console.log("[fal-request]", JSON.stringify({ model: modelUrl, body_keys: bodyKeys, target_style: falBody.target_style, effect_type: falBody.effect_type, prompt: falBody.prompt }));
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 50_000);
+    const timeout = setTimeout(() => controller.abort(), 120_000);
 
     const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
       method: "POST",
