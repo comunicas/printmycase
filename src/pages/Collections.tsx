@@ -9,6 +9,25 @@ const Collections = () => {
   const { collections, loading } = useCollections();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const title = "Coleções Exclusivas | PrintMyCase";
+    const desc = "Explore nossas coleções de designs exclusivos para capas de celular. Proteção premium com estilo.";
+    document.title = title;
+    const setMeta = (attr: string, key: string, content: string) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
+      el.setAttribute("content", content);
+    };
+    setMeta("name", "description", desc);
+    setMeta("property", "og:title", title);
+    setMeta("property", "og:description", desc);
+    setMeta("property", "og:url", `${SITE_URL}/colecoes`);
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) { canonical = document.createElement("link"); canonical.setAttribute("rel", "canonical"); document.head.appendChild(canonical); }
+    canonical.setAttribute("href", `${SITE_URL}/colecoes`);
+    return () => { canonical?.remove(); };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       

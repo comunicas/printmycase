@@ -24,6 +24,68 @@ const CollectionPage = () => {
     );
   }
 
+  useEffect(() => {
+    if (!collection) return;
+    const title = `${collection.name} | ${SITE_NAME}`;
+    const desc = collection.description || `Coleção ${collection.name} — designs exclusivos para capas de celular.`;
+    const image = collection.cover_image || "";
+    const url = `${SITE_URL}/colecao/${slug}`;
+
+    document.title = title;
+
+    const setMeta = (attr: string, key: string, content: string) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
+      el.setAttribute("content", content);
+    };
+
+    setMeta("name", "description", desc);
+    setMeta("property", "og:title", title);
+    setMeta("property", "og:description", desc);
+    if (image) setMeta("property", "og:image", image);
+    setMeta("property", "og:url", url);
+    setMeta("property", "og:type", "website");
+    setMeta("name", "twitter:title", title);
+    setMeta("name", "twitter:description", desc);
+    if (image) setMeta("name", "twitter:image", image);
+
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) { canonical = document.createElement("link"); canonical.setAttribute("rel", "canonical"); document.head.appendChild(canonical); }
+    canonical.setAttribute("href", url);
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: collection.name,
+      description: desc,
+      url,
+      ...(image ? { image } : {}),
+      ...(designs.length > 0 ? {
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: designs.length,
+          itemListElement: designs.map((d, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            item: {
+              "@type": "Product",
+              name: d.name,
+              image: d.image_url,
+              url: `${SITE_URL}/colecao/${slug}/${d.slug}`,
+              offers: { "@type": "Offer", price: d.price_cents / 100, priceCurrency: "BRL", availability: "https://schema.org/InStock" },
+            },
+          })),
+        },
+      } : {}),
+    };
+
+    let script = document.querySelector('script[data-seo="collection-jsonld"]') as HTMLScriptElement | null;
+    if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "collection-jsonld"); document.head.appendChild(script); }
+    script.textContent = JSON.stringify(jsonLd);
+
+    return () => { script?.remove(); canonical?.remove(); };
+  }, [collection, designs, slug]);
+
   return (
     <div className="min-h-screen bg-background">
       
