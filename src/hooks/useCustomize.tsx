@@ -6,7 +6,7 @@ import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter } from "@/lib/customize-types";
+import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory } from "@/lib/customize-types";
 import {
   compressImage,
   compressForAI,
@@ -45,6 +45,7 @@ export function useCustomize(productId: string | undefined) {
   const [position, setPosition] = useState(DEFAULTS.position);
   const [rotation, setRotation] = useState(DEFAULTS.rotation);
   const [filters, setFilters] = useState<AiFilter[]>([]);
+  const [filterCategories, setFilterCategories] = useState<AiFilterCategory[]>([]);
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -77,15 +78,23 @@ export function useCustomize(productId: string | undefined) {
     }
   }, [product, productLoading, navigate, toast]);
 
-  // --- load AI filters ---
+  // --- load AI filters + categories ---
   useEffect(() => {
     supabase
       .from("ai_filters")
-      .select("id, name, style_image_url")
+      .select("id, name, style_image_url, category_id")
       .eq("active", true)
       .order("sort_order", { ascending: true })
       .then(({ data }) => {
         if (data) setFilters(data as AiFilter[]);
+      });
+    supabase
+      .from("ai_filter_categories")
+      .select("id, name, sort_order")
+      .eq("active", true)
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (data) setFilterCategories(data as AiFilterCategory[]);
       });
   }, []);
 
@@ -537,7 +546,7 @@ export function useCustomize(productId: string | undefined) {
     // transform state
     scale, position, rotation, setScale, setPosition,
     // filter state
-    filters, activeFilterId, applyingFilterId, pendingFilterId, filteredImage,
+    filters, filterCategories, activeFilterId, applyingFilterId, pendingFilterId, filteredImage,
     // dialog state
     showUpscaleDialog, setShowUpscaleDialog, setPendingFilterId,
     showLoginDialog, setShowLoginDialog,

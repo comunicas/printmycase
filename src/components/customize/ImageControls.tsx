@@ -2,7 +2,7 @@ import { SlidersHorizontal, Wand2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AdjustmentsPanel from "./AdjustmentsPanel";
 import AiFiltersList from "./AiFiltersList";
-import type { AiFilter } from "@/lib/customize-types";
+import type { AiFilter, AiFilterCategory } from "@/lib/customize-types";
 
 interface ImageControlsProps {
   hasImage: boolean;
@@ -16,6 +16,7 @@ interface ImageControlsProps {
   upscaleCost: number;
   isUpscaling: boolean;
   filters: AiFilter[];
+  filterCategories: AiFilterCategory[];
   activeFilterId: string | null;
   applyingFilterId: string | null;
   filterCost: number;
@@ -30,7 +31,7 @@ interface ImageControlsProps {
 const ImageControls = ({
   hasImage, scale, rotation, onScaleChange, onRotate, onExpand, onUpscale,
   isHD, upscaleCost, isUpscaling,
-  filters, activeFilterId, applyingFilterId, filterCost, onFilterClick,
+  filters, filterCategories, activeFilterId, applyingFilterId, filterCost, onFilterClick,
   onCompareStart, onCompareEnd, onRemoveFilter,
   onPreviewStart, onPreviewEnd,
 }: ImageControlsProps) => (
@@ -68,6 +69,7 @@ const ImageControls = ({
         <TabsContent value="filtros" className="mt-2 max-h-[30vh] overflow-y-auto lg:max-h-none lg:overflow-visible">
           <AiFiltersList
             filters={filters}
+            categories={filterCategories}
             activeFilterId={activeFilterId}
             applyingFilterId={applyingFilterId}
             disabled={!hasImage}

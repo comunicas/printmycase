@@ -63,6 +63,7 @@ const Customize = () => {
             upscaleCost={c.aiUpscaleCost}
             isUpscaling={c.isUpscaling}
             filters={c.filters}
+            filterCategories={c.filterCategories}
             activeFilterId={c.activeFilterId}
             applyingFilterId={c.applyingFilterId}
             filterCost={c.aiFilterCost}
@@ -106,6 +107,7 @@ const Customize = () => {
             upscaleCost={c.aiUpscaleCost}
             isUpscaling={c.isUpscaling}
             filters={c.filters}
+            filterCategories={c.filterCategories}
             activeFilterId={c.activeFilterId}
             applyingFilterId={c.applyingFilterId}
             filterCost={c.aiFilterCost}

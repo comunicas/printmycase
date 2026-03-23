@@ -1,10 +1,11 @@
 import { useRef, useCallback } from "react";
 import { Loader2, Eye, X, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AiFilter } from "@/lib/customize-types";
+import type { AiFilter, AiFilterCategory } from "@/lib/customize-types";
 
 interface AiFiltersListProps {
   filters: AiFilter[];
+  categories: AiFilterCategory[];
   activeFilterId: string | null;
   applyingFilterId: string | null;
   disabled: boolean;
@@ -20,7 +21,7 @@ interface AiFiltersListProps {
 const LONG_PRESS_MS = 300;
 
 const AiFiltersList = ({
-  filters, activeFilterId, applyingFilterId, disabled, filterCost,
+  filters, categories, activeFilterId, applyingFilterId, disabled, filterCost,
   onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter,
   onPreviewStart, onPreviewEnd,
 }: AiFiltersListProps) => {
@@ -58,13 +59,60 @@ const AiFiltersList = ({
     }
   }, [clearTimer, onPreviewEnd]);
 
+  const renderFilterButton = (filter: AiFilter) => {
+    const isActive = activeFilterId === filter.id;
+    const isProcessing = applyingFilterId === filter.id;
+    return (
+      <button
+        key={filter.id}
+        className={`relative flex flex-col items-center gap-1 rounded-lg transition-all focus:outline-none disabled:opacity-50 select-none ${
+          isActive ? "ring-2 ring-primary ring-offset-1" : ""
+        }`}
+        onPointerDown={() => handlePointerDown(filter)}
+        onPointerUp={() => handlePointerUp(filter)}
+        onPointerLeave={handlePointerLeave}
+        disabled={!!applyingFilterId || disabled}
+      >
+        <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-muted">
+          {filter.style_image_url ? (
+            <img src={filter.style_image_url} alt={filter.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/30 flex items-center justify-center">
+              <Wand2 className="w-5 h-5 text-muted-foreground" />
+            </div>
+          )}
+          <span className="absolute top-1 right-1 bg-background/80 backdrop-blur-sm text-[9px] font-medium px-1.5 py-0.5 rounded-full">
+            🪙{filterCost}
+          </span>
+          {isProcessing && (
+            <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            </div>
+          )}
+        </div>
+        <span className="text-[10px] text-center leading-tight text-muted-foreground truncate w-full px-0.5">
+          {filter.name}
+        </span>
+      </button>
+    );
+  };
+
+  // Group filters by category
+  const grouped = categories
+    .map((cat) => ({
+      category: cat,
+      items: filters.filter((f) => f.category_id === cat.id),
+    }))
+    .filter((g) => g.items.length > 0);
+
+  const uncategorized = filters.filter((f) => !f.category_id || !categories.some((c) => c.id === f.category_id));
+
   return (
     <div className="space-y-2">
       {activeFilterId && (
         <div className="flex gap-2">
           <Button
-            variant="outline"
-            size="sm"
+            variant="outline" size="sm"
             className="h-8 px-3 text-xs gap-1.5"
             onPointerDown={onCompareStart}
             onPointerUp={onCompareEnd}
@@ -74,8 +122,7 @@ const AiFiltersList = ({
             Segurar p/ comparar
           </Button>
           <Button
-            variant="outline"
-            size="sm"
+            variant="outline" size="sm"
             className="h-8 px-3 text-xs gap-1.5 text-destructive hover:text-destructive"
             onClick={onRemoveFilter}
           >
@@ -85,56 +132,29 @@ const AiFiltersList = ({
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
-        {filters.map((filter) => {
-          const isActive = activeFilterId === filter.id;
-          const isProcessing = applyingFilterId === filter.id;
-          return (
-            <button
-              key={filter.id}
-              className={`relative flex flex-col items-center gap-1 rounded-lg transition-all focus:outline-none disabled:opacity-50 select-none ${
-                isActive ? "ring-2 ring-primary ring-offset-1" : ""
-              }`}
-              onPointerDown={() => handlePointerDown(filter)}
-              onPointerUp={() => handlePointerUp(filter)}
-              onPointerLeave={handlePointerLeave}
-              disabled={!!applyingFilterId || disabled}
-            >
-              {/* Thumbnail */}
-              <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-muted">
-                {filter.style_image_url ? (
-                  <img
-                    src={filter.style_image_url}
-                    alt={filter.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/30 flex items-center justify-center">
-                    <Wand2 className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                )}
+      {grouped.map(({ category, items }) => (
+        <div key={category.id} className="space-y-1.5">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            {category.name}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {items.map(renderFilterButton)}
+          </div>
+        </div>
+      ))}
 
-                {/* Cost badge */}
-                <span className="absolute top-1 right-1 bg-background/80 backdrop-blur-sm text-[9px] font-medium px-1.5 py-0.5 rounded-full">
-                  🪙{filterCost}
-                </span>
-
-                {/* Processing overlay */}
-                {isProcessing && (
-                  <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  </div>
-                )}
-              </div>
-
-              {/* Label */}
-              <span className="text-[10px] text-center leading-tight text-muted-foreground truncate w-full px-0.5">
-                {filter.name}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {uncategorized.length > 0 && (
+        <div className="space-y-1.5">
+          {grouped.length > 0 && (
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Outros
+            </p>
+          )}
+          <div className="grid grid-cols-3 gap-2">
+            {uncategorized.map(renderFilterButton)}
+          </div>
+        </div>
+      )}
 
       {filters.some(f => f.style_image_url) && !activeFilterId && (
         <p className="text-[10px] text-muted-foreground/50 text-center">
