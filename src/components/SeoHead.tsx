@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useProducts } from "@/hooks/useProducts";
+import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import type { Product } from "@/lib/types";
 
 const SITE_NAME = "PrintMyCase";
