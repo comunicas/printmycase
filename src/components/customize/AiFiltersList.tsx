@@ -1,7 +1,7 @@
 import { useRef, useCallback } from "react";
-import { Loader2, Eye, X, Wand2 } from "lucide-react";
+import { Loader2, Eye, X, Wand2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AiFilter, AiFilterCategory } from "@/lib/customize-types";
+import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
 
 interface AiFiltersListProps {
   filters: AiFilter[];
@@ -10,10 +10,12 @@ interface AiFiltersListProps {
   applyingFilterId: string | null;
   disabled: boolean;
   filterCost: number;
+  filterHistory: FilterHistoryEntry[];
   onFilterClick: (filterId: string) => void;
   onCompareStart: () => void;
   onCompareEnd: () => void;
   onRemoveFilter: () => void;
+  onUndoLastFilter: () => void;
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
 }
@@ -21,8 +23,8 @@ interface AiFiltersListProps {
 const LONG_PRESS_MS = 300;
 
 const AiFiltersList = ({
-  filters, categories, activeFilterId, applyingFilterId, disabled, filterCost,
-  onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter,
+  filters, categories, activeFilterId, applyingFilterId, disabled, filterCost, filterHistory,
+  onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
 }: AiFiltersListProps) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,12 +63,14 @@ const AiFiltersList = ({
 
   const renderFilterButton = (filter: AiFilter) => {
     const isActive = activeFilterId === filter.id;
+    const historyIndex = filterHistory.findIndex(h => h.filterId === filter.id);
+    const isInHistory = historyIndex >= 0;
     const isProcessing = applyingFilterId === filter.id;
     return (
       <button
         key={filter.id}
         className={`relative flex flex-col items-center gap-1 rounded-lg transition-all focus:outline-none disabled:opacity-50 select-none ${
-          isActive ? "ring-2 ring-primary ring-offset-1" : ""
+          isActive ? "ring-2 ring-primary ring-offset-1" : isInHistory ? "ring-1 ring-primary/40 ring-offset-1" : ""
         }`}
         onPointerDown={() => handlePointerDown(filter)}
         onPointerUp={() => handlePointerUp(filter)}
@@ -84,6 +88,11 @@ const AiFiltersList = ({
           <span className="absolute top-1 right-1 bg-background/80 backdrop-blur-sm text-[9px] font-medium px-1.5 py-0.5 rounded-full">
             🪙{filterCost}
           </span>
+          {isInHistory && (
+            <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              {historyIndex + 1}
+            </span>
+          )}
           {isProcessing && (
             <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -109,26 +118,49 @@ const AiFiltersList = ({
 
   return (
     <div className="space-y-2">
-      {activeFilterId && (
-        <div className="flex gap-2">
-          <Button
-            variant="outline" size="sm"
-            className="h-8 px-3 text-xs gap-1.5"
-            onPointerDown={onCompareStart}
-            onPointerUp={onCompareEnd}
-            onPointerLeave={onCompareEnd}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            Segurar p/ comparar
-          </Button>
-          <Button
-            variant="outline" size="sm"
-            className="h-8 px-3 text-xs gap-1.5 text-destructive hover:text-destructive"
-            onClick={onRemoveFilter}
-          >
-            <X className="w-3.5 h-3.5" />
-            Remover filtro
-          </Button>
+      {/* Filter history chips */}
+      {filterHistory.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] text-muted-foreground font-medium">
+              {filterHistory.length} filtro{filterHistory.length > 1 ? "s" : ""} aplicado{filterHistory.length > 1 ? "s" : ""}:
+            </span>
+            {filterHistory.map((entry, i) => (
+              <span key={`${entry.filterId}-${i}`} className="inline-flex items-center gap-0.5 bg-primary/10 text-primary text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                {i + 1}. {entry.filterName || "Filtro"}
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline" size="sm"
+              className="h-8 px-3 text-xs gap-1.5"
+              onPointerDown={onCompareStart}
+              onPointerUp={onCompareEnd}
+              onPointerLeave={onCompareEnd}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Comparar
+            </Button>
+            {filterHistory.length > 1 && (
+              <Button
+                variant="outline" size="sm"
+                className="h-8 px-3 text-xs gap-1.5"
+                onClick={onUndoLastFilter}
+              >
+                <Undo2 className="w-3.5 h-3.5" />
+                Desfazer último
+              </Button>
+            )}
+            <Button
+              variant="outline" size="sm"
+              className="h-8 px-3 text-xs gap-1.5 text-destructive hover:text-destructive"
+              onClick={onRemoveFilter}
+            >
+              <X className="w-3.5 h-3.5" />
+              Remover todos
+            </Button>
+          </div>
         </div>
       )}
 
@@ -156,7 +188,7 @@ const AiFiltersList = ({
         </div>
       )}
 
-      {filters.some(f => f.style_image_url) && !activeFilterId && (
+      {filters.some(f => f.style_image_url) && filterHistory.length === 0 && (
         <p className="text-[10px] text-muted-foreground/50 text-center">
           Segure p/ prévia
         </p>

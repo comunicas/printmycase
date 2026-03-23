@@ -6,7 +6,7 @@ import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory } from "@/lib/customize-types";
+import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory, type FilterHistoryEntry } from "@/lib/customize-types";
 import {
   compressImage,
   urlToDataUrl,
@@ -35,6 +35,7 @@ export function useCustomize(productId: string | undefined) {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [filteredImage, setFilteredImage] = useState<string | null>(null);
   const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
+  const [filterHistory, setFilterHistory] = useState<FilterHistoryEntry[]>([]);
   const [imageFileName, setImageFileName] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
@@ -196,21 +197,36 @@ export function useCustomize(productId: string | undefined) {
     setScale(DEFAULTS.scale);
     setPosition(DEFAULTS.position);
     setRotation(DEFAULTS.rotation);
-    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
+    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); setFilterHistory([]); }
     if (product?.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
   }, [product?.slug, originalImage]);
 
   const handleCompareStart = useCallback(() => {
-    if (originalImage && activeFilterId) setImage(originalImage);
-  }, [originalImage, activeFilterId]);
+    if (originalImage && (activeFilterId || filterHistory.length > 0)) setImage(originalImage);
+  }, [originalImage, activeFilterId, filterHistory]);
 
   const handleCompareEnd = useCallback(() => {
-    if (filteredImage && activeFilterId) setImage(filteredImage);
-  }, [filteredImage, activeFilterId]);
+    if (filteredImage && (activeFilterId || filterHistory.length > 0)) setImage(filteredImage);
+  }, [filteredImage, activeFilterId, filterHistory]);
 
   const handleRemoveFilter = useCallback(() => {
-    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
+    if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); setFilterHistory([]); }
   }, [originalImage]);
+
+  const handleUndoLastFilter = useCallback(() => {
+    if (filterHistory.length <= 1) {
+      // Only one or zero entries — remove all
+      if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); setFilterHistory([]); }
+      return;
+    }
+    // Pop last entry, revert to previous
+    const newHistory = filterHistory.slice(0, -1);
+    const prev = newHistory[newHistory.length - 1];
+    setFilterHistory(newHistory);
+    setImage(prev.image);
+    setFilteredImage(prev.image);
+    setActiveFilterId(prev.filterId);
+  }, [filterHistory, originalImage]);
 
   const handleRotate = useCallback(() => {
     setRotation((prev) => (prev + 90) % 360);
@@ -298,8 +314,9 @@ export function useCustomize(productId: string | undefined) {
   const handleFilterClick = useCallback((filterId: string) => {
     if (!requireAuth()) return;
     if (!image || applyingFilterId) return;
-    if (activeFilterId === filterId) {
-      if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
+    // Clicking the last applied filter => undo it
+    if (activeFilterId === filterId && filterHistory.length > 0) {
+      handleUndoLastFilter();
       return;
     }
     if (imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
@@ -312,13 +329,14 @@ export function useCustomize(productId: string | undefined) {
       return;
     }
     setPendingFilterId(filterId);
-  }, [requireAuth, image, applyingFilterId, activeFilterId, originalImage, imageResolution, toast]);
+  }, [requireAuth, image, applyingFilterId, activeFilterId, filterHistory, handleUndoLastFilter, imageResolution, toast]);
 
   const handleFilterConfirm = useCallback(async () => {
     if (!pendingFilterId || !image || !user) return;
     const filterId = pendingFilterId;
     setPendingFilterId(null);
-    const sourceImage = originalImage || image;
+    // Use current displayed image (which may already be filtered) as source
+    const sourceImage = image;
     setApplyingFilterId(filterId);
     setProcessingMsg("Enviando imagem...");
     try {
@@ -349,6 +367,9 @@ export function useCustomize(productId: string | undefined) {
       await setImageWithResolution(resultImage);
       setFilteredImage(resultImage);
       setActiveFilterId(filterId);
+      // Add to history
+      const filterObj = filters.find(f => f.id === filterId);
+      setFilterHistory(prev => [...prev, { filterId, image: resultImage, filterName: filterObj?.name }]);
       clarityEvent("customize_filter_applied");
       await refreshCoins();
       const newBalance = coinBalance - aiFilterCost;
@@ -365,7 +386,7 @@ export function useCustomize(productId: string | undefined) {
       setApplyingFilterId(null);
       setProcessingMsg(null);
     }
-  }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
+  }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost, filters]);
 
   const handleUpscaleClick = useCallback(() => {
     if (!requireAuth()) return;
@@ -523,7 +544,7 @@ export function useCustomize(productId: string | undefined) {
 
           await upsertPending(
             product.id,
-            { scale, position, rotation, activeFilter: activeFilterId, filteredImagePath: filteredPath },
+            { scale, position, rotation, activeFilter: activeFilterId, filteredImagePath: filteredPath, filterHistory: filterHistory.map(h => h.filterId) },
             optimizedPath,
             finalPath,
             rawPath,
@@ -545,7 +566,7 @@ export function useCustomize(productId: string | undefined) {
     // transform state
     scale, position, rotation, setScale, setPosition,
     // filter state
-    filters, filterCategories, activeFilterId, applyingFilterId, pendingFilterId, filteredImage,
+    filters, filterCategories, activeFilterId, applyingFilterId, pendingFilterId, filteredImage, filterHistory,
     // dialog state
     showUpscaleDialog, setShowUpscaleDialog, setPendingFilterId,
     showLoginDialog, setShowLoginDialog,
@@ -557,7 +578,7 @@ export function useCustomize(productId: string | undefined) {
     processingMsg,
     // handlers
     handleReset, handleRotate, handleExpand, handleImageUpload,
-    handleFilterClick, handleFilterConfirm, handleRemoveFilter,
+    handleFilterClick, handleFilterConfirm, handleRemoveFilter, handleUndoLastFilter,
     handleCompareStart, handleCompareEnd,
     handleUpscaleClick, handleUpscaleConfirm,
     handleContinue, handleDownload,
