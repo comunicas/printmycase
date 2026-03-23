@@ -137,12 +137,22 @@ export function useCustomize(productId: string | undefined) {
       if (cd.scale != null) setScale(cd.scale);
       if (cd.position) setPosition(cd.position);
       if (cd.rotation != null) setRotation(cd.rotation);
+      // Restore original image
       const imgPath = pending.edited_image_path || pending.original_image_path;
       if (imgPath) {
         const url = await getSignedUrl(imgPath);
         if (url) {
           setOriginalImage(url);
           setImageWithResolution(url);
+        }
+      }
+      // Restore filtered image if available
+      if (cd.filteredImagePath && cd.activeFilter) {
+        const filteredUrl = await getSignedUrl(cd.filteredImagePath);
+        if (filteredUrl) {
+          setFilteredImage(filteredUrl);
+          setActiveFilterId(cd.activeFilter);
+          setImageWithResolution(filteredUrl);
         }
       }
       toast({ title: "Rascunho recuperado" });
@@ -410,15 +420,23 @@ export function useCustomize(productId: string | undefined) {
     }
   }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     const src = filteredImage || image;
     if (!src) return;
-    const a = document.createElement("a");
-    a.href = src;
-    a.download = `printmycase-${productName.toLowerCase().replace(/\s+/g, "-")}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    try {
+      const res = await fetch(src);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `printmycase-${productName.toLowerCase().replace(/\s+/g, "-")}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(src, "_blank");
+    }
   }, [filteredImage, image, productName]);
 
   const handleContinue = useCallback(async () => {
@@ -458,6 +476,7 @@ export function useCustomize(productId: string | undefined) {
           let rawPath: string | null = null;
           let optimizedPath: string | null = null;
           let finalPath: string | null = null;
+          let filteredPath: string | null = null;
 
           // 1. Raw image (original upload, never changes)
           const rawSrc = rawImage || originalImage || image;
@@ -486,9 +505,17 @@ export function useCustomize(productId: string | undefined) {
             finalPath = path;
           }
 
+          // 4. Filtered image (AI-generated result)
+          if (filteredImage) {
+            const blob = await fetch(filteredImage).then(r => r.blob());
+            const path = `${user.id}/pending_filtered_${ts}.jpg`;
+            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
+            filteredPath = path;
+          }
+
           await upsertPending(
             product.id,
-            { scale, position, rotation, activeFilter: activeFilterId },
+            { scale, position, rotation, activeFilter: activeFilterId, filteredImagePath: filteredPath },
             optimizedPath,
             finalPath,
             rawPath,
@@ -500,7 +527,7 @@ export function useCustomize(productId: string | undefined) {
     } finally {
       setIsRendering(false);
     }
-  }, [requireAuth, product, image, rawImage, originalImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
+  }, [requireAuth, product, image, rawImage, originalImage, filteredImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
 
   return {
     // product
