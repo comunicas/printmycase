@@ -1,15 +1,22 @@
 
 
-## Corrigir botão voltar na página "Selecione seu modelo"
+## Adicionar texto "Baixar imagem" ao lado do ícone de download
 
-### Problema
-O botão usa `navigate(-1)` que depende do histórico do navegador. Se o usuário acessou `/customize` diretamente (link, bookmark, refresh), não há página anterior — o botão não faz nada.
+### Alteração
 
-### Correção
-**`src/pages/SelectModel.tsx` — linha 62**
-- Trocar `navigate(-1)` por `navigate("/")`
-- Isso garante que o botão sempre leva à home
+**`src/components/customize/ContinueBar.tsx`** — linha 27
+
+Trocar o botão `size="icon"` por um botão com texto:
+- Remover `size="icon"` e a classe `w-10`
+- Adicionar texto "Baixar imagem" ao lado do ícone `<Download />`
+- Remover o `Tooltip` wrapper (redundante com texto visível)
+- Manter `variant="outline"` e `gap-1.5`
+
+### Resultado
+```
+[↓ Baixar imagem]  [Finalizar →]
+```
 
 ### Arquivo afetado
-- `src/pages/SelectModel.tsx` — 1 linha
+- `src/components/customize/ContinueBar.tsx` — bloco `downloadButton` (linhas 23-34)
 
