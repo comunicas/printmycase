@@ -1,44 +1,44 @@
 
 
-## Filtros sequenciais com histórico
+## Fix CORS, Download e Responsividade da Customização
 
-### Comportamento atual
-Linha 321 de `useCustomize.tsx`: `const sourceImage = originalImage || image;` — **sempre usa a imagem original**, nunca a filtrada. Segundo filtro descarta o resultado do primeiro.
+### Problema raiz: CORS em URLs fal.ai
 
-### Comportamento desejado
-Cada filtro aplicado usa a **última imagem gerada** como base. Manter histórico para permitir "desfazer" passo a passo.
+O edge function retorna `imageUrl` do fal.ai (URL temporária). O frontend tenta `urlToDataUrl(fetch())` que falha por CORS. O fallback usa a URL crua — funciona para `background-image` (sem CORS) mas falha para `handleDownload` (usa `fetch()`).
+
+**Solução**: O edge function deve baixar o resultado do fal.ai e fazer upload para o Supabase Storage, retornando uma URL pública do storage. Isso resolve CORS para display E download.
 
 ### Alterações
 
-**1. `src/hooks/useCustomize.tsx` — Estado de histórico**
-- Adicionar `filterHistory: Array<{ filterId: string; image: string }>` (estado)
-- `originalImage` continua sendo a imagem pré-filtros (para reset total)
+| # | Arquivo | Alteração |
+|---|---------|-----------|
+| 1 | `supabase/functions/apply-ai-filter/index.ts` | Após receber resultado do fal.ai: fetch imagem → upload para `customizations/{userId}/filter_{ts}.jpg` → retornar `signedUrl` do storage (válida por 1h) |
+| 2 | `supabase/functions/upscale-image/index.ts` | Mesma lógica: download resultado → upload storage → retornar signed URL |
+| 3 | `src/hooks/useCustomize.tsx` | Simplificar `handleFilterConfirm`: remover try/catch de `urlToDataUrl` — a URL retornada já é do storage (sem CORS). Remover import `urlToDataUrl` se não usado em outro lugar |
+| 4 | `src/lib/image-utils.ts` | Remover `urlToDataUrl` (não mais necessário — todas as URLs vêm do storage) |
+| 5 | `src/components/customize/AiFiltersList.tsx` | Responsividade: chips de histórico com scroll horizontal em vez de wrap; botões de ação menores no mobile |
+| 6 | `src/pages/Customize.tsx` | Mobile: ajustar `max-h` da área de controles para não comprimir o preview |
 
-**2. `handleFilterConfirm` — Usar imagem atual como source**
-- Trocar `const sourceImage = originalImage || image` por `const sourceImage = image` (a imagem exibida, que já é a última filtrada)
-- Após sucesso, push no `filterHistory`: `{ filterId, image: resultImage }`
-- `activeFilterId` passa a ser o último filtro aplicado
+### Detalhes técnicos
 
-**3. `handleFilterClick` — Comportamento ao clicar filtro já ativo**
-- Clicar no filtro ativo atual: remove último do histórico, volta à imagem anterior (undo do último filtro)
-- Se histórico vazio após remoção, volta ao `originalImage`
+**Edge function — upload resultado para storage** (items 1-2):
+```typescript
+// Após receber outputUrl do fal.ai:
+const imgRes = await fetch(outputUrl);
+const imgBlob = await imgRes.arrayBuffer();
+const path = `${userId}/filter_${Date.now()}.jpg`;
+await serviceClient.storage.from("customizations").upload(path, imgBlob, {
+  contentType: "image/jpeg", upsert: true
+});
+const { data: urlData } = await serviceClient.storage
+  .from("customizations")
+  .createSignedUrl(path, 3600); // 1h
+return { imageUrl: urlData.signedUrl };
+```
 
-**4. `handleRemoveFilter` / Reset**
-- "Remover todos" volta ao `originalImage` e limpa `filterHistory`
-- `handleReset` já faz isso
-
-**5. UI — Indicador de filtros empilhados**
-- Em `AiFiltersList.tsx`: mostrar badges/chips dos filtros aplicados no histórico (pequenos, clicáveis para remover)
-- Contador simples: "2 filtros aplicados"
-
-**6. Persistência no pending checkout**
-- `handleContinue`: salvar `filterHistory` (lista de filterIds) no `customization_data`
-- Restore: recarregar apenas a imagem final (não re-aplicar filtros), mas manter a lista para referência
-
-### Arquivos afetados
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/hooks/useCustomize.tsx` | `filterHistory` estado + `sourceImage = image` + undo |
-| `src/components/customize/AiFiltersList.tsx` | Badge/chip com filtros empilhados |
-| `src/lib/customize-types.ts` | Tipo `FilterHistoryEntry` |
+**Responsividade mobile** (items 5-6):
+- Chips de filtros aplicados: `overflow-x-auto flex-nowrap` com scroll horizontal
+- Botões "Comparar/Desfazer/Remover": ícones menores, sem texto no mobile (`sm:inline`)
+- Área de controles mobile: `max-h-[35vh]` com scroll para não comprimir preview
+- Grid de filtros: manter 3 colunas mas com gap menor no mobile
 
