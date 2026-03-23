@@ -227,6 +227,9 @@ const Landing = () => {
             </section>
           }
 
+          {/* Public AI Gallery */}
+          <PublicGallerySection />
+
           {/* Testimonials */}
           <section id="depoimentos" className="py-16 px-5 bg-background">
             <div className="max-w-5xl mx-auto">
