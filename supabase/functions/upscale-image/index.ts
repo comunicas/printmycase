@@ -76,7 +76,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Call fal-ai/aura-sr for 4x super-resolution
     console.log("Calling fal-ai/aura-sr for upscale");
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120_000);
@@ -120,6 +119,38 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Download fal.ai result and upload to Supabase Storage
+    const imgRes = await fetch(outputUrl);
+    if (!imgRes.ok) {
+      console.error("Failed to download fal.ai result:", imgRes.status);
+      return new Response(JSON.stringify({ error: "Erro ao processar resultado" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const imgBytes = new Uint8Array(await imgRes.arrayBuffer());
+    const storagePath = `${userId}/upscale_${Date.now()}.jpg`;
+    const { error: uploadError } = await serviceClient.storage
+      .from("customizations")
+      .upload(storagePath, imgBytes, { contentType: "image/jpeg", upsert: true });
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError.message);
+      return new Response(JSON.stringify({ error: "Erro ao salvar resultado" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: signedData, error: signedError } = await serviceClient.storage
+      .from("customizations")
+      .createSignedUrl(storagePath, 3600);
+    if (signedError || !signedData?.signedUrl) {
+      console.error("Signed URL error:", signedError?.message);
+      return new Response(JSON.stringify({ error: "Erro ao gerar URL" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Deduct coins
     await serviceClient
       .from("coin_transactions")
@@ -131,9 +162,9 @@ Deno.serve(async (req) => {
         description: "Upscale IA aplicado",
       });
 
-    // Return URL directly instead of downloading + converting to base64
     return new Response(JSON.stringify({
-      imageUrl: outputUrl,
+      imageUrl: signedData.signedUrl,
+      storagePath,
       width: outputWidth,
       height: outputHeight,
       coinsUsed: UPSCALE_COST,

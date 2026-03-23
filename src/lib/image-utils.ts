@@ -68,18 +68,6 @@ export function compressForAI(
   });
 }
 
-/** Load an image URL and return as a data URL (for Fal.ai temporary URLs) */
-export async function urlToDataUrl(url: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
-  const blob = await res.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
 
 /** Compress image, upload to Supabase Storage, and return a signed URL for AI processing */
 export async function uploadForAI(

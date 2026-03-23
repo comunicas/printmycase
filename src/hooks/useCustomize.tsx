@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory, type FilterHistoryEntry } from "@/lib/customize-types";
 import {
   compressImage,
-  urlToDataUrl,
   renderSnapshot,
   getImageResolution,
   uploadForAI,
@@ -357,12 +356,7 @@ export function useCustomize(productId: string | undefined) {
         return;
       }
       setProcessingMsg("Finalizando...");
-      let resultImage: string;
-      if (data.imageUrl) {
-        try { resultImage = await urlToDataUrl(data.imageUrl); } catch (e) { console.warn("[urlToDataUrl] fallback to raw URL:", e); resultImage = data.imageUrl; }
-      } else {
-        resultImage = data.image;
-      }
+      const resultImage = data.imageUrl || data.image;
       if (!originalImage) setOriginalImage(image);
       await setImageWithResolution(resultImage);
       setFilteredImage(resultImage);
@@ -418,12 +412,7 @@ export function useCustomize(productId: string | undefined) {
         return;
       }
       setProcessingMsg("Finalizando...");
-      let resultImage: string;
-      if (data.imageUrl) {
-        try { resultImage = await urlToDataUrl(data.imageUrl); } catch (e) { console.warn("[urlToDataUrl] fallback to raw URL:", e); resultImage = data.imageUrl; }
-      } else {
-        resultImage = data.image;
-      }
+      const resultImage = data.imageUrl || data.image;
       setOriginalImage(resultImage);
       await setImageWithResolution(resultImage);
       if (data.width && data.height) setImageResolution({ w: data.width, h: data.height });
