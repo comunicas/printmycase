@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    const { imageBase64, imageUrl, filterId } = await req.json();
+    const { imageBase64, imageUrl, filterId, step_number, session_id } = await req.json();
     const inputImage = imageUrl || imageBase64;
 
     if (!inputImage || !filterId) {
@@ -229,9 +229,32 @@ Deno.serve(async (req) => {
         description: "Filtro IA aplicado",
       });
 
+    // Save generation history
+    let generationId: string | null = null;
+    try {
+      const { data: genData } = await serviceClient
+        .from("user_ai_generations")
+        .insert({
+          user_id: userId,
+          image_url: signedData.signedUrl,
+          storage_path: storagePath,
+          generation_type: "filter",
+          filter_id: filterId,
+          filter_name: filter.prompt?.substring(0, 100),
+          source_image_url: inputImage,
+          step_number: step_number ?? 1,
+          session_id: session_id ?? null,
+        })
+        .select("id")
+        .single();
+      generationId = genData?.id ?? null;
+    } catch (e) {
+      console.warn("Failed to save generation history:", e?.message);
+    }
+
     console.log("[coins]", JSON.stringify({ userId, cost: AI_FILTER_COST, previous_balance: coinBalance }));
 
-    return new Response(JSON.stringify({ imageUrl: signedData.signedUrl, storagePath, coinsUsed: AI_FILTER_COST }), {
+    return new Response(JSON.stringify({ imageUrl: signedData.signedUrl, storagePath, coinsUsed: AI_FILTER_COST, generationId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    const { imageBase64, imageUrl } = await req.json();
+    const { imageBase64, imageUrl, step_number, session_id } = await req.json();
     const inputImage = imageUrl || imageBase64;
     if (!inputImage) {
       return new Response(JSON.stringify({ error: "imageUrl (or imageBase64) is required" }), {
@@ -162,12 +162,34 @@ Deno.serve(async (req) => {
         description: "Upscale IA aplicado",
       });
 
+    // Save generation history
+    let generationId: string | null = null;
+    try {
+      const { data: genData } = await serviceClient
+        .from("user_ai_generations")
+        .insert({
+          user_id: userId,
+          image_url: signedData.signedUrl,
+          storage_path: storagePath,
+          generation_type: "upscale",
+          source_image_url: inputImage,
+          step_number: step_number ?? 1,
+          session_id: session_id ?? null,
+        })
+        .select("id")
+        .single();
+      generationId = genData?.id ?? null;
+    } catch (e) {
+      console.warn("Failed to save generation history:", e?.message);
+    }
+
     return new Response(JSON.stringify({
       imageUrl: signedData.signedUrl,
       storagePath,
       width: outputWidth,
       height: outputHeight,
       coinsUsed: UPSCALE_COST,
+      generationId,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

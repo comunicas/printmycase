@@ -29,6 +29,7 @@ export function useCustomize(productId: string | undefined) {
   // --- state ---
   const [draftSaved, setDraftSaved] = useState(false);
   const [image, setImage] = useState<string | null>(null);
+  const [sessionId] = useState(() => crypto.randomUUID());
   // rawImage: stores the unmodified upload data URL; used only for storage upload (pending_raw path)
   const [rawImage, setRawImage] = useState<string | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -341,8 +342,9 @@ export function useCustomize(productId: string | undefined) {
     try {
       const { signedUrl } = await uploadForAI(sourceImage, user.id, supabase);
       setProcessingMsg("Aplicando filtro IA...");
+      const stepNumber = filterHistory.length + 1;
       const { data, error } = await supabase.functions.invoke("apply-ai-filter", {
-        body: { imageUrl: signedUrl, filterId },
+        body: { imageUrl: signedUrl, filterId, step_number: stepNumber, session_id: sessionId },
       });
       if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
@@ -380,7 +382,7 @@ export function useCustomize(productId: string | undefined) {
       setApplyingFilterId(null);
       setProcessingMsg(null);
     }
-  }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost, filters]);
+  }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost, filters, filterHistory, sessionId]);
 
   const handleUpscaleClick = useCallback(() => {
     if (!requireAuth()) return;
@@ -397,8 +399,9 @@ export function useCustomize(productId: string | undefined) {
       const sourceImage = originalImage || image;
       const { signedUrl } = await uploadForAI(sourceImage, user.id, supabase);
       setProcessingMsg("Melhorando resolução...");
+      const stepNumber = filterHistory.length + 1;
       const { data, error } = await supabase.functions.invoke("upscale-image", {
-        body: { imageUrl: signedUrl },
+        body: { imageUrl: signedUrl, step_number: stepNumber, session_id: sessionId },
       });
       if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
@@ -435,7 +438,7 @@ export function useCustomize(productId: string | undefined) {
       setIsUpscaling(false);
       setProcessingMsg(null);
     }
-  }, [image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
+  }, [image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost, filterHistory, sessionId]);
 
   const handleDownload = useCallback(async () => {
     const src = filteredImage || image;

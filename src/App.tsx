@@ -32,6 +32,7 @@ const Collections = lazy(() => import("./pages/Collections"));
 const CollectionPage = lazy(() => import("./pages/CollectionPage"));
 const DesignPage = lazy(() => import("./pages/DesignPage"));
 const SelectModel = lazy(() => import("./pages/SelectModel"));
+const MyGenerations = lazy(() => import("./pages/MyGenerations"));
 
 const App = () => (
   <AuthProvider>
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/orders" element={<AuthGuard><Orders /></AuthGuard>} />
             <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
             <Route path="/coins" element={<AuthGuard><Coins /></AuthGuard>} />
+            <Route path="/minhas-geracoes" element={<AuthGuard><MyGenerations /></AuthGuard>} />
             <Route path="/admin" element={<AuthGuard><AdminGuard><Admin /></AdminGuard></AuthGuard>} />
             <Route path="/solicitar-modelo" element={<RequestModel />} />
             <Route path="/colecoes" element={<Collections />} />

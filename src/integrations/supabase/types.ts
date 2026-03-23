@@ -847,6 +847,56 @@ export type Database = {
         }
         Relationships: []
       }
+      user_ai_generations: {
+        Row: {
+          created_at: string
+          filter_id: string | null
+          filter_name: string | null
+          generation_type: string
+          id: string
+          image_url: string
+          session_id: string | null
+          source_image_url: string | null
+          step_number: number
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filter_id?: string | null
+          filter_name?: string | null
+          generation_type?: string
+          id?: string
+          image_url: string
+          session_id?: string | null
+          source_image_url?: string | null
+          step_number?: number
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filter_id?: string | null
+          filter_name?: string | null
+          generation_type?: string
+          id?: string
+          image_url?: string
+          session_id?: string | null
+          source_image_url?: string | null
+          step_number?: number
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_ai_generations_filter_id_fkey"
+            columns: ["filter_id"]
+            isOneToOne: false
+            referencedRelation: "ai_filters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string

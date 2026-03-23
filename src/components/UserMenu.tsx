@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, ShoppingBag, Shield } from "lucide-react";
+import { LogOut, User, ShoppingBag, Shield, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -69,6 +69,10 @@ const UserMenu = ({ transparent = false }: { transparent?: boolean }) => {
               {pendingCount}
             </span>
           )}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/minhas-geracoes")}>
+          <ImageIcon className="mr-2 h-4 w-4" />
+          Minhas Gerações
         </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem onClick={() => navigate("/admin")}>
