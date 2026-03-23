@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
     const isStyleTransfer = modelUrl.includes("style-transfer");
     const isPhotographyEffects = modelUrl.includes("photography-effects");
     const isLightingRestoration = modelUrl.includes("lighting-restoration");
+    const isKontext = modelUrl.includes("kontext");
 
     let falBody: Record<string, unknown>;
 
@@ -119,6 +120,13 @@ Deno.serve(async (req) => {
         target_style: filter.prompt,
         ...(shouldSendStyleImage && { style_reference_image_url: filter.style_image_url }),
         aspect_ratio: { ratio: "9:16" },
+      };
+    } else if (isKontext) {
+      falBody = {
+        image_url: imageBase64,
+        prompt: filter.prompt,
+        aspect_ratio: "9:16",
+        output_format: "jpeg",
       };
     } else {
       falBody = {
