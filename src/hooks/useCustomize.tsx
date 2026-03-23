@@ -410,15 +410,23 @@ export function useCustomize(productId: string | undefined) {
     }
   }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     const src = filteredImage || image;
     if (!src) return;
-    const a = document.createElement("a");
-    a.href = src;
-    a.download = `printmycase-${productName.toLowerCase().replace(/\s+/g, "-")}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    try {
+      const res = await fetch(src);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `printmycase-${productName.toLowerCase().replace(/\s+/g, "-")}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(src, "_blank");
+    }
   }, [filteredImage, image, productName]);
 
   const handleContinue = useCallback(async () => {
