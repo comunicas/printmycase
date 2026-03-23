@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory, type FilterHistoryEntry } from "@/lib/customize-types";
 import {
   compressImage,
-  urlToDataUrl,
   renderSnapshot,
   getImageResolution,
   uploadForAI,

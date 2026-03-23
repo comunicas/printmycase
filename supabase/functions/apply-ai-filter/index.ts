@@ -141,7 +141,6 @@ Deno.serve(async (req) => {
       };
     }
 
-    // Sanitized log — never log base64 payloads
     const bodyKeys = Object.keys(falBody).filter(k => k !== "image_url" && k !== "image_urls");
     console.log("[fal-request]", JSON.stringify({ model: modelUrl, body_keys: bodyKeys, target_style: falBody.target_style, effect_type: falBody.effect_type, prompt: falBody.prompt }));
 
@@ -159,7 +158,6 @@ Deno.serve(async (req) => {
 
     if (!falResponse.ok) {
       const errText = await falResponse.text();
-      // Sanitize error log — truncate base64 from error response
       const sanitizedErr = errText.length > 500 ? errText.substring(0, 500) + "...[truncated]" : errText;
       console.error("Fal.ai error:", sanitizedErr);
       let userError = "Erro no processamento de IA";
@@ -188,6 +186,38 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Download fal.ai result and upload to Supabase Storage
+    const imgRes = await fetch(outputUrl);
+    if (!imgRes.ok) {
+      console.error("Failed to download fal.ai result:", imgRes.status);
+      return new Response(JSON.stringify({ error: "Erro ao processar resultado" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const imgBytes = new Uint8Array(await imgRes.arrayBuffer());
+    const storagePath = `${userId}/filter_${Date.now()}.jpg`;
+    const { error: uploadError } = await serviceClient.storage
+      .from("customizations")
+      .upload(storagePath, imgBytes, { contentType: "image/jpeg", upsert: true });
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError.message);
+      return new Response(JSON.stringify({ error: "Erro ao salvar resultado" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: signedData, error: signedError } = await serviceClient.storage
+      .from("customizations")
+      .createSignedUrl(storagePath, 3600);
+    if (signedError || !signedData?.signedUrl) {
+      console.error("Signed URL error:", signedError?.message);
+      return new Response(JSON.stringify({ error: "Erro ao gerar URL" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Deduct coins
     await serviceClient
       .from("coin_transactions")
@@ -201,8 +231,7 @@ Deno.serve(async (req) => {
 
     console.log("[coins]", JSON.stringify({ userId, cost: AI_FILTER_COST, previous_balance: coinBalance }));
 
-    // Return URL directly instead of downloading + converting to base64
-    return new Response(JSON.stringify({ imageUrl: outputUrl, coinsUsed: AI_FILTER_COST }), {
+    return new Response(JSON.stringify({ imageUrl: signedData.signedUrl, storagePath, coinsUsed: AI_FILTER_COST }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
