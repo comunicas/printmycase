@@ -855,6 +855,7 @@ export type Database = {
           generation_type: string
           id: string
           image_url: string
+          public: boolean
           session_id: string | null
           source_image_url: string | null
           step_number: number
@@ -868,6 +869,7 @@ export type Database = {
           generation_type?: string
           id?: string
           image_url: string
+          public?: boolean
           session_id?: string | null
           source_image_url?: string | null
           step_number?: number
@@ -881,6 +883,7 @@ export type Database = {
           generation_type?: string
           id?: string
           image_url?: string
+          public?: boolean
           session_id?: string | null
           source_image_url?: string | null
           step_number?: number
