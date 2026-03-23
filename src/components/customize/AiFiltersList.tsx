@@ -121,44 +121,44 @@ const AiFiltersList = ({
       {/* Filter history chips */}
       {filterHistory.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] text-muted-foreground font-medium">
-              {filterHistory.length} filtro{filterHistory.length > 1 ? "s" : ""} aplicado{filterHistory.length > 1 ? "s" : ""}:
+          <div className="flex items-center gap-1.5 overflow-x-auto flex-nowrap scrollbar-hide pb-0.5">
+            <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
+              {filterHistory.length} filtro{filterHistory.length > 1 ? "s" : ""}:
             </span>
             {filterHistory.map((entry, i) => (
-              <span key={`${entry.filterId}-${i}`} className="inline-flex items-center gap-0.5 bg-primary/10 text-primary text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+              <span key={`${entry.filterId}-${i}`} className="inline-flex items-center gap-0.5 bg-primary/10 text-primary text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                 {i + 1}. {entry.filterName || "Filtro"}
               </span>
             ))}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <Button
               variant="outline" size="sm"
-              className="h-8 px-3 text-xs gap-1.5"
+              className="h-7 px-2 text-[11px] gap-1"
               onPointerDown={onCompareStart}
               onPointerUp={onCompareEnd}
               onPointerLeave={onCompareEnd}
             >
-              <Eye className="w-3.5 h-3.5" />
-              Comparar
+              <Eye className="w-3 h-3" />
+              <span className="hidden sm:inline">Comparar</span>
             </Button>
             {filterHistory.length > 1 && (
               <Button
                 variant="outline" size="sm"
-                className="h-8 px-3 text-xs gap-1.5"
+                className="h-7 px-2 text-[11px] gap-1"
                 onClick={onUndoLastFilter}
               >
-                <Undo2 className="w-3.5 h-3.5" />
-                Desfazer último
+                <Undo2 className="w-3 h-3" />
+                <span className="hidden sm:inline">Desfazer</span>
               </Button>
             )}
             <Button
               variant="outline" size="sm"
-              className="h-8 px-3 text-xs gap-1.5 text-destructive hover:text-destructive"
+              className="h-7 px-2 text-[11px] gap-1 text-destructive hover:text-destructive"
               onClick={onRemoveFilter}
             >
-              <X className="w-3.5 h-3.5" />
-              Remover todos
+              <X className="w-3 h-3" />
+              <span className="hidden sm:inline">Remover</span>
             </Button>
           </div>
         </div>

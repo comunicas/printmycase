@@ -50,7 +50,7 @@ const Customize = () => {
         </div>
 
         {/* Mobile controls */}
-        <div className="lg:hidden w-full flex justify-center">
+        <div className="lg:hidden w-full flex justify-center max-h-[35vh] overflow-y-auto">
           <ImageControls
             hasImage={!!c.image}
             scale={c.scale}
