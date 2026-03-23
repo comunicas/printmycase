@@ -11,5 +11,4 @@ export interface AiFilter {
   id: string;
   name: string;
   style_image_url: string | null;
-  preview_css: string | null;
 }

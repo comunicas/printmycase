@@ -13,7 +13,7 @@ interface AiFiltersListProps {
   onCompareStart: () => void;
   onCompareEnd: () => void;
   onRemoveFilter: () => void;
-  onPreviewStart?: (cssFilter: string) => void;
+  onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
 }
 

@@ -211,11 +211,20 @@ Páginas pesadas usam `React.lazy()` com `Suspense` + `LoadingSpinner`:
 O sistema de filtros IA permite aplicar estilos artísticos (style transfer) às imagens do usuário antes da impressão.
 
 **Fluxo:**
-1. Admin cadastra filtros na tabela `ai_filters` com modelo Fal.ai, prompt e imagem de estilo opcional
-2. Usuário na tela de customização vê os filtros ativos como chips com thumbnail circular
-3. Ao clicar, a edge function `apply-ai-filter` envia a imagem para o Fal.ai
-4. A imagem filtrada retorna e é exibida com **crossfade de 350ms** (duas camadas sobrepostas)
-5. Clicar no filtro ativo reverte para a imagem original (toggle)
+1. Admin cadastra filtros na tabela `ai_filters` com modelo Fal.ai, prompt e imagem de estilo
+2. Usuário na tela de customização vê os filtros ativos em grid 3 colunas com thumbnails
+3. **Long-press (300ms)**: mostra a `style_image_url` do filtro como overlay no PhonePreview com fade-in de 200ms — prévia visual sem custo de IA
+4. **Tap curto**: abre modal de confirmação simplificada exibindo apenas o custo em moedas (🪙)
+5. Ao confirmar, a edge function `apply-ai-filter` (timeout 120s) envia a imagem para o Fal.ai
+6. A imagem filtrada retorna e é exibida com **crossfade de 200ms** (duas camadas sobrepostas)
+7. Botão "Remover filtro" reverte para a imagem original
+
+**Persistência:**
+- Ao continuar para checkout, a imagem filtrada é salva no storage (`pending_filtered_{ts}.jpg`) e o path + `activeFilterId` são incluídos no `customization_data` do pending checkout
+- Ao retornar à customização, o draft restore busca a imagem filtrada via signed URL e restaura `filteredImage` + `activeFilterId`
+
+**Download:**
+- URLs cross-origin (fal.ai) são baixadas via `fetch → blob → createObjectURL` para garantir que o atributo `download` funcione corretamente
 
 ### Sistema de Moedas AI
 

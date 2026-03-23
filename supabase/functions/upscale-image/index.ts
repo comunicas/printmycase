@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     // Call fal-ai/aura-sr for 4x super-resolution
     console.log("Calling fal-ai/aura-sr for upscale");
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 50_000);
+    const timeout = setTimeout(() => controller.abort(), 120_000);
 
     const falResponse = await fetch("https://fal.run/fal-ai/aura-sr", {
       method: "POST",
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     if (err?.name === "AbortError") {
-      console.error("upscale-image error: timeout after 50s");
+      console.error("upscale-image error: timeout after 120s");
       return new Response(JSON.stringify({ error: "Tempo limite excedido. Tente novamente." }), {
         status: 504,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
