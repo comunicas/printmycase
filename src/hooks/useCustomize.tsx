@@ -314,8 +314,9 @@ export function useCustomize(productId: string | undefined) {
   const handleFilterClick = useCallback((filterId: string) => {
     if (!requireAuth()) return;
     if (!image || applyingFilterId) return;
-    if (activeFilterId === filterId) {
-      if (originalImage) { setImage(originalImage); setActiveFilterId(null); setFilteredImage(null); }
+    // Clicking the last applied filter => undo it
+    if (activeFilterId === filterId && filterHistory.length > 0) {
+      handleUndoLastFilter();
       return;
     }
     if (imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
@@ -328,7 +329,7 @@ export function useCustomize(productId: string | undefined) {
       return;
     }
     setPendingFilterId(filterId);
-  }, [requireAuth, image, applyingFilterId, activeFilterId, originalImage, imageResolution, toast]);
+  }, [requireAuth, image, applyingFilterId, activeFilterId, filterHistory, handleUndoLastFilter, imageResolution, toast]);
 
   const handleFilterConfirm = useCallback(async () => {
     if (!pendingFilterId || !image || !user) return;
