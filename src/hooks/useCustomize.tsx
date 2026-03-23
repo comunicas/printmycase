@@ -315,17 +315,17 @@ export function useCustomize(productId: string | undefined) {
   }, [requireAuth, image, applyingFilterId, activeFilterId, originalImage, imageResolution, toast]);
 
   const handleFilterConfirm = useCallback(async () => {
-    if (!pendingFilterId || !image) return;
+    if (!pendingFilterId || !image || !user) return;
     const filterId = pendingFilterId;
     setPendingFilterId(null);
     const sourceImage = originalImage || image;
     setApplyingFilterId(filterId);
     setProcessingMsg("Enviando imagem...");
     try {
-      const compressedSource = await compressForAI(sourceImage);
+      const { signedUrl } = await uploadForAI(sourceImage, user.id, supabase);
       setProcessingMsg("Aplicando filtro IA...");
       const { data, error } = await supabase.functions.invoke("apply-ai-filter", {
-        body: { imageBase64: compressedSource, filterId },
+        body: { imageUrl: signedUrl, filterId },
       });
       if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
@@ -351,7 +351,6 @@ export function useCustomize(productId: string | undefined) {
       setActiveFilterId(filterId);
       clarityEvent("customize_filter_applied");
       await refreshCoins();
-      // Check low balance
       const newBalance = coinBalance - aiFilterCost;
       if (newBalance < Math.min(aiFilterCost, aiUpscaleCost)) {
         toast({
@@ -366,7 +365,7 @@ export function useCustomize(productId: string | undefined) {
       setApplyingFilterId(null);
       setProcessingMsg(null);
     }
-  }, [pendingFilterId, image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
+  }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
   const handleUpscaleClick = useCallback(() => {
     if (!requireAuth()) return;
