@@ -113,8 +113,8 @@ const Customize = () => {
             onCompareStart={c.handleCompareStart}
             onCompareEnd={c.handleCompareEnd}
             onRemoveFilter={c.handleRemoveFilter}
-            onPreviewStart={setPreviewCssFilter}
-            onPreviewEnd={() => setPreviewCssFilter(null)}
+            onPreviewStart={setPreviewImageUrl}
+            onPreviewEnd={() => setPreviewImageUrl(null)}
           />
 
           <div className="mt-auto">

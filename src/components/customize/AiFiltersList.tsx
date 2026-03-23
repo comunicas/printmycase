@@ -136,7 +136,7 @@ const AiFiltersList = ({
         })}
       </div>
 
-      {filters.some(f => f.preview_css) && !activeFilterId && (
+      {filters.some(f => f.style_image_url) && !activeFilterId && (
         <p className="text-[10px] text-muted-foreground/50 text-center">
           Segure p/ prévia
         </p>
