@@ -6,6 +6,7 @@ import ProductDetails from "@/components/ProductDetails";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
+import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import { clarityEvent, clarityTag } from "@/lib/clarity";
 import { pixelEvent } from "@/lib/meta-pixel";
 import LoadingSpinner from "@/components/ui/loading-spinner";
