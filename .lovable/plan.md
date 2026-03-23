@@ -1,63 +1,36 @@
 
 
-## Preview de filtro com long-press + simplificar modal
+## Configurar preview_css nos filtros existentes + teste
 
-### Ideia
-Ao segurar (long-press) um botão de filtro na lista, a imagem do usuário aparece no PhonePreview com um filtro CSS aplicado como prévia aproximada. Ao soltar, volta ao normal. Zero custo de IA — é só CSS.
+### Situação atual
+Dos 7 filtros ativos, apenas "3D mascot" tem `preview_css` configurado. Os outros 6 estão com `null`.
 
-Ao clicar (tap normal), abre a modal de confirmação para gerar via IA como já funciona.
+### 1. Atualizar preview_css via SQL (dados, não schema)
 
-### Alterações
+Valores CSS apropriados para cada filtro:
 
-**1. Migração SQL — coluna `preview_css` na tabela `ai_filters`**
-- `ALTER TABLE ai_filters ADD COLUMN preview_css text` (nullable)
-- Exemplos de valores: `grayscale(1)`, `sepia(0.8) saturate(1.5)`, `hue-rotate(180deg) contrast(1.2)`
+| Filtro | preview_css |
+|--------|------------|
+| 3D mascot | `grayscale(1) sepia(0.8) saturate(1.5)` (já configurado, mas com vírgula errada — corrigir) |
+| Cyberpunk | `hue-rotate(180deg) contrast(1.3) saturate(1.8) brightness(1.1)` |
+| Pixel Art | `contrast(1.5) saturate(0.6) brightness(1.1)` |
+| Cartoon | `saturate(1.6) contrast(1.2) brightness(1.05)` |
+| Foto Realista | `contrast(1.1) saturate(1.1)` |
+| Anime | `saturate(1.4) contrast(1.15) hue-rotate(10deg)` |
+| Desenho | `grayscale(0.7) contrast(1.3) brightness(1.1)` |
 
-**2. `src/lib/customize-types.ts`** — Adicionar `preview_css: string | null` ao tipo `AiFilter`
+### 2. Teste do long-press
 
-**3. `src/hooks/useCustomize.tsx`** — Incluir `preview_css` no select dos filtros
+Para testar a funcionalidade:
+1. Navegar até `/customize/{produto}` com uma imagem carregada
+2. Ir na aba "Filtros IA"
+3. **Segurar** um filtro por 300ms+ → verificar se o CSS filter aparece no PhonePreview
+4. **Soltar** → verificar se volta ao normal
+5. **Tap curto** → verificar se abre modal de confirmação
 
-**4. `src/components/customize/AiFiltersList.tsx`** — Long-press preview
-- Adicionar props: `onPreviewStart(cssFilter: string)` e `onPreviewEnd()`
-- Em cada botão de filtro: `onPointerDown` inicia timer de 300ms → se atingir, chama `onPreviewStart(filter.preview_css)` e seta flag para não disparar `onClick`
-- `onPointerUp`/`onPointerLeave` chama `onPreviewEnd()` e limpa timer
-- Se soltar antes de 300ms → é tap normal → dispara `onFilterClick`
-- Mostrar hint "Segure p/ prévia" abaixo do grid (texto discreto)
+Isso precisa ser testado manualmente na preview após configurar os valores.
 
-**5. `src/components/customize/ImageControls.tsx` + `src/pages/Customize.tsx`**
-- Passar `onPreviewStart`/`onPreviewEnd` pela cadeia até o `Customize.tsx`
-- No `Customize.tsx`: estado `previewCssFilter: string | null`
-- Passar para `PhonePreview` como nova prop `cssFilter`
-
-**6. `src/components/PhonePreview.tsx`** — Aplicar CSS filter
-- Nova prop `cssFilter?: string | null`
-- Quando presente, aplicar `style={{ filter: cssFilter }}` na div da imagem atual
-- Transição suave: `transition: filter 0.2s ease`
-
-**7. `src/components/customize/FilterConfirmDialog.tsx`** — Simplificar
-- Remover linhas "Seu saldo" e "Saldo após"
-- Manter apenas custo: `🪙 {cost}`
-- Manter lógica de saldo insuficiente
-
-**8. `src/components/admin/AiFiltersManager.tsx`** — Campo `preview_css` no formulário admin
-
-### Fluxo do usuário
-1. Envia foto → aparece no phone
-2. Vai em "Filtros IA" → vê grid de filtros
-3. **Segura** um filtro → prévia CSS aparece no phone instantaneamente
-4. **Solta** → volta ao normal
-5. **Toca** (tap curto) → modal com custo `🪙 X` → confirma → gera via IA
-
-### Arquivos afetados
-| Arquivo | Alteração |
-|---------|-----------|
-| Migração SQL | Coluna `preview_css` |
-| `src/lib/customize-types.ts` | Tipo atualizado |
-| `src/hooks/useCustomize.tsx` | Select atualizado |
-| `src/components/customize/AiFiltersList.tsx` | Long-press logic |
-| `src/components/customize/ImageControls.tsx` | Props passthrough |
-| `src/pages/Customize.tsx` | Estado `previewCssFilter` |
-| `src/components/PhonePreview.tsx` | Aplicar CSS filter |
-| `src/components/customize/FilterConfirmDialog.tsx` | Simplificar modal |
-| `src/components/admin/AiFiltersManager.tsx` | Campo admin |
+### Arquivos/ações
+- UPDATE em `ai_filters` para definir `preview_css` nos 7 filtros
+- Teste manual na preview
 
