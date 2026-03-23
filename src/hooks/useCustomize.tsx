@@ -342,8 +342,9 @@ export function useCustomize(productId: string | undefined) {
     try {
       const { signedUrl } = await uploadForAI(sourceImage, user.id, supabase);
       setProcessingMsg("Aplicando filtro IA...");
+      const stepNumber = filterHistory.length + 1;
       const { data, error } = await supabase.functions.invoke("apply-ai-filter", {
-        body: { imageUrl: signedUrl, filterId },
+        body: { imageUrl: signedUrl, filterId, step_number: stepNumber, session_id: sessionId },
       });
       if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
