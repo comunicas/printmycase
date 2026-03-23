@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { ArrowRight, Check, Download, Loader2, RotateCcw } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
 interface ContinueBarProps {
@@ -11,18 +10,20 @@ interface ContinueBarProps {
   isRendering: boolean;
   inline?: boolean;
   showDownload?: boolean;
-  onDownload?: () => void;
+  onDownload?: () => Promise<void> | void;
 }
 
 const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, inline, showDownload, onDownload }: ContinueBarProps) => {
   const [downloading, setDownloading] = useState(false);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     if (!onDownload || downloading) return;
     setDownloading(true);
-    onDownload();
-    toast({ title: "Imagem baixada", description: "A imagem foi salva com sucesso." });
-    setTimeout(() => setDownloading(false), 1500);
+    try {
+      await onDownload();
+    } finally {
+      setTimeout(() => setDownloading(false), 1500);
+    }
   }, [onDownload, downloading]);
 
   const resetButton = isModified && (

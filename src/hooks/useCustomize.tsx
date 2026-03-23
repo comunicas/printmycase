@@ -443,10 +443,11 @@ export function useCustomize(productId: string | undefined) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
+      toast({ title: "Imagem baixada", description: "A imagem foi salva com sucesso." });
     } catch {
       window.open(src, "_blank");
     }
-  }, [filteredImage, image, productName]);
+  }, [filteredImage, image, productName, toast]);
 
   const handleContinue = useCallback(async () => {
     if (!requireAuth()) return;
