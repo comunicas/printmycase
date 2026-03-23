@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PhonePreview from "@/components/PhonePreview";
 import { formatPrice } from "@/lib/types";
@@ -15,6 +16,7 @@ const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const c = useCustomize(id);
+  const [previewCssFilter, setPreviewCssFilter] = useState<string | null>(null);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
@@ -43,6 +45,7 @@ const Customize = () => {
             isProcessing={c.isProcessing}
             processingMessage={c.processingMsg || undefined}
             onUpscaleClick={!c.isHD && c.image ? c.handleUpscaleClick : undefined}
+            cssFilter={previewCssFilter}
           />
         </div>
 
@@ -67,6 +70,8 @@ const Customize = () => {
             onCompareStart={c.handleCompareStart}
             onCompareEnd={c.handleCompareEnd}
             onRemoveFilter={c.handleRemoveFilter}
+            onPreviewStart={setPreviewCssFilter}
+            onPreviewEnd={() => setPreviewCssFilter(null)}
           />
         </div>
 
@@ -108,6 +113,8 @@ const Customize = () => {
             onCompareStart={c.handleCompareStart}
             onCompareEnd={c.handleCompareEnd}
             onRemoveFilter={c.handleRemoveFilter}
+            onPreviewStart={setPreviewCssFilter}
+            onPreviewEnd={() => setPreviewCssFilter(null)}
           />
 
           <div className="mt-auto">
