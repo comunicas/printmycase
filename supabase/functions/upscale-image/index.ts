@@ -140,6 +140,13 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
+    if (err?.name === "AbortError") {
+      console.error("upscale-image error: timeout after 50s");
+      return new Response(JSON.stringify({ error: "Tempo limite excedido. Tente novamente." }), {
+        status: 504,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     console.error("upscale-image error:", err?.message || "unknown");
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
