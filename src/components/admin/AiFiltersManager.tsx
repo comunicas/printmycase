@@ -261,7 +261,10 @@ const AiFiltersManager = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{filter.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{filter.prompt}</p>
-                <p className="text-[10px] text-muted-foreground/60 truncate">{MODEL_OPTIONS.find(m => m.value === filter.model_url)?.label || filter.model_url}</p>
+                <p className="text-[10px] text-muted-foreground/60 truncate">
+                  {MODEL_OPTIONS.find(m => m.value === filter.model_url)?.label || filter.model_url}
+                  {filter.category_id && categories.length > 0 && ` • ${categories.find(c => c.id === filter.category_id)?.name || ""}`}
+                </p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <Button size="icon" variant="ghost" onClick={() => handleToggleActive(filter)} title={filter.active ? "Desativar" : "Ativar"}>
