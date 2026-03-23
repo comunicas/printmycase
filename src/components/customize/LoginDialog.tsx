@@ -252,6 +252,8 @@ const LoginDialog = forwardRef<HTMLDivElement, LoginDialogProps>(({ open, onOpen
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+LoginDialog.displayName = "LoginDialog";
 
 export default LoginDialog;

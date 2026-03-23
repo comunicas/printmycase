@@ -69,6 +69,8 @@ const UpscaleConfirmDialog = forwardRef<HTMLDivElement, UpscaleConfirmDialogProp
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+UpscaleConfirmDialog.displayName = "UpscaleConfirmDialog";
 
 export default UpscaleConfirmDialog;

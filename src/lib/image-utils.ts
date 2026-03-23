@@ -71,17 +71,23 @@ export function compressForAI(
 }
 
 
-/** Compress image, upload to Supabase Storage, and return a signed URL for AI processing */
+/** Compress image, upload to Supabase Storage, and return a signed URL for AI processing.
+ *  If src is already an HTTP URL (e.g. from a previous filter result in storage), skip compress+upload. */
 export async function uploadForAI(
-  dataUrl: string,
+  src: string,
   userId: string,
   supabaseClient: { storage: { from: (bucket: string) => any } },
   maxW = 640,
   maxH = 1136,
   quality = 0.70,
 ): Promise<{ path: string; signedUrl: string }> {
-  // Compress
-  const compressed = await compressForAI(dataUrl, maxW, maxH, quality);
+  // If already an HTTP URL (previous filter result stored in bucket), reuse directly
+  if (src.startsWith("http")) {
+    return { path: "", signedUrl: src };
+  }
+
+  // Compress data URL
+  const compressed = await compressForAI(src, maxW, maxH, quality);
 
   // Convert data URL to blob
   const res = await fetch(compressed);
