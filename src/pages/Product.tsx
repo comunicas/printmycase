@@ -88,15 +88,13 @@ const Product = () => {
           image,
           url,
           description: desc,
+          sku: product.slug,
           category: "Capas para Celular",
-          brand: { "@type": "Brand", name: brandName },
-          offers: {
-            "@type": "Offer",
-            price: product.price_cents / 100,
-            priceCurrency: "BRL",
-            availability: "https://schema.org/InStock",
-            url,
-          },
+          brand: BRAND,
+          offers: merchantOffer(product.price_cents / 100, url),
+          ...(product.rating && product.review_count
+            ? { aggregateRating: { "@type": "AggregateRating", ratingValue: product.rating, reviewCount: product.review_count } }
+            : {}),
         },
         {
           "@type": "BreadcrumbList",

@@ -56,9 +56,12 @@ const CollectionPage = () => {
             item: {
               "@type": "Product",
               name: d.name,
+              description: `Capa com design "${d.name}" da coleção ${collection.name}.`,
+              sku: d.slug,
+              brand: BRAND,
               image: d.image_url,
               url: `${SITE_URL}/colecao/${slug}/${d.slug}`,
-              offers: { "@type": "Offer", price: d.price_cents / 100, priceCurrency: "BRL", availability: "https://schema.org/InStock" },
+              offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${slug}/${d.slug}`),
             },
           })),
         },
