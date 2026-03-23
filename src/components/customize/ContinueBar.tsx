@@ -1,6 +1,6 @@
-import { ArrowRight, Download, Loader2, RotateCcw } from "lucide-react";
+import { useState, useCallback } from "react";
+import { ArrowRight, Check, Download, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ContinueBarProps {
   isModified: boolean;
@@ -14,6 +14,15 @@ interface ContinueBarProps {
 }
 
 const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, inline, showDownload, onDownload }: ContinueBarProps) => {
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = useCallback(() => {
+    if (!onDownload || downloading) return;
+    setDownloading(true);
+    onDownload();
+    setTimeout(() => setDownloading(false), 1500);
+  }, [onDownload, downloading]);
+
   const resetButton = isModified && (
     <Button variant="ghost" size="icon" onClick={onReset} className="shrink-0 text-muted-foreground h-10 w-10">
       <RotateCcw className="w-4 h-4" />
@@ -21,10 +30,18 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
   );
 
   const downloadButton = showDownload && onDownload && (
-    <Button variant="outline" onClick={onDownload} className="shrink-0 gap-1.5 whitespace-nowrap text-sm">
-      <Download className="w-4 h-4" />
-      <span className="hidden sm:inline">Baixar imagem</span>
-      <span className="sm:hidden">Baixar</span>
+    <Button
+      variant="outline"
+      onClick={handleDownload}
+      className={`shrink-0 gap-1.5 whitespace-nowrap text-sm transition-all duration-200 ${downloading ? "border-green-500 text-green-600" : ""}`}
+    >
+      {downloading ? (
+        <Check className="w-4 h-4 animate-scale-in text-green-600" />
+      ) : (
+        <Download className="w-4 h-4" />
+      )}
+      <span className="hidden sm:inline">{downloading ? "Baixado!" : "Baixar imagem"}</span>
+      <span className="sm:hidden">{downloading ? "Baixado!" : "Baixar"}</span>
     </Button>
   );
 
