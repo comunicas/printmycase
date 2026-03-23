@@ -17,6 +17,7 @@ import AiCoinsSection from "@/components/AiCoinsSection";
 import WhyPrintMyCase from "@/components/WhyPrintMyCase";
 import FaqSection from "@/components/FaqSection";
 import PaymentBadges from "@/components/PaymentBadges";
+import PublicGallerySection from "@/components/PublicGallerySection";
 import logoPrintMyCase from "@/assets/logo-printmycase-sm.webp";
 
 const testimonials = [
