@@ -1,48 +1,33 @@
 
 
-## Admin: Gerenciamento de Gerações de Usuários + Aprovação Pública
+## Galeria de Inspiração na Landing Page — Gerações Públicas
 
-### Contexto
+### O que será feito
 
-A tabela `user_ai_generations` já existe com RLS para admin (`has_role`). O admin precisa de uma interface para ver TODAS as gerações de todos os usuários, aprovar imagens para exibição pública (ex: galeria na home), e gerenciar (deletar).
+Nova seção na landing page exibindo imagens de gerações IA marcadas como públicas pelos admins. Funciona como galeria de inspiração, mostrando aos visitantes o que é possível criar.
 
 ### Alterações
 
-**1. Migração — Adicionar coluna `public` à tabela `user_ai_generations`**
+| # | Arquivo | Alteração |
+|---|---------|-----------|
+| 1 | `src/components/PublicGallerySection.tsx` | **Novo** — Componente que busca `user_ai_generations` onde `public = true`, exibe grid masonry-like de imagens com nome do filtro e animação hover |
+| 2 | `src/pages/Landing.tsx` | Importar e renderizar `PublicGallerySection` entre a seção de Coleções e Depoimentos |
 
-```sql
-ALTER TABLE public.user_ai_generations ADD COLUMN public boolean NOT NULL DEFAULT false;
+### Detalhes do componente `PublicGallerySection`
 
--- Qualquer pessoa pode ver gerações públicas (para exibir na home)
-CREATE POLICY "Anyone can view public generations"
-  ON public.user_ai_generations FOR SELECT TO public
-  USING (public = true);
+- Query: `supabase.from("user_ai_generations").select("id, image_url, filter_name, generation_type").eq("public", true).order("created_at", { ascending: false }).limit(8)`
+- Não renderiza se não houver gerações públicas (comportamento igual à seção de coleções)
+- Grid responsivo: 2 colunas mobile, 4 colunas desktop
+- Cada card: imagem com `aspect-square`, overlay com nome do filtro no hover, `object-cover`
+- CTA ao final: "Crie a sua" → `/customize`
+- Envolvido em `ScrollReveal` para animação de entrada
+- Imagens com `loading="lazy"`
+
+### Posição na landing
+
+```text
+... Coleções Exclusivas ...
+▼ NOVA SEÇÃO: Galeria de Inspiração (gerações públicas)
+... Depoimentos ...
 ```
-
-**2. Novo componente `src/components/admin/UserGenerationsManager.tsx`**
-
-- Lista todas as gerações de todos os usuários (query admin via RLS)
-- Grid de cards com: thumbnail, tipo (filtro/upscale/original), nome do filtro, data, user_id truncado
-- Toggle "Público" por imagem (switch que faz update `public = true/false`)
-- Botão deletar (remove registro + arquivo do storage)
-- Filtros: por tipo (filter/upscale/original), por status público/privado
-- Infinite scroll (mesmo padrão do `AiGenerationsManager`)
-- Lightbox para ver imagem em tamanho completo
-
-**3. Atualizar `src/pages/Admin.tsx`**
-
-- Adicionar nova sub-tab "Gerações Usuários" dentro da tab "Galeria" (ao lado de "Ilustrativas" e "Gerações")
-- Import e render do `UserGenerationsManager`
-
-**4. Landing/Home — Exibir gerações públicas (opcional/futuro)**
-
-- Não implementado agora, mas a coluna `public` + policy SELECT pública prepara o terreno
-
-### Arquivos afetados
-
-| Arquivo | Alteração |
-|---------|-----------|
-| Migração SQL | `public` boolean + policy SELECT pública |
-| `src/components/admin/UserGenerationsManager.tsx` | Novo componente CRUD admin |
-| `src/pages/Admin.tsx` | Nova sub-tab "Gerações Usuários" |
 
