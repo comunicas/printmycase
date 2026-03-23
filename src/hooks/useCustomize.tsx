@@ -527,7 +527,7 @@ export function useCustomize(productId: string | undefined) {
     } finally {
       setIsRendering(false);
     }
-  }, [requireAuth, product, image, rawImage, originalImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
+  }, [requireAuth, product, image, rawImage, originalImage, filteredImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
 
   return {
     // product
