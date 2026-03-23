@@ -438,7 +438,7 @@ export function useCustomize(productId: string | undefined) {
       setIsUpscaling(false);
       setProcessingMsg(null);
     }
-  }, [image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
+  }, [image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost, filterHistory, sessionId]);
 
   const handleDownload = useCallback(async () => {
     const src = filteredImage || image;
