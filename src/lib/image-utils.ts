@@ -81,6 +81,38 @@ export async function urlToDataUrl(url: string): Promise<string> {
   });
 }
 
+/** Compress image, upload to Supabase Storage, and return a signed URL for AI processing */
+export async function uploadForAI(
+  dataUrl: string,
+  userId: string,
+  supabaseClient: { storage: { from: (bucket: string) => any } },
+  maxW = 640,
+  maxH = 1136,
+  quality = 0.70,
+): Promise<{ path: string; signedUrl: string }> {
+  // Compress
+  const compressed = await compressForAI(dataUrl, maxW, maxH, quality);
+
+  // Convert data URL to blob
+  const res = await fetch(compressed);
+  const blob = await res.blob();
+
+  // Upload to storage
+  const path = `${userId}/ai_source_${Date.now()}.jpg`;
+  const { error } = await supabaseClient.storage
+    .from("customizations")
+    .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+  if (error) throw new Error(`Upload failed: ${error.message}`);
+
+  // Generate signed URL (5 min)
+  const { data: signedData, error: signedError } = await supabaseClient.storage
+    .from("customizations")
+    .createSignedUrl(path, 300);
+  if (signedError || !signedData?.signedUrl) throw new Error("Failed to create signed URL");
+
+  return { path, signedUrl: signedData.signedUrl };
+}
+
 export function renderSnapshot(
   imgSrc: string,
   scale: number,

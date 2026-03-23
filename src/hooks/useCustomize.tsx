@@ -9,10 +9,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory } from "@/lib/customize-types";
 import {
   compressImage,
-  compressForAI,
   urlToDataUrl,
   renderSnapshot,
   getImageResolution,
+  uploadForAI,
 } from "@/lib/image-utils";
 import { useCoins } from "@/hooks/useCoins";
 import { useCoinSettings } from "@/hooks/useCoinSettings";
@@ -315,17 +315,17 @@ export function useCustomize(productId: string | undefined) {
   }, [requireAuth, image, applyingFilterId, activeFilterId, originalImage, imageResolution, toast]);
 
   const handleFilterConfirm = useCallback(async () => {
-    if (!pendingFilterId || !image) return;
+    if (!pendingFilterId || !image || !user) return;
     const filterId = pendingFilterId;
     setPendingFilterId(null);
     const sourceImage = originalImage || image;
     setApplyingFilterId(filterId);
     setProcessingMsg("Enviando imagem...");
     try {
-      const compressedSource = await compressForAI(sourceImage);
+      const { signedUrl } = await uploadForAI(sourceImage, user.id, supabase);
       setProcessingMsg("Aplicando filtro IA...");
       const { data, error } = await supabase.functions.invoke("apply-ai-filter", {
-        body: { imageBase64: compressedSource, filterId },
+        body: { imageUrl: signedUrl, filterId },
       });
       if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
@@ -351,7 +351,6 @@ export function useCustomize(productId: string | undefined) {
       setActiveFilterId(filterId);
       clarityEvent("customize_filter_applied");
       await refreshCoins();
-      // Check low balance
       const newBalance = coinBalance - aiFilterCost;
       if (newBalance < Math.min(aiFilterCost, aiUpscaleCost)) {
         toast({
@@ -366,7 +365,7 @@ export function useCustomize(productId: string | undefined) {
       setApplyingFilterId(null);
       setProcessingMsg(null);
     }
-  }, [pendingFilterId, image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
+  }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
   const handleUpscaleClick = useCallback(() => {
     if (!requireAuth()) return;
@@ -375,16 +374,16 @@ export function useCustomize(productId: string | undefined) {
   }, [requireAuth, image, isUpscaling, isHD]);
 
   const handleUpscaleConfirm = useCallback(async () => {
-    if (!image) return;
+    if (!image || !user) return;
     setShowUpscaleDialog(false);
     setIsUpscaling(true);
     setProcessingMsg("Enviando imagem...");
     try {
       const sourceImage = originalImage || image;
-      const compressedSource = await compressForAI(sourceImage);
+      const { signedUrl } = await uploadForAI(sourceImage, user.id, supabase);
       setProcessingMsg("Melhorando resolução...");
       const { data, error } = await supabase.functions.invoke("upscale-image", {
-        body: { imageBase64: compressedSource },
+        body: { imageUrl: signedUrl },
       });
       if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
@@ -410,7 +409,6 @@ export function useCustomize(productId: string | undefined) {
       setActiveFilterId(null);
       refreshCoins();
       toast({ title: "Upscale concluído!", description: `Nova resolução: ${data.width}×${data.height}px` });
-      // Check low balance
       const newBalance = coinBalance - aiUpscaleCost;
       if (newBalance < Math.min(aiFilterCost, aiUpscaleCost)) {
         setTimeout(() => {
@@ -427,7 +425,7 @@ export function useCustomize(productId: string | undefined) {
       setIsUpscaling(false);
       setProcessingMsg(null);
     }
-  }, [image, originalImage, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
+  }, [image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
 
   const handleDownload = useCallback(async () => {
     const src = filteredImage || image;
