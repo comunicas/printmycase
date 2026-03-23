@@ -24,7 +24,6 @@ interface AiFilter {
   active: boolean;
   style_image_url: string | null;
   send_style_image: boolean;
-  preview_css: string | null;
   category_id: string | null;
 }
 
