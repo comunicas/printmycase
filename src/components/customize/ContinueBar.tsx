@@ -21,6 +21,7 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
     if (!onDownload || downloading) return;
     setDownloading(true);
     onDownload();
+    toast({ title: "Imagem baixada", description: "A imagem foi salva com sucesso." });
     setTimeout(() => setDownloading(false), 1500);
   }, [onDownload, downloading]);
 
