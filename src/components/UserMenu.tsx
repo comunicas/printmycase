@@ -73,6 +73,7 @@ const UserMenu = ({ transparent = false }: { transparent?: boolean }) => {
         <DropdownMenuItem onClick={() => navigate("/minhas-geracoes")}>
           <ImageIcon className="mr-2 h-4 w-4" />
           Minhas Gerações
+        </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem onClick={() => navigate("/admin")}>
             <Shield className="mr-2 h-4 w-4" />
