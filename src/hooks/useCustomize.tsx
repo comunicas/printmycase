@@ -6,7 +6,7 @@ import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory } from "@/lib/customize-types";
+import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory, type FilterHistoryEntry } from "@/lib/customize-types";
 import {
   compressImage,
   urlToDataUrl,
