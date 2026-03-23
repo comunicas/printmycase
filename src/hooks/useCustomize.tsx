@@ -544,7 +544,7 @@ export function useCustomize(productId: string | undefined) {
 
           await upsertPending(
             product.id,
-            { scale, position, rotation, activeFilter: activeFilterId, filteredImagePath: filteredPath },
+            { scale, position, rotation, activeFilter: activeFilterId, filteredImagePath: filteredPath, filterHistory: filterHistory.map(h => h.filterId) },
             optimizedPath,
             finalPath,
             rawPath,
