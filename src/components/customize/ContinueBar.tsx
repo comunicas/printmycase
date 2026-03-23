@@ -21,16 +21,10 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
   );
 
   const downloadButton = showDownload && onDownload && (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="outline" size="icon" onClick={onDownload} className="shrink-0 h-10 w-10">
-            <Download className="w-4 h-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Baixar imagem</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Button variant="outline" onClick={onDownload} className="shrink-0 gap-1.5">
+      <Download className="w-4 h-4" />
+      Baixar imagem
+    </Button>
   );
 
   const renderButtonContent = () =>
