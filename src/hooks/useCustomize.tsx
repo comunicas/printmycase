@@ -335,7 +335,8 @@ export function useCustomize(productId: string | undefined) {
     if (!pendingFilterId || !image || !user) return;
     const filterId = pendingFilterId;
     setPendingFilterId(null);
-    const sourceImage = originalImage || image;
+    // Use current displayed image (which may already be filtered) as source
+    const sourceImage = image;
     setApplyingFilterId(filterId);
     setProcessingMsg("Enviando imagem...");
     try {
@@ -366,6 +367,9 @@ export function useCustomize(productId: string | undefined) {
       await setImageWithResolution(resultImage);
       setFilteredImage(resultImage);
       setActiveFilterId(filterId);
+      // Add to history
+      const filterObj = filters.find(f => f.id === filterId);
+      setFilterHistory(prev => [...prev, { filterId, image: resultImage, filterName: filterObj?.name }]);
       clarityEvent("customize_filter_applied");
       await refreshCoins();
       const newBalance = coinBalance - aiFilterCost;
@@ -382,7 +386,7 @@ export function useCustomize(productId: string | undefined) {
       setApplyingFilterId(null);
       setProcessingMsg(null);
     }
-  }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost]);
+  }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost, filters]);
 
   const handleUpscaleClick = useCallback(() => {
     if (!requireAuth()) return;
