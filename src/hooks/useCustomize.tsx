@@ -137,12 +137,22 @@ export function useCustomize(productId: string | undefined) {
       if (cd.scale != null) setScale(cd.scale);
       if (cd.position) setPosition(cd.position);
       if (cd.rotation != null) setRotation(cd.rotation);
+      // Restore original image
       const imgPath = pending.edited_image_path || pending.original_image_path;
       if (imgPath) {
         const url = await getSignedUrl(imgPath);
         if (url) {
           setOriginalImage(url);
           setImageWithResolution(url);
+        }
+      }
+      // Restore filtered image if available
+      if (cd.filteredImagePath && cd.activeFilter) {
+        const filteredUrl = await getSignedUrl(cd.filteredImagePath);
+        if (filteredUrl) {
+          setFilteredImage(filteredUrl);
+          setActiveFilterId(cd.activeFilter);
+          setImageWithResolution(filteredUrl);
         }
       }
       toast({ title: "Rascunho recuperado" });
