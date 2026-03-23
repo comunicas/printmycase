@@ -335,6 +335,12 @@ const AiFiltersManager = () => {
               <Input id="filter-preview-css" value={previewCss} onChange={(e) => setPreviewCss(e.target.value)} placeholder="Ex: grayscale(1), sepia(0.8) saturate(1.5)" />
               <p className="text-[11px] text-muted-foreground mt-1">Filtro CSS aplicado ao segurar o botão. Deixe vazio para desabilitar prévia.</p>
             </FormField>
+            <FormField label="Categoria" id="filter-category">
+              <select id="filter-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <option value="">Sem categoria</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </FormField>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
