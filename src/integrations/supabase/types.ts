@@ -66,6 +66,7 @@ export type Database = {
           id: string
           model_url: string
           name: string
+          preview_css: string | null
           prompt: string
           send_style_image: boolean
           sort_order: number
@@ -77,6 +78,7 @@ export type Database = {
           id?: string
           model_url?: string
           name: string
+          preview_css?: string | null
           prompt: string
           send_style_image?: boolean
           sort_order?: number
@@ -88,6 +90,7 @@ export type Database = {
           id?: string
           model_url?: string
           name?: string
+          preview_css?: string | null
           prompt?: string
           send_style_image?: boolean
           sort_order?: number

@@ -24,6 +24,7 @@ interface AiFilter {
   active: boolean;
   style_image_url: string | null;
   send_style_image: boolean;
+  preview_css: string | null;
 }
 
 const MODEL_OPTIONS = [
@@ -134,6 +135,7 @@ const AiFiltersManager = () => {
   const [modelUrl, setModelUrl] = useState(MODEL_OPTIONS[0].value);
   const [styleImageUrl, setStyleImageUrl] = useState("");
   const [sendStyleImage, setSendStyleImage] = useState(true);
+  const [previewCss, setPreviewCss] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AiFilter | null>(null);
   const { toast } = useToast();
@@ -160,11 +162,11 @@ const AiFiltersManager = () => {
   const noPromptNeeded = isLightingRestoration;
 
   const openNew = () => {
-    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setDialogOpen(true);
+    setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setPreviewCss(""); setDialogOpen(true);
   };
 
   const openEdit = (filter: AiFilter) => {
-    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage(filter.send_style_image ?? true); setDialogOpen(true);
+    setEditing(filter); setName(filter.name); setPrompt(filter.prompt); setModelUrl(filter.model_url || MODEL_OPTIONS[0].value); setStyleImageUrl(filter.style_image_url || ""); setSendStyleImage(filter.send_style_image ?? true); setPreviewCss(filter.preview_css || ""); setDialogOpen(true);
   };
 
   const handleSave = async () => {
@@ -174,7 +176,7 @@ const AiFiltersManager = () => {
     if (editing) {
       const { error } = await supabase
         .from("ai_filters")
-        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage })
+        .update({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, preview_css: previewCss.trim() || null })
         .eq("id", editing.id);
       if (error) toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
       else toast({ title: "Filtro atualizado" });
@@ -182,7 +184,7 @@ const AiFiltersManager = () => {
       const maxOrder = filters.length > 0 ? Math.max(...filters.map((f) => f.sort_order)) : 0;
       const { error } = await supabase
         .from("ai_filters")
-        .insert({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, sort_order: maxOrder + 1 });
+        .insert({ name: name.trim(), prompt: noPromptNeeded ? "auto" : prompt.trim(), model_url: modelUrl, style_image_url: styleImageUrl || null, send_style_image: sendStyleImage, sort_order: maxOrder + 1, preview_css: previewCss.trim() || null });
       if (error) toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       else toast({ title: "Filtro criado" });
     }
@@ -312,6 +314,10 @@ const AiFiltersManager = () => {
                 <span className="text-sm text-foreground">Enviar imagem de referência ao fal.ai</span>
               </label>
             )}
+            <FormField label="Preview CSS (prévia no celular)" id="filter-preview-css">
+              <Input id="filter-preview-css" value={previewCss} onChange={(e) => setPreviewCss(e.target.value)} placeholder="Ex: grayscale(1), sepia(0.8) saturate(1.5)" />
+              <p className="text-[11px] text-muted-foreground mt-1">Filtro CSS aplicado ao segurar o botão. Deixe vazio para desabilitar prévia.</p>
+            </FormField>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>

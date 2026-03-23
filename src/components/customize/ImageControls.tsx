@@ -23,6 +23,8 @@ interface ImageControlsProps {
   onCompareStart: () => void;
   onCompareEnd: () => void;
   onRemoveFilter: () => void;
+  onPreviewStart?: (cssFilter: string) => void;
+  onPreviewEnd?: () => void;
 }
 
 const ImageControls = ({
@@ -30,6 +32,7 @@ const ImageControls = ({
   isHD, upscaleCost, isUpscaling,
   filters, activeFilterId, applyingFilterId, filterCost, onFilterClick,
   onCompareStart, onCompareEnd, onRemoveFilter,
+  onPreviewStart, onPreviewEnd,
 }: ImageControlsProps) => (
   <div className={`w-full max-w-xs sm:max-w-sm lg:max-w-none ${!hasImage ? "opacity-50 pointer-events-none" : ""}`}>
     <Tabs defaultValue="ajustes">
@@ -73,6 +76,8 @@ const ImageControls = ({
             onCompareStart={onCompareStart}
             onCompareEnd={onCompareEnd}
             onRemoveFilter={onRemoveFilter}
+            onPreviewStart={onPreviewStart}
+            onPreviewEnd={onPreviewEnd}
           />
         </TabsContent>
       )}

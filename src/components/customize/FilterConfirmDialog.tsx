@@ -48,21 +48,9 @@ const FilterConfirmDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2 text-sm px-1">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Custo</span>
-            <span className="font-medium">🪙 {cost}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Seu saldo</span>
-            <span className="font-medium">🪙 {balance}</span>
-          </div>
-          {hasEnough && (
-            <div className="flex justify-between border-t pt-2">
-              <span className="text-muted-foreground">Saldo após</span>
-              <span className="font-medium">🪙 {remaining}</span>
-            </div>
-          )}
+        <div className="flex items-center justify-center gap-1 text-sm font-medium py-1">
+          <span>🪙 {cost}</span>
+          <span className="text-muted-foreground">moedas</span>
         </div>
 
         {!hasEnough ? (
