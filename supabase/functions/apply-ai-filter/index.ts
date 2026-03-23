@@ -36,10 +36,11 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    const { imageBase64, filterId } = await req.json();
+    const { imageBase64, imageUrl, filterId } = await req.json();
+    const inputImage = imageUrl || imageBase64;
 
-    if (!imageBase64 || !filterId) {
-      return new Response(JSON.stringify({ error: "imageBase64 and filterId are required" }), {
+    if (!inputImage || !filterId) {
+      return new Response(JSON.stringify({ error: "imageUrl (or imageBase64) and filterId are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
