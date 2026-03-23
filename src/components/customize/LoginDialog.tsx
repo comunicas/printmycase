@@ -21,7 +21,7 @@ interface LoginDialogProps {
 
 type Tab = "login" | "signup";
 
-const LoginDialog = ({ open, onOpenChange, redirectUrl }: LoginDialogProps) => {
+const LoginDialog = forwardRef<HTMLDivElement, LoginDialogProps>(({ open, onOpenChange, redirectUrl }, _ref) => {
   const [tab, setTab] = useState<Tab>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
