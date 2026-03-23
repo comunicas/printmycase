@@ -5,6 +5,7 @@ import { useCollections } from "@/hooks/useCollections";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 
+const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 const Collections = () => {
   const { collections, loading } = useCollections();
