@@ -32,6 +32,7 @@ const Collections = lazy(() => import("./pages/Collections"));
 const CollectionPage = lazy(() => import("./pages/CollectionPage"));
 const DesignPage = lazy(() => import("./pages/DesignPage"));
 const SelectModel = lazy(() => import("./pages/SelectModel"));
+const MyGenerations = lazy(() => import("./pages/MyGenerations"));
 
 const App = () => (
   <AuthProvider>
