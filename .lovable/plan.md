@@ -1,62 +1,47 @@
 
 
-## Ajustar filtros IA para 9:16 em alta resolução + corrigir modelos
+## Code Review e Refatoração — Customização
 
-### Análise dos logs e modelos
+### Problemas encontrados
 
-**Modelos em uso e suporte a 9:16:**
+| # | Arquivo | Problema |
+|---|---------|----------|
+| 1 | `AiFiltersManager.tsx` | Campo `preview_css` ainda presente no admin (estado, formulário, insert/update). A prévia agora usa `style_image_url`, não CSS — campo é legado e confunde |
+| 2 | `AiFiltersManager.tsx` | Interface local `AiFilter` inclui `preview_css` — inconsistente com o tipo global em `customize-types.ts` |
+| 3 | `UpscaleConfirmDialog.tsx` | Variável `remaining` (linha 29) usada mas com UI verbosa (saldo/custo/saldo após). Simplificar para manter consistência com `FilterConfirmDialog` (apenas custo) |
+| 4 | `useCustomize.tsx` | `handleDownload` chama `fetch(src)` em data URLs — funciona mas é ineficiente. Deve verificar se é data URL antes do fetch |
+| 5 | `ContinueBar.tsx` | Toast de download dispara antes do download realmente concluir (o `onDownload` é async mas não é await) |
+| 6 | `PhonePreview.tsx` | Import `Sparkles` não usado (removido do JSX em refatorações anteriores? Não — é usado no badge) — na verdade é usado, ok |
 
-| Modelo | Suporte 9:16 | Status |
-|--------|-------------|--------|
-| `fal-ai/image-apps-v2/style-transfer` | `aspect_ratio: { ratio: "9:16" }` → 4K | OK |
-| `fal-ai/image-apps-v2/photography-effects` | `aspect_ratio: { ratio: "9:16" }` → 4K | OK |
-| `fal-ai/flux-pro/kontext` | `aspect_ratio: "9:16"` (string direto) | Precisa fix — está caindo no else genérico com params inválidos (`strength`, `num_inference_steps`, `image_size`) |
+### Plano de refatoração
 
-**Problema encontrado**: O modelo `kontext` cai no branch `else` do edge function e recebe params que não aceita (`strength`, `num_inference_steps`, `image_size`). Funciona por acaso porque fal.ai ignora params extras, mas `image_size` pode conflitar com `aspect_ratio`.
+**1. `src/components/admin/AiFiltersManager.tsx`** — Remover legado `preview_css`
+- Remover estado `previewCss` e `setPreviewCss`
+- Remover campo FormField "Preview CSS" do dialog (linhas 334-337)
+- Remover `preview_css` do insert/update/openEdit/openNew
+- Remover da interface local `AiFilter`
+- O campo continua no banco (sem migração destrutiva) mas o admin não o expõe mais
 
-**Filtro "Cartoon"** usa `target_style: "cartoon_animation"` que não existe no enum do style-transfer. Valores válidos incluem `cartoon_3d`, `hand_drawn_animation`, `claymation`, `anime_character` etc. — precisa corrigir para um valor válido.
+**2. `src/components/customize/UpscaleConfirmDialog.tsx`** — Simplificar modal
+- Remover variável `remaining` não usada
+- Simplificar para mostrar apenas custo `🪙 {cost} moedas` (igual ao FilterConfirmDialog)
+- Remover linhas "Seu saldo" e "Saldo após"
 
-### Alterações
+**3. `src/hooks/useCustomize.tsx` — `handleDownload`** — Otimizar para data URLs
+- Se `src` começa com `data:`, converter direto para blob via `fetch(src)` (já funciona)
+- Mas o toast no ContinueBar dispara antes do async completar — mover toast para dentro do `handleDownload` (retornar Promise) e remover toast do ContinueBar
 
-**1. `supabase/functions/apply-ai-filter/index.ts`** — Adicionar branch para `kontext`
+**4. `src/components/customize/ContinueBar.tsx`** — Corrigir timing do toast
+- `handleDownload` deve `await onDownload()` antes de mostrar feedback
+- Mover toast para `useCustomize.handleDownload` e fazer `ContinueBar` apenas aguardar
 
-```
-const isKontext = modelUrl.includes("kontext");
+**5. `ARCHITECTURE.md`** — Atualizar após mudanças
 
-if (isKontext) {
-  falBody = {
-    image_url: imageBase64,
-    prompt: filter.prompt,
-    aspect_ratio: "9:16",
-    output_format: "jpeg",
-  };
-}
-```
-
-Garantir que todos os branches enviam 9:16:
-- `style-transfer`: já tem `aspect_ratio: { ratio: "9:16" }` ✓
-- `photography-effects`: já tem `aspect_ratio: { ratio: "9:16" }` ✓
-- `kontext`: novo branch com `aspect_ratio: "9:16"` ✓
-- `else` (fallback genérico): manter `image_size: { width: 720, height: 1280 }` + `aspect_ratio: "9:16"` para modelos flux genéricos
-
-**2. Corrigir filtro "Cartoon"** — UPDATE no banco
-- Mudar `prompt` de `cartoon_animation` para `claymation` (valor válido mais próximo do conceito "cartoon")
-
-**3. Adicionar novos estilos disponíveis** como opção
-
-Estilos do `style-transfer` que ainda não são filtros e podem ser adicionados:
-- `dark_academia`, `y2k`, `vaporwave`, `synthwave`, `outrun`, `concept_art`, `hyperrealistic`, `digital_art`
-
-Efeitos do `photography-effects` disponíveis:
-- `vintage_film`, `portrait_photography`, `fashion_photography`, `street_photography`, `sepia_tone`, `light_leaks`, `vignette_effect`, `instant_camera`, `golden_hour`, `dramatic_lighting`, `soft_focus`, `bokeh_effect`
-
-Vou adicionar alguns dos mais populares como filtros inativos para o admin ativar depois.
-
-### Arquivos/ações afetados
-
-| Ação | Detalhe |
-|------|---------|
-| `supabase/functions/apply-ai-filter/index.ts` | Branch `kontext` dedicado com params corretos |
-| UPDATE `ai_filters` (Cartoon) | Corrigir `prompt` para `claymation` |
-| INSERT `ai_filters` | Novos filtros inativos: `dark_academia`, `vaporwave`, `synthwave`, `golden_hour`, `bokeh_effect`, `dramatic_lighting` |
+### Arquivos afetados
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/admin/AiFiltersManager.tsx` | Remover `preview_css` (estado, form, queries) |
+| `src/components/customize/UpscaleConfirmDialog.tsx` | Simplificar para custo apenas |
+| `src/hooks/useCustomize.tsx` | `handleDownload` retorna Promise |
+| `src/components/customize/ContinueBar.tsx` | `await onDownload()` + mover toast |
 
