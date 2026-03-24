@@ -20,7 +20,7 @@ interface PhonePreviewProps {
 
 const CROSSFADE_MS = 200;
 
-const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
