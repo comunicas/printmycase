@@ -106,6 +106,7 @@ const ImageGalleriesManager = () => {
 
       toast({ title: `${result.count} imagens adicionadas!` });
       fetchImages(selectedGallery.id);
+      fetchGalleries();
     } catch (err: any) {
       toast({ title: "Erro no upload ZIP", description: err.message, variant: "destructive" });
     } finally {
@@ -124,6 +125,11 @@ const ImageGalleriesManager = () => {
       const { data: urlData } = supabase.storage.from("product-assets").getPublicUrl(path);
       const nextOrder = images.length > 0 ? Math.max(...images.map(i => i.sort_order)) + 1 : 0;
       await supabase.from("gallery_images").insert({ gallery_id: selectedGallery.id, url: urlData.publicUrl, label: file.name.replace(/\.[^.]+$/, ""), sort_order: nextOrder });
+      // Auto-set cover if missing
+      if (!selectedGallery.cover_image) {
+        await supabase.from("image_galleries").update({ cover_image: urlData.publicUrl }).eq("id", selectedGallery.id);
+        setSelectedGallery(prev => prev ? { ...prev, cover_image: urlData.publicUrl } : prev);
+      }
       toast({ title: "Imagem adicionada!" });
       fetchImages(selectedGallery.id);
     } catch (err: any) {
