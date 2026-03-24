@@ -134,6 +134,9 @@ const Admin = () => {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="gallery-illustrations"><GalleryImagesManager /></TabsContent>
+              <TabsContent value="gallery-custom">
+                <ImageGalleriesManager />
+              </TabsContent>
               <TabsContent value="gallery-generations"><AiGenerationsManager /></TabsContent>
               <TabsContent value="gallery-user-generations"><UserGenerationsManager /></TabsContent>
             </Tabs>
