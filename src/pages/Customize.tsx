@@ -18,6 +18,7 @@ const Customize = () => {
   const navigate = useNavigate();
   const c = useCustomize(id);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [showGalleryPicker, setShowGalleryPicker] = useState(false);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
