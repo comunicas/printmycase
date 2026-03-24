@@ -180,6 +180,12 @@ const Customize = () => {
         onOpenChange={c.setShowTermsDialog}
         onAccept={c.handleTermsAccept}
       />
+
+      <GalleryPicker
+        open={showGalleryPicker}
+        onOpenChange={setShowGalleryPicker}
+        onSelect={c.handleGalleryImageSelect}
+      />
     </div>
   );
 };
