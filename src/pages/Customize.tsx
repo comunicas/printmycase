@@ -78,6 +78,7 @@ const Customize = () => {
             onUndoLastFilter={c.handleUndoLastFilter}
             onPreviewStart={setPreviewImageUrl}
             onPreviewEnd={() => setPreviewImageUrl(null)}
+            onGallerySelect={c.handleGalleryImageSelect}
           />
         </div>
 
