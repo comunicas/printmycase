@@ -1,22 +1,38 @@
 
 
-## Adicionar tab "Galeria" no ImageControls
+## Auto-definir cover_image das galerias
 
 ### Problema
-Atualmente o GalleryPicker só abre via botão no PhonePreview. O usuário precisa de uma tab dedicada "Galeria" dentro do painel de controles (ImageControls) para navegar e escolher imagens diretamente, sem depender do dialog.
+As 3 galerias existentes (Brasil, Talk, Arte) têm `cover_image = null`, mostrando ícone genérico. Precisamos: (1) atualizar as existentes com a primeira imagem, (2) automatizar para uploads futuros.
 
 ### Alterações
 
 | # | Arquivo | Alteração |
 |---|---------|-----------|
-| 1 | `src/components/customize/ImageControls.tsx` | Adicionar terceira tab "Galeria" com ícone `ImageIcon`. Renderizar um grid inline de galerias e imagens (similar ao GalleryPicker mas embutido na tab, não em dialog). Recebe `onGallerySelect` callback. |
-| 2 | `src/components/customize/GalleryTab.tsx` | **Novo** — Componente inline que carrega galerias e imagens do banco. Mostra grid de galerias, ao clicar mostra imagens, ao clicar na imagem chama `onSelect(url)`. Sem dialog, renderiza direto na tab. |
-| 3 | `src/pages/Customize.tsx` | Passar `onGallerySelect={c.handleGalleryImageSelect}` para ambos os `ImageControls` (mobile e desktop). |
+| 1 | SQL (insert tool) | UPDATE para definir `cover_image` das galerias existentes usando a primeira imagem de cada uma (subquery em `gallery_images` ordenado por `sort_order` limit 1) |
+| 2 | `supabase/functions/upload-gallery-zip/index.ts` | Após inserir imagens, verificar se a galeria tem `cover_image` null. Se sim, atualizar com a URL da primeira imagem enviada |
+| 3 | `src/components/admin/ImageGalleriesManager.tsx` | No `handleSingleUpload`, após inserir imagem, verificar se galeria não tem cover e atualizar. No `handleZipUpload`, após sucesso, refetch da galeria para pegar cover atualizado |
 
-### Comportamento
-- Tab "Galeria" aparece sempre (não depende de `hasImage`), permitindo escolher imagem mesmo sem ter feito upload.
-- Remove a restrição `opacity-50 pointer-events-none` para a tab Galeria quando não há imagem.
-- Grid de galerias com cover image → clique abre grid de imagens → clique aplica imagem ao preview.
-- Botão "Voltar" para retornar à lista de galerias.
-- TabsList passa de `grid-cols-2` para `grid-cols-3` quando há filtros, ou `grid-cols-2` quando não há.
+### Detalhes
+
+**Galerias existentes** — Um único UPDATE:
+```sql
+UPDATE image_galleries SET cover_image = (
+  SELECT url FROM gallery_images 
+  WHERE gallery_id = image_galleries.id 
+  ORDER BY sort_order LIMIT 1
+) WHERE cover_image IS NULL;
+```
+
+**Edge function** — Adicionar ao final do processamento do ZIP:
+```typescript
+if (uploaded.length > 0) {
+  const { data: gal } = await adminClient.from("image_galleries").select("cover_image").eq("id", galleryId).single();
+  if (!gal?.cover_image) {
+    await adminClient.from("image_galleries").update({ cover_image: uploaded[0] }).eq("id", galleryId);
+  }
+}
+```
+
+**Admin frontend** — Mesma lógica no `handleSingleUpload`.
 
