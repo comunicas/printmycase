@@ -470,6 +470,74 @@ export type Database = {
           },
         ]
       }
+      gallery_images: {
+        Row: {
+          active: boolean
+          created_at: string
+          gallery_id: string
+          id: string
+          label: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          gallery_id: string
+          id?: string
+          label?: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          gallery_id?: string
+          id?: string
+          label?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_images_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "image_galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_galleries: {
+        Row: {
+          active: boolean
+          cover_image: string | null
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          cover_image?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          cover_image?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       kb_articles: {
         Row: {
           active: boolean
