@@ -245,24 +245,34 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
               </div>
             )}
             {!image && (
-              <button
-                onClick={() => inputRef.current?.click()}
-                className="flex items-center justify-center h-full w-full hover:bg-primary/5 transition-colors group/upload"
-              >
+              <div className="flex items-center justify-center h-full w-full">
                 <div className="text-center space-y-3 px-6">
-                  <div className="w-14 h-14 lg:w-16 lg:h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center group-hover/upload:bg-primary/20 transition-colors">
-                    <ImagePlus className="w-7 h-7 lg:w-8 lg:h-8 text-primary/60 group-hover/upload:text-primary transition-colors" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground group-hover/upload:text-primary/80 transition-colors">
-                      Envie sua foto
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/40">
-                      827×1772px recomendado
-                    </p>
-                  </div>
+                  <button
+                    onClick={() => inputRef.current?.click()}
+                    className="w-full hover:bg-primary/5 transition-colors group/upload p-4 rounded-xl"
+                  >
+                    <div className="w-14 h-14 lg:w-16 lg:h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center group-hover/upload:bg-primary/20 transition-colors">
+                      <ImagePlus className="w-7 h-7 lg:w-8 lg:h-8 text-primary/60 group-hover/upload:text-primary transition-colors" />
+                    </div>
+                    <div className="space-y-1 mt-3">
+                      <p className="text-xs font-medium text-muted-foreground group-hover/upload:text-primary/80 transition-colors">
+                        Envie sua foto
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/40">
+                        827×1772px recomendado
+                      </p>
+                    </div>
+                  </button>
+                  {onGalleryClick && (
+                    <button
+                      onClick={onGalleryClick}
+                      className="w-full text-xs font-medium text-primary/70 hover:text-primary transition-colors py-2 border border-dashed border-primary/20 rounded-lg hover:border-primary/40"
+                    >
+                      📷 Ou escolha da galeria
+                    </button>
+                  )}
                 </div>
-              </button>
+              </div>
             )}
           </div>
           {isProcessing && (
