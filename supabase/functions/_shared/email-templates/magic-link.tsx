@@ -9,7 +9,6 @@ import {
   Head,
   Heading,
   Html,
-  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -23,23 +22,22 @@ export const MagicLinkEmail = ({
   siteName,
   confirmationUrl,
 }: MagicLinkEmailProps) => (
-  <Html lang="pt-BR" dir="ltr">
+  <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Acesse sua conta PrintMyCase</Preview>
+    <Preview>Your login link for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={logoUrl} alt="PrintMyCase" width="140" height="auto" style={logo} />
-        <Heading style={h1}>Acesse sua conta</Heading>
+        <Heading style={h1}>Your login link</Heading>
         <Text style={text}>
-          Clique no botão abaixo para entrar na sua conta PrintMyCase. Este link expira em breve.
+          Click the button below to log in to {siteName}. This link will expire
+          shortly.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Entrar na Conta
+          Log In
         </Button>
         <Text style={footer}>
-          Se você não solicitou este link, pode ignorar este email.
+          If you didn't request this link, you can safely ignore this email.
         </Text>
-        <Text style={brand}>PrintMyCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>
@@ -47,21 +45,26 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-const logoUrl = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
-const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
-const container = { padding: '40px 25px', maxWidth: '520px', margin: '0 auto' }
-const logo = { margin: '0 auto 32px', display: 'block' as const }
-const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#1a1a1a', margin: '0 0 16px' }
-const text = { fontSize: '15px', color: '#555555', lineHeight: '1.6', margin: '0 0 20px' }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const container = { padding: '20px 25px' }
+const h1 = {
+  fontSize: '22px',
+  fontWeight: 'bold' as const,
+  color: '#000000',
+  margin: '0 0 20px',
+}
+const text = {
+  fontSize: '14px',
+  color: '#55575d',
+  lineHeight: '1.5',
+  margin: '0 0 25px',
+}
 const button = {
-  backgroundColor: 'hsl(265, 83%, 57%)',
+  backgroundColor: '#000000',
   color: '#ffffff',
   fontSize: '14px',
-  fontWeight: '600' as const,
-  borderRadius: '1.5rem',
-  padding: '14px 32px',
+  borderRadius: '8px',
+  padding: '12px 20px',
   textDecoration: 'none',
-  display: 'inline-block' as const,
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-const brand = { fontSize: '12px', color: '#aaaaaa', margin: '16px 0 0', textAlign: 'center' as const }

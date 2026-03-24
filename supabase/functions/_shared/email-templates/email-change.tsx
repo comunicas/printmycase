@@ -9,7 +9,6 @@ import {
   Head,
   Heading,
   Html,
-  Img,
   Link,
   Preview,
   Text,
@@ -28,29 +27,33 @@ export const EmailChangeEmail = ({
   newEmail,
   confirmationUrl,
 }: EmailChangeEmailProps) => (
-  <Html lang="pt-BR" dir="ltr">
+  <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirme a troca de email — PrintMyCase</Preview>
+    <Preview>Confirm your email change for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={logoUrl} alt="PrintMyCase" width="140" height="auto" style={logo} />
-        <Heading style={h1}>Confirme a troca de email</Heading>
+        <Heading style={h1}>Confirm your email change</Heading>
         <Text style={text}>
-          Você solicitou a troca do email da sua conta PrintMyCase de{' '}
-          <Link href={`mailto:${email}`} style={link}>{email}</Link>{' '}
-          para{' '}
-          <Link href={`mailto:${newEmail}`} style={link}>{newEmail}</Link>.
+          You requested to change your email address for {siteName} from{' '}
+          <Link href={`mailto:${email}`} style={link}>
+            {email}
+          </Link>{' '}
+          to{' '}
+          <Link href={`mailto:${newEmail}`} style={link}>
+            {newEmail}
+          </Link>
+          .
         </Text>
         <Text style={text}>
-          Clique no botão abaixo para confirmar:
+          Click the button below to confirm this change:
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Confirmar Novo Email
+          Confirm Email Change
         </Button>
         <Text style={footer}>
-          Se você não solicitou esta troca, proteja sua conta imediatamente.
+          If you didn't request this change, please secure your account
+          immediately.
         </Text>
-        <Text style={brand}>PrintMyCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>
@@ -58,22 +61,27 @@ export const EmailChangeEmail = ({
 
 export default EmailChangeEmail
 
-const logoUrl = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
-const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
-const container = { padding: '40px 25px', maxWidth: '520px', margin: '0 auto' }
-const logo = { margin: '0 auto 32px', display: 'block' as const }
-const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#1a1a1a', margin: '0 0 16px' }
-const text = { fontSize: '15px', color: '#555555', lineHeight: '1.6', margin: '0 0 20px' }
-const link = { color: 'hsl(265, 83%, 57%)', textDecoration: 'underline' }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const container = { padding: '20px 25px' }
+const h1 = {
+  fontSize: '22px',
+  fontWeight: 'bold' as const,
+  color: '#000000',
+  margin: '0 0 20px',
+}
+const text = {
+  fontSize: '14px',
+  color: '#55575d',
+  lineHeight: '1.5',
+  margin: '0 0 25px',
+}
+const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
-  backgroundColor: 'hsl(265, 83%, 57%)',
+  backgroundColor: '#000000',
   color: '#ffffff',
   fontSize: '14px',
-  fontWeight: '600' as const,
-  borderRadius: '1.5rem',
-  padding: '14px 32px',
+  borderRadius: '8px',
+  padding: '12px 20px',
   textDecoration: 'none',
-  display: 'inline-block' as const,
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-const brand = { fontSize: '12px', color: '#aaaaaa', margin: '16px 0 0', textAlign: 'center' as const }
