@@ -11,6 +11,7 @@ import KbCategoriesManager from "@/components/admin/KbCategoriesManager";
 import KbArticlesManager from "@/components/admin/KbArticlesManager";
 import FaqManager from "@/components/admin/FaqManager";
 import GalleryImagesManager from "@/components/admin/GalleryImagesManager";
+import ImageGalleriesManager from "@/components/admin/ImageGalleriesManager";
 import AiGenerationsManager from "@/components/admin/AiGenerationsManager";
 import UserGenerationsManager from "@/components/admin/UserGenerationsManager";
 import CoinPackagesManager from "@/components/admin/CoinPackagesManager";
