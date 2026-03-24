@@ -129,6 +129,9 @@ const Admin = () => {
                 <TabsTrigger value="gallery-generations" className="gap-1.5">
                   <Sparkles className="w-4 h-4" /> Gerações
                 </TabsTrigger>
+                <TabsTrigger value="gallery-custom" className="gap-1.5">
+                  <Layers className="w-4 h-4" /> Galerias Custom
+                </TabsTrigger>
                 <TabsTrigger value="gallery-user-generations" className="gap-1.5">
                   <Sparkles className="w-4 h-4" /> Gerações Usuários
                 </TabsTrigger>
