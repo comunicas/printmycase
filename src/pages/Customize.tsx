@@ -10,6 +10,7 @@ import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
 import UpscaleConfirmDialog from "@/components/customize/UpscaleConfirmDialog";
 import LoginDialog from "@/components/customize/LoginDialog";
 import TermsDialog from "@/components/customize/TermsDialog";
+import GalleryPicker from "@/components/customize/GalleryPicker";
 import { useCustomize } from "@/hooks/useCustomize.tsx";
 
 const Customize = () => {
@@ -17,6 +18,7 @@ const Customize = () => {
   const navigate = useNavigate();
   const c = useCustomize(id);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [showGalleryPicker, setShowGalleryPicker] = useState(false);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
@@ -46,6 +48,7 @@ const Customize = () => {
             processingMessage={c.processingMsg || undefined}
             onUpscaleClick={!c.isHD && c.image ? c.handleUpscaleClick : undefined}
             previewImageUrl={previewImageUrl}
+            onGalleryClick={() => setShowGalleryPicker(true)}
           />
         </div>
 
@@ -176,6 +179,12 @@ const Customize = () => {
         open={c.showTermsDialog}
         onOpenChange={c.setShowTermsDialog}
         onAccept={c.handleTermsAccept}
+      />
+
+      <GalleryPicker
+        open={showGalleryPicker}
+        onOpenChange={setShowGalleryPicker}
+        onSelect={c.handleGalleryImageSelect}
       />
     </div>
   );
