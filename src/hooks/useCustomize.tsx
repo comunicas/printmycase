@@ -460,6 +460,18 @@ export function useCustomize(productId: string | undefined) {
     }
   }, [filteredImage, image, productName, toast]);
 
+  const handleGalleryImageSelect = useCallback(async (url: string) => {
+    setActiveFilterId(null);
+    setFilteredImage(null);
+    setFilterHistory([]);
+    setImageFileName(null);
+    setRawImage(null);
+    await setImageWithResolution(url);
+    setOriginalImage(url);
+    clarityEvent("customize_gallery_image_selected");
+    toast({ title: "Imagem da galeria aplicada" });
+  }, [setImageWithResolution, toast]);
+
   const handleContinue = useCallback(async () => {
     if (!requireAuth()) return;
     if (!product || !image) return;
