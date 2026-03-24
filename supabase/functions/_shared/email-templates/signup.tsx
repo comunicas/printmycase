@@ -9,7 +9,6 @@ import {
   Head,
   Heading,
   Html,
-  Img,
   Link,
   Preview,
   Text,
@@ -30,32 +29,30 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirme sua conta PrintMyCase</Preview>
+    <Preview>Confirme seu email na {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={logoUrl} alt="PrintMyCase" width="140" height="auto" style={logo} />
-        <Heading style={h1}>Olá! 👋</Heading>
+        <Heading style={h1}>Confirme seu email</Heading>
         <Text style={text}>
-          Bem-vindo à{' '}
+          Obrigado por se cadastrar na{' '}
           <Link href={siteUrl} style={link}>
-            <strong>PrintMyCase</strong>
+            <strong>{siteName}</strong>
           </Link>
-          ! Estamos felizes em ter você por aqui.
+          ! 🎉
         </Text>
         <Text style={text}>
-          Clique no botão abaixo para confirmar seu email (
+          Confirme seu endereço de email (
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
           </Link>
-          ) e começar a personalizar sua capinha.
+          ) clicando no botão abaixo:
         </Text>
         <Button style={button} href={confirmationUrl}>
           Confirmar Email
         </Button>
         <Text style={footer}>
-          Se você não criou uma conta na PrintMyCase, pode ignorar este email.
+          Se você não criou uma conta, pode ignorar este email com segurança.
         </Text>
-        <Text style={brand}>PrintMyCase — Cases personalizadas</Text>
       </Container>
     </Body>
   </Html>
@@ -63,22 +60,27 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const logoUrl = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
-const container = { padding: '40px 25px', maxWidth: '520px', margin: '0 auto' }
-const logo = { margin: '0 auto 32px', display: 'block' as const }
-const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#1a1a1a', margin: '0 0 16px' }
-const text = { fontSize: '15px', color: '#555555', lineHeight: '1.6', margin: '0 0 20px' }
-const link = { color: 'hsl(265, 83%, 57%)', textDecoration: 'underline' }
+const container = { padding: '20px 25px' }
+const h1 = {
+  fontSize: '22px',
+  fontWeight: 'bold' as const,
+  color: '#1a1a1a',
+  margin: '0 0 20px',
+}
+const text = {
+  fontSize: '14px',
+  color: '#555555',
+  lineHeight: '1.5',
+  margin: '0 0 25px',
+}
+const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
   backgroundColor: 'hsl(265, 83%, 57%)',
   color: '#ffffff',
   fontSize: '14px',
-  fontWeight: '600' as const,
-  borderRadius: '1.5rem',
-  padding: '14px 32px',
+  borderRadius: '12px',
+  padding: '12px 20px',
   textDecoration: 'none',
-  display: 'inline-block' as const,
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-const brand = { fontSize: '12px', color: '#aaaaaa', margin: '16px 0 0', textAlign: 'center' as const }
