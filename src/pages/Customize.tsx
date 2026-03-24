@@ -48,6 +48,7 @@ const Customize = () => {
             processingMessage={c.processingMsg || undefined}
             onUpscaleClick={!c.isHD && c.image ? c.handleUpscaleClick : undefined}
             previewImageUrl={previewImageUrl}
+            onGalleryClick={() => setShowGalleryPicker(true)}
           />
         </div>
 
