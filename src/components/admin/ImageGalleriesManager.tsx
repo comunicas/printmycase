@@ -106,6 +106,7 @@ const ImageGalleriesManager = () => {
 
       toast({ title: `${result.count} imagens adicionadas!` });
       fetchImages(selectedGallery.id);
+      fetchGalleries();
     } catch (err: any) {
       toast({ title: "Erro no upload ZIP", description: err.message, variant: "destructive" });
     } finally {

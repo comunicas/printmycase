@@ -115,6 +115,14 @@ Deno.serve(async (req) => {
       uploaded.push(urlData.publicUrl);
     }
 
+    // Auto-set cover_image if null
+    if (uploaded.length > 0) {
+      const { data: gal } = await adminClient.from("image_galleries").select("cover_image").eq("id", galleryId).single();
+      if (!gal?.cover_image) {
+        await adminClient.from("image_galleries").update({ cover_image: uploaded[0] }).eq("id", galleryId);
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, count: uploaded.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
