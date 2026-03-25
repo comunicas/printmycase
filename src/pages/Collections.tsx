@@ -6,12 +6,12 @@ import AppHeader from "@/components/AppHeader";
 import { useDesignsGroupedByCollection } from "@/hooks/useCollectionDesigns";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
+import { setPageSeo, setMeta, SITE_URL } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 const TITLE = "Capinhas Exclusivas para Celular | PrintMyCase";
 const DESC = "Explore nossas coleções de capinhas exclusivas para celular. Designs únicos, proteção premium e acabamento soft-touch. Encontre a capa perfeita ou personalize a sua.";
 
