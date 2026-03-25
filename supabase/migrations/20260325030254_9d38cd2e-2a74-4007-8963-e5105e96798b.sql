@@ -1,0 +1,1 @@
+ALTER TABLE public.user_ai_generations ADD COLUMN public_image_url text;

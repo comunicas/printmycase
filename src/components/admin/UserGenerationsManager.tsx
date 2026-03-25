@@ -91,9 +91,34 @@ const UserGenerationsManager = () => {
 
   const togglePublic = async (img: Generation) => {
     const newVal = !img.public;
+    let publicImageUrl: string | null = null;
+
+    if (newVal) {
+      try {
+        // Download image from current signed URL
+        const response = await fetch(img.image_url);
+        if (!response.ok) throw new Error("Failed to fetch image");
+        const blob = await response.blob();
+
+        // Upload to public bucket
+        const publicPath = `galleries/public/${img.id}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from("product-assets")
+          .upload(publicPath, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
+        if (uploadError) throw uploadError;
+
+        // Build permanent public URL
+        const { data: urlData } = supabase.storage.from("product-assets").getPublicUrl(publicPath);
+        publicImageUrl = urlData.publicUrl;
+      } catch (err: any) {
+        toast({ title: "Erro ao copiar imagem para bucket público", description: err.message, variant: "destructive" });
+        return;
+      }
+    }
+
     const { error } = await supabase
       .from("user_ai_generations")
-      .update({ public: newVal } as any)
+      .update({ public: newVal, public_image_url: publicImageUrl } as any)
       .eq("id", img.id);
     if (error) {
       toast({ title: "Erro ao atualizar", variant: "destructive" });

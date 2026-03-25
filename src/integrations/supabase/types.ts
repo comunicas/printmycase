@@ -924,6 +924,7 @@ export type Database = {
           id: string
           image_url: string
           public: boolean
+          public_image_url: string | null
           session_id: string | null
           source_image_url: string | null
           step_number: number
@@ -938,6 +939,7 @@ export type Database = {
           id?: string
           image_url: string
           public?: boolean
+          public_image_url?: string | null
           session_id?: string | null
           source_image_url?: string | null
           step_number?: number
@@ -952,6 +954,7 @@ export type Database = {
           id?: string
           image_url?: string
           public?: boolean
+          public_image_url?: string | null
           session_id?: string | null
           source_image_url?: string | null
           step_number?: number

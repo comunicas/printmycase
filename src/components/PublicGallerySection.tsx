@@ -8,6 +8,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 interface PublicGeneration {
   id: string;
   image_url: string;
+  public_image_url: string | null;
   filter_name: string | null;
   generation_type: string;
 }
@@ -19,7 +20,7 @@ const PublicGallerySection = () => {
   useEffect(() => {
     supabase
       .from("user_ai_generations")
-      .select("id, image_url, filter_name, generation_type")
+      .select("id, image_url, public_image_url, filter_name, generation_type")
       .eq("public", true)
       .order("created_at", { ascending: false })
       .limit(8)
@@ -56,7 +57,7 @@ const PublicGallerySection = () => {
               <ScrollReveal key={img.id} delay={i * 80}>
                 <div className={`group relative ${aspect} rounded-xl overflow-hidden bg-muted break-inside-avoid`}>
                   <img
-                    src={img.image_url}
+                    src={img.public_image_url || img.image_url}
                     alt={img.filter_name || "Geração IA"}
                     loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
