@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
         const image = data.device_image ?? (data.images as string[] | null)?.[0] ?? DEFAULT_IMAGE;
         const nameForTitle = data.name.startsWith("Capa ") ? data.name : `Capa ${data.name}`;
         return html({
-          title: `Capa ${data.name} | ${SITE_NAME}`,
+          title: `${nameForTitle} | ${SITE_NAME}`,
           description:
             data.description ??
             `Capa personalizada para ${data.name}. Proteção premium com acabamento soft-touch.`,
