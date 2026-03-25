@@ -4,11 +4,11 @@ import AppHeader from "@/components/AppHeader";
 import { useCollection } from "@/hooks/useCollections";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
+import { setPageSeo, SITE_URL } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 
 const SITE_NAME = "PrintMyCase";
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 const CollectionPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -19,26 +19,11 @@ const CollectionPage = () => {
     if (!collection) return;
     const title = `${collection.name} | ${SITE_NAME}`;
     const desc = collection.description || `Coleção ${collection.name} — designs exclusivos para capas de celular.`;
-    const image = collection.cover_image || "";
+    const image = collection.cover_image || undefined;
     const url = `${SITE_URL}/colecao/${slug}`;
-    document.title = title;
-    const setMeta = (attr: string, key: string, content: string) => {
-      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
-      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
-      el.setAttribute("content", content);
-    };
-    setMeta("name", "description", desc);
-    setMeta("property", "og:title", title);
-    setMeta("property", "og:description", desc);
-    if (image) setMeta("property", "og:image", image);
-    setMeta("property", "og:url", url);
-    setMeta("property", "og:type", "website");
-    setMeta("name", "twitter:title", title);
-    setMeta("name", "twitter:description", desc);
-    if (image) setMeta("name", "twitter:image", image);
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) { canonical = document.createElement("link"); canonical.setAttribute("rel", "canonical"); document.head.appendChild(canonical); }
-    canonical.setAttribute("href", url);
+
+    const cleanup = setPageSeo({ title, description: desc, url, image });
+
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
@@ -70,7 +55,7 @@ const CollectionPage = () => {
     let script = document.querySelector('script[data-seo="collection-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "collection-jsonld"); document.head.appendChild(script); }
     script.textContent = JSON.stringify(jsonLd);
-    return () => { script?.remove(); canonical?.remove(); };
+    return () => { script?.remove(); cleanup(); };
   }, [collection, designs, slug]);
 
   if (loading) return <LoadingSpinner variant="fullPage" />;

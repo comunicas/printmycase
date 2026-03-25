@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
+import { setPageSeo, setMeta, SITE_URL } from "@/lib/seo";
 import { type ShippingResult } from "@/lib/shipping";
 import { generateEventId } from "@/lib/meta-pixel";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
@@ -17,7 +18,6 @@ import PaymentBadges from "@/components/PaymentBadges";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 const SITE_NAME = "PrintMyCase";
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 const DesignPage = () => {
   const { collectionSlug, designSlug } = useParams<{ collectionSlug: string; designSlug: string }>();
@@ -110,27 +110,11 @@ const DesignPage = () => {
     const desc = `Capa com design "${design.name}" — ${formatPrice(design.price_cents / 100)}. Escolha seu modelo e finalize!`;
     const image = design.image_url;
     const url = `${SITE_URL}/colecao/${collectionSlug}/${designSlug}`;
-    document.title = title;
-    const setMeta = (attr: string, key: string, content: string) => {
-      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
-      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
-      el.setAttribute("content", content);
-    };
-    setMeta("name", "description", desc);
-    setMeta("property", "og:title", title);
-    setMeta("property", "og:description", desc);
-    setMeta("property", "og:image", image);
-    setMeta("property", "og:url", url);
-    setMeta("property", "og:type", "product");
+
+    const cleanup = setPageSeo({ title, description: desc, url, image, type: "product" });
     setMeta("property", "product:price:amount", String(design.price_cents / 100));
     setMeta("property", "product:price:currency", "BRL");
-    setMeta("name", "twitter:card", "summary_large_image");
-    setMeta("name", "twitter:title", title);
-    setMeta("name", "twitter:description", desc);
-    setMeta("name", "twitter:image", image);
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) { canonical = document.createElement("link"); canonical.setAttribute("rel", "canonical"); document.head.appendChild(canonical); }
-    canonical.setAttribute("href", url);
+
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "Product",
@@ -146,7 +130,7 @@ const DesignPage = () => {
     let script = document.querySelector('script[data-seo="design-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "design-jsonld"); document.head.appendChild(script); }
     script.textContent = JSON.stringify(jsonLd);
-    return () => { script?.remove(); canonical?.remove(); };
+    return () => { script?.remove(); cleanup(); };
   }, [design, collectionSlug, designSlug]);
 
   if (designLoading || productsLoading) return <LoadingSpinner variant="fullPage" />;

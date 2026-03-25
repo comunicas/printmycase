@@ -6,12 +6,12 @@ import AppHeader from "@/components/AppHeader";
 import { useDesignsGroupedByCollection } from "@/hooks/useCollectionDesigns";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
+import { setPageSeo, SITE_URL } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 const TITLE = "Capinhas Exclusivas para Celular | PrintMyCase";
 const DESC = "Explore nossas coleções de capinhas exclusivas para celular. Designs únicos, proteção premium e acabamento soft-touch. Encontre a capa perfeita ou personalize a sua.";
 
@@ -31,23 +31,13 @@ const Collections = () => {
 
   /* SEO */
   useEffect(() => {
-    document.title = TITLE;
-    const setMeta = (attr: string, key: string, content: string) => {
-      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
-      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
-      el.setAttribute("content", content);
-    };
-    setMeta("name", "description", DESC);
-    setMeta("property", "og:title", TITLE);
-    setMeta("property", "og:description", DESC);
-    setMeta("property", "og:url", `${SITE_URL}/colecoes`);
-    setMeta("property", "og:type", "website");
-    setMeta("name", "twitter:title", TITLE);
-    setMeta("name", "twitter:description", DESC);
-
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) { canonical = document.createElement("link"); canonical.setAttribute("rel", "canonical"); document.head.appendChild(canonical); }
-    canonical.setAttribute("href", `${SITE_URL}/colecoes`);
+    const coverImage = allDesigns.length > 0 ? allDesigns[0].image_url : undefined;
+    const cleanup = setPageSeo({
+      title: TITLE,
+      description: DESC,
+      url: `${SITE_URL}/colecoes`,
+      image: coverImage,
+    });
 
     const jsonLd = {
       "@context": "https://schema.org",
@@ -77,8 +67,8 @@ const Collections = () => {
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "collections-jsonld"); document.head.appendChild(script); }
     script.textContent = JSON.stringify(jsonLd);
 
-    return () => { script?.remove(); canonical?.remove(); };
-  }, [allDesigns]);
+    return () => { script?.remove(); cleanup(); };
+  }, [allDesigns, collections]);
 
   const scrollToCollection = (slug: string) => {
     setActiveTag(slug);

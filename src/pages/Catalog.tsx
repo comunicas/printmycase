@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import { ChevronLeft, ChevronRight, Search, SearchX, X } from "lucide-react";
+import { setPageSeo, SITE_URL } from "@/lib/seo";
 
 const PAGE_SIZE = 12;
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 const Catalog = () => {
   const { products, loading } = useProducts();
@@ -18,23 +18,15 @@ const Catalog = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const title = "Catálogo de Capas | PrintMyCase";
-    const desc = "Encontre a capa perfeita para seu celular. Modelos Apple, Samsung, Motorola e mais com proteção premium.";
-    document.title = title;
-    const setMeta = (attr: string, key: string, content: string) => {
-      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
-      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
-      el.setAttribute("content", content);
-    };
-    setMeta("name", "description", desc);
-    setMeta("property", "og:title", title);
-    setMeta("property", "og:description", desc);
-    setMeta("property", "og:url", `${SITE_URL}/catalog`);
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) { canonical = document.createElement("link"); canonical.setAttribute("rel", "canonical"); document.head.appendChild(canonical); }
-    canonical.setAttribute("href", `${SITE_URL}/catalog`);
-    return () => { canonical?.remove(); };
-  }, []);
+    const firstImage = products.length > 0 ? (products[0].device_image ?? products[0].images[0]) : undefined;
+    const cleanup = setPageSeo({
+      title: "Catálogo de Capas | PrintMyCase",
+      description: "Encontre a capa perfeita para seu celular. Modelos Apple, Samsung, Motorola e mais com proteção premium.",
+      url: `${SITE_URL}/catalog`,
+      image: firstImage ?? undefined,
+    });
+    return cleanup;
+  }, [products]);
 
   const brandCounts = useMemo(() => {
     const map = new Map<string, number>();
