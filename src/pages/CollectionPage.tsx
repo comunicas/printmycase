@@ -19,26 +19,11 @@ const CollectionPage = () => {
     if (!collection) return;
     const title = `${collection.name} | ${SITE_NAME}`;
     const desc = collection.description || `Coleção ${collection.name} — designs exclusivos para capas de celular.`;
-    const image = collection.cover_image || "";
+    const image = collection.cover_image || undefined;
     const url = `${SITE_URL}/colecao/${slug}`;
-    document.title = title;
-    const setMeta = (attr: string, key: string, content: string) => {
-      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
-      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
-      el.setAttribute("content", content);
-    };
-    setMeta("name", "description", desc);
-    setMeta("property", "og:title", title);
-    setMeta("property", "og:description", desc);
-    if (image) setMeta("property", "og:image", image);
-    setMeta("property", "og:url", url);
-    setMeta("property", "og:type", "website");
-    setMeta("name", "twitter:title", title);
-    setMeta("name", "twitter:description", desc);
-    if (image) setMeta("name", "twitter:image", image);
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) { canonical = document.createElement("link"); canonical.setAttribute("rel", "canonical"); document.head.appendChild(canonical); }
-    canonical.setAttribute("href", url);
+
+    const cleanup = setPageSeo({ title, description: desc, url, image });
+
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
