@@ -1,27 +1,20 @@
 
 
-## Atualizar Edge Functions para usar getClaims
+## Atualizar Edge Functions restantes para getClaims
+
+### Situação atual
+- `create-checkout` — **já usa `getClaims`**, nada a fazer
+- `create-coin-checkout` — usa `getUser`, precisa migrar. Usa `user.email` para Stripe customer lookup → extrair email de `claimsData.claims.email`
+- `delete-account` — usa `adminClient.auth.getUser`, precisa migrar. Usa apenas `user.id` → extrair de `claimsData.claims.sub`
 
 ### Alterações
 
 | # | Arquivo | O que |
 |---|---------|-------|
-| 1 | `supabase/functions/upscale-image/index.ts` (linhas 30-37) | Trocar `getUser(token)` por `getClaims(token)`. Extrair `userId` de `claimsData.claims.sub` |
-| 2 | `supabase/functions/generate-gallery-image/index.ts` (linhas 30-36) | Trocar `getUser(token)` por `getClaims(token)`. Extrair userId de `claimsData.claims.sub` e usar no `has_role` RPC (linha 44) |
+| 1 | `create-coin-checkout/index.ts` (linhas 48-63) | Trocar `getUser(token)` por `getClaims(token)`. Extrair `userId` de `claims.sub` e `userEmail` de `claims.email`. Usar `userEmail` no Stripe customer lookup (linha 89) e `customer_email` (linha 96) |
+| 2 | `delete-account/index.ts` (linhas 29-38) | Trocar `adminClient.auth.getUser(token)` por `adminClient.auth.getClaims(token)`. Extrair `userId` de `claims.sub`. O resto (avatar cleanup + deleteUser) permanece igual |
 
-### Padrão aplicado (mesmo do apply-ai-filter)
-
-```typescript
-// Antes
-const { data: userData, error: userError } = await supabase.auth.getUser(token);
-if (userError || !userData?.user) { /* 401 */ }
-const userId = userData.user.id;
-
-// Depois
-const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-if (claimsError || !claimsData?.claims) { /* 401 */ }
-const userId = claimsData.claims.sub as string;
-```
-
-Sem mudança funcional — apenas valida o JWT localmente em vez de fazer round-trip ao servidor.
+### Notas
+- `notify-order-status` usa `getUser` mas é para **lookup de admin caller** — já valida via `has_role` RPC e funciona corretamente, não precisa migrar
+- `delete-account` usa `adminClient` (service role) para `getUser`, mas `getClaims` funciona igualmente pois apenas valida o JWT
 
