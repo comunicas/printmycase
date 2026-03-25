@@ -249,7 +249,10 @@ const DesignPage = () => {
                   <img
                     src={selectedProduct.device_image}
                     alt={selectedProduct.name}
+                    width={120}
+                    height={120}
                     className="max-h-[120px] object-contain"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-medium text-foreground truncate">{selectedProduct.name}</span>

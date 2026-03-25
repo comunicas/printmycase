@@ -109,8 +109,11 @@ const CollectionPage = () => {
                   <img
                     src={design.image_url}
                     alt={design.name}
+                    width={300}
+                    height={300}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
+                    onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none'; }}
                   />
                 </div>
                 <CardContent className="p-3">
