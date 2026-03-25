@@ -151,7 +151,7 @@ const CollectionDesignsManager = () => {
           {designs.map((d) => (
             <div key={d.id} className="border rounded-xl overflow-hidden bg-card">
               <div className="aspect-square overflow-hidden bg-muted">
-                <img src={d.image_url} alt={d.name} className="w-full h-full object-cover" />
+                <img src={d.image_url} alt={d.name} width={300} height={300} className="w-full h-full object-cover" loading="lazy" />
               </div>
               <div className="p-3 space-y-1">
                 <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
