@@ -176,17 +176,17 @@ const Landing = () => {
                   </Card>
                 </ScrollReveal>
 
-                {/* Collection Cards */}
-                {collections.slice(0, 3).map((col, i) => (
-                  <ScrollReveal key={col.id} delay={(i + 1) * 80}>
-                    <CollectionCard collection={col} />
+                {/* Product Cards */}
+                {products.map((product, i) => (
+                  <ScrollReveal key={product.id} delay={(i + 1) * 80}>
+                    <ProductCard product={product} />
                   </ScrollReveal>
                 ))}
               </div>
               <ScrollReveal delay={350}>
                 <div className="text-center mt-8">
-                  <Button variant="outline" className="gap-2" onClick={() => navigate("/colecoes")}>
-                    Ver Todas as Coleções <ChevronRight className="w-4 h-4" />
+                  <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
+                    Ver Todos os Modelos <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
               </ScrollReveal>
