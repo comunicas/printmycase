@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Maximize, RotateCw, Expand, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -15,11 +16,11 @@ interface AdjustmentsPanelProps {
   isUpscaling: boolean;
 }
 
-const AdjustmentsPanel = ({
+const AdjustmentsPanel = forwardRef<HTMLDivElement, AdjustmentsPanelProps>(({
   scale, rotation, onScaleChange, onRotate, onExpand, onUpscale,
   disabled, isHD, upscaleCost, isUpscaling,
-}: AdjustmentsPanelProps) => (
-  <div className="space-y-3">
+}, ref) => (
+  <div ref={ref} className="space-y-3">
     <div className="space-y-1">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
@@ -64,6 +65,8 @@ const AdjustmentsPanel = ({
       </Button>
     </div>
   </div>
-);
+));
+
+AdjustmentsPanel.displayName = "AdjustmentsPanel";
 
 export default AdjustmentsPanel;

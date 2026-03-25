@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, forwardRef } from "react";
 import { Loader2, Eye, X, Wand2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
@@ -22,11 +22,11 @@ interface AiFiltersListProps {
 
 const LONG_PRESS_MS = 300;
 
-const AiFiltersList = ({
+const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
   filters, categories, activeFilterId, applyingFilterId, disabled, filterCost, filterHistory,
   onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
-}: AiFiltersListProps) => {
+}, ref) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPreviewing = useRef(false);
 
@@ -117,7 +117,7 @@ const AiFiltersList = ({
   const uncategorized = filters.filter((f) => !f.category_id || !categories.some((c) => c.id === f.category_id));
 
   return (
-    <div className="space-y-2">
+    <div ref={ref} className="space-y-2">
       {/* Filter history chips */}
       {filterHistory.length > 0 && (
         <div className="space-y-2">
@@ -195,6 +195,8 @@ const AiFiltersList = ({
       )}
     </div>
   );
-};
+});
+
+AiFiltersList.displayName = "AiFiltersList";
 
 export default AiFiltersList;
