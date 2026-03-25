@@ -34,7 +34,10 @@ const DesignPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showZoom, setShowZoom] = useState(false);
+  const [zoomImage, setZoomImage] = useState("");
   const initiateCheckoutEventId = useRef(generateEventId());
+
+  const selectedProduct = products.find((p) => p.id === selectedProductId);
 
   useEffect(() => {
     if (!showZoom) return;
