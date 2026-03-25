@@ -191,8 +191,7 @@ const DesignPage = () => {
                 <button
                   type="button"
                   className="w-16 h-16 rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-zoom-in flex-shrink-0"
-                  onMouseEnter={() => { setZoomImage(design.image_url); setShowZoom(true); }}
-                  onClick={() => { setZoomImage(design.image_url); setShowZoom((v) => !v); }}
+                  onClick={() => { setZoomImage(design.image_url); setShowZoom(true); }}
                 >
                   <img
                     src={design.image_url}
