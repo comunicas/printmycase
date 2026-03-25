@@ -95,8 +95,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (session.metadata?.user_id !== user.id) {
-      console.warn("[verify-coin] User mismatch:", user.id, "vs", session.metadata?.user_id);
+    if (session.metadata?.user_id !== userId) {
+      console.warn("[verify-coin] User mismatch:", userId, "vs", session.metadata?.user_id);
       return new Response(JSON.stringify({ error: "User mismatch" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
