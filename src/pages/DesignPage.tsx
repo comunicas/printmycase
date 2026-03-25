@@ -261,6 +261,21 @@ const DesignPage = () => {
           </div>
         </div>
       </main>
+
+      {showZoom && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setShowZoom(false)}
+          onMouseLeave={() => setShowZoom(false)}
+        >
+          <img
+            src={design.image_url}
+            alt={design.name}
+            className="max-w-3xl max-h-[90vh] w-full object-contain rounded-lg shadow-2xl"
+            onClick={(e: ReactMouseEvent) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };
