@@ -195,6 +195,8 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
       )}
     </div>
   );
-};
+});
+
+AiFiltersList.displayName = "AiFiltersList";
 
 export default AiFiltersList;
