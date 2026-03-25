@@ -215,7 +215,7 @@ const Collections = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               <CtaCard />
               {filteredDesigns.map((d) => (
-                <DesignCard key={d.id} design={d} />
+                <LazyDesignCard key={d.id} design={d} />
               ))}
             </div>
             {filteredDesigns.length === 0 && (
