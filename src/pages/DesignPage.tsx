@@ -199,6 +199,8 @@ const DesignPage = () => {
                   <img
                     src={design.image_url}
                     alt={`${design.name} — ampliar`}
+                    width={64}
+                    height={64}
                     className="w-full h-full object-cover"
                   />
                 </button>
