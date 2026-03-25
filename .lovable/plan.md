@@ -1,32 +1,32 @@
 
 
-## Vitrine da Home: Produtos + CTA fixo
+## Vitrine da Home: Designs das Coleções + CTA fixo
 
 ### O que muda
 
-A seção "Escolha um modelo" passa a exibir **produtos reais** (ordenados por `updated_at` desc) ao invés de coleções. O primeiro card continua sendo o CTA fixo "Personalize sua Capinha".
+A seção "Escolha um modelo" passa a exibir **designs das coleções** (`collection_designs`) ao invés de produtos (modelos de celular). O primeiro card continua sendo o CTA fixo.
 
 ### Alterações
 
 | # | Arquivo | Alteração |
 |---|---------|-----------|
-| 1 | `src/hooks/useProducts.ts` | Alterar ordenação de `created_at` para `updated_at` (desc) |
-| 2 | `src/pages/Landing.tsx` | Importar `useProducts` e `ProductCard`. Substituir os `CollectionCard` por produtos (`products.slice(0, 7)`). Manter CTA fixo como primeiro card. Botão inferior muda para "Ver Todos os Modelos" linkando para `/catalog`. Remover import de `CollectionCard` e `useCollections`. |
+| 1 | `src/pages/Landing.tsx` | Substituir `useProducts` por query de `collection_designs` (todas as ativas, com join na collection para pegar o slug). Renderizar cards com `image_url`, `name`, `price_cents`. Cada card linka para `/colecao/{collectionSlug}/{designSlug}`. Botão inferior: "Ver Todas as Coleções" → `/colecoes`. Remover import de `ProductCard` e `useProducts`. |
+| 2 | `src/hooks/useCollectionDesigns.ts` | **Novo** — Hook `useAllDesigns(limit?)` que busca `collection_designs` ativas com `collections.slug` via join, ordenadas por `created_at desc`. Retorna array com `image_url`, `name`, `price_cents`, `slug`, `collection_slug`. |
 
-### Layout
+### Layout (mesmo grid atual)
 
 ```text
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│  CTA         │ │  Produto 1   │ │  Produto 2   │ │  Produto 3   │
-│  Personalize │ │  (device_img)│ │  (device_img)│ │  (device_img)│
+│  CTA         │ │  Design 1    │ │  Design 2    │ │  Design 3    │
+│  Personalize │ │  (image_url) │ │  (image_url) │ │  (image_url) │
 │  [Começar]   │ │  Nome/Preço  │ │  Nome/Preço  │ │  Nome/Preço  │
 ├──────────────┤ ├──────────────┤ ├──────────────┤ ├──────────────┤
-│  Produto 4   │ │  Produto 5   │ │  Produto 6   │ │  Produto 7   │
+│  Design 4    │ │  Design 5    │ │  Design 6    │ │  Design 7    │
 └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
-                    "Ver Todos os Modelos >"
+                    "Ver Todas as Coleções >"
 ```
 
-- Grid 2 colunas mobile, 4 desktop
-- 1 CTA + 7 produtos = 8 cards (2 linhas completas)
-- `useProducts(7)` para limitar a query
+- Cada card de design mostra `image_url`, `name`, `formatPrice(price_cents/100)`
+- Click navega para `/colecao/{collection.slug}/{design.slug}`
+- Query: `supabase.from("collection_designs").select("*, collections!inner(slug)").eq("active", true).order("created_at", { ascending: false }).limit(7)`
 
