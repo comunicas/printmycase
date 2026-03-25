@@ -31,23 +31,13 @@ const Collections = () => {
 
   /* SEO */
   useEffect(() => {
-    document.title = TITLE;
-    const setMeta = (attr: string, key: string, content: string) => {
-      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
-      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
-      el.setAttribute("content", content);
-    };
-    setMeta("name", "description", DESC);
-    setMeta("property", "og:title", TITLE);
-    setMeta("property", "og:description", DESC);
-    setMeta("property", "og:url", `${SITE_URL}/colecoes`);
-    setMeta("property", "og:type", "website");
-    setMeta("name", "twitter:title", TITLE);
-    setMeta("name", "twitter:description", DESC);
-
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) { canonical = document.createElement("link"); canonical.setAttribute("rel", "canonical"); document.head.appendChild(canonical); }
-    canonical.setAttribute("href", `${SITE_URL}/colecoes`);
+    const coverImage = collections.length > 0 ? collections[0].cover_image ?? undefined : undefined;
+    const cleanup = setPageSeo({
+      title: TITLE,
+      description: DESC,
+      url: `${SITE_URL}/colecoes`,
+      image: coverImage,
+    });
 
     const jsonLd = {
       "@context": "https://schema.org",
