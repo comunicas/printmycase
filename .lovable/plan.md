@@ -1,40 +1,20 @@
 
 
-## Corrigir cancel_url do Stripe para compras de coleção
+## Atualizar plan.md — remover itens concluídos
 
-### Problema
-Na edge function `create-checkout`, a `cancel_url` do Stripe é sempre `/customize/{product.slug}`, mesmo para compras de coleção. Quando o usuário cancela o pagamento no Stripe, ele é redirecionado para a página de customização (que não faz sentido para coleções) em vez de voltar para a página do design (`/colecao/{collectionSlug}/{designSlug}`).
+### Verificação do fluxo
 
-### Correção
+O código da `cancel_url` está correto e implantado:
+- Linha 106: `.select("*, collections!inner(slug)")` busca o slug da coleção
+- Linhas 219-221: monta `/colecao/{collection.slug}/{design.slug}` para compras de coleção
+
+Os logs confirmam que a última compra de coleção passou com sucesso. Não foi possível testar o cancelamento no Stripe via automação do browser (requer login real + pagamento). **Recomendo testar manualmente**: inicie uma compra de coleção e clique em "Voltar" na página do Stripe para confirmar o redirecionamento.
+
+### Alteração
 
 | # | Arquivo | O que |
 |---|---------|-------|
-| 1 | `create-checkout/index.ts` | Quando `isCollectionPurchase`, buscar o slug da coleção via join (`collections.slug`) na query do design. Montar `cancel_url` como `/colecao/{collection.slug}/{design.slug}` em vez de `/customize/{product.slug}` |
+| 1 | `.lovable/plan.md` | Limpar o conteúdo — o único item ("Corrigir cancel_url do Stripe") já foi implementado e deployado |
 
-### Detalhes
-
-Na query existente do design (linha ~107), adicionar join para pegar o slug da coleção:
-
-```typescript
-// Antes
-.select("*")
-
-// Depois  
-.select("*, collections!inner(slug)")
-```
-
-Na montagem da cancel_url (linha ~219):
-
-```typescript
-// Antes
-params.append("cancel_url", `${origin}/customize/${product.slug}`);
-
-// Depois
-const cancelUrl = isCollectionPurchase
-  ? `${origin}/colecao/${design!.collections.slug}/${design!.slug}`
-  : `${origin}/customize/${product.slug}`;
-params.append("cancel_url", cancelUrl);
-```
-
-Sem mudança no frontend — a correção é inteiramente na edge function.
+O arquivo ficará vazio (ou com um header básico) indicando que não há pendências.
 
