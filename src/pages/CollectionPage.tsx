@@ -55,7 +55,7 @@ const CollectionPage = () => {
     let script = document.querySelector('script[data-seo="collection-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "collection-jsonld"); document.head.appendChild(script); }
     script.textContent = JSON.stringify(jsonLd);
-    return () => { script?.remove(); canonical?.remove(); };
+    return () => { script?.remove(); cleanup(); };
   }, [collection, designs, slug]);
 
   if (loading) return <LoadingSpinner variant="fullPage" />;

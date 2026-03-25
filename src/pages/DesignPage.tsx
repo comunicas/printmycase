@@ -130,7 +130,7 @@ const DesignPage = () => {
     let script = document.querySelector('script[data-seo="design-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "design-jsonld"); document.head.appendChild(script); }
     script.textContent = JSON.stringify(jsonLd);
-    return () => { script?.remove(); canonical?.remove(); };
+    return () => { script?.remove(); cleanup(); };
   }, [design, collectionSlug, designSlug]);
 
   if (designLoading || productsLoading) return <LoadingSpinner variant="fullPage" />;

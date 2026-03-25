@@ -112,7 +112,7 @@ const Product = () => {
 
     return () => {
       script?.remove();
-      canonical?.remove();
+      cleanup();
     };
   }, [product]);
 

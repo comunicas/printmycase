@@ -67,8 +67,8 @@ const Collections = () => {
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "collections-jsonld"); document.head.appendChild(script); }
     script.textContent = JSON.stringify(jsonLd);
 
-    return () => { script?.remove(); canonical?.remove(); };
-  }, [allDesigns]);
+    return () => { script?.remove(); cleanup(); };
+  }, [allDesigns, collections]);
 
   const scrollToCollection = (slug: string) => {
     setActiveTag(slug);
