@@ -233,6 +233,29 @@ const DesignPage = () => {
               </select>
             </div>
 
+            {/* Device image preview */}
+            {selectedProduct?.device_image && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Seu modelo:</p>
+                <div
+                  className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/50 cursor-zoom-in"
+                  onMouseEnter={() => { setZoomImage(selectedProduct.device_image!); setShowZoom(true); }}
+                  onClick={() => { setZoomImage(selectedProduct.device_image!); setShowZoom((v) => !v); }}
+                >
+                  <img
+                    src={selectedProduct.device_image}
+                    alt={selectedProduct.name}
+                    className="max-h-[120px] object-contain"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-foreground truncate">{selectedProduct.name}</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">Passe o mouse para ampliar</span>
+                    <span className="text-xs text-muted-foreground sm:hidden">Toque para ampliar</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Address */}
             <AddressForm
               shipping={shipping}
