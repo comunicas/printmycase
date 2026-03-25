@@ -1,36 +1,39 @@
 
 
-## Thumbnail com Hover Zoom na Página do Design
+## Mostrar Imagem do Modelo Selecionado na Página do Design
 
 ### O que muda
 
-Abaixo da imagem principal do design, adicionar uma **thumbnail clicável** da imagem. Ao passar o mouse (hover) ou tocar (mobile), exibe um **overlay/modal com a imagem em tamanho grande** para o usuário conferir os detalhes antes de finalizar.
+Quando o usuário seleciona um modelo de celular no dropdown, exibir a **imagem do aparelho** (`device_image`) abaixo do seletor para que ele visualize em qual modelo a capinha será aplicada. A thumbnail de zoom passa a mostrar a `device_image` do modelo selecionado (não mais a imagem do design duplicada).
 
 ### Alteração
 
 | # | Arquivo | O que |
 |---|---------|-------|
-| 1 | `src/pages/DesignPage.tsx` | Adicionar thumbnail abaixo da imagem principal + estado `showZoom`. Ao hover na thumb, exibe overlay fullscreen com a imagem ampliada. No mobile, click abre/fecha o overlay. |
+| 1 | `src/pages/DesignPage.tsx` | Derivar o produto selecionado (`selectedProduct`) a partir de `products` + `selectedProductId`. Abaixo do dropdown de modelo, exibir a `device_image` do produto selecionado em um card com label "Seu modelo:" e o nome. Se não houver `device_image`, não renderiza nada. Adicionar hover/click zoom na imagem do aparelho (reutilizar a mesma lógica de overlay). |
 
 ### Layout
 
 ```text
-┌──────────────────────┐
-│                      │
-│   Imagem principal   │  ← já existe (aspect-square)
-│                      │
-└──────────────────────┘
-┌────────┐
-│ thumb  │  ← nova (w-16 h-16, borda, cursor zoom-in)
-└────────┘
-   hover → overlay escuro com imagem grande (max-w-3xl, click para fechar)
+Escolha o modelo do seu celular
+┌─────────────────────────────┐
+│  iPhone 16 Pro Max       ▼  │
+└─────────────────────────────┘
+
+Seu modelo:
+┌─────────────────┐
+│                 │  ← device_image do produto (rounded, border, ~120px height)
+│   📱 Aparelho   │
+│                 │
+└─────────────────┘
+  iPhone 16 Pro Max
+  (click/hover para ampliar)
 ```
 
-### Comportamento
+### Detalhes
 
-- Thumbnail: miniatura 64×64px com borda, `cursor-pointer`
-- Hover (desktop): abre overlay com `fixed inset-0 bg-black/80 z-50` contendo a imagem em tamanho grande (`max-w-3xl max-h-[90vh] object-contain`)
-- Click (mobile): toggle do overlay
-- Click no overlay ou pressionar Escape: fecha
-- Texto auxiliar sob a thumb: "Passe o mouse para ampliar"
+- `const selectedProduct = products.find(p => p.id === selectedProductId)`
+- Se `selectedProduct?.device_image` existe, renderiza imagem com `object-contain`, fundo `bg-muted`, `rounded-xl`, max-h de ~160px
+- Click/hover abre overlay de zoom (reutiliza estado `showZoom` existente, mas com `zoomImage` state para alternar entre design e device)
+- Trocar de modelo atualiza a imagem instantaneamente
 
