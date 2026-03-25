@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ArrowRight, Smartphone, Sparkles } from "lucide-react";
+import DesignCardSkeleton from "@/components/DesignCardSkeleton";
 import AppHeader from "@/components/AppHeader";
 import { useDesignsGroupedByCollection } from "@/hooks/useCollectionDesigns";
 import { formatPrice } from "@/lib/types";
