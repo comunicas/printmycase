@@ -60,6 +60,8 @@ const ProductGallery = forwardRef<HTMLDivElement, ProductGalleryProps>(
                   <img
                     src={img}
                     alt={`${productName} - ${i >= productCount ? "Ilustrativa" : "Miniatura"} ${i + 1}`}
+                    width={64}
+                    height={64}
                     className="w-full h-full object-contain p-1"
                     loading="lazy"
                   />

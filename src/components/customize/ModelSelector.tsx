@@ -58,7 +58,10 @@ const ModelSelector = ({ currentSlug, productName, productImage }: ModelSelector
                 <img
                   src={thumb}
                   alt={p.name}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-md object-cover border border-border flex-shrink-0"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
               ) : (
                 <div className="w-8 h-8 rounded-md bg-muted flex-shrink-0" />
