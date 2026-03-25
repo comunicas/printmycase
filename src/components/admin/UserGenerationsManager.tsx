@@ -89,27 +89,30 @@ const UserGenerationsManager = () => {
     return () => observer.disconnect();
   }, [hasMore, loading, fetchImages]);
 
+  const copyToPublicBucket = async (id: string, storagePath: string): Promise<string> => {
+    // Download directly from private bucket (works for authenticated admin)
+    const { data: fileData, error: dlError } = await supabase.storage
+      .from("customizations")
+      .download(storagePath);
+    if (dlError || !fileData) throw new Error(dlError?.message || "Falha ao baixar imagem do storage");
+
+    const publicPath = `galleries/public/${id}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from("product-assets")
+      .upload(publicPath, fileData, { upsert: true, contentType: fileData.type || "image/jpeg" });
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = supabase.storage.from("product-assets").getPublicUrl(publicPath);
+    return urlData.publicUrl;
+  };
+
   const togglePublic = async (img: Generation) => {
     const newVal = !img.public;
     let publicImageUrl: string | null = null;
 
     if (newVal) {
       try {
-        // Download image from current signed URL
-        const response = await fetch(img.image_url);
-        if (!response.ok) throw new Error("Failed to fetch image");
-        const blob = await response.blob();
-
-        // Upload to public bucket
-        const publicPath = `galleries/public/${img.id}.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from("product-assets")
-          .upload(publicPath, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
-        if (uploadError) throw uploadError;
-
-        // Build permanent public URL
-        const { data: urlData } = supabase.storage.from("product-assets").getPublicUrl(publicPath);
-        publicImageUrl = urlData.publicUrl;
+        publicImageUrl = await copyToPublicBucket(img.id, img.storage_path);
       } catch (err: any) {
         toast({ title: "Erro ao copiar imagem para bucket público", description: err.message, variant: "destructive" });
         return;
@@ -126,6 +129,43 @@ const UserGenerationsManager = () => {
     }
     setImages((prev) => prev.map((i) => (i.id === img.id ? { ...i, public: newVal } : i)));
     toast({ title: newVal ? "Imagem tornada pública" : "Imagem tornada privada" });
+  };
+
+  const [backfilling, setBackfilling] = useState(false);
+
+  const backfillPublicImages = async () => {
+    setBackfilling(true);
+    try {
+      const { data: rows } = await supabase
+        .from("user_ai_generations")
+        .select("id, storage_path")
+        .eq("public", true)
+        .is("public_image_url", null);
+
+      if (!rows?.length) {
+        toast({ title: "Nenhuma imagem pública para reprocessar" });
+        setBackfilling(false);
+        return;
+      }
+
+      let ok = 0;
+      for (const row of rows) {
+        try {
+          const url = await copyToPublicBucket(row.id, row.storage_path);
+          await supabase
+            .from("user_ai_generations")
+            .update({ public_image_url: url } as any)
+            .eq("id", row.id);
+          ok++;
+        } catch {
+          // skip failed ones
+        }
+      }
+      toast({ title: `${ok}/${rows.length} imagens reprocessadas com sucesso` });
+    } catch (err: any) {
+      toast({ title: "Erro no backfill", description: err.message, variant: "destructive" });
+    }
+    setBackfilling(false);
   };
 
   const handleDelete = async () => {
@@ -194,6 +234,14 @@ const UserGenerationsManager = () => {
             </Button>
           ))}
         </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={backfilling}
+          onClick={backfillPublicImages}
+        >
+          {backfilling ? "Reprocessando…" : "Reprocessar Imagens Públicas"}
+        </Button>
       </div>
 
       {images.length === 0 && !loading && (
