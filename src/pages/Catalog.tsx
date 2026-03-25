@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import { ChevronLeft, ChevronRight, Search, SearchX, X } from "lucide-react";
+import { setPageSeo, SITE_URL } from "@/lib/seo";
 
 const PAGE_SIZE = 12;
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 const Catalog = () => {
   const { products, loading } = useProducts();
