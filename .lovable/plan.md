@@ -1,47 +1,15 @@
 
-## Configurar Cloudflare Worker para prerender
 
-### Status
+## Remover preload de imagem não utilizada
 
-A edge function `prerender` já está deployada. Falta configurar o proxy no Cloudflare para rotear crawlers.
+### Problema
+A linha 35 do `index.html` faz preload de `/lovable-uploads/79379ce7-c6b3-4051-9947-c8dfc449251d.webp`, mas essa imagem não é referenciada em nenhum componente do app. Isso causa o warning do browser e desperdiça bandwidth.
 
-### Código do Cloudflare Worker
+### Alteração
 
-Criar um Worker no domínio `studio.printmycase.com.br` com este código:
+| # | Arquivo | O que |
+|---|---------|-------|
+| 1 | `index.html` | Remover a linha `<link rel="preload" as="image" href="/lovable-uploads/79379ce7-...webp" />` |
 
-```javascript
-const BOT_AGENTS = /facebookexternalhit|WhatsApp|LinkedInBot|TelegramBot|Twitterbot|Slackbot|Discordbot|embedly|Quora Link Preview|Showyoubot|outbrain|pinterest|vkShare|W3C_Validator|redditbot/i;
+Alteração de 1 linha. Sem impacto funcional.
 
-const EDGE_FN_URL = "https://iqnqpwnbdqzvqssxcxgb.supabase.co/functions/v1/prerender";
-
-export default {
-  async fetch(request) {
-    const ua = request.headers.get("user-agent") || "";
-    const url = new URL(request.url);
-
-    // Only intercept bot requests on public routes
-    if (BOT_AGENTS.test(ua) && isPublicRoute(url.pathname)) {
-      const prerenderUrl = `${EDGE_FN_URL}?path=${encodeURIComponent(url.pathname)}`;
-      return fetch(prerenderUrl);
-    }
-
-    // All other requests pass through to origin
-    return fetch(request);
-  }
-};
-
-function isPublicRoute(path) {
-  return path === "/" ||
-    path === "/catalog" ||
-    path === "/colecoes" ||
-    path.startsWith("/colecao/") ||
-    path.startsWith("/product/");
-}
-```
-
-### Passos manuais
-
-1. No Cloudflare Dashboard → Workers & Pages → Create Worker
-2. Colar o código acima
-3. Em Workers → Routes, adicionar: `studio.printmycase.com.br/*`
-4. Testar compartilhando um link de produto no WhatsApp
