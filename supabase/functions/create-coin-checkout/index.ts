@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    const customers = await stripe.customers.list({ email: user.email!, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     const customerId = customers.data.length > 0 ? customers.data[0].id : undefined;
 
     console.log("[coin-checkout] Stripe customer:", customerId || "new");
