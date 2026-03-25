@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log("[verify-coin] Start:", JSON.stringify({ userId: user.id, sessionId }));
+    console.log("[verify-coin] Start:", JSON.stringify({ userId, sessionId }));
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
