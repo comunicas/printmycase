@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
     if (isCollectionPurchase) {
       const { data: designData, error: designError } = await supabaseAdmin
         .from("collection_designs")
-        .select("*")
+        .select("*, collections!inner(slug)")
         .eq("id", design_id)
         .eq("active", true)
         .single();
