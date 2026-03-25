@@ -89,6 +89,27 @@ const UserGenerationsManager = () => {
     return () => observer.disconnect();
   }, [hasMore, loading, fetchImages]);
 
+  const optimizeBlob = async (blob: Blob, maxSize = 800, quality = 0.80): Promise<Blob> => {
+    const bitmap = await createImageBitmap(blob);
+    const { width: w, height: h } = bitmap;
+
+    // Only resize if larger than maxSize
+    let nw = w;
+    let nh = h;
+    if (w > maxSize || h > maxSize) {
+      const ratio = Math.min(maxSize / w, maxSize / h);
+      nw = Math.round(w * ratio);
+      nh = Math.round(h * ratio);
+    }
+
+    const canvas = new OffscreenCanvas(nw, nh);
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(bitmap, 0, 0, nw, nh);
+    bitmap.close();
+
+    return canvas.convertToBlob({ type: "image/webp", quality });
+  };
+
   const copyToPublicBucket = async (id: string, storagePath: string): Promise<string> => {
     // Download directly from private bucket (works for authenticated admin)
     const { data: fileData, error: dlError } = await supabase.storage
@@ -96,10 +117,13 @@ const UserGenerationsManager = () => {
       .download(storagePath);
     if (dlError || !fileData) throw new Error(dlError?.message || "Falha ao baixar imagem do storage");
 
-    const publicPath = `galleries/public/${id}.jpg`;
+    // Optimize: resize to max 800px and convert to WebP
+    const optimized = await optimizeBlob(fileData);
+
+    const publicPath = `galleries/public/${id}.webp`;
     const { error: uploadError } = await supabase.storage
       .from("product-assets")
-      .upload(publicPath, fileData, { upsert: true, contentType: fileData.type || "image/jpeg" });
+      .upload(publicPath, optimized, { upsert: true, contentType: "image/webp" });
     if (uploadError) throw uploadError;
 
     const { data: urlData } = supabase.storage.from("product-assets").getPublicUrl(publicPath);
