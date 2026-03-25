@@ -183,15 +183,15 @@ const DesignPage = () => {
               <img
                 src={design.image_url}
                 alt={design.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover cursor-zoom-in"
+                onClick={() => { setZoomImage(design.image_url); setShowZoom(true); }}
               />
             </div>
             <div className="flex items-center gap-3">
                 <button
                   type="button"
                   className="w-16 h-16 rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-zoom-in flex-shrink-0"
-                  onMouseEnter={() => { setZoomImage(design.image_url); setShowZoom(true); }}
-                  onClick={() => { setZoomImage(design.image_url); setShowZoom((v) => !v); }}
+                  onClick={() => { setZoomImage(design.image_url); setShowZoom(true); }}
                 >
                   <img
                     src={design.image_url}
@@ -239,8 +239,7 @@ const DesignPage = () => {
                 <p className="text-sm font-medium text-foreground">Seu modelo:</p>
                 <div
                   className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/50 cursor-zoom-in"
-                  onMouseEnter={() => { setZoomImage(selectedProduct.device_image!); setShowZoom(true); }}
-                  onClick={() => { setZoomImage(selectedProduct.device_image!); setShowZoom((v) => !v); }}
+                  onClick={() => { setZoomImage(selectedProduct.device_image!); setShowZoom(true); }}
                 >
                   <img
                     src={selectedProduct.device_image}
@@ -292,7 +291,6 @@ const DesignPage = () => {
         <div
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setShowZoom(false)}
-          onMouseLeave={() => setShowZoom(false)}
         >
           <img
               src={zoomImage}
