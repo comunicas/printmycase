@@ -289,13 +289,13 @@ const DesignPage = () => {
 
       {showZoom && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out"
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out animate-zoom-backdrop"
           onClick={() => setShowZoom(false)}
         >
           <img
               src={zoomImage}
               alt="Ampliar"
-              className="max-w-3xl max-h-[90vh] w-full object-contain rounded-lg shadow-2xl"
+              className="max-w-3xl max-h-[90vh] w-full object-contain rounded-lg shadow-2xl animate-zoom-img"
               onClick={(e: ReactMouseEvent) => e.stopPropagation()}
             />
         </div>
