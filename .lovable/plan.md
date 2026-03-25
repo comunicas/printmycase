@@ -1,22 +1,60 @@
 
 
-## Corrigir domínio do app nos emails de autenticação
+## Refatoração Completa do Sistema de Emails — Do Zero
 
-### Problema
+### Estado Atual
 
-O `auth-email-hook` tem `ROOT_DOMAIN = "printmycase.com.br"`, fazendo os links dos emails de autenticação apontarem para `https://printmycase.com.br` em vez de `https://studio.printmycase.com.br`.
+- Domínio `printmycase.com.br` adicionado, status **Pendente** (NS records não verificados)
+- `auth-email-hook` funcional com fila, mas templates sem logo
+- `notify-order-status` usa HTML manual (template strings) e FROM incorreto (`noreply@notify.printmycase.com.br` em vez de `noreply@printmycase.com.br`)
+- Não existe infraestrutura transacional (`send-transactional-email`, `handle-email-unsubscribe`, `handle-email-suppression`)
+- `process-email-queue` bem implementado, sem alterações necessárias
 
-### Alteração
+### DNS — Configuração Necessária
 
-| # | Arquivo | O que |
-|---|---------|-------|
-| 1 | `supabase/functions/auth-email-hook/index.ts` | Alterar `ROOT_DOMAIN` para `"studio.printmycase.com.br"`. Alterar `SAMPLE_PROJECT_URL` para `"https://studio.printmycase.com.br"`. Manter `SENDER_DOMAIN` e `FROM_DOMAIN` como estão (o envio continua via `printmycase.com.br`). |
+O subdomínio `notify.printmycase.com.br` precisa dos seguintes registros no provedor DNS de `printmycase.com.br` (Hostinger ou Registro.br):
 
-### O que NÃO muda
-- `SENDER_DOMAIN = "notify.printmycase.com.br"` — correto, é o subdomínio de envio
-- `FROM_DOMAIN = "printmycase.com.br"` — correto, é o domínio no remetente (`noreply@printmycase.com.br`)
-- Domínio de email configurado (`printmycase.com.br`) — correto, o NS do `notify` precisa ser verificado no provedor de DNS de `printmycase.com.br`
+| Tipo | Nome | Valor |
+|------|------|-------|
+| NS | notify | `ns3.lovable.cloud` |
+| NS | notify | `ns4.lovable.cloud` |
 
-### Sobre o DNS
-O status do domínio de email está como **pendente**. Os NS records (`ns3.lovable.cloud` e `ns4.lovable.cloud`) para o subdomínio `notify` precisam estar configurados no provedor que gerencia o DNS de `printmycase.com.br` — seja Registro.br ou Hostinger, dependendo de para onde os NS do domínio raiz apontam.
+Até que esses registros sejam verificados, nenhum email será enviado — mas toda a infraestrutura pode ser criada e deployada agora.
+
+### Plano de Execução
+
+| # | Ação | Detalhe |
+|---|------|---------|
+| 1 | Configurar infraestrutura de email | Criar tabelas, filas pgmq, RPCs, cron job (se não existirem) |
+| 2 | Re-scaffoldar templates de autenticação | Recriar os 6 templates com logo PrintMyCase do bucket `email-assets` e branding consistente |
+| 3 | Deploy auth-email-hook | Redeployar com templates atualizados |
+| 4 | Scaffoldar infraestrutura transacional | Criar `send-transactional-email`, `handle-email-unsubscribe`, `handle-email-suppression` e registry |
+| 5 | Criar template `order-status-update` | Template React Email com logo, status badge, dados do pedido, rastreio (shipped), botão "Ver Meus Pedidos" |
+| 6 | Refatorar `notify-order-status` | Remover HTML manual. Chamar `send-transactional-email` via `supabase.functions.invoke()`. Corrigir FROM para `noreply@printmycase.com.br` |
+| 7 | Criar página de unsubscribe | Página no app para processar cancelamento de inscrição |
+| 8 | Deploy de todas as Edge Functions | `auth-email-hook`, `send-transactional-email`, `handle-email-unsubscribe`, `handle-email-suppression`, `notify-order-status` |
+
+### Correções Específicas no `notify-order-status`
+
+- FROM: `noreply@notify.printmycase.com.br` → `noreply@printmycase.com.br`
+- Remover construção de HTML manual (`buildEmailHtml`)
+- Adicionar `message_id`, `run_id`, `label`, `text` (plaintext) ao payload
+- Usar `send-transactional-email` em vez de enqueue direto
+
+### Resultado Final
+
+```text
+supabase/functions/
+├── _shared/
+│   ├── email-templates/              ← Auth (6 templates com logo + branding)
+│   └── transactional-email-templates/
+│       ├── registry.ts
+│       └── order-status-update.tsx
+├── auth-email-hook/                  ← Re-scaffolded
+├── send-transactional-email/         ← Novo
+├── handle-email-unsubscribe/         ← Novo
+├── handle-email-suppression/         ← Novo
+├── process-email-queue/              ← Mantido
+└── notify-order-status/              ← Refatorado
+```
 
