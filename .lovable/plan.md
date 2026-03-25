@@ -1,36 +1,22 @@
 
 
-## Lazy Loading com Skeleton nos Cards de Design
+## Corrigir domínio do app nos emails de autenticação
 
-### O que muda
+### Problema
 
-Adicionar lazy loading com Intersection Observer nos cards de design da página `/colecoes`. Enquanto o card não entra no viewport, exibe um skeleton placeholder. Quando entra, renderiza o card real com a imagem.
+O `auth-email-hook` tem `ROOT_DOMAIN = "printmycase.com.br"`, fazendo os links dos emails de autenticação apontarem para `https://printmycase.com.br` em vez de `https://studio.printmycase.com.br`.
 
-### Alterações
+### Alteração
 
 | # | Arquivo | O que |
 |---|---------|-------|
-| 1 | `src/components/DesignCardSkeleton.tsx` | Novo skeleton específico para design cards (aspect-square + nome + preço), sem o botão do ProductCardSkeleton |
-| 2 | `src/pages/Collections.tsx` | Envolver cada `DesignCard` com um wrapper que usa `IntersectionObserver` para detectar visibilidade. Mostra `DesignCardSkeleton` até o card entrar no viewport (com margem de 200px para pre-load). Usar um hook inline `useInView` com `useState` + `useEffect` + `useRef`. |
+| 1 | `supabase/functions/auth-email-hook/index.ts` | Alterar `ROOT_DOMAIN` para `"studio.printmycase.com.br"`. Alterar `SAMPLE_PROJECT_URL` para `"https://studio.printmycase.com.br"`. Manter `SENDER_DOMAIN` e `FROM_DOMAIN` como estão (o envio continua via `printmycase.com.br`). |
 
-### Comportamento
+### O que NÃO muda
+- `SENDER_DOMAIN = "notify.printmycase.com.br"` — correto, é o subdomínio de envio
+- `FROM_DOMAIN = "printmycase.com.br"` — correto, é o domínio no remetente (`noreply@printmycase.com.br`)
+- Domínio de email configurado (`printmycase.com.br`) — correto, o NS do `notify` precisa ser verificado no provedor de DNS de `printmycase.com.br`
 
-- Cards fora do viewport: renderizam `DesignCardSkeleton` (placeholder animado)
-- Quando o card entra na zona visível (200px de margem): troca para o `DesignCard` real
-- Uma vez visível, nunca volta para skeleton (`triggerOnce`)
-- O loading inicial da página continua usando `LoadingSpinner` enquanto os dados carregam do banco
-
-### Skeleton Layout
-
-```text
-┌──────────────────┐
-│                  │  ← aspect-square bg-muted animate-pulse
-│                  │
-│                  │
-├──────────────────┤
-│ ████████████     │  ← título (h-3.5)
-│ ████████         │  ← título linha 2 (h-3.5 w-2/3)
-│ ██████           │  ← preço (h-6 w-20)
-└──────────────────┘
-```
+### Sobre o DNS
+O status do domínio de email está como **pendente**. Os NS records (`ns3.lovable.cloud` e `ns4.lovable.cloud`) para o subdomínio `notify` precisam estar configurados no provedor que gerencia o DNS de `printmycase.com.br` — seja Registro.br ou Hostinger, dependendo de para onde os NS do domínio raiz apontam.
 
