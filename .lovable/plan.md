@@ -1,20 +1,40 @@
 
 
-## Atualizar Edge Functions restantes para getClaims
+## Corrigir cancel_url do Stripe para compras de coleção
 
-### Situação atual
-- `create-checkout` — **já usa `getClaims`**, nada a fazer
-- `create-coin-checkout` — usa `getUser`, precisa migrar. Usa `user.email` para Stripe customer lookup → extrair email de `claimsData.claims.email`
-- `delete-account` — usa `adminClient.auth.getUser`, precisa migrar. Usa apenas `user.id` → extrair de `claimsData.claims.sub`
+### Problema
+Na edge function `create-checkout`, a `cancel_url` do Stripe é sempre `/customize/{product.slug}`, mesmo para compras de coleção. Quando o usuário cancela o pagamento no Stripe, ele é redirecionado para a página de customização (que não faz sentido para coleções) em vez de voltar para a página do design (`/colecao/{collectionSlug}/{designSlug}`).
 
-### Alterações
+### Correção
 
 | # | Arquivo | O que |
 |---|---------|-------|
-| 1 | `create-coin-checkout/index.ts` (linhas 48-63) | Trocar `getUser(token)` por `getClaims(token)`. Extrair `userId` de `claims.sub` e `userEmail` de `claims.email`. Usar `userEmail` no Stripe customer lookup (linha 89) e `customer_email` (linha 96) |
-| 2 | `delete-account/index.ts` (linhas 29-38) | Trocar `adminClient.auth.getUser(token)` por `adminClient.auth.getClaims(token)`. Extrair `userId` de `claims.sub`. O resto (avatar cleanup + deleteUser) permanece igual |
+| 1 | `create-checkout/index.ts` | Quando `isCollectionPurchase`, buscar o slug da coleção via join (`collections.slug`) na query do design. Montar `cancel_url` como `/colecao/{collection.slug}/{design.slug}` em vez de `/customize/{product.slug}` |
 
-### Notas
-- `notify-order-status` usa `getUser` mas é para **lookup de admin caller** — já valida via `has_role` RPC e funciona corretamente, não precisa migrar
-- `delete-account` usa `adminClient` (service role) para `getUser`, mas `getClaims` funciona igualmente pois apenas valida o JWT
+### Detalhes
+
+Na query existente do design (linha ~107), adicionar join para pegar o slug da coleção:
+
+```typescript
+// Antes
+.select("*")
+
+// Depois  
+.select("*, collections!inner(slug)")
+```
+
+Na montagem da cancel_url (linha ~219):
+
+```typescript
+// Antes
+params.append("cancel_url", `${origin}/customize/${product.slug}`);
+
+// Depois
+const cancelUrl = isCollectionPurchase
+  ? `${origin}/colecao/${design!.collections.slug}/${design!.slug}`
+  : `${origin}/customize/${product.slug}`;
+params.append("cancel_url", cancelUrl);
+```
+
+Sem mudança no frontend — a correção é inteiramente na edge function.
 
