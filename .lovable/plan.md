@@ -1,60 +1,47 @@
 
+## Configurar Cloudflare Worker para prerender
 
-## Prerender para Crawlers (WhatsApp, Facebook, LinkedIn)
+### Status
 
-### O Problema
+A edge function `prerender` já está deployada. Falta configurar o proxy no Cloudflare para rotear crawlers.
 
-Como o app é uma SPA (Single Page Application) servida estaticamente pelo Lovable, crawlers que **não executam JavaScript** (WhatsApp, Facebook, LinkedIn, Telegram) sempre veem as meta tags estáticas do `index.html` — nunca as dinâmicas injetadas via `useEffect`.
+### Código do Cloudflare Worker
 
-### Solução
+Criar um Worker no domínio `studio.printmycase.com.br` com este código:
 
-Criar uma edge function `prerender` que gera HTML mínimo com as meta tags corretas para cada rota pública, e configurar um proxy reverso (Cloudflare Worker) no domínio customizado para rotear crawlers para essa função.
+```javascript
+const BOT_AGENTS = /facebookexternalhit|WhatsApp|LinkedInBot|TelegramBot|Twitterbot|Slackbot|Discordbot|embedly|Quora Link Preview|Showyoubot|outbrain|pinterest|vkShare|W3C_Validator|redditbot/i;
 
-```text
-Crawler (WhatsApp/Facebook)
-  → studio.printmycase.com.br/colecao/Creative/heck-yeah
-  → Cloudflare Worker detecta bot pelo User-Agent
-  → Proxy para edge function "prerender?path=/colecao/Creative/heck-yeah"
-  → Retorna HTML com og:title, og:image, og:description corretos
+const EDGE_FN_URL = "https://iqnqpwnbdqzvqssxcxgb.supabase.co/functions/v1/prerender";
 
-Usuário normal
-  → Cloudflare Worker detecta browser normal
-  → Serve a SPA normalmente (sem mudança)
+export default {
+  async fetch(request) {
+    const ua = request.headers.get("user-agent") || "";
+    const url = new URL(request.url);
+
+    // Only intercept bot requests on public routes
+    if (BOT_AGENTS.test(ua) && isPublicRoute(url.pathname)) {
+      const prerenderUrl = `${EDGE_FN_URL}?path=${encodeURIComponent(url.pathname)}`;
+      return fetch(prerenderUrl);
+    }
+
+    // All other requests pass through to origin
+    return fetch(request);
+  }
+};
+
+function isPublicRoute(path) {
+  return path === "/" ||
+    path === "/catalog" ||
+    path === "/colecoes" ||
+    path.startsWith("/colecao/") ||
+    path.startsWith("/product/");
+}
 ```
 
-### Alterações
+### Passos manuais
 
-| # | Arquivo | O que |
-|---|---------|-------|
-| 1 | `supabase/functions/prerender/index.ts` | Nova edge function que recebe `?path=...`, identifica a rota (produto, coleção, design, catálogo, etc.), busca dados no banco e retorna HTML mínimo com todas as meta tags OG/Twitter corretas |
-
-### Como funciona a edge function
-
-1. Recebe o path da URL (ex: `/colecao/Creative/heck-yeah`)
-2. Faz pattern matching para identificar o tipo de página:
-   - `/product/:slug` → busca produto
-   - `/colecao/:slug` → busca coleção
-   - `/colecao/:col/:design` → busca design
-   - `/colecoes` → página estática de coleções
-   - `/catalog` → página estática de catálogo
-   - `/` → landing page
-3. Busca os dados relevantes do banco (título, descrição, imagem)
-4. Retorna HTML com:
-   - `og:title`, `og:description`, `og:image`, `og:url`
-   - `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`
-   - `<meta http-equiv="refresh">` para redirecionar usuários normais para a SPA
-   - Cache de 1 hora
-
-### Configuração do proxy (manual, fora do Lovable)
-
-Após a edge function estar deployada, será necessário configurar um Cloudflare Worker (ou similar) no domínio `studio.printmycase.com.br` que:
-- Detecta bots pelo User-Agent (facebookexternalhit, WhatsApp, LinkedInBot, TelegramBot, Twitterbot)
-- Redireciona a requisição para a edge function com o path original
-- Para todos os outros requests, serve normalmente
-
-Fornecerei o código do Worker como referência.
-
-### Limitação
-
-A configuração do Cloudflare Worker é externa ao Lovable e precisa ser feita manualmente no painel do Cloudflare (ou equivalente do provedor DNS usado).
-
+1. No Cloudflare Dashboard → Workers & Pages → Create Worker
+2. Colar o código acima
+3. Em Workers → Routes, adicionar: `studio.printmycase.com.br/*`
+4. Testar compartilhando um link de produto no WhatsApp
