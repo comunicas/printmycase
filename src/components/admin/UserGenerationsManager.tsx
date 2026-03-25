@@ -234,6 +234,14 @@ const UserGenerationsManager = () => {
             </Button>
           ))}
         </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={backfilling}
+          onClick={backfillPublicImages}
+        >
+          {backfilling ? "Reprocessando…" : "Reprocessar Imagens Públicas"}
+        </Button>
       </div>
 
       {images.length === 0 && !loading && (
