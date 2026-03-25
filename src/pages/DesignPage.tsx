@@ -239,8 +239,7 @@ const DesignPage = () => {
                 <p className="text-sm font-medium text-foreground">Seu modelo:</p>
                 <div
                   className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/50 cursor-zoom-in"
-                  onMouseEnter={() => { setZoomImage(selectedProduct.device_image!); setShowZoom(true); }}
-                  onClick={() => { setZoomImage(selectedProduct.device_image!); setShowZoom((v) => !v); }}
+                  onClick={() => { setZoomImage(selectedProduct.device_image!); setShowZoom(true); }}
                 >
                   <img
                     src={selectedProduct.device_image}
