@@ -1,39 +1,14 @@
 
 
-## Mostrar Imagem do Modelo Selecionado na Página do Design
+## Trocar Hover por Click no Zoom das Imagens
 
-### O que muda
+### Problema
+As imagens (design e device) abrem o zoom no `onMouseEnter`. O usuário quer que o zoom só abra no **click**.
 
-Quando o usuário seleciona um modelo de celular no dropdown, exibir a **imagem do aparelho** (`device_image`) abaixo do seletor para que ele visualize em qual modelo a capinha será aplicada. A thumbnail de zoom passa a mostrar a `device_image` do modelo selecionado (não mais a imagem do design duplicada).
+### Alteração em `src/pages/DesignPage.tsx`
 
-### Alteração
-
-| # | Arquivo | O que |
-|---|---------|-------|
-| 1 | `src/pages/DesignPage.tsx` | Derivar o produto selecionado (`selectedProduct`) a partir de `products` + `selectedProductId`. Abaixo do dropdown de modelo, exibir a `device_image` do produto selecionado em um card com label "Seu modelo:" e o nome. Se não houver `device_image`, não renderiza nada. Adicionar hover/click zoom na imagem do aparelho (reutilizar a mesma lógica de overlay). |
-
-### Layout
-
-```text
-Escolha o modelo do seu celular
-┌─────────────────────────────┐
-│  iPhone 16 Pro Max       ▼  │
-└─────────────────────────────┘
-
-Seu modelo:
-┌─────────────────┐
-│                 │  ← device_image do produto (rounded, border, ~120px height)
-│   📱 Aparelho   │
-│                 │
-└─────────────────┘
-  iPhone 16 Pro Max
-  (click/hover para ampliar)
-```
-
-### Detalhes
-
-- `const selectedProduct = products.find(p => p.id === selectedProductId)`
-- Se `selectedProduct?.device_image` existe, renderiza imagem com `object-contain`, fundo `bg-muted`, `rounded-xl`, max-h de ~160px
-- Click/hover abre overlay de zoom (reutiliza estado `showZoom` existente, mas com `zoomImage` state para alternar entre design e device)
-- Trocar de modelo atualiza a imagem instantaneamente
+1. **Imagem principal do design** — Adicionar `cursor-zoom-in` e `onClick` para abrir zoom
+2. **Thumbnail do design** — Remover `onMouseEnter`, manter apenas `onClick` para toggle
+3. **Card do device image** — Remover `onMouseEnter`, manter apenas `onClick` para toggle
+4. **Overlay** — Remover `onMouseLeave`, fechar apenas por click no backdrop ou Escape
 
