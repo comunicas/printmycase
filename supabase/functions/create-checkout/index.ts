@@ -216,7 +216,10 @@ Deno.serve(async (req) => {
     const eventId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 
     params.append("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&eid=${eventId}`);
-    params.append("cancel_url", `${origin}/customize/${product.slug}`);
+    const cancelUrl = isCollectionPurchase
+      ? `${origin}/colecao/${(design as any).collections.slug}/${design!.slug}`
+      : `${origin}/customize/${product.slug}`;
+    params.append("cancel_url", cancelUrl);
     params.append("metadata[user_id]", userId);
     params.append("metadata[product_id]", product_id);
     params.append("metadata[event_id]", eventId);
