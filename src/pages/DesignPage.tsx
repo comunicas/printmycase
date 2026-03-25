@@ -248,7 +248,7 @@ const DesignPage = () => {
                   />
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-medium text-foreground truncate">{selectedProduct.name}</span>
-                    <span className="text-xs text-muted-foreground hidden sm:inline">Passe o mouse para ampliar</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">Clique para ampliar</span>
                     <span className="text-xs text-muted-foreground sm:hidden">Toque para ampliar</span>
                   </div>
                 </div>
