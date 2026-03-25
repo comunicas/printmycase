@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Text,
@@ -21,6 +22,8 @@ interface EmailChangeEmailProps {
   confirmationUrl: string
 }
 
+const LOGO_URL = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
+
 export const EmailChangeEmail = ({
   siteName,
   email,
@@ -29,12 +32,13 @@ export const EmailChangeEmail = ({
 }: EmailChangeEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirme a troca de email na {siteName}</Preview>
+    <Preview>Confirme a troca de email — {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src={LOGO_URL} alt={siteName} height="40" style={logo} />
         <Heading style={h1}>Confirme a troca de email</Heading>
         <Text style={text}>
-          Você solicitou a alteração do email da sua conta na {siteName} de{' '}
+          Você solicitou a troca do email da sua conta {siteName} de{' '}
           <Link href={`mailto:${email}`} style={link}>
             {email}
           </Link>{' '}
@@ -45,7 +49,7 @@ export const EmailChangeEmail = ({
           .
         </Text>
         <Text style={text}>
-          Clique no botão abaixo para confirmar esta alteração:
+          Clique no botão abaixo para confirmar:
         </Text>
         <Button style={button} href={confirmationUrl}>
           Confirmar Troca de Email
@@ -61,11 +65,12 @@ export const EmailChangeEmail = ({
 export default EmailChangeEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
-const container = { padding: '20px 25px' }
+const container = { padding: '32px 25px' }
+const logo = { height: '40px', width: 'auto', marginBottom: '24px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#1a1a1a',
+  color: '#19191d',
   margin: '0 0 20px',
 }
 const text = {
@@ -74,13 +79,14 @@ const text = {
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const link = { color: 'hsl(265, 83%, 57%)', textDecoration: 'underline' }
 const button = {
   backgroundColor: 'hsl(265, 83%, 57%)',
   color: '#ffffff',
   fontSize: '14px',
-  borderRadius: '12px',
-  padding: '12px 20px',
+  fontWeight: '600' as const,
+  borderRadius: '24px',
+  padding: '14px 28px',
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

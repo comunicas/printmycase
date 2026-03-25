@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Text,
@@ -20,6 +21,8 @@ interface InviteEmailProps {
   confirmationUrl: string
 }
 
+const LOGO_URL = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
+
 export const InviteEmail = ({
   siteName,
   siteUrl,
@@ -27,12 +30,13 @@ export const InviteEmail = ({
 }: InviteEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Você foi convidado para a {siteName}</Preview>
+    <Preview>Convite PrintMyCase</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src={LOGO_URL} alt={siteName} height="40" style={logo} />
         <Heading style={h1}>Você foi convidado!</Heading>
         <Text style={text}>
-          Você recebeu um convite para a{' '}
+          Você foi convidado para a{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
           </Link>
@@ -42,7 +46,7 @@ export const InviteEmail = ({
           Aceitar Convite
         </Button>
         <Text style={footer}>
-          Se não esperava este convite, pode ignorar este email com segurança.
+          Se você não esperava este convite, pode ignorar este email.
         </Text>
       </Container>
     </Body>
@@ -52,11 +56,12 @@ export const InviteEmail = ({
 export default InviteEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
-const container = { padding: '20px 25px' }
+const container = { padding: '32px 25px' }
+const logo = { height: '40px', width: 'auto', marginBottom: '24px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#1a1a1a',
+  color: '#19191d',
   margin: '0 0 20px',
 }
 const text = {
@@ -65,13 +70,14 @@ const text = {
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const link = { color: 'hsl(265, 83%, 57%)', textDecoration: 'underline' }
 const button = {
   backgroundColor: 'hsl(265, 83%, 57%)',
   color: '#ffffff',
   fontSize: '14px',
-  borderRadius: '12px',
-  padding: '12px 20px',
+  fontWeight: '600' as const,
+  borderRadius: '24px',
+  padding: '14px 28px',
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
