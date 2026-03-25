@@ -1,42 +1,36 @@
-## Sistema de Emails — Refatoração Completa ✅
 
-### Infraestrutura
 
-- Filas pgmq (`auth_emails`, `transactional_emails`) + cron job a cada 5s
-- Tabelas: `email_send_log`, `email_send_state`, `suppressed_emails`, `email_unsubscribe_tokens`
-- RPCs: `enqueue_email`, `read_email_batch`, `delete_email`, `move_to_dlq`
+## Thumbnail com Hover Zoom na Página do Design
 
-### Edge Functions
+### O que muda
 
-| Função | Descrição |
-|--------|-----------|
-| `auth-email-hook` | Webhook de auth → renderiza templates React Email → enfileira em `auth_emails` |
-| `send-transactional-email` | Entrada única para emails transacionais → verifica supressão → gera token unsubscribe → enfileira |
-| `process-email-queue` | Dispatcher (cron) → drena filas → retry/rate-limit/DLQ |
-| `preview-transactional-email` | Preview de templates transacionais (API interna) |
-| `handle-email-unsubscribe` | API JSON para validação e processamento de unsubscribe |
-| `handle-email-suppression` | Webhook para bounces/complaints do provedor |
-| `notify-order-status` | Admin: busca dados do pedido → chama `send-transactional-email` com template `order-status-update` |
+Abaixo da imagem principal do design, adicionar uma **thumbnail clicável** da imagem. Ao passar o mouse (hover) ou tocar (mobile), exibe um **overlay/modal com a imagem em tamanho grande** para o usuário conferir os detalhes antes de finalizar.
 
-### Templates de Autenticação (PT-BR + branding)
+### Alteração
 
-Todos com logo PrintMyCase, cor primária `hsl(265, 83%, 57%)`, border-radius `24px`, fonte Inter:
-- `signup.tsx` — Confirme sua conta
-- `recovery.tsx` — Redefinir senha
-- `magic-link.tsx` — Acesse sua conta
-- `invite.tsx` — Convite
-- `email-change.tsx` — Confirme a troca de email
-- `reauthentication.tsx` — Código de verificação
+| # | Arquivo | O que |
+|---|---------|-------|
+| 1 | `src/pages/DesignPage.tsx` | Adicionar thumbnail abaixo da imagem principal + estado `showZoom`. Ao hover na thumb, exibe overlay fullscreen com a imagem ampliada. No mobile, click abre/fecha o overlay. |
 
-### Templates Transacionais
+### Layout
 
-- `order-status-update.tsx` — Status do pedido (badge colorido, dados, rastreio, botão "Ver Meus Pedidos")
+```text
+┌──────────────────────┐
+│                      │
+│   Imagem principal   │  ← já existe (aspect-square)
+│                      │
+└──────────────────────┘
+┌────────┐
+│ thumb  │  ← nova (w-16 h-16, borda, cursor zoom-in)
+└────────┘
+   hover → overlay escuro com imagem grande (max-w-3xl, click para fechar)
+```
 
-### DNS Pendente
+### Comportamento
 
-| Tipo | Nome | Valor |
-|------|------|-------|
-| NS | notify | `ns3.lovable.cloud` |
-| NS | notify | `ns4.lovable.cloud` |
+- Thumbnail: miniatura 64×64px com borda, `cursor-pointer`
+- Hover (desktop): abre overlay com `fixed inset-0 bg-black/80 z-50` contendo a imagem em tamanho grande (`max-w-3xl max-h-[90vh] object-contain`)
+- Click (mobile): toggle do overlay
+- Click no overlay ou pressionar Escape: fecha
+- Texto auxiliar sob a thumb: "Passe o mouse para ampliar"
 
-Estes registros devem ser adicionados no provedor DNS de `printmycase.com.br`.
