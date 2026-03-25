@@ -1,44 +1,27 @@
 
 
-## Otimização de Imagens Públicas na Galeria
+## Atualizar Edge Functions para usar getClaims
 
-### Diagnóstico
+### Alterações
 
-Não existe rotina de otimização nas imagens da galeria pública. O fluxo atual:
+| # | Arquivo | O que |
+|---|---------|-------|
+| 1 | `supabase/functions/upscale-image/index.ts` (linhas 30-37) | Trocar `getUser(token)` por `getClaims(token)`. Extrair `userId` de `claimsData.claims.sub` |
+| 2 | `supabase/functions/generate-gallery-image/index.ts` (linhas 30-36) | Trocar `getUser(token)` por `getClaims(token)`. Extrair userId de `claimsData.claims.sub` e usar no `has_role` RPC (linha 44) |
 
-```text
-fal.ai output (ex: 1280x2272 jpg, ~500KB-2MB)
-  → armazenado em customizations/ (tamanho original)
-  → copiado 1:1 para product-assets/galleries/public/ (sem resize)
-  → servido na landing page em cards de ~200-400px
+### Padrão aplicado (mesmo do apply-ai-filter)
+
+```typescript
+// Antes
+const { data: userData, error: userError } = await supabase.auth.getUser(token);
+if (userError || !userData?.user) { /* 401 */ }
+const userId = userData.user.id;
+
+// Depois
+const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+if (claimsError || !claimsData?.claims) { /* 401 */ }
+const userId = claimsData.claims.sub as string;
 ```
 
-O resultado é que imagens de até 2MB são servidas para exibição em cards de 200px. Não há nenhuma compressão, redimensionamento ou conversão para WebP no pipeline de publicação.
-
-### Plano de Correção
-
-| # | Onde | O que |
-|---|------|-------|
-| 1 | `UserGenerationsManager.tsx` — `copyToPublicBucket` | Após o download do bucket privado, redimensionar a imagem para max 800x800 e converter para WebP (quality 0.80) usando canvas no browser antes de fazer upload para o bucket público. Isso reduz ~80% do peso. |
-| 2 | `AiCoinsSection.tsx` | Adicionar `decoding="async"` e `fetchpriority="low"` nas imagens da galeria para não competir com o LCP. |
-
-### Detalhes Técnicos — Passo 1
-
-Na função `copyToPublicBucket`, após o `download()`, criar um pipeline de otimização:
-
-```text
-blob do bucket privado
-  → createImageBitmap(blob)
-  → canvas.drawImage (max 800x800, mantendo aspect ratio)
-  → canvas.toBlob("image/webp", 0.80)
-  → upload para product-assets/galleries/public/{id}.webp
-```
-
-Isso garante que toda imagem publicada passe por otimização automática, sem depender de ação manual.
-
-### Impacto Estimado
-
-- Imagem típica de filtro (640x1136 jpg): ~300KB → ~60KB webp 800px
-- Imagem típica de upscale (1280x2272 jpg): ~1.5MB → ~80KB webp 800px
-- Melhoria no LCP da landing page: significativa (menos bytes no viewport)
+Sem mudança funcional — apenas valida o JWT localmente em vez de fazer round-trip ao servidor.
 
