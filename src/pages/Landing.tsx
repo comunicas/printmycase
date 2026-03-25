@@ -36,7 +36,7 @@ const fadeIn = (delayMs: number): React.CSSProperties => ({
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { collections } = useCollections();
+  const { products } = useProducts(7);
 
   return (
     <>
