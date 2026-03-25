@@ -200,7 +200,7 @@ const DesignPage = () => {
                   />
                 </button>
                 <span className="text-xs text-muted-foreground hidden sm:inline">
-                  Passe o mouse para ampliar
+                  Clique para ampliar
                 </span>
                 <span className="text-xs text-muted-foreground sm:hidden">
                   Toque para ampliar
