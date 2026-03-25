@@ -1,52 +1,60 @@
 
 
-## Ajustar SEO dinâmico das páginas públicas
+## Prerender para Crawlers (WhatsApp, Facebook, LinkedIn)
 
-### Diagnóstico
+### O Problema
 
-As páginas já injetam meta tags via `useEffect`, mas há inconsistências — algumas não definem `og:image`, `twitter:card` ou `twitter:image`. O `index.html` tem tags OG estáticas do landing page que servem como fallback.
+Como o app é uma SPA (Single Page Application) servida estaticamente pelo Lovable, crawlers que **não executam JavaScript** (WhatsApp, Facebook, LinkedIn, Telegram) sempre veem as meta tags estáticas do `index.html` — nunca as dinâmicas injetadas via `useEffect`.
 
-**Páginas com meta tags incompletas:**
+### Solução
 
-| Página | og:image | og:type | twitter:card | twitter:image |
-|--------|----------|---------|--------------|---------------|
-| Catalog (`/catalog`) | ❌ | ❌ | ❌ | ❌ |
-| Collections (`/colecoes`) | ❌ | ✅ | ❌ (card) | ❌ |
-| CollectionPage (`/colecao/:slug`) | ✅ | ✅ | ❌ (card) | ✅ |
-| DesignPage (`/colecao/:s/:d`) | ✅ | ✅ | ✅ | ✅ |
-| Product (`/product/:id`) | ✅ | ✅ | ✅ | ✅ |
+Criar uma edge function `prerender` que gera HTML mínimo com as meta tags corretas para cada rota pública, e configurar um proxy reverso (Cloudflare Worker) no domínio customizado para rotear crawlers para essa função.
 
-### Limitação importante
+```text
+Crawler (WhatsApp/Facebook)
+  → studio.printmycase.com.br/colecao/Creative/heck-yeah
+  → Cloudflare Worker detecta bot pelo User-Agent
+  → Proxy para edge function "prerender?path=/colecao/Creative/heck-yeah"
+  → Retorna HTML com og:title, og:image, og:description corretos
 
-Como o app é SPA (client-side rendering), crawlers que **não executam JavaScript** (WhatsApp, Facebook, LinkedIn) verão sempre as tags estáticas do `index.html`. O Google executa JS e lê as tags dinâmicas. Para resolver isso de forma completa, seria necessário um serviço de prerender (fora do escopo atual).
+Usuário normal
+  → Cloudflare Worker detecta browser normal
+  → Serve a SPA normalmente (sem mudança)
+```
 
 ### Alterações
 
 | # | Arquivo | O que |
 |---|---------|-------|
-| 1 | `src/pages/Catalog.tsx` | Adicionar `og:image` (usar a social image padrão ou primeira imagem de produto), `og:type: website`, `twitter:card: summary_large_image`, `twitter:title`, `twitter:description`, `twitter:image` |
-| 2 | `src/pages/Collections.tsx` | Adicionar `og:image` (usar cover da primeira coleção ou fallback), `twitter:card: summary_large_image`, `twitter:image` |
-| 3 | `src/pages/CollectionPage.tsx` | Adicionar `twitter:card: summary_large_image` |
-| 4 | Extrair helper `setMetaTags` | Criar um utilitário `src/lib/seo.ts` com a função `setMeta` reutilizável e uma função `setPageSeo({ title, description, image, url, type })` para eliminar duplicação em todas as páginas |
+| 1 | `supabase/functions/prerender/index.ts` | Nova edge function que recebe `?path=...`, identifica a rota (produto, coleção, design, catálogo, etc.), busca dados no banco e retorna HTML mínimo com todas as meta tags OG/Twitter corretas |
 
-### Estrutura do helper
+### Como funciona a edge function
 
-```typescript
-// src/lib/seo.ts
-export function setPageSeo(opts: {
-  title: string;
-  description: string;
-  url: string;
-  image?: string;
-  type?: string; // default "website"
-}) {
-  document.title = opts.title;
-  // sets: description, og:title, og:description, og:image, og:url, og:type
-  // sets: twitter:card, twitter:title, twitter:description, twitter:image
-  // sets/creates canonical link
-  // returns cleanup function for useEffect
-}
-```
+1. Recebe o path da URL (ex: `/colecao/Creative/heck-yeah`)
+2. Faz pattern matching para identificar o tipo de página:
+   - `/product/:slug` → busca produto
+   - `/colecao/:slug` → busca coleção
+   - `/colecao/:col/:design` → busca design
+   - `/colecoes` → página estática de coleções
+   - `/catalog` → página estática de catálogo
+   - `/` → landing page
+3. Busca os dados relevantes do banco (título, descrição, imagem)
+4. Retorna HTML com:
+   - `og:title`, `og:description`, `og:image`, `og:url`
+   - `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`
+   - `<meta http-equiv="refresh">` para redirecionar usuários normais para a SPA
+   - Cache de 1 hora
 
-Todas as 5 páginas públicas passam a usar `setPageSeo()`, garantindo consistência e eliminando ~15 linhas duplicadas por página.
+### Configuração do proxy (manual, fora do Lovable)
+
+Após a edge function estar deployada, será necessário configurar um Cloudflare Worker (ou similar) no domínio `studio.printmycase.com.br` que:
+- Detecta bots pelo User-Agent (facebookexternalhit, WhatsApp, LinkedInBot, TelegramBot, Twitterbot)
+- Redireciona a requisição para a edge function com o path original
+- Para todos os outros requests, serve normalmente
+
+Fornecerei o código do Worker como referência.
+
+### Limitação
+
+A configuração do Cloudflare Worker é externa ao Lovable e precisa ser feita manualmente no painel do Cloudflare (ou equivalente do provedor DNS usado).
 
