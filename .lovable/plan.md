@@ -1,22 +1,42 @@
+## Sistema de Emails — Refatoração Completa ✅
 
+### Infraestrutura
 
-## Corrigir domínio do app nos emails de autenticação
+- Filas pgmq (`auth_emails`, `transactional_emails`) + cron job a cada 5s
+- Tabelas: `email_send_log`, `email_send_state`, `suppressed_emails`, `email_unsubscribe_tokens`
+- RPCs: `enqueue_email`, `read_email_batch`, `delete_email`, `move_to_dlq`
 
-### Problema
+### Edge Functions
 
-O `auth-email-hook` tem `ROOT_DOMAIN = "printmycase.com.br"`, fazendo os links dos emails de autenticação apontarem para `https://printmycase.com.br` em vez de `https://studio.printmycase.com.br`.
+| Função | Descrição |
+|--------|-----------|
+| `auth-email-hook` | Webhook de auth → renderiza templates React Email → enfileira em `auth_emails` |
+| `send-transactional-email` | Entrada única para emails transacionais → verifica supressão → gera token unsubscribe → enfileira |
+| `process-email-queue` | Dispatcher (cron) → drena filas → retry/rate-limit/DLQ |
+| `preview-transactional-email` | Preview de templates transacionais (API interna) |
+| `handle-email-unsubscribe` | API JSON para validação e processamento de unsubscribe |
+| `handle-email-suppression` | Webhook para bounces/complaints do provedor |
+| `notify-order-status` | Admin: busca dados do pedido → chama `send-transactional-email` com template `order-status-update` |
 
-### Alteração
+### Templates de Autenticação (PT-BR + branding)
 
-| # | Arquivo | O que |
-|---|---------|-------|
-| 1 | `supabase/functions/auth-email-hook/index.ts` | Alterar `ROOT_DOMAIN` para `"studio.printmycase.com.br"`. Alterar `SAMPLE_PROJECT_URL` para `"https://studio.printmycase.com.br"`. Manter `SENDER_DOMAIN` e `FROM_DOMAIN` como estão (o envio continua via `printmycase.com.br`). |
+Todos com logo PrintMyCase, cor primária `hsl(265, 83%, 57%)`, border-radius `24px`, fonte Inter:
+- `signup.tsx` — Confirme sua conta
+- `recovery.tsx` — Redefinir senha
+- `magic-link.tsx` — Acesse sua conta
+- `invite.tsx` — Convite
+- `email-change.tsx` — Confirme a troca de email
+- `reauthentication.tsx` — Código de verificação
 
-### O que NÃO muda
-- `SENDER_DOMAIN = "notify.printmycase.com.br"` — correto, é o subdomínio de envio
-- `FROM_DOMAIN = "printmycase.com.br"` — correto, é o domínio no remetente (`noreply@printmycase.com.br`)
-- Domínio de email configurado (`printmycase.com.br`) — correto, o NS do `notify` precisa ser verificado no provedor de DNS de `printmycase.com.br`
+### Templates Transacionais
 
-### Sobre o DNS
-O status do domínio de email está como **pendente**. Os NS records (`ns3.lovable.cloud` e `ns4.lovable.cloud`) para o subdomínio `notify` precisam estar configurados no provedor que gerencia o DNS de `printmycase.com.br` — seja Registro.br ou Hostinger, dependendo de para onde os NS do domínio raiz apontam.
+- `order-status-update.tsx` — Status do pedido (badge colorido, dados, rastreio, botão "Ver Meus Pedidos")
 
+### DNS Pendente
+
+| Tipo | Nome | Valor |
+|------|------|-------|
+| NS | notify | `ns3.lovable.cloud` |
+| NS | notify | `ns4.lovable.cloud` |
+
+Estes registros devem ser adicionados no provedor DNS de `printmycase.com.br`.
