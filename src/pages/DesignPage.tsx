@@ -183,7 +183,8 @@ const DesignPage = () => {
               <img
                 src={design.image_url}
                 alt={design.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover cursor-zoom-in"
+                onClick={() => { setZoomImage(design.image_url); setShowZoom(true); }}
               />
             </div>
             <div className="flex items-center gap-3">
