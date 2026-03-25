@@ -1,36 +1,41 @@
 
 
-## Revisão e Correção do Sistema de Emails
+## Alterar vitrine da home para exibir Coleções + CTA fixo
 
-### Diagnóstico
+### O que muda
 
-Encontrei **3 problemas** que explicam por que os emails não estão funcionando:
+A seção "Escolha um modelo" atualmente mostra 4 produtos individuais. Será alterada para:
 
-1. **DNS pendente** — O domínio `notify.printmycase.com.br` está com status "Pending". Os registros NS não foram configurados (ou ainda não propagaram) no provedor de domínio. Sem isso, nenhum email é enviado.
+1. **Primeiro card fixo** — Um card de CTA estilizado ("Personalize sua Capinha") que leva para `/customize`. Não é um produto, é um card visual com ícone/ilustração e botão.
+2. **Cards seguintes** — Exibem as **coleções ativas** (cover_image, nome), linkando para `/colecao/{slug}`. Mostra até 3 coleções para manter o grid 4 colunas.
 
-2. **auth-email-hook desatualizado** — O hook de emails de autenticação (confirmação de conta, recuperação de senha, etc.) usa o padrão antigo de envio direto. Precisa ser atualizado para usar a fila de mensagens, garantindo retentativas automáticas em caso de falha.
+### Alterações
 
-3. **SENDER_DOMAIN errado no auth-email-hook** — Está configurado como `printmycase.com.br` (domínio raiz), mas deveria ser `notify.printmycase.com.br` (subdomínio verificado). Isso faz a API rejeitar todos os envios de emails de autenticação.
+| # | Arquivo | O que |
+|---|---------|-------|
+| 1 | `src/pages/Landing.tsx` | Substituir o grid de `featuredProducts` por: 1 card CTA fixo + cards de coleções. Remover `useProducts(4)` (se não usado em outro lugar da page). Usar `collections` que já é carregado. Remover a seção separada de "Coleções Exclusivas" mais abaixo para evitar duplicidade. |
+| 2 | `src/components/CollectionCard.tsx` | **Novo** — Card de coleção com cover_image, nome, hover effect. Link para `/colecao/{slug}`. Reutilizável. |
 
-O `notify-order-status` (emails transacionais de pedidos) já está correto — usa a fila e o subdomínio certo.
+### Layout do grid
 
-### Plano de Ação
+```text
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│  🎨 CTA      │ │  Coleção 1   │ │  Coleção 2   │ │  Coleção 3   │
+│  Personalize │ │  (cover)     │ │  (cover)     │ │  (cover)     │
+│  sua Capinha  │ │              │ │              │ │              │
+│  [Botão]     │ │  Nome        │ │  Nome        │ │  Nome        │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+                          "Ver Todas as Coleções >"
+```
 
-| # | Ação | Detalhes |
-|---|------|----------|
-| 1 | **Completar configuração DNS** | Acessar Cloud → Emails e verificar/completar os registros NS no provedor de domínio. Sem isso, nada funciona. |
-| 2 | **Atualizar auth-email-hook** | Re-scaffoldar o hook para usar o padrão baseado em fila (`enqueue_email`) ao invés do envio direto (`sendLovableEmail`). Isso adiciona retentativas automáticas e resiliência. |
-| 3 | **Corrigir SENDER_DOMAIN** | Alterar de `printmycase.com.br` para `notify.printmycase.com.br` no auth-email-hook após o re-scaffold. |
-| 4 | **Deploy do auth-email-hook** | Reimplantar a função atualizada. |
-| 5 | **Verificar cron job** | Confirmar que o job `process-email-queue` existe e está rodando a cada 5 segundos para processar a fila. |
+- Mobile: grid 2 colunas (CTA + 1 coleção na primeira linha)
+- O título da seção muda para "Escolha um modelo" (mantém)
+- Botão inferior muda para "Ver Todas as Coleções"
+- A seção "Coleções Exclusivas" mais abaixo é removida (agora redundante)
 
-### Alternativas?
-
-O sistema atual (Lovable Emails com fila pgmq) é a melhor opção para este projeto — já está parcialmente configurado e não requer API keys ou contas externas. O único bloqueio real é o DNS pendente.
-
-Não há necessidade de trocar para outro serviço. Uma vez que o DNS propagar e os fixes acima forem aplicados, tanto os emails de autenticação quanto os de notificação de pedidos vão funcionar com retentativas automáticas.
-
-### Próximo passo imediato
-
-Completar a configuração DNS em Cloud → Emails. Posso então aplicar os fixes técnicos (steps 2-5) em seguida.
+### CTA Card
+- Background gradient primary com ícone de smartphone/palette
+- Texto: "Personalize sua Capinha" + subtexto "Envie sua foto e crie um design único"
+- Botão: "Começar" com seta
+- `onClick → navigate("/customize")`
 
