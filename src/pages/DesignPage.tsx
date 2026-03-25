@@ -33,7 +33,15 @@ const DesignPage = () => {
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [showZoom, setShowZoom] = useState(false);
   const initiateCheckoutEventId = useRef(generateEventId());
+
+  useEffect(() => {
+    if (!showZoom) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setShowZoom(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showZoom]);
 
   // Auto-select first product
   useEffect(() => {
