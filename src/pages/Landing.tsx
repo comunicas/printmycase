@@ -5,10 +5,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useCollections } from "@/hooks/useCollections";
+import { useProducts } from "@/hooks/useProducts";
 import SeoHead from "@/components/SeoHead";
 import AppHeader from "@/components/AppHeader";
-import CollectionCard from "@/components/CollectionCard";
+import ProductCard from "@/components/ProductCard";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import AiCoinsSection from "@/components/AiCoinsSection";
