@@ -15,7 +15,7 @@ import AiCoinsSection from "@/components/AiCoinsSection";
 import WhyPrintMyCase from "@/components/WhyPrintMyCase";
 import FaqSection from "@/components/FaqSection";
 import PaymentBadges from "@/components/PaymentBadges";
-import PublicGallerySection from "@/components/PublicGallerySection";
+
 import logoPrintMyCase from "@/assets/logo-printmycase-sm.webp";
 
 const testimonials = [
@@ -224,8 +224,6 @@ const Landing = () => {
           <WhyPrintMyCase />
 
 
-          {/* Public AI Gallery */}
-          <PublicGallerySection />
 
           {/* Testimonials */}
           <section id="depoimentos" className="py-16 px-5 bg-background">
