@@ -152,7 +152,7 @@ const Landing = () => {
           <section id="destaques" className="py-16 px-5 bg-background">
             <div className="max-w-5xl mx-auto">
               <ScrollReveal>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Escolha um modelo</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Crie ou escolha sua campinha</h2>
               </ScrollReveal>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Fixed CTA Card */}
