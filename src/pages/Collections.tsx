@@ -245,7 +245,7 @@ const Collections = () => {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {col.designs.slice(0, 8).map((d) => (
-                    <DesignCard key={d.id} design={d} />
+                    <LazyDesignCard key={d.id} design={d} />
                   ))}
                 </div>
                 {col.designs.length > 8 && (
