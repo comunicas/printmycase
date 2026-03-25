@@ -1,35 +1,36 @@
 
 
-## Otimização de Imagens — Front-end e SEO
+## Otimização de Thumbnails — Plano Completo
 
 ### Diagnóstico
 
-| Problema | Impacto | Onde |
-|----------|---------|-----|
-| **Logo do header é PNG** (`logo-printmycase.png`) | LCP penalizado — PNG é ~3-5x maior que WebP para logos | `AppHeader.tsx` |
-| **Assets originais não-otimizados no repositório** | `hero-bg.jpg` (original), `hero-bg.png`, `hero-bg.webp`, `printmycase-hero.png`, `printmycase-hero.webp`, `logo-epson.png`, `logo-precisioncore.png` — ocupam espaço e podem ser importados por engano | `src/assets/` |
-| **Imagens da galeria de inspiração sem `width`/`height`** | CLS (Cumulative Layout Shift) — browser não reserva espaço | `PublicGallerySection.tsx` |
-| **Design cards da landing sem `width`/`height`** | CLS nos cards de coleção | `Landing.tsx` (grid de designs) |
-| **Showcase AI images duplicadas no DOM** (marquee `[...arr, ...arr]`) | 10 `<img>` tags em vez de 5 — dobra downloads | `AiCoinsSection.tsx` |
-| **Galeria pública sem fallback visual para imagens faltantes** | Se `public_image_url` for null e `image_url` expirou, renderiza img quebrada | `PublicGallerySection.tsx` |
+Analisei todas as imagens renderizadas como thumbnails na aplicação. Problemas encontrados:
+
+| Problema | Impacto | Arquivos |
+|----------|---------|----------|
+| **Thumbs sem `width`/`height` explícitos** | CLS — browser não reserva espaço antes do download | `CollectionPage.tsx`, `SelectModel.tsx`, `MyGenerations.tsx`, `DesignPage.tsx`, `ModelSelector.tsx`, `PendingCheckoutCards.tsx`, `ProductsTable.tsx` |
+| **Thumbs sem `loading="lazy"`** | Downloads desnecessários — imagens fora do viewport carregam junto | `DesignPage.tsx` (thumb do design e device), `CollectionDesignsManager.tsx`, `ImageGalleriesManager.tsx` |
+| **Sem fallback `onError`** | Imagem quebrada visível se URL expirar ou falhar | `CollectionPage.tsx`, `SelectModel.tsx`, `MyGenerations.tsx`, `DesignPage.tsx`, `PendingCheckoutCards.tsx`, `ModelSelector.tsx` |
+| **Imagem principal do design sem `width`/`height`** | CLS na página do design (LCP element) | `DesignPage.tsx` |
 
 ### Plano de Correções
 
 | # | Arquivo | O que |
 |---|---------|-------|
-| 1 | `AppHeader.tsx` | Trocar `logo-printmycase.png` → `logo-printmycase-sm.webp` (já existe em `src/assets/`) via import estático, eliminando o PNG |
-| 2 | `PublicGallerySection.tsx` | Adicionar `width={400}` e `height={400}` nas `<img>`. Adicionar `onError` handler para esconder imagens quebradas |
-| 3 | `Landing.tsx` | Nos design cards, garantir que `<img>` tenha `width` e `height` explícitos (já tem `300x300`, ok). Confirmar hero bg tem `width`/`height` |
-| 4 | `AiCoinsSection.tsx` | Manter a duplicação (necessária para marquee contínuo) mas adicionar `loading="eager"` apenas nos primeiros 5 e `loading="lazy"` nos clones |
-| 5 | Deletar assets não-usados | Remover `hero-bg.jpg`, `hero-bg.png`, `hero-bg.webp`, `printmycase-hero.png`, `printmycase-hero.webp`, `logo-epson.png`, `logo-precisioncore.png` — mantendo apenas os `.webp` otimizados em uso |
+| 1 | `CollectionPage.tsx` | Adicionar `width={300} height={300}` e `onError` handler nas imagens dos designs |
+| 2 | `SelectModel.tsx` | Adicionar `width={300} height={300}` e `onError` handler nas thumbs dos modelos |
+| 3 | `MyGenerations.tsx` | Adicionar `width={180} height={320}` (aspect 9/16) e `onError` handler |
+| 4 | `DesignPage.tsx` | Adicionar `width={600} height={600}` na imagem principal, `width={64} height={64}` na thumb, `width={120} height={120}` na device image. Adicionar `onError` em todas |
+| 5 | `ModelSelector.tsx` | Adicionar `width={32} height={32}` e `onError` handler nas mini thumbs (w-8 h-8) |
+| 6 | `PendingCheckoutCards.tsx` | Adicionar `width={56} height={56}` e `onError` handler |
+| 7 | `ProductGallery.tsx` | Adicionar `width={600} height={600}` na imagem principal, `width={64} height={64}` nas thumbnails |
+| 8 | `ProductsTable.tsx` (admin) | Adicionar `width={40} height={40}` |
+| 9 | `OrderImagesPreviewer.tsx` (admin) | Adicionar `width={56} height={80}` nas thumbs |
+| 10 | `CollectionDesignsManager.tsx` (admin) | Adicionar `loading="lazy"` e dimensões nas imagens dos designs |
 
-### Detalhes Técnicos
+### Detalhes
 
-**Logo WebP** — O arquivo `logo-printmycase-sm.webp` já existe no projeto. Basta importar como módulo ES e usar como `src`.
-
-**CLS fix na galeria** — Adicionar dimensões explícitas + `object-cover` garante que o browser reserve espaço antes do download.
-
-**Imagens quebradas** — `onError={(e) => (e.currentTarget.style.display = 'none')}` impede que imagens com URL expirada mostrem ícone quebrado.
-
-**Limpeza de assets** — Os 7 arquivos não-otimizados somam ~5-15MB no repositório. Removê-los reduz o bundle size e evita uso acidental.
+- **`onError` padrão**: `onError={(e) => { e.currentTarget.style.display = 'none'; }}` — esconde imagem quebrada sem quebrar layout
+- **Dimensões**: valores escolhidos para corresponder ao tamanho CSS renderizado, evitando CLS sem forçar reflow
+- **Prioridade**: páginas públicas (1-6) primeiro, admin (7-10) depois — impacto no SEO é apenas nas públicas
 
