@@ -91,6 +91,8 @@ const AiCoinsSection = () => {
                       src={img.public_image_url || img.image_url}
                       alt={img.filter_name || "Geração IA"}
                       loading="lazy"
+                      decoding="async"
+                      fetchPriority="low"
                       width={400}
                       height={400}
                       onError={(e) => {
