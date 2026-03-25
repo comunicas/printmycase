@@ -148,26 +148,45 @@ const Landing = () => {
             </div>
           </section>
 
-          {/* Featured Products */}
+          {/* Collections Showcase */}
           <section id="destaques" className="py-16 px-5 bg-background">
             <div className="max-w-5xl mx-auto">
               <ScrollReveal>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Escolha um modelo   </h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Escolha um modelo</h2>
               </ScrollReveal>
-              {loading ?
-              <LoadingSpinner /> :
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {featuredProducts.map((product, i) =>
-                <ScrollReveal key={product.id} delay={i * 80}>
-                    <ProductCard product={product} />
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Fixed CTA Card */}
+                <ScrollReveal>
+                  <Card
+                    className="group cursor-pointer overflow-hidden border-0 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 bg-gradient-to-br from-primary to-primary/80"
+                    onClick={() => navigate("/customize")}
+                  >
+                    <div className="aspect-square flex flex-col items-center justify-center text-center p-4 space-y-3">
+                      <div className="w-14 h-14 rounded-2xl bg-primary-foreground/20 flex items-center justify-center">
+                        <Smartphone className="w-7 h-7 text-primary-foreground" strokeWidth={1.5} />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-primary-foreground leading-tight">Personalize sua Capinha</h3>
+                        <p className="text-xs text-primary-foreground/70 mt-1">Envie sua foto e crie um design único</p>
+                      </div>
+                      <Button size="sm" variant="secondary" className="gap-1 text-xs font-semibold">
+                        Começar <ArrowRight className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </Card>
+                </ScrollReveal>
+
+                {/* Collection Cards */}
+                {collections.slice(0, 3).map((col, i) => (
+                  <ScrollReveal key={col.id} delay={(i + 1) * 80}>
+                    <CollectionCard collection={col} />
                   </ScrollReveal>
-                )}
+                ))}
               </div>
-              }
               <ScrollReveal delay={350}>
                 <div className="text-center mt-8">
-                  <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
-                    Ver Catálogo Completo <ChevronRight className="w-4 h-4" />
+                  <Button variant="outline" className="gap-2" onClick={() => navigate("/colecoes")}>
+                    Ver Todas as Coleções <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
               </ScrollReveal>
