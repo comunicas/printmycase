@@ -57,7 +57,7 @@ const PublicGallerySection = () => {
               <ScrollReveal key={img.id} delay={i * 80}>
                 <div className={`group relative ${aspect} rounded-xl overflow-hidden bg-muted break-inside-avoid`}>
                   <img
-                    src={img.image_url}
+                    src={img.public_image_url || img.image_url}
                     alt={img.filter_name || "Geração IA"}
                     loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
