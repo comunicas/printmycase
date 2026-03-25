@@ -4,11 +4,11 @@ import AppHeader from "@/components/AppHeader";
 import { useCollection } from "@/hooks/useCollections";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
+import { setPageSeo, setMeta, SITE_URL } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 
 const SITE_NAME = "PrintMyCase";
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 const CollectionPage = () => {
   const { slug } = useParams<{ slug: string }>();
