@@ -65,6 +65,6 @@ const AdjustmentsPanel = forwardRef<HTMLDivElement, AdjustmentsPanelProps>(({
       </Button>
     </div>
   </div>
-);
+));
 
-export default AdjustmentsPanel;
+AdjustmentsPanel.displayName = "AdjustmentsPanel";

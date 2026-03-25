@@ -117,7 +117,7 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
   const uncategorized = filters.filter((f) => !f.category_id || !categories.some((c) => c.id === f.category_id));
 
   return (
-    <div className="space-y-2">
+    <div ref={ref} className="space-y-2">
       {/* Filter history chips */}
       {filterHistory.length > 0 && (
         <div className="space-y-2">
