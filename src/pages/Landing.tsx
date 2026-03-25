@@ -5,10 +5,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useProducts } from "@/hooks/useProducts";
+import { useAllDesigns } from "@/hooks/useCollectionDesigns";
+import { formatPrice } from "@/lib/types";
 import SeoHead from "@/components/SeoHead";
 import AppHeader from "@/components/AppHeader";
-import ProductCard from "@/components/ProductCard";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import AiCoinsSection from "@/components/AiCoinsSection";
@@ -36,7 +36,7 @@ const fadeIn = (delayMs: number): React.CSSProperties => ({
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { products } = useProducts(7);
+  const { designs } = useAllDesigns(7);
 
   return (
     <>
@@ -176,17 +176,39 @@ const Landing = () => {
                   </Card>
                 </ScrollReveal>
 
-                {/* Product Cards */}
-                {products.map((product, i) => (
-                  <ScrollReveal key={product.id} delay={(i + 1) * 80}>
-                    <ProductCard product={product} />
+                {/* Design Cards */}
+                {designs.map((design, i) => (
+                  <ScrollReveal key={design.id} delay={(i + 1) * 80}>
+                    <Card
+                      className="group cursor-pointer overflow-hidden border-0 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                      onClick={() => navigate(`/colecao/${design.collection_slug}/${design.slug}`)}
+                    >
+                      <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
+                        <img
+                          src={design.image_url}
+                          alt={design.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          width="300"
+                          height="300"
+                        />
+                      </div>
+                      <CardContent className="p-2.5">
+                        <h3 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">
+                          {design.name}
+                        </h3>
+                        <span className="inline-block mt-1.5 text-sm font-bold text-foreground bg-accent/60 px-2 py-0.5 rounded-md">
+                          {formatPrice(design.price_cents / 100)}
+                        </span>
+                      </CardContent>
+                    </Card>
                   </ScrollReveal>
                 ))}
               </div>
               <ScrollReveal delay={350}>
                 <div className="text-center mt-8">
-                  <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
-                    Ver Todos os Modelos <ChevronRight className="w-4 h-4" />
+                  <Button variant="outline" className="gap-2" onClick={() => navigate("/colecoes")}>
+                    Ver Todas as Coleções <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
               </ScrollReveal>
