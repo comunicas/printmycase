@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       throw new Error("Failed to credit coins");
     }
 
-    console.log("[verify-coin] Coins credited:", coinAmount, "to user:", user.id);
+    console.log("[verify-coin] Coins credited:", coinAmount, "to user:", userId);
 
     return new Response(JSON.stringify({ status: "credited", coins: coinAmount }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
