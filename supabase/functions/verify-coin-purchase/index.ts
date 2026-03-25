@@ -28,15 +28,16 @@ Deno.serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !userData.user) {
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const user = userData.user;
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
     const { sessionId } = await req.json();
 
     if (!sessionId || typeof sessionId !== "string") {
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log("[verify-coin] Start:", JSON.stringify({ userId: user.id, sessionId }));
+    console.log("[verify-coin] Start:", JSON.stringify({ userId, sessionId }));
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -94,8 +95,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (session.metadata?.user_id !== user.id) {
-      console.warn("[verify-coin] User mismatch:", user.id, "vs", session.metadata?.user_id);
+    if (session.metadata?.user_id !== userId) {
+      console.warn("[verify-coin] User mismatch:", userId, "vs", session.metadata?.user_id);
       return new Response(JSON.stringify({ error: "User mismatch" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -114,7 +115,7 @@ Deno.serve(async (req) => {
     const { error: insertError } = await supabaseAdmin
       .from("coin_transactions")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         amount: coinAmount,
         type: "coin_purchase",
         expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
@@ -134,7 +135,7 @@ Deno.serve(async (req) => {
       throw new Error("Failed to credit coins");
     }
 
-    console.log("[verify-coin] Coins credited:", coinAmount, "to user:", user.id);
+    console.log("[verify-coin] Coins credited:", coinAmount, "to user:", userId);
 
     return new Response(JSON.stringify({ status: "credited", coins: coinAmount }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
