@@ -18,7 +18,6 @@ import PaymentBadges from "@/components/PaymentBadges";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 const SITE_NAME = "PrintMyCase";
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 const DesignPage = () => {
   const { collectionSlug, designSlug } = useParams<{ collectionSlug: string; designSlug: string }>();
