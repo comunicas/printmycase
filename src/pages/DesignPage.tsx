@@ -175,13 +175,33 @@ const DesignPage = () => {
       <main className="flex-1 max-w-4xl mx-auto w-full p-5 lg:p-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Design preview */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="aspect-square rounded-2xl overflow-hidden bg-muted border">
               <img
                 src={design.image_url}
                 alt={design.name}
                 className="w-full h-full object-cover"
               />
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="w-16 h-16 rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-zoom-in flex-shrink-0"
+                onMouseEnter={() => setShowZoom(true)}
+                onClick={() => setShowZoom((v) => !v)}
+              >
+                <img
+                  src={design.image_url}
+                  alt={`${design.name} — ampliar`}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+              <span className="text-xs text-muted-foreground hidden sm:inline">
+                Passe o mouse para ampliar
+              </span>
+              <span className="text-xs text-muted-foreground sm:hidden">
+                Toque para ampliar
+              </span>
             </div>
           </div>
 
