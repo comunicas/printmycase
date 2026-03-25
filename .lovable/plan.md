@@ -1,32 +1,89 @@
 
 
-## Vitrine da Home: Designs das Coleções + CTA fixo
+## Página de Coleções — Landing Page Completa com Vitrines por Coleção
 
-### O que muda
+### Visão Geral
 
-A seção "Escolha um modelo" passa a exibir **designs das coleções** (`collection_designs`) ao invés de produtos (modelos de celular). O primeiro card continua sendo o CTA fixo.
+Transformar `/colecoes` de uma listagem simples de cards de coleção em uma **landing page pilar** completa, com busca, tags de coleção, CTA fixo, vitrines separadas por coleção e SEO otimizado.
+
+### Layout da Página
+
+```text
+┌─────────────────────────────────────────────────┐
+│  AppHeader                                       │
+├─────────────────────────────────────────────────┤
+│  Hero: H1 + subtítulo + campo de busca           │
+│  Tags de coleção (chips clicáveis p/ scroll)     │
+├─────────────────────────────────────────────────┤
+│  Grid: CTA "Personalize" + resultados de busca   │
+│  (aparece quando há termo de busca)              │
+├─────────────────────────────────────────────────┤
+│  Vitrine Coleção 1 (h2 + "Ver tudo >")           │
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐               │
+│  │ D1  │ │ D2  │ │ D3  │ │ D4  │               │
+│  └─────┘ └─────┘ └─────┘ └─────┘               │
+├─────────────────────────────────────────────────┤
+│  Vitrine Coleção 2 (h2 + "Ver tudo >")           │
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐               │
+│  └─────┘ └─────┘ └─────┘ └─────┘               │
+├─────────────────────────────────────────────────┤
+│  ... mais coleções                               │
+├─────────────────────────────────────────────────┤
+│  CTA final: "Não encontrou? Personalize!"        │
+│  Footer links                                    │
+└─────────────────────────────────────────────────┘
+```
 
 ### Alterações
 
-| # | Arquivo | Alteração |
-|---|---------|-----------|
-| 1 | `src/pages/Landing.tsx` | Substituir `useProducts` por query de `collection_designs` (todas as ativas, com join na collection para pegar o slug). Renderizar cards com `image_url`, `name`, `price_cents`. Cada card linka para `/colecao/{collectionSlug}/{designSlug}`. Botão inferior: "Ver Todas as Coleções" → `/colecoes`. Remover import de `ProductCard` e `useProducts`. |
-| 2 | `src/hooks/useCollectionDesigns.ts` | **Novo** — Hook `useAllDesigns(limit?)` que busca `collection_designs` ativas com `collections.slug` via join, ordenadas por `created_at desc`. Retorna array com `image_url`, `name`, `price_cents`, `slug`, `collection_slug`. |
+| # | Arquivo | O que |
+|---|---------|-------|
+| 1 | `src/hooks/useCollectionDesigns.ts` | Adicionar hook `useDesignsGroupedByCollection()` — busca **todas** as `collection_designs` ativas com join em `collections(id, name, slug, sort_order)`, agrupa por coleção e ordena coleções por `sort_order`. Retorna `{ collections: { id, name, slug, designs: Design[] }[], allDesigns: Design[], loading }` |
+| 2 | `src/pages/Collections.tsx` | Reescrever completamente como landing page pilar |
 
-### Layout (mesmo grid atual)
+### Detalhes da página Collections.tsx
 
-```text
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│  CTA         │ │  Design 1    │ │  Design 2    │ │  Design 3    │
-│  Personalize │ │  (image_url) │ │  (image_url) │ │  (image_url) │
-│  [Começar]   │ │  Nome/Preço  │ │  Nome/Preço  │ │  Nome/Preço  │
-├──────────────┤ ├──────────────┤ ├──────────────┤ ├──────────────┤
-│  Design 4    │ │  Design 5    │ │  Design 6    │ │  Design 7    │
-└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
-                    "Ver Todas as Coleções >"
+**Hero section:**
+- `<h1>` "Capinhas Exclusivas para Celular" (SEO-friendly)
+- Subtítulo descritivo
+- Campo de busca (`<input>` controlado) que filtra designs por nome em tempo real
+
+**Tags de coleção:**
+- Chips horizontais scrolláveis com nome de cada coleção
+- Click faz scroll suave até a seção da coleção correspondente (`id="colecao-{slug}"`)
+- Tag "Todas" ativa por padrão
+
+**CTA fixo:**
+- Mesmo card da home ("Personalize sua Capinha") como primeiro item quando busca está ativa, ou como seção destacada no topo
+
+**Vitrines por coleção:**
+- Cada coleção vira uma `<section>` com `id="colecao-{slug}"`
+- `<h2>` com nome da coleção + link "Ver tudo →" para `/colecao/{slug}`
+- Grid 2x2 mobile / 4 colunas desktop com os designs
+- Mostra até 8 designs por coleção; se tiver mais, botão "Ver todos os designs"
+
+**Busca:**
+- Quando o usuário digita, esconde as vitrines e mostra um grid flat filtrado
+- Filtragem client-side por `design.name.toLowerCase().includes(query)`
+- CTA fixo como primeiro card no grid de resultados
+
+**SEO (dentro do useEffect):**
+- Title: "Capinhas Exclusivas para Celular | PrintMyCase"
+- Meta description rica
+- Canonical: `/colecoes`
+- JSON-LD `CollectionPage` com `ItemList` contendo todos os designs como `Product`
+- Open Graph completo
+- Hierarquia: `<h1>` página → `<h2>` cada coleção → `<h3>` nomes dos designs nos cards
+
+**CTA final:**
+- Seção antes do footer: "Não encontrou o que procura?" + botão para `/customize`
+
+### Hook useDesignsGroupedByCollection
+
+```typescript
+// Busca: collection_designs com collections!inner(id, name, slug, sort_order)
+// Agrupa designs por collection_id
+// Ordena coleções por sort_order
+// Retorna estrutura agrupada + flat list para busca
 ```
-
-- Cada card de design mostra `image_url`, `name`, `formatPrice(price_cents/100)`
-- Click navega para `/colecao/{collection.slug}/{design.slug}`
-- Query: `supabase.from("collection_designs").select("*, collections!inner(slug)").eq("active", true).order("created_at", { ascending: false }).limit(7)`
 
