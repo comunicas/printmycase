@@ -1,28 +1,35 @@
 
 
-## Backfill das Imagens Públicas Existentes
+## Otimização de Imagens — Front-end e SEO
 
-### Problema
-As 3 gerações marcadas como `public = true` foram criadas antes do campo `public_image_url`. Ambas têm `public_image_url = null` e `image_url` com signed URLs expiradas. A galeria fica vazia.
+### Diagnóstico
 
-### Solução
+| Problema | Impacto | Onde |
+|----------|---------|-----|
+| **Logo do header é PNG** (`logo-printmycase.png`) | LCP penalizado — PNG é ~3-5x maior que WebP para logos | `AppHeader.tsx` |
+| **Assets originais não-otimizados no repositório** | `hero-bg.jpg` (original), `hero-bg.png`, `hero-bg.webp`, `printmycase-hero.png`, `printmycase-hero.webp`, `logo-epson.png`, `logo-precisioncore.png` — ocupam espaço e podem ser importados por engano | `src/assets/` |
+| **Imagens da galeria de inspiração sem `width`/`height`** | CLS (Cumulative Layout Shift) — browser não reserva espaço | `PublicGallerySection.tsx` |
+| **Design cards da landing sem `width`/`height`** | CLS nos cards de coleção | `Landing.tsx` (grid de designs) |
+| **Showcase AI images duplicadas no DOM** (marquee `[...arr, ...arr]`) | 10 `<img>` tags em vez de 5 — dobra downloads | `AiCoinsSection.tsx` |
+| **Galeria pública sem fallback visual para imagens faltantes** | Se `public_image_url` for null e `image_url` expirou, renderiza img quebrada | `PublicGallerySection.tsx` |
 
-Como as signed URLs já expiraram, não podemos fazer download delas. Mas as imagens ainda existem no bucket `customizations` — o `storage_path` está salvo na tabela. A solução é:
+### Plano de Correções
 
-| # | Ação | Detalhe |
-|---|------|---------|
-| 1 | Refatorar `UserGenerationsManager.tsx` | No toggle para `public = true`, em vez de fazer fetch da signed URL (que pode expirar), usar `supabase.storage.from('customizations').download(storage_path)` para baixar diretamente do bucket privado, e depois fazer upload para `product-assets/galleries/public/{id}.jpg`. Isso funciona porque o admin autenticado tem acesso ao bucket. |
-| 2 | Criar botão de backfill no admin | Adicionar um botão "Reprocessar imagens públicas" que busca todas as gerações com `public = true AND public_image_url IS NULL`, faz download via `storage_path` e upload para o bucket público. |
-| 3 | Alternativa simples | O admin pode desmarcar e remarcar cada geração como pública — o novo código (passo 1) vai funcionar porque usa `storage_path` em vez da signed URL. |
+| # | Arquivo | O que |
+|---|---------|-------|
+| 1 | `AppHeader.tsx` | Trocar `logo-printmycase.png` → `logo-printmycase-sm.webp` (já existe em `src/assets/`) via import estático, eliminando o PNG |
+| 2 | `PublicGallerySection.tsx` | Adicionar `width={400}` e `height={400}` nas `<img>`. Adicionar `onError` handler para esconder imagens quebradas |
+| 3 | `Landing.tsx` | Nos design cards, garantir que `<img>` tenha `width` e `height` explícitos (já tem `300x300`, ok). Confirmar hero bg tem `width`/`height` |
+| 4 | `AiCoinsSection.tsx` | Manter a duplicação (necessária para marquee contínuo) mas adicionar `loading="eager"` apenas nos primeiros 5 e `loading="lazy"` nos clones |
+| 5 | Deletar assets não-usados | Remover `hero-bg.jpg`, `hero-bg.png`, `hero-bg.webp`, `printmycase-hero.png`, `printmycase-hero.webp`, `logo-epson.png`, `logo-precisioncore.png` — mantendo apenas os `.webp` otimizados em uso |
 
-### Correção no toggle (passo 1)
+### Detalhes Técnicos
 
-```text
-Antes:  fetch(image_url) → pode falhar se expirada
-Depois: storage.download(storage_path) → sempre funciona para admin
-```
+**Logo WebP** — O arquivo `logo-printmycase-sm.webp` já existe no projeto. Basta importar como módulo ES e usar como `src`.
 
-### Decisão
+**CLS fix na galeria** — Adicionar dimensões explícitas + `object-cover` garante que o browser reserve espaço antes do download.
 
-O passo 1 é obrigatório (corrigir o toggle). O passo 2 (botão backfill) é um nice-to-have. Após o passo 1, o admin pode simplesmente toggle off/on nas 3 gerações existentes.
+**Imagens quebradas** — `onError={(e) => (e.currentTarget.style.display = 'none')}` impede que imagens com URL expirada mostrem ícone quebrado.
+
+**Limpeza de assets** — Os 7 arquivos não-otimizados somam ~5-15MB no repositório. Removê-los reduz o bundle size e evita uso acidental.
 
