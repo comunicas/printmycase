@@ -165,6 +165,18 @@
   }
 }
 
+/* Zoom overlay animations */
+@keyframes zoom-backdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes zoom-img {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-zoom-backdrop { animation: zoom-backdrop 0.2s ease-out; }
+.animate-zoom-img { animation: zoom-img 0.2s ease-out; }
+
 /* Toast progress bar */
 @keyframes toast-progress {
   from { width: 100%; }

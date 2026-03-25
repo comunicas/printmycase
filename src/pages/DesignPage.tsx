@@ -200,7 +200,7 @@ const DesignPage = () => {
                   />
                 </button>
                 <span className="text-xs text-muted-foreground hidden sm:inline">
-                  Passe o mouse para ampliar
+                  Clique para ampliar
                 </span>
                 <span className="text-xs text-muted-foreground sm:hidden">
                   Toque para ampliar
@@ -248,7 +248,7 @@ const DesignPage = () => {
                   />
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-medium text-foreground truncate">{selectedProduct.name}</span>
-                    <span className="text-xs text-muted-foreground hidden sm:inline">Passe o mouse para ampliar</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">Clique para ampliar</span>
                     <span className="text-xs text-muted-foreground sm:hidden">Toque para ampliar</span>
                   </div>
                 </div>
@@ -289,13 +289,13 @@ const DesignPage = () => {
 
       {showZoom && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out"
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out animate-zoom-backdrop"
           onClick={() => setShowZoom(false)}
         >
           <img
               src={zoomImage}
               alt="Ampliar"
-              className="max-w-3xl max-h-[90vh] w-full object-contain rounded-lg shadow-2xl"
+              className="max-w-3xl max-h-[90vh] w-full object-contain rounded-lg shadow-2xl animate-zoom-img"
               onClick={(e: ReactMouseEvent) => e.stopPropagation()}
             />
         </div>
