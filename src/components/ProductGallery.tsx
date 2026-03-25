@@ -33,8 +33,11 @@ const ProductGallery = forwardRef<HTMLDivElement, ProductGalleryProps>(
           <img
             src={allImages[selectedIndex]}
             alt={`${productName} - Imagem ${selectedIndex + 1}`}
+            width={600}
+            height={600}
             className="w-full h-full object-contain p-6"
             loading={selectedIndex === 0 ? "eager" : "lazy"}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         </div>
 
