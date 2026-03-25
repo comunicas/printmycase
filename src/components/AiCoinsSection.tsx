@@ -59,7 +59,7 @@ const AiCoinsSection = () => {
                   src={src}
                   alt={`Exemplo de filtro IA ${i % showcaseImages.length + 1}`}
                   className="aspect-square w-full object-cover"
-                  loading="lazy"
+                  loading={i < showcaseImages.length ? "eager" : "lazy"}
                   width={176}
                   height={176} />
                 

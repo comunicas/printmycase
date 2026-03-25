@@ -2,6 +2,7 @@ import { forwardRef, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
+import logoWebp from "@/assets/logo-printmycase-sm.webp";
 import UserMenu from "@/components/UserMenu";
 import CoinBalance from "@/components/CoinBalance";
 
@@ -46,7 +47,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
             <img
               alt="PrintMyCase"
               className="h-14 sm:h-16 w-auto transition-all duration-300"
-              src="/lovable-uploads/logo-printmycase.png"
+              src={logoWebp}
               fetchPriority="high"
               width="64"
               height="64"
