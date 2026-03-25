@@ -291,7 +291,6 @@ const DesignPage = () => {
         <div
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setShowZoom(false)}
-          onMouseLeave={() => setShowZoom(false)}
         >
           <img
               src={zoomImage}
