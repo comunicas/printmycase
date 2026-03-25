@@ -31,7 +31,7 @@ const Collections = () => {
 
   /* SEO */
   useEffect(() => {
-    const coverImage = collections.length > 0 ? collections[0].cover_image ?? undefined : undefined;
+    const coverImage = allDesigns.length > 0 ? allDesigns[0].image_url : undefined;
     const cleanup = setPageSeo({
       title: TITLE,
       description: DESC,
