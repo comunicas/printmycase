@@ -1,39 +1,28 @@
 
 
-## Imagens da Galeria de Inspiração Quebradas — URLs Expiradas
+## Backfill das Imagens Públicas Existentes
 
-### Causa Raiz
-
-As `image_url` salvas em `user_ai_generations` são **signed URLs** do bucket `customizations` (que é **privado**). Essas URLs expiram em ~1 hora. Depois disso, as imagens ficam inacessíveis e mostram apenas o alt text.
-
-Exemplo de URL salva:
-```
-.../object/sign/customizations/...?token=...&exp=1774255407
-```
+### Problema
+As 3 gerações marcadas como `public = true` foram criadas antes do campo `public_image_url`. Ambas têm `public_image_url = null` e `image_url` com signed URLs expiradas. A galeria fica vazia.
 
 ### Solução
 
-Quando o admin marcar uma geração como `public = true`, copiar a imagem para o bucket **público** `product-assets` (em `galleries/public/`) e salvar a URL pública permanente em um novo campo `public_image_url`. O componente `PublicGallerySection` passa a usar esse campo.
+Como as signed URLs já expiraram, não podemos fazer download delas. Mas as imagens ainda existem no bucket `customizations` — o `storage_path` está salvo na tabela. A solução é:
 
-### Alterações
+| # | Ação | Detalhe |
+|---|------|---------|
+| 1 | Refatorar `UserGenerationsManager.tsx` | No toggle para `public = true`, em vez de fazer fetch da signed URL (que pode expirar), usar `supabase.storage.from('customizations').download(storage_path)` para baixar diretamente do bucket privado, e depois fazer upload para `product-assets/galleries/public/{id}.jpg`. Isso funciona porque o admin autenticado tem acesso ao bucket. |
+| 2 | Criar botão de backfill no admin | Adicionar um botão "Reprocessar imagens públicas" que busca todas as gerações com `public = true AND public_image_url IS NULL`, faz download via `storage_path` e upload para o bucket público. |
+| 3 | Alternativa simples | O admin pode desmarcar e remarcar cada geração como pública — o novo código (passo 1) vai funcionar porque usa `storage_path` em vez da signed URL. |
 
-| # | O que | Detalhe |
-|---|-------|---------|
-| 1 | Migration | Adicionar coluna `public_image_url text` na tabela `user_ai_generations` |
-| 2 | `PublicGallerySection.tsx` | Usar `public_image_url` (com fallback para `image_url`) no select e na renderização |
-| 3 | `UserGenerationsManager.tsx` (admin) | Ao toggle `public = true`, fazer download da signed URL, upload para `product-assets/galleries/public/{id}.jpg`, salvar a URL pública em `public_image_url`. Ao toggle `public = false`, limpar `public_image_url` |
-
-### Fluxo
+### Correção no toggle (passo 1)
 
 ```text
-Admin marca public = true
-  → fetch image da signed URL (ainda válida no momento do toggle)
-  → upload para product-assets/galleries/public/{generation_id}.jpg
-  → update public_image_url = URL pública permanente
-  → Galeria de Inspiração usa a URL pública (nunca expira)
+Antes:  fetch(image_url) → pode falhar se expirada
+Depois: storage.download(storage_path) → sempre funciona para admin
 ```
 
-### Por que não simplesmente tornar o bucket público?
+### Decisão
 
-O bucket `customizations` contém TODAS as customizações de TODOS os usuários — torná-lo público exporia dados privados. A abordagem correta é copiar apenas as imagens aprovadas para um bucket público.
+O passo 1 é obrigatório (corrigir o toggle). O passo 2 (botão backfill) é um nice-to-have. Após o passo 1, o admin pode simplesmente toggle off/on nas 3 gerações existentes.
 
