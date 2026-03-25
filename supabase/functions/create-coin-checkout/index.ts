@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       ],
       mode: "payment",
       metadata: {
-        user_id: user.id,
+        user_id: userId,
         coin_amount: String(pkg.coins),
         type: "coin_purchase",
       },
