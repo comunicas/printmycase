@@ -78,7 +78,10 @@ const OrderImagesPreviewer = ({ customizationData }: Props) => {
                     <img
                       src={state.url!}
                       alt={label}
+                      width={56}
+                      height={80}
                       className="w-14 h-20 object-cover"
+                      loading="lazy"
                     />
                   </button>
                   {path && state.url && (

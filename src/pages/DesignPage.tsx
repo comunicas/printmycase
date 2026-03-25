@@ -183,8 +183,11 @@ const DesignPage = () => {
               <img
                 src={design.image_url}
                 alt={design.name}
+                width={600}
+                height={600}
                 className="w-full h-full object-cover cursor-zoom-in"
                 onClick={() => { setZoomImage(design.image_url); setShowZoom(true); }}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </div>
             <div className="flex items-center gap-3">
@@ -196,6 +199,8 @@ const DesignPage = () => {
                   <img
                     src={design.image_url}
                     alt={`${design.name} — ampliar`}
+                    width={64}
+                    height={64}
                     className="w-full h-full object-cover"
                   />
                 </button>
@@ -244,7 +249,10 @@ const DesignPage = () => {
                   <img
                     src={selectedProduct.device_image}
                     alt={selectedProduct.name}
+                    width={120}
+                    height={120}
                     className="max-h-[120px] object-contain"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-medium text-foreground truncate">{selectedProduct.name}</span>

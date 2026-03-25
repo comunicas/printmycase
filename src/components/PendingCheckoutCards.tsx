@@ -61,7 +61,7 @@ const PendingCheckoutCards = () => {
       {items.map((item) => (
         <div key={item.id} className="border rounded-xl p-4 bg-card flex items-center gap-4">
           {item.thumbUrl && (
-            <img src={item.thumbUrl} alt="Preview" className="w-14 h-14 rounded-lg object-cover border flex-shrink-0" />
+            <img src={item.thumbUrl} alt="Preview" width={56} height={56} className="w-14 h-14 rounded-lg object-cover border flex-shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           )}
           <div className="flex-1 min-w-0">
             <p className="font-medium text-sm text-foreground truncate">{item.productName ?? "Produto"}</p>

@@ -70,7 +70,7 @@ const ProductsTable = ({ products, loading, onEdit, onToggleActive, selectedIds,
               </TableCell>
               <TableCell>
               {(p.images?.[0] || p.device_image) ? (
-                  <img src={p.images?.[0] || p.device_image!} alt={p.name} className="h-10 w-10 rounded object-cover" />
+                  <img src={p.images?.[0] || p.device_image!} alt={p.name} width={40} height={40} className="h-10 w-10 rounded object-cover" loading="lazy" />
                 ) : (
                   <div className="h-10 w-10 rounded bg-muted" />
                 )}

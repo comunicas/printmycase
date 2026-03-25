@@ -159,8 +159,11 @@ const SelectModel = () => {
                     <img
                       src={thumb}
                       alt={product.name}
+                      width={300}
+                      height={300}
                       className="w-full aspect-square object-contain rounded-lg bg-muted/30 group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   ) : (
                     <div className="w-full aspect-square rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground text-xs">

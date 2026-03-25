@@ -126,8 +126,11 @@ const MyGenerations = () => {
                         <img
                           src={gen.image_url}
                           alt={`${typeLabels[gen.generation_type] || gen.generation_type} #${gen.step_number}`}
+                          width={180}
+                          height={320}
                           className="w-full h-full object-cover"
                           loading="lazy"
+                          onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none'; }}
                         />
                       </div>
                       {/* Overlay with actions */}
