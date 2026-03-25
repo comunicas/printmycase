@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -18,26 +19,29 @@ interface RecoveryEmailProps {
   confirmationUrl: string
 }
 
+const LOGO_URL = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
+
 export const RecoveryEmail = ({
   siteName,
   confirmationUrl,
 }: RecoveryEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Reset your password for {siteName}</Preview>
+    <Preview>Redefinir senha — {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Reset your password</Heading>
+        <Img src={LOGO_URL} alt={siteName} height="40" style={logo} />
+        <Heading style={h1}>Redefinir sua senha</Heading>
         <Text style={text}>
-          We received a request to reset your password for {siteName}. Click
-          the button below to choose a new password.
+          Recebemos uma solicitação para redefinir sua senha na {siteName}. Clique
+          no botão abaixo para escolher uma nova senha.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Reset Password
+          Redefinir Senha
         </Button>
         <Text style={footer}>
-          If you didn't request a password reset, you can safely ignore this
-          email. Your password will not be changed.
+          Se você não solicitou a redefinição de senha, pode ignorar este email.
+          Sua senha não será alterada.
         </Text>
       </Container>
     </Body>
@@ -46,26 +50,28 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
+const container = { padding: '32px 25px' }
+const logo = { height: '40px', width: 'auto', marginBottom: '24px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: '#19191d',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
+  color: '#555555',
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: 'hsl(265, 83%, 57%)',
   color: '#ffffff',
   fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  fontWeight: '600' as const,
+  borderRadius: '24px',
+  padding: '14px 28px',
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
