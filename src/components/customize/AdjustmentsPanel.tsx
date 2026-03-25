@@ -16,11 +16,11 @@ interface AdjustmentsPanelProps {
   isUpscaling: boolean;
 }
 
-const AdjustmentsPanel = ({
+const AdjustmentsPanel = forwardRef<HTMLDivElement, AdjustmentsPanelProps>(({
   scale, rotation, onScaleChange, onRotate, onExpand, onUpscale,
   disabled, isHD, upscaleCost, isUpscaling,
-}: AdjustmentsPanelProps) => (
-  <div className="space-y-3">
+}, ref) => (
+  <div ref={ref} className="space-y-3">
     <div className="space-y-1">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">

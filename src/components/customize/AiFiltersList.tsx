@@ -22,11 +22,11 @@ interface AiFiltersListProps {
 
 const LONG_PRESS_MS = 300;
 
-const AiFiltersList = ({
+const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
   filters, categories, activeFilterId, applyingFilterId, disabled, filterCost, filterHistory,
   onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
-}: AiFiltersListProps) => {
+}, ref) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPreviewing = useRef(false);
 
