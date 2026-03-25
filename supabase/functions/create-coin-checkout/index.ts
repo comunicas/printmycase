@@ -46,21 +46,22 @@ Deno.serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !userData.user) {
-      console.warn("[coin-checkout] Auth error:", userError?.message);
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      console.warn("[coin-checkout] Auth error:", claimsError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const user = userData.user;
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
     const { coinAmount } = await req.json();
 
     console.log("[coin-checkout] Start:", JSON.stringify({
-      userId: user.id,
-      email: user.email,
+      userId,
+      email: userEmail,
       coinAmount,
     }));
 
@@ -86,14 +87,14 @@ Deno.serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    const customers = await stripe.customers.list({ email: user.email!, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     const customerId = customers.data.length > 0 ? customers.data[0].id : undefined;
 
     console.log("[coin-checkout] Stripe customer:", customerId || "new");
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email!,
+      customer_email: customerId ? undefined : userEmail,
       line_items: [
         {
           price_data: {
@@ -106,7 +107,7 @@ Deno.serve(async (req) => {
       ],
       mode: "payment",
       metadata: {
-        user_id: user.id,
+        user_id: userId,
         coin_amount: String(pkg.coins),
         type: "coin_purchase",
       },
