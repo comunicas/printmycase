@@ -60,8 +60,8 @@ Deno.serve(async (req) => {
     const { coinAmount } = await req.json();
 
     console.log("[coin-checkout] Start:", JSON.stringify({
-      userId: user.id,
-      email: user.email,
+      userId,
+      email: userEmail,
       coinAmount,
     }));
 
