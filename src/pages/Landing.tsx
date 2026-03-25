@@ -40,7 +40,7 @@ const Landing = () => {
 
   return (
     <>
-      <SeoHead products={featuredProducts} />
+      <SeoHead />
       <div className="min-h-screen bg-background flex flex-col">
         <main>
           {/* Hero — Dark */}
