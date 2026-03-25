@@ -8,6 +8,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 interface PublicGeneration {
   id: string;
   image_url: string;
+  public_image_url: string | null;
   filter_name: string | null;
   generation_type: string;
 }
