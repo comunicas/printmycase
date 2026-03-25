@@ -20,7 +20,7 @@ const PublicGallerySection = () => {
   useEffect(() => {
     supabase
       .from("user_ai_generations")
-      .select("id, image_url, filter_name, generation_type")
+      .select("id, image_url, public_image_url, filter_name, generation_type")
       .eq("public", true)
       .order("created_at", { ascending: false })
       .limit(8)
