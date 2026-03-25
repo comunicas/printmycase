@@ -87,7 +87,9 @@ const Collections = () => {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const DesignCard = ({ design }: { design: { id: string; name: string; slug: string; image_url: string; price_cents: number; collection_slug: string } }) => (
+  type DesignData = { id: string; name: string; slug: string; image_url: string; price_cents: number; collection_slug: string };
+
+  const DesignCardInner = ({ design }: { design: DesignData }) => (
     <Card
       className="group cursor-pointer overflow-hidden border-0 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
       onClick={() => navigate(`/colecao/${design.collection_slug}/${design.slug}`)}
@@ -110,6 +112,24 @@ const Collections = () => {
       </CardContent>
     </Card>
   );
+
+  const LazyDesignCard = ({ design }: { design: DesignData }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const [inView, setInView] = useState(false);
+
+    useEffect(() => {
+      const el = ref.current;
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+        { rootMargin: "200px" }
+      );
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, []);
+
+    return <div ref={ref}>{inView ? <DesignCardInner design={design} /> : <DesignCardSkeleton />}</div>;
+  };
 
   const CtaCard = () => (
     <Card
