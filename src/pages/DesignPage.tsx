@@ -295,11 +295,11 @@ const DesignPage = () => {
           onMouseLeave={() => setShowZoom(false)}
         >
           <img
-            src={design.image_url}
-            alt={design.name}
-            className="max-w-3xl max-h-[90vh] w-full object-contain rounded-lg shadow-2xl"
-            onClick={(e: ReactMouseEvent) => e.stopPropagation()}
-          />
+              src={zoomImage}
+              alt="Ampliar"
+              className="max-w-3xl max-h-[90vh] w-full object-contain rounded-lg shadow-2xl"
+              onClick={(e: ReactMouseEvent) => e.stopPropagation()}
+            />
         </div>
       )}
     </div>
