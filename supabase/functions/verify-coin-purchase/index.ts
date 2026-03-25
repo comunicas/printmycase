@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
     const { error: insertError } = await supabaseAdmin
       .from("coin_transactions")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         amount: coinAmount,
         type: "coin_purchase",
         expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
