@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ArrowRight, Smartphone, Sparkles } from "lucide-react";
+import DesignCardSkeleton from "@/components/DesignCardSkeleton";
 import AppHeader from "@/components/AppHeader";
 import { useDesignsGroupedByCollection } from "@/hooks/useCollectionDesigns";
 import { formatPrice } from "@/lib/types";
@@ -86,7 +87,9 @@ const Collections = () => {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const DesignCard = ({ design }: { design: { id: string; name: string; slug: string; image_url: string; price_cents: number; collection_slug: string } }) => (
+  type DesignData = { id: string; name: string; slug: string; image_url: string; price_cents: number; collection_slug: string };
+
+  const DesignCardInner = ({ design }: { design: DesignData }) => (
     <Card
       className="group cursor-pointer overflow-hidden border-0 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
       onClick={() => navigate(`/colecao/${design.collection_slug}/${design.slug}`)}
@@ -109,6 +112,24 @@ const Collections = () => {
       </CardContent>
     </Card>
   );
+
+  const LazyDesignCard = ({ design }: { design: DesignData }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const [inView, setInView] = useState(false);
+
+    useEffect(() => {
+      const el = ref.current;
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+        { rootMargin: "200px" }
+      );
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, []);
+
+    return <div ref={ref}>{inView ? <DesignCardInner design={design} /> : <DesignCardSkeleton />}</div>;
+  };
 
   const CtaCard = () => (
     <Card
@@ -194,7 +215,7 @@ const Collections = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               <CtaCard />
               {filteredDesigns.map((d) => (
-                <DesignCard key={d.id} design={d} />
+                <LazyDesignCard key={d.id} design={d} />
               ))}
             </div>
             {filteredDesigns.length === 0 && (
@@ -224,7 +245,7 @@ const Collections = () => {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {col.designs.slice(0, 8).map((d) => (
-                    <DesignCard key={d.id} design={d} />
+                    <LazyDesignCard key={d.id} design={d} />
                   ))}
                 </div>
                 {col.designs.length > 8 && (
