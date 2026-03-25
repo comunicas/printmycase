@@ -7,14 +7,13 @@ import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
+import { setPageSeo, setMeta, SITE_URL } from "@/lib/seo";
 import { clarityEvent, clarityTag } from "@/lib/clarity";
 import { pixelEvent } from "@/lib/meta-pixel";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 
 const SITE_NAME = "PrintMyCase";
-const SITE_URL =
-  typeof window !== "undefined" ? window.location.origin : "https://printmycase.com.br";
 
 const Product = () => {
   const { id } = useParams<{ id: string }>();
