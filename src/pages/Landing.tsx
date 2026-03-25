@@ -224,8 +224,6 @@ const Landing = () => {
           <WhyPrintMyCase />
 
 
-          {/* Public AI Gallery */}
-          <PublicGallerySection />
 
           {/* Testimonials */}
           <section id="depoimentos" className="py-16 px-5 bg-background">
