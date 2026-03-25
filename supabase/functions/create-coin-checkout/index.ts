@@ -46,16 +46,17 @@ Deno.serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !userData.user) {
-      console.warn("[coin-checkout] Auth error:", userError?.message);
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      console.warn("[coin-checkout] Auth error:", claimsError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const user = userData.user;
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
     const { coinAmount } = await req.json();
 
     console.log("[coin-checkout] Start:", JSON.stringify({
