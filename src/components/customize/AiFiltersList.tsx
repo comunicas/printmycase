@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, forwardRef } from "react";
 import { Loader2, Eye, X, Wand2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";

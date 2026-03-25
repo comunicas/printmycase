@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Maximize, RotateCw, Expand, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
