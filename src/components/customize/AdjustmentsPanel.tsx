@@ -68,3 +68,5 @@ const AdjustmentsPanel = forwardRef<HTMLDivElement, AdjustmentsPanelProps>(({
 ));
 
 AdjustmentsPanel.displayName = "AdjustmentsPanel";
+
+export default AdjustmentsPanel;
