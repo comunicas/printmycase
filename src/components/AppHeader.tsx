@@ -2,6 +2,7 @@ import { forwardRef, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
+import logoWebp from "@/assets/logo-printmycase-sm.webp";
 import UserMenu from "@/components/UserMenu";
 import CoinBalance from "@/components/CoinBalance";
 
