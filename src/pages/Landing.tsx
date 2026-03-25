@@ -5,10 +5,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useCollections } from "@/hooks/useCollections";
+import { useProducts } from "@/hooks/useProducts";
 import SeoHead from "@/components/SeoHead";
 import AppHeader from "@/components/AppHeader";
-import CollectionCard from "@/components/CollectionCard";
+import ProductCard from "@/components/ProductCard";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import AiCoinsSection from "@/components/AiCoinsSection";
@@ -36,7 +36,7 @@ const fadeIn = (delayMs: number): React.CSSProperties => ({
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { collections } = useCollections();
+  const { products } = useProducts(7);
 
   return (
     <>
@@ -176,17 +176,17 @@ const Landing = () => {
                   </Card>
                 </ScrollReveal>
 
-                {/* Collection Cards */}
-                {collections.slice(0, 3).map((col, i) => (
-                  <ScrollReveal key={col.id} delay={(i + 1) * 80}>
-                    <CollectionCard collection={col} />
+                {/* Product Cards */}
+                {products.map((product, i) => (
+                  <ScrollReveal key={product.id} delay={(i + 1) * 80}>
+                    <ProductCard product={product} />
                   </ScrollReveal>
                 ))}
               </div>
               <ScrollReveal delay={350}>
                 <div className="text-center mt-8">
-                  <Button variant="outline" className="gap-2" onClick={() => navigate("/colecoes")}>
-                    Ver Todas as Coleções <ChevronRight className="w-4 h-4" />
+                  <Button variant="outline" className="gap-2" onClick={() => navigate("/catalog")}>
+                    Ver Todos os Modelos <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
               </ScrollReveal>
