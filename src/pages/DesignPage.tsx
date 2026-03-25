@@ -34,7 +34,10 @@ const DesignPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showZoom, setShowZoom] = useState(false);
+  const [zoomImage, setZoomImage] = useState("");
   const initiateCheckoutEventId = useRef(generateEventId());
+
+  const selectedProduct = products.find((p) => p.id === selectedProductId);
 
   useEffect(() => {
     if (!showZoom) return;
@@ -184,25 +187,25 @@ const DesignPage = () => {
               />
             </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="w-16 h-16 rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-zoom-in flex-shrink-0"
-                onMouseEnter={() => setShowZoom(true)}
-                onClick={() => setShowZoom((v) => !v)}
-              >
-                <img
-                  src={design.image_url}
-                  alt={`${design.name} — ampliar`}
-                  className="w-full h-full object-cover"
-                />
-              </button>
-              <span className="text-xs text-muted-foreground hidden sm:inline">
-                Passe o mouse para ampliar
-              </span>
-              <span className="text-xs text-muted-foreground sm:hidden">
-                Toque para ampliar
-              </span>
-            </div>
+                <button
+                  type="button"
+                  className="w-16 h-16 rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-zoom-in flex-shrink-0"
+                  onMouseEnter={() => { setZoomImage(design.image_url); setShowZoom(true); }}
+                  onClick={() => { setZoomImage(design.image_url); setShowZoom((v) => !v); }}
+                >
+                  <img
+                    src={design.image_url}
+                    alt={`${design.name} — ampliar`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+                <span className="text-xs text-muted-foreground hidden sm:inline">
+                  Passe o mouse para ampliar
+                </span>
+                <span className="text-xs text-muted-foreground sm:hidden">
+                  Toque para ampliar
+                </span>
+              </div>
           </div>
 
           {/* Purchase section */}
@@ -229,6 +232,29 @@ const DesignPage = () => {
                 ))}
               </select>
             </div>
+
+            {/* Device image preview */}
+            {selectedProduct?.device_image && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Seu modelo:</p>
+                <div
+                  className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/50 cursor-zoom-in"
+                  onMouseEnter={() => { setZoomImage(selectedProduct.device_image!); setShowZoom(true); }}
+                  onClick={() => { setZoomImage(selectedProduct.device_image!); setShowZoom((v) => !v); }}
+                >
+                  <img
+                    src={selectedProduct.device_image}
+                    alt={selectedProduct.name}
+                    className="max-h-[120px] object-contain"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-foreground truncate">{selectedProduct.name}</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">Passe o mouse para ampliar</span>
+                    <span className="text-xs text-muted-foreground sm:hidden">Toque para ampliar</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Address */}
             <AddressForm
@@ -269,11 +295,11 @@ const DesignPage = () => {
           onMouseLeave={() => setShowZoom(false)}
         >
           <img
-            src={design.image_url}
-            alt={design.name}
-            className="max-w-3xl max-h-[90vh] w-full object-contain rounded-lg shadow-2xl"
-            onClick={(e: ReactMouseEvent) => e.stopPropagation()}
-          />
+              src={zoomImage}
+              alt="Ampliar"
+              className="max-w-3xl max-h-[90vh] w-full object-contain rounded-lg shadow-2xl"
+              onClick={(e: ReactMouseEvent) => e.stopPropagation()}
+            />
         </div>
       )}
     </div>
