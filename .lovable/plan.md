@@ -1,89 +1,36 @@
 
 
-## Página de Coleções — Landing Page Completa com Vitrines por Coleção
+## Lazy Loading com Skeleton nos Cards de Design
 
-### Visão Geral
+### O que muda
 
-Transformar `/colecoes` de uma listagem simples de cards de coleção em uma **landing page pilar** completa, com busca, tags de coleção, CTA fixo, vitrines separadas por coleção e SEO otimizado.
-
-### Layout da Página
-
-```text
-┌─────────────────────────────────────────────────┐
-│  AppHeader                                       │
-├─────────────────────────────────────────────────┤
-│  Hero: H1 + subtítulo + campo de busca           │
-│  Tags de coleção (chips clicáveis p/ scroll)     │
-├─────────────────────────────────────────────────┤
-│  Grid: CTA "Personalize" + resultados de busca   │
-│  (aparece quando há termo de busca)              │
-├─────────────────────────────────────────────────┤
-│  Vitrine Coleção 1 (h2 + "Ver tudo >")           │
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐               │
-│  │ D1  │ │ D2  │ │ D3  │ │ D4  │               │
-│  └─────┘ └─────┘ └─────┘ └─────┘               │
-├─────────────────────────────────────────────────┤
-│  Vitrine Coleção 2 (h2 + "Ver tudo >")           │
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐               │
-│  └─────┘ └─────┘ └─────┘ └─────┘               │
-├─────────────────────────────────────────────────┤
-│  ... mais coleções                               │
-├─────────────────────────────────────────────────┤
-│  CTA final: "Não encontrou? Personalize!"        │
-│  Footer links                                    │
-└─────────────────────────────────────────────────┘
-```
+Adicionar lazy loading com Intersection Observer nos cards de design da página `/colecoes`. Enquanto o card não entra no viewport, exibe um skeleton placeholder. Quando entra, renderiza o card real com a imagem.
 
 ### Alterações
 
 | # | Arquivo | O que |
 |---|---------|-------|
-| 1 | `src/hooks/useCollectionDesigns.ts` | Adicionar hook `useDesignsGroupedByCollection()` — busca **todas** as `collection_designs` ativas com join em `collections(id, name, slug, sort_order)`, agrupa por coleção e ordena coleções por `sort_order`. Retorna `{ collections: { id, name, slug, designs: Design[] }[], allDesigns: Design[], loading }` |
-| 2 | `src/pages/Collections.tsx` | Reescrever completamente como landing page pilar |
+| 1 | `src/components/DesignCardSkeleton.tsx` | Novo skeleton específico para design cards (aspect-square + nome + preço), sem o botão do ProductCardSkeleton |
+| 2 | `src/pages/Collections.tsx` | Envolver cada `DesignCard` com um wrapper que usa `IntersectionObserver` para detectar visibilidade. Mostra `DesignCardSkeleton` até o card entrar no viewport (com margem de 200px para pre-load). Usar um hook inline `useInView` com `useState` + `useEffect` + `useRef`. |
 
-### Detalhes da página Collections.tsx
+### Comportamento
 
-**Hero section:**
-- `<h1>` "Capinhas Exclusivas para Celular" (SEO-friendly)
-- Subtítulo descritivo
-- Campo de busca (`<input>` controlado) que filtra designs por nome em tempo real
+- Cards fora do viewport: renderizam `DesignCardSkeleton` (placeholder animado)
+- Quando o card entra na zona visível (200px de margem): troca para o `DesignCard` real
+- Uma vez visível, nunca volta para skeleton (`triggerOnce`)
+- O loading inicial da página continua usando `LoadingSpinner` enquanto os dados carregam do banco
 
-**Tags de coleção:**
-- Chips horizontais scrolláveis com nome de cada coleção
-- Click faz scroll suave até a seção da coleção correspondente (`id="colecao-{slug}"`)
-- Tag "Todas" ativa por padrão
+### Skeleton Layout
 
-**CTA fixo:**
-- Mesmo card da home ("Personalize sua Capinha") como primeiro item quando busca está ativa, ou como seção destacada no topo
-
-**Vitrines por coleção:**
-- Cada coleção vira uma `<section>` com `id="colecao-{slug}"`
-- `<h2>` com nome da coleção + link "Ver tudo →" para `/colecao/{slug}`
-- Grid 2x2 mobile / 4 colunas desktop com os designs
-- Mostra até 8 designs por coleção; se tiver mais, botão "Ver todos os designs"
-
-**Busca:**
-- Quando o usuário digita, esconde as vitrines e mostra um grid flat filtrado
-- Filtragem client-side por `design.name.toLowerCase().includes(query)`
-- CTA fixo como primeiro card no grid de resultados
-
-**SEO (dentro do useEffect):**
-- Title: "Capinhas Exclusivas para Celular | PrintMyCase"
-- Meta description rica
-- Canonical: `/colecoes`
-- JSON-LD `CollectionPage` com `ItemList` contendo todos os designs como `Product`
-- Open Graph completo
-- Hierarquia: `<h1>` página → `<h2>` cada coleção → `<h3>` nomes dos designs nos cards
-
-**CTA final:**
-- Seção antes do footer: "Não encontrou o que procura?" + botão para `/customize`
-
-### Hook useDesignsGroupedByCollection
-
-```typescript
-// Busca: collection_designs com collections!inner(id, name, slug, sort_order)
-// Agrupa designs por collection_id
-// Ordena coleções por sort_order
-// Retorna estrutura agrupada + flat list para busca
+```text
+┌──────────────────┐
+│                  │  ← aspect-square bg-muted animate-pulse
+│                  │
+│                  │
+├──────────────────┤
+│ ████████████     │  ← título (h-3.5)
+│ ████████         │  ← título linha 2 (h-3.5 w-2/3)
+│ ██████           │  ← preço (h-6 w-20)
+└──────────────────┘
 ```
 
