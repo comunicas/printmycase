@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const TITLE = "Capinhas Exclusivas para Celular | PrintMyCase";
+const TITLE = "Capinhas Exclusivas para Celular | Studio PrintMyCase";
 const DESC = "Explore nossas coleções de capinhas exclusivas para celular. Designs únicos, proteção premium e acabamento soft-touch. Encontre a capa perfeita ou personalize a sua.";
 
 const Collections = () => {

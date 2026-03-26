@@ -20,7 +20,7 @@ const Catalog = () => {
   useEffect(() => {
     const firstImage = products.length > 0 ? (products[0].device_image ?? products[0].images[0]) : undefined;
     const cleanup = setPageSeo({
-      title: "Catálogo de Capas | PrintMyCase",
+      title: "Catálogo de Capas | Studio PrintMyCase",
       description: "Encontre a capa perfeita para seu celular. Modelos Apple, Samsung, Motorola e mais com proteção premium.",
       url: `${SITE_URL}/catalog`,
       image: firstImage ?? undefined,

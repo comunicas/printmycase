@@ -83,4 +83,4 @@ export function setPageSeo(opts: PageSeoOptions): () => void {
   };
 }
 
-export { SITE_URL, setMeta };
+export { SITE_URL, SITE_NAME, setMeta };

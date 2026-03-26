@@ -8,7 +8,7 @@ import { setPageSeo, SITE_URL } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 
-const SITE_NAME = "PrintMyCase";
+const SITE_NAME = "Studio PrintMyCase";
 
 const CollectionPage = () => {
   const { slug } = useParams<{ slug: string }>();

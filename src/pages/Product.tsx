@@ -13,7 +13,7 @@ import { pixelEvent } from "@/lib/meta-pixel";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 
-const SITE_NAME = "PrintMyCase";
+const SITE_NAME = "Studio PrintMyCase";
 
 const Product = () => {
   const { id } = useParams<{ id: string }>();

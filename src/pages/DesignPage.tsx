@@ -17,7 +17,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
-const SITE_NAME = "PrintMyCase";
+const SITE_NAME = "Studio PrintMyCase";
 
 const DesignPage = () => {
   const { collectionSlug, designSlug } = useParams<{ collectionSlug: string; designSlug: string }>();
