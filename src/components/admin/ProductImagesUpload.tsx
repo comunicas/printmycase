@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Check } from "lucide-react";
+import { optimizeForUpload } from "@/lib/image-utils";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
 interface StorageImage {
