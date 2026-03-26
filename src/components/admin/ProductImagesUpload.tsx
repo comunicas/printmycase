@@ -83,11 +83,12 @@ const ProductImagesUpload = ({ productId, value, onChange }: Props) => {
     try {
       const newUrls: string[] = [];
       for (const file of imageFiles) {
-        const path = `${id}/${file.name}`;
+        const blob = await optimizeForUpload(file);
+        const path = `${id}/${crypto.randomUUID()}.webp`;
 
         const { error } = await supabase.storage
           .from("product-assets")
-          .upload(path, file, { upsert: true });
+          .upload(path, blob, { upsert: true, contentType: "image/webp" });
         if (error) throw error;
 
         const { data } = supabase.storage

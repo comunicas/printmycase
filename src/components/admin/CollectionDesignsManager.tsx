@@ -112,11 +112,16 @@ const CollectionDesignsManager = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const path = `collections/designs/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("product-assets").upload(path, file);
-    if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); return; }
-    const { data: { publicUrl } } = supabase.storage.from("product-assets").getPublicUrl(path);
-    setImageUrl(publicUrl);
+    try {
+      const blob = await optimizeForUpload(file);
+      const path = `collections/designs/${Date.now()}-${crypto.randomUUID()}.webp`;
+      const { error } = await supabase.storage.from("product-assets").upload(path, blob, { contentType: "image/webp" });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("product-assets").getPublicUrl(path);
+      setImageUrl(publicUrl);
+    } catch (err: any) {
+      toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+    }
   };
 
   const autoSlug = (val: string) => {

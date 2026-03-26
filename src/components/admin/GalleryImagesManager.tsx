@@ -55,9 +55,9 @@ const GalleryImagesManager = () => {
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "png";
-      const path = `gallery/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("product-assets").upload(path, file);
+      const blob = await optimizeForUpload(file);
+      const path = `gallery/${crypto.randomUUID()}.webp`;
+      const { error } = await supabase.storage.from("product-assets").upload(path, blob, { contentType: "image/webp" });
       if (error) throw error;
 
       const { data: urlData } = supabase.storage.from("product-assets").getPublicUrl(path);

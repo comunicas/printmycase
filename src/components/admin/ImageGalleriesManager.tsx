@@ -119,9 +119,9 @@ const ImageGalleriesManager = () => {
     if (!selectedGallery) return;
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "png";
-      const path = `galleries/${selectedGallery.id}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("product-assets").upload(path, file);
+      const blob = await optimizeForUpload(file);
+      const path = `galleries/${selectedGallery.id}/${crypto.randomUUID()}.webp`;
+      const { error } = await supabase.storage.from("product-assets").upload(path, blob, { contentType: "image/webp" });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("product-assets").getPublicUrl(path);
       const nextOrder = images.length > 0 ? Math.max(...images.map(i => i.sort_order)) + 1 : 0;
