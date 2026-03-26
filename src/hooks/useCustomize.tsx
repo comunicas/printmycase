@@ -433,7 +433,7 @@ export function useCustomize(productId: string | undefined) {
         }, 3000);
       }
     } catch {
-      toast({ title: "Erro no upscale", variant: "destructive" });
+      toast({ title: "Erro no upscale", description: "Nenhuma moeda foi debitada. Tente gerar novamente.", variant: "destructive" });
     } finally {
       setIsUpscaling(false);
       setProcessingMsg(null);
