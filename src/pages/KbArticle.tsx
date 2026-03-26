@@ -5,6 +5,7 @@ import AppHeader from "@/components/AppHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { setPageSeo, SITE_URL } from "@/lib/seo";
 import { ArrowLeft, Calendar, FolderOpen } from "lucide-react";
 
 /** Parse inline markdown: **bold** and [text](url) */
