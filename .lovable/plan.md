@@ -1,77 +1,68 @@
 
 
-## Revisão dos Modelos Flux — Parâmetros de Edição de Imagem
+## Revisao Completa dos Modelos fal.ai — Parametros e Implementacao
 
-### Modelos em uso
+### Modelos na lista (MODEL_OPTIONS)
 
-| Function | Modelo | Tipo | Edita imagem? |
-|----------|--------|------|---------------|
-| `generate-gallery-image` | `fal-ai/flux-2-pro/edit` | Multi-image editing | ✅ Sim |
-| `apply-ai-filter` (default) | `fal-ai/flux/dev/image-to-image` | Single-image editing | ✅ Sim |
+| # | Modelo | URL | Existe no fal.ai? | Handler dedicado? |
+|---|--------|-----|--------------------|--------------------|
+| 1 | Flux Dev (padrao) | `fal-ai/flux/dev/image-to-image` | Sim | Sim (bloco `else` default) |
+| 2 | Flux Pro Kontext | `fal-ai/flux-pro/kontext` | Sim | Sim (`isKontext`) |
+| 3 | SD 3.5 Large | `fal-ai/stable-diffusion-v35-large/image-to-image` | Sim | **NAO — cai no default Flux Dev** |
+| 4 | Style Transfer | `fal-ai/image-apps-v2/style-transfer` | Sim | Sim (`isStyleTransfer`) |
+| 5 | Photography Effects | `fal-ai/image-apps-v2/photography-effects` | Sim | Sim (`isPhotographyEffects`) |
+| 6 | Lighting Restoration | `fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration` | Sim | Sim (`isLightingRestoration`) |
 
-Ambos editam imagens. Estão corretos para seus respectivos usos.
+### Problema encontrado
 
----
+**SD 3.5 Large** nao tem handler proprio e cai no bloco default (Flux Dev). Os defaults sao diferentes:
 
-### Problemas encontrados no `apply-ai-filter` (default path — `flux/dev/image-to-image`)
+| Parametro | Flux Dev (default atual) | SD 3.5 Large (API) |
+|-----------|--------------------------|---------------------|
+| `strength` | 0.85 | **0.83** |
+| `num_inference_steps` | 40 | **28** |
+| `guidance_scale` | 3.5 | 3.5 |
+| `image_size` | nao suportado | **suportado** (portrait_16_9) |
+| `negative_prompt` | nao suportado | **suportado** |
 
-| Parâmetro | Valor no código | Default da API | Problema |
-|-----------|----------------|----------------|----------|
-| `strength` | `0.75` | `0.95` | Valor baixo = menos transformação. Pode ser intencional, mas filtros artísticos geralmente precisam de mais strength |
-| `num_inference_steps` | `28` | `40` | Abaixo do recomendado — menos qualidade, mais velocidade |
-| `guidance_scale` | `7.5` | `3.5` | Dobro do default — força demais o prompt, pode gerar artefatos |
-| `image_size` | `{ width: 720, height: 1280 }` | **Não existe na API** | Parâmetro ignorado pela API — não faz nada |
+Usar steps=40 no SD 3.5 Large gasta mais tempo sem ganho de qualidade (o recomendado e 28). O strength 0.85 vs 0.83 e marginal.
 
-### Problemas no `generate-gallery-image` (`flux-2-pro/edit`)
+### Verificacao dos demais modelos
 
-| Parâmetro | Status |
-|-----------|--------|
-| `image_urls` | ✅ OK |
-| `prompt` | ✅ OK |
-| `seed` | ✅ OK |
-| `image_size` | ✅ OK (aceita enum ou object) |
-| `safety_tolerance` | ✅ OK (já corrigido para string) |
-| `output_format` | ✅ OK |
+- **Flux Dev**: `strength: 0.85`, `steps: 40`, `guidance: 3.5` — correto (defaults da API sao 0.95/40/3.5, o 0.85 e intencional para preservar mais a imagem original)
+- **Kontext**: `image_url`, `prompt`, `aspect_ratio: "9:16"`, `output_format: "jpeg"` — correto
+- **Style Transfer**: `image_url`, `target_style`, `style_reference_image_url` (condicional), `aspect_ratio: { ratio: "9:16" }` — correto
+- **Photography Effects**: `image_url`, `effect_type`, `aspect_ratio: { ratio: "9:16" }` — correto
+- **Lighting Restoration**: `image_urls: [url]`, `image_size: { width: 720, height: 1280 }` — correto
 
-O `flux-2-pro/edit` está correto. Os problemas estão apenas no path default do `apply-ai-filter`.
+### Correcao necessaria
 
----
+**Arquivo: `supabase/functions/apply-ai-filter/index.ts`**
 
-### Correções necessárias
-
-**Arquivo: `supabase/functions/apply-ai-filter/index.ts`** — bloco default (linhas 133-141)
-
-Ajustar os parâmetros para valores mais alinhados com a API:
+Adicionar handler dedicado para SD 3.5 Large antes do bloco `else` default:
 
 ```typescript
-// ANTES
-falBody = {
-  image_url: inputImage,
-  prompt: filter.prompt,
-  strength: 0.75,
-  num_inference_steps: 28,
-  guidance_scale: 7.5,
-  image_size: { width: 720, height: 1280 },
-};
+const isSD35 = modelUrl.includes("stable-diffusion-v35-large");
 
-// DEPOIS
-falBody = {
-  image_url: inputImage,
-  prompt: filter.prompt,
-  strength: 0.85,
-  num_inference_steps: 40,
-  guidance_scale: 3.5,
-};
+// ... nos ifs existentes, antes do else:
+} else if (isSD35) {
+  falBody = {
+    image_url: inputImage,
+    prompt: filter.prompt,
+    strength: 0.83,
+    num_inference_steps: 28,
+    guidance_scale: 3.5,
+    image_size: "portrait_16_9",
+    output_format: "jpeg",
+  };
+} else {
+  // Flux Dev default
+  ...
+}
 ```
 
-Mudanças:
-1. `strength`: `0.75` → `0.85` — mais transformação para filtros artísticos, mas preserva estrutura
-2. `num_inference_steps`: `28` → `40` — qualidade padrão recomendada
-3. `guidance_scale`: `7.5` → `3.5` — valor default da API, reduz artefatos
-4. `image_size` removido — parâmetro não existe nesta API, era ignorado
-
-### Detalhes técnicos
+### Detalhes tecnicos
 - 1 arquivo modificado: `supabase/functions/apply-ai-filter/index.ts`
-- Nenhuma mudança no frontend ou banco de dados
-- O `flux-2-pro/edit` (generate-gallery-image) não precisa de correção
+- Adicionar deteccao `isSD35` e bloco de configuracao dedicado
+- Nenhuma mudanca no frontend ou banco de dados
 
