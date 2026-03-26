@@ -1,68 +1,61 @@
 
 
-## Revisao Completa dos Modelos fal.ai — Parametros e Implementacao
+## Corrigir Aspect Ratio do Flux Dev + Adicionar Modelos Nano Banana Edit
 
-### Modelos na lista (MODEL_OPTIONS)
+### Correções e adições
 
-| # | Modelo | URL | Existe no fal.ai? | Handler dedicado? |
-|---|--------|-----|--------------------|--------------------|
-| 1 | Flux Dev (padrao) | `fal-ai/flux/dev/image-to-image` | Sim | Sim (bloco `else` default) |
-| 2 | Flux Pro Kontext | `fal-ai/flux-pro/kontext` | Sim | Sim (`isKontext`) |
-| 3 | SD 3.5 Large | `fal-ai/stable-diffusion-v35-large/image-to-image` | Sim | **NAO — cai no default Flux Dev** |
-| 4 | Style Transfer | `fal-ai/image-apps-v2/style-transfer` | Sim | Sim (`isStyleTransfer`) |
-| 5 | Photography Effects | `fal-ai/image-apps-v2/photography-effects` | Sim | Sim (`isPhotographyEffects`) |
-| 6 | Lighting Restoration | `fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration` | Sim | Sim (`isLightingRestoration`) |
+**1. Flux Dev — adicionar `image_size` para forçar 9:16**
 
-### Problema encontrado
+O bloco default (linhas 144-152) não tem configuração de tamanho. Adicionar `image_size: { width: 720, height: 1280 }`.
 
-**SD 3.5 Large** nao tem handler proprio e cai no bloco default (Flux Dev). Os defaults sao diferentes:
+**2. Nano Banana 2 Edit + Nano Banana Pro Edit — novos modelos**
 
-| Parametro | Flux Dev (default atual) | SD 3.5 Large (API) |
-|-----------|--------------------------|---------------------|
-| `strength` | 0.85 | **0.83** |
-| `num_inference_steps` | 40 | **28** |
-| `guidance_scale` | 3.5 | 3.5 |
-| `image_size` | nao suportado | **suportado** (portrait_16_9) |
-| `negative_prompt` | nao suportado | **suportado** |
+Ambos usam `image_urls` (array), `prompt`, `aspect_ratio: "9:16"`, `resolution: "1K"`, `safety_tolerance: "4"`.
 
-Usar steps=40 no SD 3.5 Large gasta mais tempo sem ganho de qualidade (o recomendado e 28). O strength 0.85 vs 0.83 e marginal.
+### Alterações
 
-### Verificacao dos demais modelos
-
-- **Flux Dev**: `strength: 0.85`, `steps: 40`, `guidance: 3.5` — correto (defaults da API sao 0.95/40/3.5, o 0.85 e intencional para preservar mais a imagem original)
-- **Kontext**: `image_url`, `prompt`, `aspect_ratio: "9:16"`, `output_format: "jpeg"` — correto
-- **Style Transfer**: `image_url`, `target_style`, `style_reference_image_url` (condicional), `aspect_ratio: { ratio: "9:16" }` — correto
-- **Photography Effects**: `image_url`, `effect_type`, `aspect_ratio: { ratio: "9:16" }` — correto
-- **Lighting Restoration**: `image_urls: [url]`, `image_size: { width: 720, height: 1280 }` — correto
-
-### Correcao necessaria
-
-**Arquivo: `supabase/functions/apply-ai-filter/index.ts`**
-
-Adicionar handler dedicado para SD 3.5 Large antes do bloco `else` default:
-
+**Arquivo 1: `src/components/admin/AiFiltersManager.tsx`** — adicionar 2 opções ao `MODEL_OPTIONS`:
 ```typescript
-const isSD35 = modelUrl.includes("stable-diffusion-v35-large");
+{ value: "fal-ai/nano-banana-2/edit", label: "Nano Banana 2 Edit" },
+{ value: "fal-ai/nano-banana-pro/edit", label: "Nano Banana Pro Edit" },
+```
 
-// ... nos ifs existentes, antes do else:
-} else if (isSD35) {
+**Arquivo 2: `supabase/functions/apply-ai-filter/index.ts`** — 2 mudanças:
+
+1. Adicionar detecção `isNanoBanana`:
+```typescript
+const isNanoBanana = modelUrl.includes("nano-banana");
+```
+
+2. Adicionar handler antes do `else` default e corrigir o default:
+```typescript
+} else if (isNanoBanana) {
+  falBody = {
+    image_urls: [inputImage],
+    prompt: filter.prompt,
+    aspect_ratio: "9:16",
+    output_format: "jpeg",
+    resolution: "1K",
+    safety_tolerance: "4",
+    num_images: 1,
+  };
+} else {
+  // Flux Dev default — agora com image_size 9:16
   falBody = {
     image_url: inputImage,
     prompt: filter.prompt,
-    strength: 0.83,
-    num_inference_steps: 28,
+    strength: 0.85,
+    num_inference_steps: 40,
     guidance_scale: 3.5,
-    image_size: "portrait_16_9",
-    output_format: "jpeg",
+    image_size: { width: 720, height: 1280 },
   };
-} else {
-  // Flux Dev default
-  ...
 }
 ```
 
-### Detalhes tecnicos
-- 1 arquivo modificado: `supabase/functions/apply-ai-filter/index.ts`
-- Adicionar deteccao `isSD35` e bloco de configuracao dedicado
-- Nenhuma mudanca no frontend ou banco de dados
+**Arquivo 3: `.lovable/plan.md`** — atualizar tabela de modelos com Nano Banana e status corrigido do Flux Dev.
+
+### Resumo
+- 2 arquivos de código + plano
+- Nenhuma mudança no banco de dados
+- Todos os 8 modelos passam a ter saída 9:16 garantida
 
