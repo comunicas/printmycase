@@ -40,6 +40,7 @@ const KnowledgeBase = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [faqItems, setFaqItems] = useState<{ question: string; answer: string }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
