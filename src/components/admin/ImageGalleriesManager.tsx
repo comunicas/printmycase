@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Plus, Trash2, Upload, ChevronLeft, Image as ImageIcon, Eye, EyeOff } from "lucide-react";
+import { optimizeForUpload } from "@/lib/image-utils";
 
 interface Gallery {
   id: string;
