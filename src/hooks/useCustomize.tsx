@@ -377,7 +377,7 @@ export function useCustomize(productId: string | undefined) {
         });
       }
     } catch {
-      toast({ title: "Erro ao aplicar filtro", variant: "destructive" });
+      toast({ title: "Erro ao aplicar filtro", description: "Nenhuma moeda foi debitada. Tente gerar novamente.", variant: "destructive" });
     } finally {
       setApplyingFilterId(null);
       setProcessingMsg(null);
