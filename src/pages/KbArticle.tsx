@@ -47,6 +47,9 @@ const KbArticle = () => {
 
   useEffect(() => {
     if (!categorySlug || !articleSlug) return;
+    let scriptEl: HTMLScriptElement | null = null;
+    let seoCleanup: (() => void) | null = null;
+
     const fetchData = async () => {
       const { data: cat } = await supabase
         .from("kb_categories")
@@ -70,6 +73,15 @@ const KbArticle = () => {
         const dateStr = new Date(art.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
         setUpdatedAt(dateStr);
 
+        // SEO meta tags
+        const desc = art.content.replace(/[#*\-_]/g, "").slice(0, 155).trim();
+        seoCleanup = setPageSeo({
+          title: `${art.title} | Central de Ajuda — Studio PrintMyCase`,
+          description: desc,
+          url: `${SITE_URL}/ajuda/${categorySlug}/${articleSlug}`,
+          type: "article",
+        });
+
         // Inject Article + BreadcrumbList JSON-LD
         const jsonLd = {
           "@context": "https://schema.org",
@@ -80,7 +92,7 @@ const KbArticle = () => {
               dateModified: art.updated_at,
               author: { "@type": "Organization", name: "Studio PrintMyCase" },
               publisher: { "@type": "Organization", name: "Studio PrintMyCase" },
-              description: art.content.replace(/[#*\-_]/g, "").slice(0, 160).trim(),
+              description: desc,
             },
             {
               "@type": "BreadcrumbList",
@@ -93,15 +105,20 @@ const KbArticle = () => {
             },
           ],
         };
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.setAttribute("data-seo", "kb-article");
-        script.textContent = JSON.stringify(jsonLd);
-        document.head.appendChild(script);
+        scriptEl = document.createElement("script");
+        scriptEl.type = "application/ld+json";
+        scriptEl.setAttribute("data-seo", "kb-article");
+        scriptEl.textContent = JSON.stringify(jsonLd);
+        document.head.appendChild(scriptEl);
       }
       setLoading(false);
     };
     fetchData();
+
+    return () => {
+      scriptEl?.remove();
+      seoCleanup?.();
+    };
   }, [categorySlug, articleSlug]);
 
   if (loading) return <LoadingSpinner variant="fullPage" />;
