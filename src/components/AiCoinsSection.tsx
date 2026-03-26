@@ -64,8 +64,7 @@ const AiCoinsSection = () => {
               </span>
             </h2>
             <p className="text-base md:text-lg text-white/70 max-w-2xl mx-auto">
-              Aplique filtros artísticos com um clique. Pop art, 3D, cartoon e
-              muito mais. Cadastre-se e receba 50 coins grátis.
+              Aplique filtros artísticos com um clique. Pop art, 3D, cartoon e muito mais.
             </p>
           </div>
         </ScrollReveal>
