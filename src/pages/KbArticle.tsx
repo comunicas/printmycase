@@ -5,13 +5,12 @@ import AppHeader from "@/components/AppHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
-import { setPageSeo, SITE_URL } from "@/lib/seo";
-import { ArrowLeft, Calendar, FolderOpen } from "lucide-react";
+import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo";
+import { ArrowLeft, Calendar, FolderOpen, ChevronRight } from "lucide-react";
 
 /** Parse inline markdown: **bold** and [text](url) */
 const parseInline = (text: string) => {
   const parts: React.ReactNode[] = [];
-  // Combined regex for bold and links
   const regex = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)/g;
   let last = 0;
   let match: RegExpExecArray | null;
@@ -34,6 +33,12 @@ const parseInline = (text: string) => {
   return parts;
 };
 
+interface RelatedArticle {
+  id: string;
+  title: string;
+  slug: string;
+}
+
 const KbArticle = () => {
   const { categorySlug, articleSlug } = useParams<{
     categorySlug: string;
@@ -44,16 +49,22 @@ const KbArticle = () => {
   const [content, setContent] = useState("");
   const [updatedAt, setUpdatedAt] = useState("");
   const [loading, setLoading] = useState(true);
+  const [relatedArticles, setRelatedArticles] = useState<RelatedArticle[]>([]);
+
+  useEffect(() => {
+    document.title = "Central de Ajuda | Studio PrintMyCase";
+  }, []);
 
   useEffect(() => {
     if (!categorySlug || !articleSlug) return;
-    let scriptEl: HTMLScriptElement | null = null;
+    let jsonLdCleanup: (() => void) | null = null;
+    let breadcrumbCleanup: (() => void) | null = null;
     let seoCleanup: (() => void) | null = null;
 
     const fetchData = async () => {
       const { data: cat } = await supabase
         .from("kb_categories")
-        .select("name")
+        .select("id, name")
         .eq("slug", categorySlug)
         .eq("active", true)
         .maybeSingle();
@@ -62,7 +73,7 @@ const KbArticle = () => {
 
       const { data: art } = await supabase
         .from("kb_articles")
-        .select("title, content, updated_at")
+        .select("id, title, content, updated_at, category_id")
         .eq("slug", articleSlug)
         .eq("active", true)
         .maybeSingle();
@@ -73,6 +84,17 @@ const KbArticle = () => {
         const dateStr = new Date(art.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
         setUpdatedAt(dateStr);
 
+        // Fetch related articles from same category
+        const { data: related } = await supabase
+          .from("kb_articles")
+          .select("id, title, slug")
+          .eq("category_id", art.category_id)
+          .eq("active", true)
+          .neq("id", art.id)
+          .order("sort_order", { ascending: true })
+          .limit(3);
+        setRelatedArticles(related ?? []);
+
         // SEO meta tags
         const desc = art.content.replace(/[#*\-_]/g, "").slice(0, 155).trim();
         seoCleanup = setPageSeo({
@@ -82,41 +104,35 @@ const KbArticle = () => {
           type: "article",
         });
 
-        // Inject Article + BreadcrumbList JSON-LD
-        const jsonLd = {
+        // BreadcrumbList
+        breadcrumbCleanup = injectJsonLd("kb-art-breadcrumb", {
           "@context": "https://schema.org",
-          "@graph": [
-            {
-              "@type": "Article",
-              headline: art.title,
-              dateModified: art.updated_at,
-              author: { "@type": "Organization", name: "Studio PrintMyCase" },
-              publisher: { "@type": "Organization", name: "Studio PrintMyCase" },
-              description: desc,
-            },
-            {
-              "@type": "BreadcrumbList",
-              itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-                { "@type": "ListItem", position: 2, name: "Central de Ajuda", item: `${SITE_URL}/ajuda` },
-                { "@type": "ListItem", position: 3, name: cat?.name ?? "", item: `${SITE_URL}/ajuda/${categorySlug}` },
-                { "@type": "ListItem", position: 4, name: art.title },
-              ],
-            },
-          ],
-        };
-        scriptEl = document.createElement("script");
-        scriptEl.type = "application/ld+json";
-        scriptEl.setAttribute("data-seo", "kb-article");
-        scriptEl.textContent = JSON.stringify(jsonLd);
-        document.head.appendChild(scriptEl);
+          ...breadcrumbJsonLd([
+            { name: "Home", url: SITE_URL },
+            { name: "Central de Ajuda", url: `${SITE_URL}/ajuda` },
+            { name: cat?.name ?? "", url: `${SITE_URL}/ajuda/${categorySlug}` },
+            { name: art.title },
+          ]),
+        });
+
+        // Article JSON-LD
+        jsonLdCleanup = injectJsonLd("kb-article", {
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: art.title,
+          dateModified: art.updated_at,
+          author: { "@type": "Organization", name: "Studio PrintMyCase" },
+          publisher: { "@type": "Organization", name: "Studio PrintMyCase" },
+          description: desc,
+        });
       }
       setLoading(false);
     };
     fetchData();
 
     return () => {
-      scriptEl?.remove();
+      jsonLdCleanup?.();
+      breadcrumbCleanup?.();
       seoCleanup?.();
     };
   }, [categorySlug, articleSlug]);
@@ -174,6 +190,27 @@ const KbArticle = () => {
             </article>
           </CardContent>
         </Card>
+
+        {/* Related articles */}
+        {relatedArticles.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Artigos relacionados</h2>
+            <div className="space-y-2">
+              {relatedArticles.map((art) => (
+                <Link
+                  key={art.id}
+                  to={`/ajuda/${categorySlug}/${art.slug}`}
+                  className="flex items-center justify-between p-4 rounded-xl border bg-card hover:bg-muted/50 transition-colors group"
+                >
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                    {art.title}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Back button */}
         <div className="mt-8">

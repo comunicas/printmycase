@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import ScrollReveal from "@/components/ScrollReveal";
+import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 import { ChevronRight } from "lucide-react";
 
 interface Article {
@@ -19,11 +20,18 @@ const KbCategory = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = "Central de Ajuda | Studio PrintMyCase";
+  }, []);
+
+  useEffect(() => {
     if (!categorySlug) return;
+    let seoCleanup: (() => void) | null = null;
+    let breadcrumbCleanup: (() => void) | null = null;
+
     const fetch = async () => {
       const { data: cat } = await supabase
         .from("kb_categories")
-        .select("id, name")
+        .select("id, name, description")
         .eq("slug", categorySlug)
         .eq("active", true)
         .maybeSingle();
@@ -39,9 +47,33 @@ const KbCategory = () => {
         .order("sort_order", { ascending: true });
 
       setArticles(arts ?? []);
+
+      const desc = cat.description || `Artigos sobre ${cat.name} no Studio PrintMyCase.`;
+      const url = `${SITE_URL}/ajuda/${categorySlug}`;
+
+      seoCleanup = setPageSeo({
+        title: `${cat.name} | Central de Ajuda — Studio PrintMyCase`,
+        description: desc,
+        url,
+      });
+
+      breadcrumbCleanup = injectJsonLd("kb-cat-breadcrumb", {
+        "@context": "https://schema.org",
+        ...breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Central de Ajuda", url: `${SITE_URL}/ajuda` },
+          { name: cat.name, url },
+        ]),
+      });
+
       setLoading(false);
     };
     fetch();
+
+    return () => {
+      seoCleanup?.();
+      breadcrumbCleanup?.();
+    };
   }, [categorySlug]);
 
   if (loading) return <LoadingSpinner variant="fullPage" />;
