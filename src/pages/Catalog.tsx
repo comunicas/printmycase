@@ -25,7 +25,14 @@ const Catalog = () => {
       url: `${SITE_URL}/catalog`,
       image: firstImage ?? undefined,
     });
-    return cleanup;
+    const cleanupBreadcrumb = injectJsonLd("catalog-breadcrumb", {
+      "@context": "https://schema.org",
+      ...breadcrumbJsonLd([
+        { name: "Home", url: SITE_URL },
+        { name: "Catálogo", url: `${SITE_URL}/catalog` },
+      ]),
+    });
+    return () => { cleanup(); cleanupBreadcrumb(); };
   }, [products]);
 
   const brandCounts = useMemo(() => {

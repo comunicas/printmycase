@@ -69,23 +69,10 @@ const Product = () => {
         {
           "@type": "BreadcrumbList",
           itemListElement: [
-            {
-              "@type": "ListItem",
-              position: 1,
-              name: "Catálogo",
-              item: `${SITE_URL}/catalog`,
-            },
-            {
-              "@type": "ListItem",
-              position: 2,
-              name: brandName,
-              item: `${SITE_URL}/catalog?brand=${encodeURIComponent(brandName)}`,
-            },
-            {
-              "@type": "ListItem",
-              position: 3,
-              name: `Capa ${product.name}`,
-            },
+            { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+            { "@type": "ListItem", position: 2, name: "Catálogo", item: `${SITE_URL}/catalog` },
+            { "@type": "ListItem", position: 3, name: brandName, item: `${SITE_URL}/catalog?brand=${encodeURIComponent(brandName)}` },
+            { "@type": "ListItem", position: 4, name: `Capa ${product.name}` },
           ],
         },
       ],

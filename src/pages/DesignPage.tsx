@@ -117,15 +117,25 @@ const DesignPage = () => {
 
     const jsonLd = {
       "@context": "https://schema.org",
-      "@type": "Product",
-      name: design.name,
-      image,
-      url,
-      description: desc,
-      sku: design.slug,
-      category: "Capas para Celular",
-      brand: BRAND,
-      offers: merchantOffer(design.price_cents / 100, url),
+      "@graph": [
+        {
+          "@type": "Product",
+          name: design.name,
+          image,
+          url,
+          description: desc,
+          sku: design.slug,
+          category: "Capas para Celular",
+          brand: BRAND,
+          offers: merchantOffer(design.price_cents / 100, url),
+        },
+        breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Coleções", url: `${SITE_URL}/colecoes` },
+          { name: collectionSlug || "", url: `${SITE_URL}/colecao/${collectionSlug}` },
+          { name: design.name },
+        ]),
+      ],
     };
     let script = document.querySelector('script[data-seo="design-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "design-jsonld"); document.head.appendChild(script); }

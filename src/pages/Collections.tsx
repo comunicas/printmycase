@@ -41,27 +41,35 @@ const Collections = () => {
 
     const jsonLd = {
       "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      name: "Capinhas Exclusivas para Celular",
-      description: DESC,
-      url: `${SITE_URL}/colecoes`,
-      mainEntity: {
-        "@type": "ItemList",
-        numberOfItems: allDesigns.length,
-        itemListElement: allDesigns.map((d, i) => ({
-          "@type": "ListItem",
-          position: i + 1,
-          item: {
-            "@type": "Product",
-            name: d.name,
-            sku: d.slug,
-            brand: BRAND,
-            image: d.image_url,
-            url: `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`,
-            offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`),
+      "@graph": [
+        {
+          "@type": "CollectionPage",
+          name: "Capinhas Exclusivas para Celular",
+          description: DESC,
+          url: `${SITE_URL}/colecoes`,
+          mainEntity: {
+            "@type": "ItemList",
+            numberOfItems: allDesigns.length,
+            itemListElement: allDesigns.map((d, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              item: {
+                "@type": "Product",
+                name: d.name,
+                sku: d.slug,
+                brand: BRAND,
+                image: d.image_url,
+                url: `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`,
+                offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`),
+              },
+            })),
           },
-        })),
-      },
+        },
+        breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Coleções", url: `${SITE_URL}/colecoes` },
+        ]),
+      ],
     };
     let script = document.querySelector('script[data-seo="collections-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "collections-jsonld"); document.head.appendChild(script); }
