@@ -1,27 +1,45 @@
 
 
-## Fase 2 — Conteúdo "Minha Conta" na Base de Conhecimento
+## Otimizar FAQ JSON-LD na Home e na Central de Ajuda
 
-### O que será feito
+### Situação atual
 
-Inserir 1 nova categoria e 4 artigos via SQL (insert tool), com conteúdo real baseado nas funcionalidades existentes da página de perfil.
+| Página | FAQ JSON-LD | Problema |
+|--------|------------|----------|
+| `/ajuda` (KnowledgeBase) | Injeta `FAQPage` com até 30 artigos da `kb_articles` | Usa títulos de artigos como perguntas e primeiros 300 chars do conteúdo como resposta — funciona, mas não são perguntas reais |
+| Home (Landing) | **Nenhum** | O `FaqSection` renderiza as 5 FAQs featured da tabela `faqs` mas **não injeta JSON-LD** |
+| `/ajuda/:categorySlug/:articleSlug` (KbArticle) | **Nenhum** | Artigos individuais não têm schema estruturado |
 
-### Nova Categoria
+### Alterações
 
-| Nome | Slug | Ícone | sort_order |
-|------|------|-------|------------|
-| Minha Conta | minha-conta | User | 5 |
+**1. FaqSection.tsx — Injetar FAQPage JSON-LD na Home**
 
-### Artigos (4)
+Adicionar um `useEffect` que injeta o schema `FAQPage` com as 5 FAQs featured já carregadas. Usa a função `faqPageJsonLd` existente de `merchant-jsonld.ts`. Inclui cleanup no return.
 
-1. **Como criar minha conta no Studio PrintMyCase** — cadastro com e-mail/senha ou Google, verificação de e-mail, código de indicação
-2. **Como editar meu perfil** — alterar nome, telefone, foto (máx 2 MB), e-mail exibido mas não editável
-3. **Como alterar minha senha** — mínimo 6 caracteres, fluxo de redefinição via "Esqueci minha senha"
-4. **Como excluir minha conta** — ação irreversível, digitar "EXCLUIR" para confirmar, dados removidos permanentemente
+**2. KnowledgeBase.tsx — Usar FAQs reais em vez de artigos**
+
+Alterar a lógica para buscar da tabela `faqs` (perguntas e respostas reais) em vez de usar títulos de `kb_articles` como proxy. Isso garante que o schema tenha perguntas genuínas no formato pergunta/resposta que o Google espera.
+
+**3. KbArticle.tsx — Adicionar schema Article + BreadcrumbList**
+
+Injetar JSON-LD com:
+- `@type: Article` (headline, dateModified, author: Studio PrintMyCase)
+- `@type: BreadcrumbList` (Home → Central de Ajuda → Categoria → Artigo)
+
+Isso melhora a indexação de artigos individuais e habilita breadcrumbs nos resultados de busca.
+
+**4. KnowledgeBase.tsx — Adicionar meta tags SEO**
+
+Usar `setPageSeo` de `src/lib/seo.ts` para definir title, description, canonical e OG tags na página `/ajuda`.
+
+**5. KbArticle.tsx — Adicionar meta tags SEO**
+
+Usar `setPageSeo` para definir title/description dinâmicos baseados no título e conteúdo do artigo.
 
 ### Detalhes técnicos
 
-- Inserir 1 registro em `kb_categories` e 4 em `kb_articles` usando o insert tool (não migration, pois é apenas dados)
-- Conteúdo Markdown real baseado na página `Profile.tsx` e fluxos de Login/Signup
-- Aparece imediatamente no admin existente
+- Nenhuma alteração no banco de dados
+- 3 arquivos modificados: `FaqSection.tsx`, `KnowledgeBase.tsx`, `KbArticle.tsx`
+- Reutiliza `faqPageJsonLd` e `setPageSeo` já existentes
+- Todos os scripts JSON-LD incluem cleanup no `useEffect` return para evitar duplicação na navegação SPA
 
