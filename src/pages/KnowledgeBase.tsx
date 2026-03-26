@@ -5,7 +5,7 @@ import AppHeader from "@/components/AppHeader";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 import { faqPageJsonLd } from "@/lib/merchant-jsonld";
-import { setPageSeo, SITE_URL } from "@/lib/seo";
+import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 import { Input } from "@/components/ui/input";
 import ScrollReveal from "@/components/ScrollReveal";
 import {
@@ -46,11 +46,19 @@ const KnowledgeBase = () => {
 
   // SEO meta tags
   useEffect(() => {
-    return setPageSeo({
+    const cleanup = setPageSeo({
       title: "Central de Ajuda | Studio PrintMyCase",
       description: "Encontre respostas sobre personalização de capinhas, pagamentos, AI Coins e muito mais no Studio PrintMyCase.",
       url: `${SITE_URL}/ajuda`,
     });
+    const cleanupBreadcrumb = injectJsonLd("kb-breadcrumb", {
+      "@context": "https://schema.org",
+      ...breadcrumbJsonLd([
+        { name: "Home", url: SITE_URL },
+        { name: "Central de Ajuda", url: `${SITE_URL}/ajuda` },
+      ]),
+    });
+    return () => { cleanup(); cleanupBreadcrumb(); };
   }, []);
 
   useEffect(() => {

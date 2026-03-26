@@ -4,11 +4,11 @@ import AppHeader from "@/components/AppHeader";
 import { useCollection } from "@/hooks/useCollections";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
-import { setPageSeo, SITE_URL } from "@/lib/seo";
+import { setPageSeo, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 
-const SITE_NAME = "PrintMyCase";
+const SITE_NAME = "Studio PrintMyCase";
 
 const CollectionPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -26,31 +26,40 @@ const CollectionPage = () => {
 
     const jsonLd = {
       "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      name: collection.name,
-      description: desc,
-      url,
-      ...(image ? { image } : {}),
-      ...(designs.length > 0 ? {
-        mainEntity: {
-          "@type": "ItemList",
-          numberOfItems: designs.length,
-          itemListElement: designs.map((d, i) => ({
-            "@type": "ListItem",
-            position: i + 1,
-            item: {
-              "@type": "Product",
-              name: d.name,
-              description: `Capa com design "${d.name}" da coleção ${collection.name}.`,
-              sku: d.slug,
-              brand: BRAND,
-              image: d.image_url,
-              url: `${SITE_URL}/colecao/${slug}/${d.slug}`,
-              offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${slug}/${d.slug}`),
+      "@graph": [
+        {
+          "@type": "CollectionPage",
+          name: collection.name,
+          description: desc,
+          url,
+          ...(image ? { image } : {}),
+          ...(designs.length > 0 ? {
+            mainEntity: {
+              "@type": "ItemList",
+              numberOfItems: designs.length,
+              itemListElement: designs.map((d, i) => ({
+                "@type": "ListItem",
+                position: i + 1,
+                item: {
+                  "@type": "Product",
+                  name: d.name,
+                  description: `Capa com design "${d.name}" da coleção ${collection.name}.`,
+                  sku: d.slug,
+                  brand: BRAND,
+                  image: d.image_url,
+                  url: `${SITE_URL}/colecao/${slug}/${d.slug}`,
+                  offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${slug}/${d.slug}`),
+                },
+              })),
             },
-          })),
+          } : {}),
         },
-      } : {}),
+        breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Coleções", url: `${SITE_URL}/colecoes` },
+          { name: collection.name, url },
+        ]),
+      ],
     };
     let script = document.querySelector('script[data-seo="collection-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "collection-jsonld"); document.head.appendChild(script); }

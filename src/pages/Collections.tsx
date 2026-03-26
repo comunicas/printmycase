@@ -6,13 +6,13 @@ import AppHeader from "@/components/AppHeader";
 import { useDesignsGroupedByCollection } from "@/hooks/useCollectionDesigns";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
-import { setPageSeo, SITE_URL } from "@/lib/seo";
+import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const TITLE = "Capinhas Exclusivas para Celular | PrintMyCase";
+const TITLE = "Capinhas Exclusivas para Celular | Studio PrintMyCase";
 const DESC = "Explore nossas coleções de capinhas exclusivas para celular. Designs únicos, proteção premium e acabamento soft-touch. Encontre a capa perfeita ou personalize a sua.";
 
 const Collections = () => {
@@ -41,27 +41,35 @@ const Collections = () => {
 
     const jsonLd = {
       "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      name: "Capinhas Exclusivas para Celular",
-      description: DESC,
-      url: `${SITE_URL}/colecoes`,
-      mainEntity: {
-        "@type": "ItemList",
-        numberOfItems: allDesigns.length,
-        itemListElement: allDesigns.map((d, i) => ({
-          "@type": "ListItem",
-          position: i + 1,
-          item: {
-            "@type": "Product",
-            name: d.name,
-            sku: d.slug,
-            brand: BRAND,
-            image: d.image_url,
-            url: `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`,
-            offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`),
+      "@graph": [
+        {
+          "@type": "CollectionPage",
+          name: "Capinhas Exclusivas para Celular",
+          description: DESC,
+          url: `${SITE_URL}/colecoes`,
+          mainEntity: {
+            "@type": "ItemList",
+            numberOfItems: allDesigns.length,
+            itemListElement: allDesigns.map((d, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              item: {
+                "@type": "Product",
+                name: d.name,
+                sku: d.slug,
+                brand: BRAND,
+                image: d.image_url,
+                url: `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`,
+                offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`),
+              },
+            })),
           },
-        })),
-      },
+        },
+        breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Coleções", url: `${SITE_URL}/colecoes` },
+        ]),
+      ],
     };
     let script = document.querySelector('script[data-seo="collections-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "collections-jsonld"); document.head.appendChild(script); }

@@ -3,9 +3,9 @@ import { useProducts } from "@/hooks/useProducts";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import type { Product } from "@/lib/types";
 
-const SITE_NAME = "PrintMyCase";
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://printmycase.com.br";
-const TITLE = "PrintMyCase | Capas Personalizadas para Celular";
+const SITE_NAME = "Studio PrintMyCase";
+const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
+const TITLE = "Studio PrintMyCase | Capas Personalizadas para Celular";
 const DESCRIPTION =
   "Crie capas de celular personalizadas com suas fotos. Proteção premium, acabamento soft-touch e frete grátis para diversos modelos de smartphone.";
 

@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
-import { setPageSeo, setMeta, SITE_URL } from "@/lib/seo";
+import { setPageSeo, setMeta, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import { type ShippingResult } from "@/lib/shipping";
 import { generateEventId } from "@/lib/meta-pixel";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
@@ -17,7 +17,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
-const SITE_NAME = "PrintMyCase";
+const SITE_NAME = "Studio PrintMyCase";
 
 const DesignPage = () => {
   const { collectionSlug, designSlug } = useParams<{ collectionSlug: string; designSlug: string }>();
@@ -117,15 +117,25 @@ const DesignPage = () => {
 
     const jsonLd = {
       "@context": "https://schema.org",
-      "@type": "Product",
-      name: design.name,
-      image,
-      url,
-      description: desc,
-      sku: design.slug,
-      category: "Capas para Celular",
-      brand: BRAND,
-      offers: merchantOffer(design.price_cents / 100, url),
+      "@graph": [
+        {
+          "@type": "Product",
+          name: design.name,
+          image,
+          url,
+          description: desc,
+          sku: design.slug,
+          category: "Capas para Celular",
+          brand: BRAND,
+          offers: merchantOffer(design.price_cents / 100, url),
+        },
+        breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Coleções", url: `${SITE_URL}/colecoes` },
+          { name: collectionSlug || "", url: `${SITE_URL}/colecao/${collectionSlug}` },
+          { name: design.name },
+        ]),
+      ],
     };
     let script = document.querySelector('script[data-seo="design-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "design-jsonld"); document.head.appendChild(script); }

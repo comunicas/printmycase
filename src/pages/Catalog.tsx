@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import { ChevronLeft, ChevronRight, Search, SearchX, X } from "lucide-react";
-import { setPageSeo, SITE_URL } from "@/lib/seo";
+import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 
 const PAGE_SIZE = 12;
 
@@ -20,12 +20,19 @@ const Catalog = () => {
   useEffect(() => {
     const firstImage = products.length > 0 ? (products[0].device_image ?? products[0].images[0]) : undefined;
     const cleanup = setPageSeo({
-      title: "Catálogo de Capas | PrintMyCase",
+      title: "Catálogo de Capas | Studio PrintMyCase",
       description: "Encontre a capa perfeita para seu celular. Modelos Apple, Samsung, Motorola e mais com proteção premium.",
       url: `${SITE_URL}/catalog`,
       image: firstImage ?? undefined,
     });
-    return cleanup;
+    const cleanupBreadcrumb = injectJsonLd("catalog-breadcrumb", {
+      "@context": "https://schema.org",
+      ...breadcrumbJsonLd([
+        { name: "Home", url: SITE_URL },
+        { name: "Catálogo", url: `${SITE_URL}/catalog` },
+      ]),
+    });
+    return () => { cleanup(); cleanupBreadcrumb(); };
   }, [products]);
 
   const brandCounts = useMemo(() => {
