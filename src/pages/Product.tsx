@@ -7,7 +7,7 @@ import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
-import { setPageSeo, setMeta, SITE_URL } from "@/lib/seo";
+import { setPageSeo, setMeta, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import { clarityEvent, clarityTag } from "@/lib/clarity";
 import { pixelEvent } from "@/lib/meta-pixel";
 import LoadingSpinner from "@/components/ui/loading-spinner";
