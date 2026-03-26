@@ -1,6 +1,10 @@
-import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette, Settings, Layers } from "lucide-react";
+import { useState } from "react";
+import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette, Settings, Layers, Zap } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import ProductsManager from "@/components/admin/ProductsManager";
 import OrdersManager from "@/components/admin/OrdersManager";
 import AiFiltersManager from "@/components/admin/AiFiltersManager";
@@ -20,11 +24,35 @@ import CollectionDesignsManager from "@/components/admin/CollectionDesignsManage
 import AiFilterCategoriesManager from "@/components/admin/AiFilterCategoriesManager";
 
 const Admin = () => {
+  const [optimizing, setOptimizing] = useState(false);
+
+  const handleOptimize = async () => {
+    setOptimizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("optimize-existing-images");
+      if (error) throw error;
+      toast({
+        title: "Otimização concluída",
+        description: `${data.optimized} imagens otimizadas, ${data.errors} erros.`,
+      });
+    } catch (err: any) {
+      toast({ title: "Erro ao otimizar", description: err.message, variant: "destructive" });
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader breadcrumbs={[{ label: "Admin" }]} />
       <main className="max-w-5xl mx-auto px-5 py-10">
-        <h1 className="text-3xl font-bold mb-6">Painel Admin</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Painel Admin</h1>
+          <Button variant="outline" size="sm" onClick={handleOptimize} disabled={optimizing} className="gap-1.5">
+            <Zap className="w-4 h-4" />
+            {optimizing ? "Otimizando…" : "Otimizar Imagens"}
+          </Button>
+        </div>
 
         <Tabs defaultValue="products" className="w-full">
           <TabsList className="mb-6 w-full flex-wrap h-auto gap-1 justify-start">
