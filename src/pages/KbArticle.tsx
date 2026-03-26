@@ -67,7 +67,37 @@ const KbArticle = () => {
       if (art) {
         setTitle(art.title);
         setContent(art.content);
-        setUpdatedAt(new Date(art.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }));
+        const dateStr = new Date(art.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+        setUpdatedAt(dateStr);
+
+        // Inject Article + BreadcrumbList JSON-LD
+        const jsonLd = {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Article",
+              headline: art.title,
+              dateModified: art.updated_at,
+              author: { "@type": "Organization", name: "Studio PrintMyCase" },
+              publisher: { "@type": "Organization", name: "Studio PrintMyCase" },
+              description: art.content.replace(/[#*\-_]/g, "").slice(0, 160).trim(),
+            },
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+                { "@type": "ListItem", position: 2, name: "Central de Ajuda", item: `${SITE_URL}/ajuda` },
+                { "@type": "ListItem", position: 3, name: cat?.name ?? "", item: `${SITE_URL}/ajuda/${categorySlug}` },
+                { "@type": "ListItem", position: 4, name: art.title },
+              ],
+            },
+          ],
+        };
+        const script = document.createElement("script");
+        script.type = "application/ld+json";
+        script.setAttribute("data-seo", "kb-article");
+        script.textContent = JSON.stringify(jsonLd);
+        document.head.appendChild(script);
       }
       setLoading(false);
     };

@@ -44,8 +44,17 @@ const KnowledgeBase = () => {
   const [faqItems, setFaqItems] = useState<{ question: string; answer: string }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
+  // SEO meta tags
   useEffect(() => {
-    const fetch = async () => {
+    return setPageSeo({
+      title: "Central de Ajuda | Studio PrintMyCase",
+      description: "Encontre respostas sobre personalização de capinhas, pagamentos, AI Coins e muito mais no Studio PrintMyCase.",
+      url: `${SITE_URL}/ajuda`,
+    });
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
       const { data: cats } = await supabase
         .from("kb_categories")
         .select("id, name, slug, icon, description, sort_order")
@@ -56,7 +65,7 @@ const KnowledgeBase = () => {
 
       const { data: articles } = await supabase
         .from("kb_articles")
-        .select("category_id, title, content")
+        .select("category_id")
         .eq("active", true);
 
       const countMap: Record<string, number> = {};
@@ -68,19 +77,21 @@ const KnowledgeBase = () => {
         cats.map((c) => ({ ...c, article_count: countMap[c.id] || 0 }))
       );
 
-      // Build FAQ items for JSON-LD (use first ~200 chars of content as answer)
-      if (articles) {
-        setFaqItems(
-          articles.slice(0, 30).map((a) => ({
-            question: a.title,
-            answer: a.content.replace(/[#*\-_]/g, "").slice(0, 300).trim(),
-          }))
-        );
+      // Fetch real FAQs for JSON-LD
+      const { data: faqs } = await supabase
+        .from("faqs")
+        .select("question, answer")
+        .eq("active", true)
+        .order("sort_order", { ascending: true })
+        .limit(30);
+
+      if (faqs) {
+        setFaqItems(faqs.map((f) => ({ question: f.question, answer: f.answer })));
       }
 
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, []);
 
   // Inject FAQ JSON-LD for AI agents
