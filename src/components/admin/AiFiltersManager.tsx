@@ -39,6 +39,8 @@ const MODEL_OPTIONS = [
   { value: "fal-ai/image-apps-v2/style-transfer", label: "Style Transfer" },
   { value: "fal-ai/image-apps-v2/photography-effects", label: "Photography Effects" },
   { value: "fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration", label: "Lighting Restoration" },
+  { value: "fal-ai/nano-banana-2/edit", label: "Nano Banana 2 Edit" },
+  { value: "fal-ai/nano-banana-pro/edit", label: "Nano Banana Pro Edit" },
 ];
 
 const STYLE_OPTIONS = [
