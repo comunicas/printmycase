@@ -138,7 +138,6 @@ Deno.serve(async (req) => {
         num_inference_steps: 28,
         guidance_scale: 7.5,
         image_size: { width: 720, height: 1280 },
-        aspect_ratio: "9:16",
       };
     }
 

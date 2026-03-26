@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     };
     if (seed != null && seed !== "") falBody.seed = Number(seed);
     if (image_size && image_size !== "auto") falBody.image_size = image_size;
-    if (safety_tolerance != null) falBody.safety_tolerance = Number(safety_tolerance);
+    if (safety_tolerance != null) falBody.safety_tolerance = String(Number(safety_tolerance));
     if (output_format) falBody.output_format = output_format;
 
     console.log("Calling fal-ai/flux-2-pro/edit with params:", JSON.stringify({ ...falBody, image_urls: `[${image_urls.length} images]` }));
