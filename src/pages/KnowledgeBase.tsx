@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
+import { faqPageJsonLd } from "@/lib/merchant-jsonld";
 import { Input } from "@/components/ui/input";
 import ScrollReveal from "@/components/ScrollReveal";
 import {
@@ -39,6 +40,7 @@ const KnowledgeBase = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [faqItems, setFaqItems] = useState<{ question: string; answer: string }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -53,7 +55,7 @@ const KnowledgeBase = () => {
 
       const { data: articles } = await supabase
         .from("kb_articles")
-        .select("category_id")
+        .select("category_id, title, content")
         .eq("active", true);
 
       const countMap: Record<string, number> = {};
@@ -64,10 +66,31 @@ const KnowledgeBase = () => {
       setCategories(
         cats.map((c) => ({ ...c, article_count: countMap[c.id] || 0 }))
       );
+
+      // Build FAQ items for JSON-LD (use first ~200 chars of content as answer)
+      if (articles) {
+        setFaqItems(
+          articles.slice(0, 30).map((a) => ({
+            question: a.title,
+            answer: a.content.replace(/[#*\-_]/g, "").slice(0, 300).trim(),
+          }))
+        );
+      }
+
       setLoading(false);
     };
     fetch();
   }, []);
+
+  // Inject FAQ JSON-LD for AI agents
+  useEffect(() => {
+    if (faqItems.length === 0) return;
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(faqPageJsonLd(faqItems));
+    document.head.appendChild(script);
+    return () => { script.remove(); };
+  }, [faqItems]);
 
   const doSearch = useCallback(async (term: string) => {
     if (!term.trim()) { setResults([]); setSearching(false); return; }
