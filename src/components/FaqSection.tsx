@@ -4,6 +4,7 @@ import * as Accordion from "@radix-ui/react-accordion";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ScrollReveal from "@/components/ScrollReveal";
+import { faqPageJsonLd } from "@/lib/merchant-jsonld";
 import { Button } from "@/components/ui/button";
 
 interface Faq {
