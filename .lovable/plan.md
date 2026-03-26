@@ -1,75 +1,64 @@
 
 
-## Preparar o site para AI Agents (AEO — Answer Engine Optimization)
+## Fase 1 — Popular Base de Conhecimento do Studio PrintMyCase
 
-### Status atual
+### Escopo revisado
 
-O site já tem uma boa base de SEO tradicional:
-- JSON-LD estruturado (Product, ItemList, BreadcrumbList, CollectionPage)
-- Sitemap dinâmico
-- Meta tags OG/Twitter
-- Prerender edge function para crawlers
+Foco em funcionalidades da plataforma e produto. **Sem conteúdo de frete/entrega** nesta fase.
 
-**O que falta** para AI agents (ChatGPT, Perplexity, Google AI Overview, Claude):
+### Categorias (4)
 
-### Alterações necessárias
+| # | Nome | Slug | Ícone |
+|---|------|------|-------|
+| 1 | Primeiros Passos | primeiros-passos | HelpCircle |
+| 2 | Personalização | personalizacao | Sparkles |
+| 3 | Pedidos e Pagamento | pedidos-e-pagamento | CreditCard |
+| 4 | Moedas e IA | moedas-e-ia | Coins |
 
-| # | Arquivo | O que |
-|---|---------|-------|
-| 1 | `public/llms.txt` | Criar arquivo padrão [llms.txt](https://llmstxt.org/) — fornece aos LLMs um resumo legível do site, catálogo e links principais |
-| 2 | `public/robots.txt` | Adicionar regras `Allow` para os principais AI crawlers (GPTBot, ChatGPT-User, PerplexityBot, ClaudeBot, Google-Extended) e referenciar o `llms.txt` |
-| 3 | `src/lib/merchant-jsonld.ts` | Adicionar `FAQPage` schema helper para páginas de FAQ (melhora chances de aparecer em AI answers) |
-| 4 | `src/pages/KnowledgeBase.tsx` | Injetar JSON-LD `FAQPage` com perguntas/respostas reais do banco — AI agents usam FAQ schema como fonte primária |
+### Artigos (~18)
+
+**1. Primeiros Passos**
+- Como funciona o Studio PrintMyCase (3 passos: modelo → foto → personalizar)
+- Como escolher o modelo do meu celular
+- Quais marcas e modelos estão disponíveis
+- Não encontrei meu modelo, o que fazer?
+- Material e qualidade da capa (policarbonato + TPU + soft-touch)
+- Como é feita a impressão (UV Epson, Micro Piezo, cores que não desbotam)
+
+**2. Personalização**
+- Como enviar minha foto para a capinha
+- Qual a resolução ideal da foto
+- Como ajustar posição, zoom e rotação da imagem
+- Como usar designs prontos das coleções
+- Como escolher imagens da galeria
+
+**3. Pedidos e Pagamento**
+- Quais formas de pagamento são aceitas (cartão e Pix)
+- Como finalizar meu pedido
+
+**4. Moedas e IA**
+- O que são AI Coins
+- Como ganhar moedas grátis (50 no cadastro, 20 por indicação, 15 por compra)
+- Como usar filtros de IA na minha foto (custo: 20 moedas)
+- O que é o upscale de imagem com IA (custo: 20 moedas)
+- Como comprar mais moedas
+
+### FAQs em destaque (5)
+
+1. "Como funciona o Studio PrintMyCase?"
+2. "Qual o material da capinha?"
+3. "Quais formas de pagamento são aceitas?"
+4. "O que são AI Coins?"
+5. "Como usar filtros de IA na minha foto?"
+
+### Alteração no llms.txt
+
+Trocar "# PrintMyCase" por "# Studio PrintMyCase" e ajustar descrição para "estúdio digital".
 
 ### Detalhes técnicos
 
-**1. `public/llms.txt`** — Arquivo de texto simples que AI agents buscam automaticamente:
-```text
-# PrintMyCase
-
-> Capas de celular personalizadas com suas fotos. Proteção premium, acabamento soft-touch.
-
-## Páginas principais
-- Catálogo de modelos: https://studio.printmycase.com.br/catalog
-- Coleções de designs: https://studio.printmycase.com.br/colecoes
-- Personalizar capa: https://studio.printmycase.com.br/customize
-- Central de ajuda: https://studio.printmycase.com.br/ajuda
-- Solicitar modelo: https://studio.printmycase.com.br/solicitar-modelo
-
-## Sobre
-PrintMyCase é uma loja online brasileira de capas personalizadas para celular.
-Oferecemos mais de 70 modelos (Samsung, Motorola, iPhone e mais).
-O cliente pode enviar sua própria foto ou escolher designs de nossas coleções.
-Todas as capas têm acabamento soft-touch e proteção premium.
-
-## Políticas
-- Termos de uso: /termos
-- Política de privacidade: /privacidade
-- Política de compras: /compras
-```
-
-**2. `robots.txt`** — Adicionar AI crawlers:
-```
-User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-```
-
-**3-4. FAQ Schema** — Injetar `FAQPage` JSON-LD na página `/ajuda` com as perguntas da tabela `kb_articles`, pois AI agents priorizam conteúdo estruturado como FAQ para gerar respostas.
-
-### O que NÃO precisa mudar
-- Os JSON-LD de Product/Collection já estão completos
-- O sitemap já cobre todas as rotas
-- O prerender já serve meta tags para crawlers sem JS
+- **Método**: Uma migration SQL com INSERTs em `kb_categories`, `kb_articles` e `faqs`
+- **Conteúdo real**: dados de `coin_settings` (50/20/15 moedas), custo de filtros (20 moedas), materiais da seção WhyPrintMyCase (policarbonato, TPU, soft-touch, impressão UV Epson Micro Piezo)
+- **Código alterado**: apenas `public/llms.txt`
+- **Admin**: conteúdo aparece imediatamente nas abas existentes do painel
 
