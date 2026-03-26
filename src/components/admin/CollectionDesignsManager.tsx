@@ -10,6 +10,7 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { formatPrice } from "@/lib/types";
 import type { Tables } from "@/integrations/supabase/types";
+import { optimizeForUpload } from "@/lib/image-utils";
 
 type Collection = Tables<"collections">;
 type Design = Tables<"collection_designs">;
