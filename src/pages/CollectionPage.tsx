@@ -4,7 +4,7 @@ import AppHeader from "@/components/AppHeader";
 import { useCollection } from "@/hooks/useCollections";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
-import { setPageSeo, SITE_URL } from "@/lib/seo";
+import { setPageSeo, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 
