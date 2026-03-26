@@ -142,6 +142,16 @@ Deno.serve(async (req) => {
         image_size: "portrait_16_9",
         output_format: "jpeg",
       };
+    } else if (isNanoBanana) {
+      falBody = {
+        image_urls: [inputImage],
+        prompt: filter.prompt,
+        aspect_ratio: "9:16",
+        output_format: "jpeg",
+        resolution: "1K",
+        safety_tolerance: "4",
+        num_images: 1,
+      };
     } else {
       falBody = {
         image_url: inputImage,
@@ -149,6 +159,7 @@ Deno.serve(async (req) => {
         strength: 0.85,
         num_inference_steps: 40,
         guidance_scale: 3.5,
+        image_size: { width: 720, height: 1280 },
       };
     }
 
