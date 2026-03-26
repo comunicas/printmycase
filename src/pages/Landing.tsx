@@ -79,7 +79,7 @@ const Landing = () => {
             {/* Content */}
             <div className="relative z-10 max-w-3xl mx-auto text-center space-y-5 sm:space-y-7 px-5 pt-20 pb-16">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={{ ...fadeIn(0), textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                Crie sua capinha{" "}
+                Crie sua&nbsp;capinha{" "}
                 <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">personalizada</span>{" "}
                 e receba em casa.
               </h1>
