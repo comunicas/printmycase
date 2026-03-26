@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
     const isPhotographyEffects = modelUrl.includes("photography-effects");
     const isLightingRestoration = modelUrl.includes("lighting-restoration");
     const isKontext = modelUrl.includes("kontext");
+    const isSD35 = modelUrl.includes("stable-diffusion-v35-large");
 
     let falBody: Record<string, unknown>;
 
