@@ -1,40 +1,60 @@
 
 
-## Melhorar UX de Login, Cadastro e Header para Usuarios Nao Logados
+## Otimizar Imagens no Upload — Conversão Automática para WebP
 
-### Situacao atual
+### Problema
 
-- **Login/Signup**: Paginas simples com fundo `bg-background`, logo grande, formulario centralizado. Sem card visual, sem incentivo de conversao, sem consistencia com o LoginDialog (que ja tem banner de moedas gratis e tabs).
-- **Header (UserMenu)**: Para usuarios nao logados, exibe apenas um botao ghost "Entrar" — sem CTA de cadastro.
-- **LoginDialog**: Ja tem um UX superior com banner de moedas, tabs login/signup, e layout mais compacto. As paginas full-page devem seguir esse mesmo padrao.
+Os uploads de imagens no admin (coleções, designs, galerias, produtos, device images) enviam arquivos no formato original (JPG/PNG), muitos com 1-2MB+. Apenas o `UserGenerationsManager` já converte para WebP antes do upload.
 
-### O que sera feito
+### Solução
 
-| # | Arquivo | Alteracao |
-|---|---------|-----------|
-| 1 | `UserMenu.tsx` | Adicionar botao "Cadastre-se gratis" (variant primary, size sm) ao lado do "Entrar" para usuarios nao logados |
-| 2 | `Login.tsx` | Redesign: card com sombra, banner de incentivo (50 moedas gratis) no topo como no LoginDialog, remover logo duplicada (ja esta no header), visual mais limpo |
-| 3 | `Signup.tsx` | Mesmo redesign: card com banner de incentivo, layout consistente com Login, manter checkbox de termos |
+Criar uma função utilitária `optimizeForUpload` que redimensiona (max 800px) e converte para WebP (qualidade 80%) antes de qualquer upload ao storage. Aplicar em todos os pontos de upload do admin.
 
-### Detalhes do redesign Login/Signup
+### Função utilitária (novo)
 
-**Estrutura visual (ambas as paginas):**
-- Envolver formulario em um `Card` com `max-w-md` centralizado
-- Banner gradiente amber-to-orange no topo do card (igual ao LoginDialog) com icone de moedas e texto "Ganhe 50 moedas gratis!"
-- Remover logo grande redundante (AppHeader ja mostra)
-- Titulo e subtitulo mais compactos
-- Botao Google com mesmo estilo
-- Divisor "ou" mantido
-- Link para a outra pagina (Entrar / Criar conta) no rodape do card
+**`src/lib/image-utils.ts`** — adicionar:
 
-**Header para nao logados:**
-- "Entrar" permanece como `variant="ghost"`
-- Novo botao "Cadastre-se" com `variant="default"` (primary roxo) ao lado, com link para `/signup`
-- No mobile, ambos ficam `size="sm"` para caber
-- Respeita prop `transparent` para modo hero
+```typescript
+export function optimizeForUpload(
+  file: File, maxSize = 800, quality = 0.80
+): Promise<Blob>
+```
 
-### Arquivos modificados
-- `src/components/UserMenu.tsx` — adicionar CTA "Cadastre-se"
-- `src/pages/Login.tsx` — redesign com card e banner
-- `src/pages/Signup.tsx` — redesign com card e banner
+- Carrega a imagem via `createImageBitmap`
+- Redimensiona mantendo aspect ratio (max 800px no maior lado)
+- Usa `OffscreenCanvas` + `convertToBlob({ type: "image/webp", quality })`
+- Se o navegador não suportar `OffscreenCanvas`, faz fallback com `<canvas>` + `toBlob`
+- Retorna um Blob WebP
+
+### Arquivos modificados (6 pontos de upload)
+
+| Arquivo | Upload atual | Mudança |
+|---------|-------------|---------|
+| `CollectionDesignsManager.tsx` | PNG/JPG direto | Otimizar → WebP, path `.webp` |
+| `CollectionsManager.tsx` | PNG/JPG direto | Otimizar → WebP, path `.webp` |
+| `ImageGalleriesManager.tsx` | PNG/JPG direto | Otimizar → WebP, path `.webp` |
+| `GalleryImagesManager.tsx` | PNG/JPG direto | Otimizar → WebP, path `.webp` |
+| `DeviceImageUpload.tsx` | PNG/JPG direto | Otimizar → WebP, path `.webp` |
+| `ProductImagesUpload.tsx` | PNG/JPG direto | Otimizar → WebP, path `.webp` |
+
+Cada mudança: importar `optimizeForUpload`, chamar antes do `.upload()`, usar `contentType: "image/webp"` e extensão `.webp` no path.
+
+**`upload-gallery-zip/index.ts`** — manter sem mudança (edge function no Deno, sem canvas; imagens já são processadas no admin individual).
+
+### Edge Function para imagens existentes (novo)
+
+**`supabase/functions/optimize-existing-images/index.ts`**
+
+Edge function admin-only que:
+1. Lista arquivos pesados no bucket `product-assets` (galleries/, collections/)
+2. Baixa cada imagem, redimensiona para max 800px e converte para WebP via `sharp` ou API de imagem
+3. Re-upload com path `.webp` e atualiza as URLs nas tabelas `gallery_images`, `collection_designs`, `collections`, `products`
+
+Isso resolve os ~13MB de imagens pesadas já existentes.
+
+### Resultado esperado
+
+- Novos uploads: ~50-200KB ao invés de 1-2MB
+- Imagens existentes: otimizadas via edge function one-shot
+- Redução estimada de 80-90% no payload de imagens
 
