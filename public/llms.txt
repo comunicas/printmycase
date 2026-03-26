@@ -1,0 +1,29 @@
+# PrintMyCase
+
+> Capas de celular personalizadas com suas fotos. Proteção premium, acabamento soft-touch.
+
+## Páginas principais
+- Catálogo de modelos: https://studio.printmycase.com.br/catalog
+- Coleções de designs: https://studio.printmycase.com.br/colecoes
+- Personalizar capa: https://studio.printmycase.com.br/customize
+- Central de ajuda: https://studio.printmycase.com.br/ajuda
+- Solicitar modelo: https://studio.printmycase.com.br/solicitar-modelo
+
+## Sobre
+PrintMyCase é uma loja online brasileira de capas personalizadas para celular.
+Oferecemos mais de 70 modelos (Samsung, Motorola, iPhone e mais).
+O cliente pode enviar sua própria foto ou escolher designs de nossas coleções.
+Todas as capas têm acabamento soft-touch e proteção premium.
+Entregamos para todo o Brasil com prazo de 5 a 15 dias úteis.
+
+## Funcionalidades
+- Upload de foto própria para personalização
+- Filtros de IA para transformar suas fotos
+- Coleções de designs prontos
+- Upscale de imagem com IA
+- Galeria de imagens para inspiração
+
+## Políticas
+- Termos de uso: https://studio.printmycase.com.br/termos
+- Política de privacidade: https://studio.printmycase.com.br/privacidade
+- Política de compras: https://studio.printmycase.com.br/compras
