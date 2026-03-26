@@ -109,6 +109,42 @@ export async function uploadForAI(
   return { path, signedUrl: signedData.signedUrl };
 }
 
+/** Optimize an image File for upload: resize to max dimension and convert to WebP */
+export function optimizeForUpload(
+  file: File,
+  maxSize = 800,
+  quality = 0.80
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const { naturalWidth: w, naturalHeight: h } = img;
+      let nw = w;
+      let nh = h;
+      if (w > maxSize || h > maxSize) {
+        const ratio = Math.min(maxSize / w, maxSize / h);
+        nw = Math.round(w * ratio);
+        nh = Math.round(h * ratio);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = nw;
+      canvas.height = nh;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, nw, nh);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error("Failed to convert to WebP"));
+        },
+        "image/webp",
+        quality
+      );
+    };
+    img.onerror = () => reject(new Error("Failed to load image for optimization"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 export function renderSnapshot(
   imgSrc: string,
   scale: number,

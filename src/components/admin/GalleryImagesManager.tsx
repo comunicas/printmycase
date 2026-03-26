@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Upload, Trash2, GripVertical } from "lucide-react";
+import { optimizeForUpload } from "@/lib/image-utils";
 
 interface GalleryImage {
   id: string;
@@ -54,9 +55,9 @@ const GalleryImagesManager = () => {
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "png";
-      const path = `gallery/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("product-assets").upload(path, file);
+      const blob = await optimizeForUpload(file);
+      const path = `gallery/${crypto.randomUUID()}.webp`;
+      const { error } = await supabase.storage.from("product-assets").upload(path, blob, { contentType: "image/webp" });
       if (error) throw error;
 
       const { data: urlData } = supabase.storage.from("product-assets").getPublicUrl(path);

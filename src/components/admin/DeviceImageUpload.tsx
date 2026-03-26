@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { optimizeForUpload } from "@/lib/image-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -24,14 +25,14 @@ const DeviceImageUpload = ({ productId, value, onChange }: Props) => {
     }
 
     const id = productId || crypto.randomUUID();
-    const ext = file.name.split(".").pop() || "png";
-    const path = `${id}/device.${ext}`;
+    const path = `${id}/device.webp`;
 
     setUploading(true);
     try {
+      const blob = await optimizeForUpload(file);
       const { error } = await supabase.storage
         .from("product-assets")
-        .upload(path, file, { upsert: true });
+        .upload(path, blob, { upsert: true, contentType: "image/webp" });
       if (error) throw error;
 
       const { data } = supabase.storage

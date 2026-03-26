@@ -10,6 +10,7 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { formatPrice } from "@/lib/types";
 import type { Tables } from "@/integrations/supabase/types";
+import { optimizeForUpload } from "@/lib/image-utils";
 
 type Collection = Tables<"collections">;
 type Design = Tables<"collection_designs">;
@@ -111,11 +112,16 @@ const CollectionDesignsManager = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const path = `collections/designs/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("product-assets").upload(path, file);
-    if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); return; }
-    const { data: { publicUrl } } = supabase.storage.from("product-assets").getPublicUrl(path);
-    setImageUrl(publicUrl);
+    try {
+      const blob = await optimizeForUpload(file);
+      const path = `collections/designs/${Date.now()}-${crypto.randomUUID()}.webp`;
+      const { error } = await supabase.storage.from("product-assets").upload(path, blob, { contentType: "image/webp" });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("product-assets").getPublicUrl(path);
+      setImageUrl(publicUrl);
+    } catch (err: any) {
+      toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+    }
   };
 
   const autoSlug = (val: string) => {
