@@ -109,6 +109,7 @@ Deno.serve(async (req) => {
     const isLightingRestoration = modelUrl.includes("lighting-restoration");
     const isKontext = modelUrl.includes("kontext");
     const isSD35 = modelUrl.includes("stable-diffusion-v35-large");
+    const isNanoBanana = modelUrl.includes("nano-banana");
 
     let falBody: Record<string, unknown>;
 
