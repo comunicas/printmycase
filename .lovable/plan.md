@@ -1,22 +1,35 @@
 
 
-## Adicionar Aviso de IA nos Dialogs de Confirmação
+## Adicionar Mensagem "Moedas Não Debitadas" em Todos os Erros de Geração IA
 
 ### Problema
-Os dialogs de confirmação de filtro IA e upscale IA não informam o usuário que os resultados podem variar.
+Quando filtro IA ou upscale IA falham, o toast de erro não informa que as moedas não foram cobradas, causando insegurança no usuário.
 
 ### Solução
-Adicionar o texto "Imagens por IA podem variar. Revise antes de finalizar." nos dois dialogs de confirmação:
+Atualizar 4 pontos de erro em `src/hooks/useCustomize.tsx` para incluir a mensagem "Nenhuma moeda foi debitada. Tente gerar novamente."
 
-**1. `src/components/customize/FilterConfirmDialog.tsx`**
-- Adicionar `<p>` com o aviso entre o custo em moedas e os botões (após linha 53)
+### Alterações — arquivo único: `src/hooks/useCustomize.tsx`
 
-**2. `src/components/customize/UpscaleConfirmDialog.tsx`**
-- Adicionar `<p>` com o mesmo aviso na mesma posição (após linha 48)
+**1. Filtro IA — erro na resposta (linha 354)**
+- De: `description: errorMsg`
+- Para: `description: "Nenhuma moeda foi debitada. Tente gerar novamente."`
 
-Formato: `<p className="text-[11px] text-muted-foreground text-center">Imagens por IA podem variar. Revise antes de finalizar.</p>`
+**2. Filtro IA — catch genérico (linha 380)**
+- De: `toast({ title: "Erro ao aplicar filtro", variant: "destructive" })`
+- Para: `toast({ title: "Erro ao aplicar filtro", description: "Nenhuma moeda foi debitada. Tente gerar novamente.", variant: "destructive" })`
+
+**3. Upscale IA — erro na resposta (linha 411)**
+- De: `description: errorMsg`
+- Para: `description: "Nenhuma moeda foi debitada. Tente gerar novamente."`
+
+**4. Upscale IA — catch genérico (linha 436)**
+- De: `toast({ title: "Erro no upscale", variant: "destructive" })`
+- Para: `toast({ title: "Erro no upscale", description: "Nenhuma moeda foi debitada. Tente gerar novamente.", variant: "destructive" })`
+
+**Nota:** Os casos de "Moedas insuficientes" mantêm a mensagem atual (não houve tentativa de geração, então não faz sentido dizer que não foi debitado).
 
 ### Resultado
-- 2 arquivos modificados
-- Texto discreto visível antes do usuário confirmar qualquer geração IA
+- 1 arquivo modificado, 4 pontos de erro atualizados
+- Ambos os fluxos de geração IA (filtro e upscale) cobertos
+- Usuário fica tranquilo que não perdeu moedas ao ver qualquer erro
 
