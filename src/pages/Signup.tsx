@@ -9,10 +9,10 @@ import SubmitButton from "@/components/forms/SubmitButton";
 import AppHeader from "@/components/AppHeader";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import logoPrintMyCase from "@/assets/logo-printmycase-sm.webp";
 import GoogleIcon from "@/components/GoogleIcon";
 import { clarityEvent } from "@/lib/clarity";
 import { pixelEvent } from "@/lib/meta-pixel";
+import { Coins } from "lucide-react";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
@@ -25,6 +25,7 @@ const Signup = () => {
       navigate("/", { replace: true });
     }
   }, [user, authLoading, navigate]);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,18 +66,21 @@ const Signup = () => {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-muted/30 flex flex-col">
         <AppHeader />
         <main className="flex-1 flex items-center justify-center p-5">
-          <div className="w-full max-w-sm text-center space-y-4">
-            <img src={logoPrintMyCase} alt="PrintMyCase" className="h-24 mx-auto mb-2" />
-            <h1 className="text-2xl font-bold tracking-tight">Verifique seu email</h1>
-            <p className="text-sm text-muted-foreground">
-              Enviamos um link de confirmação para <strong>{email}</strong>. Clique no link para ativar sua conta.
-            </p>
-            <Link to="/login">
-              <Button variant="outline" className="mt-4">Voltar ao login</Button>
-            </Link>
+          <div className="w-full max-w-md">
+            <div className="rounded-xl border bg-card text-card-foreground shadow-lg overflow-hidden">
+              <div className="p-6 text-center space-y-4">
+                <h1 className="text-2xl font-bold tracking-tight">Verifique seu email</h1>
+                <p className="text-sm text-muted-foreground">
+                  Enviamos um link de confirmação para <strong>{email}</strong>. Clique no link para ativar sua conta.
+                </p>
+                <Link to="/login">
+                  <Button variant="outline" className="mt-4">Voltar ao login</Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -84,91 +88,107 @@ const Signup = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-muted/30 flex flex-col">
       <AppHeader />
       <main className="flex-1 flex items-center justify-center p-5">
-        <div className="w-full max-w-sm space-y-6">
-          <div className="text-center space-y-1">
-            <img src={logoPrintMyCase} alt="PrintMyCase" className="h-24 mx-auto" />
-            <h1 className="text-2xl font-bold tracking-tight">Criar conta</h1>
-            <p className="text-sm text-muted-foreground">Cadastre-se para personalizar sua capa</p>
-          </div>
-
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignup}>
-            <GoogleIcon />
-            Criar com Google
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+        <div className="w-full max-w-md">
+          <div className="rounded-xl border bg-card text-card-foreground shadow-lg overflow-hidden">
+            {/* Incentive banner */}
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+                  <Coins className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm leading-tight">🎁 Ganhe 50 moedas grátis!</p>
+                  <p className="text-xs text-white/85 leading-tight mt-0.5">Crie sua conta e use em filtros IA, upscale e mais</p>
+                </div>
+              </div>
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">ou</span>
+
+            <div className="p-6 space-y-5">
+              <div className="text-center space-y-1">
+                <h1 className="text-2xl font-bold tracking-tight">Criar conta grátis</h1>
+                <p className="text-sm text-muted-foreground">Cadastre-se para personalizar sua capa</p>
+              </div>
+
+              <Button variant="outline" className="w-full" onClick={handleGoogleSignup}>
+                <GoogleIcon />
+                Criar com Google
+              </Button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">ou</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSignup} className="space-y-4">
+                <FormField label="Nome completo" id="name" required>
+                  <Input
+                    id="name"
+                    placeholder="Seu nome"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    autoComplete="name"
+                    required
+                  />
+                </FormField>
+                <FormField label="Email" id="email" required>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    required
+                  />
+                </FormField>
+                <FormField label="Senha" id="password" required>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    minLength={6}
+                    required
+                  />
+                </FormField>
+                <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-0.5 rounded border-input"
+                  />
+                  <span className="text-muted-foreground leading-tight text-xs">
+                    Li e aceito os{" "}
+                    <Link to="/termos" target="_blank" className="text-primary hover:underline">Termos de Uso</Link>
+                    , a{" "}
+                    <Link to="/privacidade" target="_blank" className="text-primary hover:underline">Política de Privacidade</Link>
+                    {" "}e a{" "}
+                    <Link to="/compras" target="_blank" className="text-primary hover:underline">Política de Compra e Devolução</Link>
+                  </span>
+                </label>
+                <SubmitButton loading={loading} className="w-full" disabled={!acceptedTerms}>
+                  Criar conta grátis
+                </SubmitButton>
+              </form>
+
+              <p className="text-center text-sm text-muted-foreground">
+                Já tem conta?{" "}
+                <Link to="/login" className="text-primary hover:underline font-medium">
+                  Entrar
+                </Link>
+              </p>
             </div>
           </div>
-
-          <form onSubmit={handleSignup} className="space-y-4">
-            <FormField label="Nome completo" id="name" required>
-              <Input
-                id="name"
-                placeholder="Seu nome"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
-                required
-              />
-            </FormField>
-            <FormField label="Email" id="email" required>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-            </FormField>
-            <FormField label="Senha" id="password" required>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                minLength={6}
-                required
-              />
-            </FormField>
-            <label className="flex items-start gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="mt-0.5 rounded border-input"
-              />
-              <span className="text-muted-foreground leading-tight">
-                Li e aceito os{" "}
-                <Link to="/termos" target="_blank" className="text-primary hover:underline">Termos de Uso</Link>
-                , a{" "}
-                <Link to="/privacidade" target="_blank" className="text-primary hover:underline">Política de Privacidade</Link>
-                {" "}e a{" "}
-                <Link to="/compras" target="_blank" className="text-primary hover:underline">Política de Compra e Devolução</Link>
-              </span>
-            </label>
-            <SubmitButton loading={loading} className="w-full" disabled={!acceptedTerms}>
-              Criar conta
-            </SubmitButton>
-          </form>
-
-          <p className="text-center text-sm text-muted-foreground">
-            Já tem conta?{" "}
-            <Link to="/login" className="text-primary hover:underline font-medium">
-              Entrar
-            </Link>
-          </p>
         </div>
       </main>
     </div>
