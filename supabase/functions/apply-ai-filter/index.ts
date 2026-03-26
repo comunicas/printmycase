@@ -134,10 +134,9 @@ Deno.serve(async (req) => {
       falBody = {
         image_url: inputImage,
         prompt: filter.prompt,
-        strength: 0.75,
-        num_inference_steps: 28,
-        guidance_scale: 7.5,
-        image_size: { width: 720, height: 1280 },
+        strength: 0.85,
+        num_inference_steps: 40,
+        guidance_scale: 3.5,
       };
     }
 
