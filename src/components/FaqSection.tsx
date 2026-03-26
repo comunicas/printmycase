@@ -4,6 +4,7 @@ import * as Accordion from "@radix-ui/react-accordion";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ScrollReveal from "@/components/ScrollReveal";
+import { faqPageJsonLd } from "@/lib/merchant-jsonld";
 import { Button } from "@/components/ui/button";
 
 interface Faq {
@@ -37,6 +38,17 @@ const FaqSection = () => {
         }
       });
   }, []);
+
+  // Inject FAQPage JSON-LD for search engines and AI agents
+  useEffect(() => {
+    if (faqs.length === 0) return;
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-seo", "faq-home");
+    script.textContent = JSON.stringify(faqPageJsonLd(faqs.map(f => ({ question: f.question, answer: f.answer }))));
+    document.head.appendChild(script);
+    return () => { script.remove(); };
+  }, [faqs]);
 
   if (faqs.length === 0) return null;
 

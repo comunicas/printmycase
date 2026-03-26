@@ -5,6 +5,7 @@ import AppHeader from "@/components/AppHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { setPageSeo, SITE_URL } from "@/lib/seo";
 import { ArrowLeft, Calendar, FolderOpen } from "lucide-react";
 
 /** Parse inline markdown: **bold** and [text](url) */
@@ -46,6 +47,9 @@ const KbArticle = () => {
 
   useEffect(() => {
     if (!categorySlug || !articleSlug) return;
+    let scriptEl: HTMLScriptElement | null = null;
+    let seoCleanup: (() => void) | null = null;
+
     const fetchData = async () => {
       const { data: cat } = await supabase
         .from("kb_categories")
@@ -66,11 +70,55 @@ const KbArticle = () => {
       if (art) {
         setTitle(art.title);
         setContent(art.content);
-        setUpdatedAt(new Date(art.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }));
+        const dateStr = new Date(art.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+        setUpdatedAt(dateStr);
+
+        // SEO meta tags
+        const desc = art.content.replace(/[#*\-_]/g, "").slice(0, 155).trim();
+        seoCleanup = setPageSeo({
+          title: `${art.title} | Central de Ajuda — Studio PrintMyCase`,
+          description: desc,
+          url: `${SITE_URL}/ajuda/${categorySlug}/${articleSlug}`,
+          type: "article",
+        });
+
+        // Inject Article + BreadcrumbList JSON-LD
+        const jsonLd = {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Article",
+              headline: art.title,
+              dateModified: art.updated_at,
+              author: { "@type": "Organization", name: "Studio PrintMyCase" },
+              publisher: { "@type": "Organization", name: "Studio PrintMyCase" },
+              description: desc,
+            },
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+                { "@type": "ListItem", position: 2, name: "Central de Ajuda", item: `${SITE_URL}/ajuda` },
+                { "@type": "ListItem", position: 3, name: cat?.name ?? "", item: `${SITE_URL}/ajuda/${categorySlug}` },
+                { "@type": "ListItem", position: 4, name: art.title },
+              ],
+            },
+          ],
+        };
+        scriptEl = document.createElement("script");
+        scriptEl.type = "application/ld+json";
+        scriptEl.setAttribute("data-seo", "kb-article");
+        scriptEl.textContent = JSON.stringify(jsonLd);
+        document.head.appendChild(scriptEl);
       }
       setLoading(false);
     };
     fetchData();
+
+    return () => {
+      scriptEl?.remove();
+      seoCleanup?.();
+    };
   }, [categorySlug, articleSlug]);
 
   if (loading) return <LoadingSpinner variant="fullPage" />;
