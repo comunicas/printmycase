@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
+import { faqPageJsonLd } from "@/lib/merchant-jsonld";
 import { Input } from "@/components/ui/input";
 import ScrollReveal from "@/components/ScrollReveal";
 import {
