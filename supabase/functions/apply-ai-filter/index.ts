@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
     const isPhotographyEffects = modelUrl.includes("photography-effects");
     const isLightingRestoration = modelUrl.includes("lighting-restoration");
     const isKontext = modelUrl.includes("kontext");
+    const isSD35 = modelUrl.includes("stable-diffusion-v35-large");
 
     let falBody: Record<string, unknown>;
 
@@ -128,6 +129,16 @@ Deno.serve(async (req) => {
         image_url: inputImage,
         prompt: filter.prompt,
         aspect_ratio: "9:16",
+        output_format: "jpeg",
+      };
+    } else if (isSD35) {
+      falBody = {
+        image_url: inputImage,
+        prompt: filter.prompt,
+        strength: 0.83,
+        num_inference_steps: 28,
+        guidance_scale: 3.5,
+        image_size: "portrait_16_9",
         output_format: "jpeg",
       };
     } else {
