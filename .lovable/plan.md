@@ -1,45 +1,40 @@
 
 
-## Revisão SEO Completa — Branding, Silos e Structured Data
+## Melhorar UX de Login, Cadastro e Header para Usuarios Nao Logados
 
-### Auditoria atual
+### Situacao atual
 
-| Página | setPageSeo | JSON-LD Product/Collection | BreadcrumbList | Branding correto |
-|--------|-----------|---------------------------|----------------|-----------------|
-| Home (`SeoHead`) | ✅ | ✅ ItemList | ❌ | ❌ "PrintMyCase" |
-| `/catalog` | ✅ | ❌ nenhum | ❌ | ❌ "PrintMyCase" |
-| `/product/:slug` | ✅ | ✅ Product | ✅ | ❌ "PrintMyCase" |
-| `/colecoes` | ✅ | ✅ CollectionPage+ItemList | ❌ | ❌ "PrintMyCase" |
-| `/colecao/:slug` | ✅ | ✅ CollectionPage+ItemList | ❌ | ❌ "PrintMyCase" |
-| `/colecao/:s/:d` (Design) | ✅ | ✅ Product | ❌ | ❌ "PrintMyCase" |
-| `/ajuda` | ✅ | ✅ FAQPage | ❌ | ✅ |
-| `/ajuda/:cat` | ❌ nenhum | ❌ | ❌ | ❌ |
-| `/ajuda/:cat/:art` | ✅ | ✅ Article | ✅ | ✅ |
+- **Login/Signup**: Paginas simples com fundo `bg-background`, logo grande, formulario centralizado. Sem card visual, sem incentivo de conversao, sem consistencia com o LoginDialog (que ja tem banner de moedas gratis e tabs).
+- **Header (UserMenu)**: Para usuarios nao logados, exibe apenas um botao ghost "Entrar" — sem CTA de cadastro.
+- **LoginDialog**: Ja tem um UX superior com banner de moedas, tabs login/signup, e layout mais compacto. As paginas full-page devem seguir esse mesmo padrao.
 
-**Produtos individuais (`/product/:slug`) já têm Product schema completo** com `sku`, `brand`, `offers`, `aggregateRating`, `shippingDetails` e `returnPolicy`. Estão OK.
+### O que sera feito
 
-**Designs individuais (`/colecao/:s/:d`) também têm Product schema** com `sku`, `brand`, `offers`. OK.
-
-### O que precisa ser feito
-
-| # | Arquivo | Alteração |
+| # | Arquivo | Alteracao |
 |---|---------|-----------|
-| 1 | `SeoHead.tsx` | `SITE_NAME` → "Studio PrintMyCase", `TITLE` → "Studio PrintMyCase \| Capas Personalizadas...", URL fallback → `studio.printmycase.com.br` |
-| 2 | `Catalog.tsx` | Title → "...Studio PrintMyCase", adicionar BreadcrumbList (Home → Catálogo) |
-| 3 | `Product.tsx` | `SITE_NAME` → "Studio PrintMyCase" (BreadcrumbList já existe) |
-| 4 | `Collections.tsx` | Title/DESC → "Studio PrintMyCase", adicionar BreadcrumbList (Home → Coleções) |
-| 5 | `CollectionPage.tsx` | `SITE_NAME` → "Studio PrintMyCase", adicionar BreadcrumbList (Home → Coleções → Nome) |
-| 6 | `DesignPage.tsx` | `SITE_NAME` → "Studio PrintMyCase", adicionar BreadcrumbList (Home → Coleções → Coleção → Design) |
-| 7 | `KbCategory.tsx` | Adicionar `setPageSeo` + BreadcrumbList (Home → Ajuda → Categoria) |
-| 8 | `KnowledgeBase.tsx` | Adicionar BreadcrumbList (Home → Central de Ajuda) |
-| 9 | `KbArticle.tsx` | Adicionar seção "Artigos relacionados" — até 3 links para artigos da mesma categoria (internal linking) |
-| 10 | `seo.ts` | Atualizar fallback URL para `studio.printmycase.com.br` |
+| 1 | `UserMenu.tsx` | Adicionar botao "Cadastre-se gratis" (variant primary, size sm) ao lado do "Entrar" para usuarios nao logados |
+| 2 | `Login.tsx` | Redesign: card com sombra, banner de incentivo (50 moedas gratis) no topo como no LoginDialog, remover logo duplicada (ja esta no header), visual mais limpo |
+| 3 | `Signup.tsx` | Mesmo redesign: card com banner de incentivo, layout consistente com Login, manter checkbox de termos |
 
-### Detalhes técnicos
+### Detalhes do redesign Login/Signup
 
-- **10 arquivos** modificados, nenhuma alteração no banco
-- Branding unificado: toda constante `SITE_NAME` passa para `"Studio PrintMyCase"`
-- BreadcrumbList segue padrão já usado em `Product.tsx` — array de `ListItem` com `position`, `name`, `item`
-- Internal linking no `KbArticle`: query adicional buscando até 3 artigos da mesma `category_id` (excluindo o atual), renderizados como cards com link
-- Todas as injeções JSON-LD usam `useEffect` com cleanup para evitar duplicação na navegação SPA
+**Estrutura visual (ambas as paginas):**
+- Envolver formulario em um `Card` com `max-w-md` centralizado
+- Banner gradiente amber-to-orange no topo do card (igual ao LoginDialog) com icone de moedas e texto "Ganhe 50 moedas gratis!"
+- Remover logo grande redundante (AppHeader ja mostra)
+- Titulo e subtitulo mais compactos
+- Botao Google com mesmo estilo
+- Divisor "ou" mantido
+- Link para a outra pagina (Entrar / Criar conta) no rodape do card
+
+**Header para nao logados:**
+- "Entrar" permanece como `variant="ghost"`
+- Novo botao "Cadastre-se" com `variant="default"` (primary roxo) ao lado, com link para `/signup`
+- No mobile, ambos ficam `size="sm"` para caber
+- Respeita prop `transparent` para modo hero
+
+### Arquivos modificados
+- `src/components/UserMenu.tsx` — adicionar CTA "Cadastre-se"
+- `src/pages/Login.tsx` — redesign com card e banner
+- `src/pages/Signup.tsx` — redesign com card e banner
 
