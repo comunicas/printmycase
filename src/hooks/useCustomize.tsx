@@ -351,7 +351,7 @@ export function useCustomize(productId: string | undefined) {
         const errorMsg = data?.error || "Tente novamente.";
         toast({
           title: isInsufficientCoins ? "Moedas insuficientes" : "Erro ao aplicar filtro",
-          description: isInsufficientCoins ? "Compre mais moedas para usar filtros IA." : errorMsg,
+          description: isInsufficientCoins ? "Compre mais moedas para usar filtros IA." : "Nenhuma moeda foi debitada. Tente gerar novamente.",
           variant: "destructive",
         });
         if (isInsufficientCoins) navigate("/coins");
@@ -377,7 +377,7 @@ export function useCustomize(productId: string | undefined) {
         });
       }
     } catch {
-      toast({ title: "Erro ao aplicar filtro", variant: "destructive" });
+      toast({ title: "Erro ao aplicar filtro", description: "Nenhuma moeda foi debitada. Tente gerar novamente.", variant: "destructive" });
     } finally {
       setApplyingFilterId(null);
       setProcessingMsg(null);
@@ -408,7 +408,7 @@ export function useCustomize(productId: string | undefined) {
         const errorMsg = data?.error || "Tente novamente.";
         toast({
           title: isInsufficientCoins ? "Moedas insuficientes" : "Erro no upscale",
-          description: isInsufficientCoins ? "Compre mais moedas para usar o upscale IA." : errorMsg,
+          description: isInsufficientCoins ? "Compre mais moedas para usar o upscale IA." : "Nenhuma moeda foi debitada. Tente gerar novamente.",
           variant: "destructive",
         });
         if (isInsufficientCoins) navigate("/coins");
@@ -433,7 +433,7 @@ export function useCustomize(productId: string | undefined) {
         }, 3000);
       }
     } catch {
-      toast({ title: "Erro no upscale", variant: "destructive" });
+      toast({ title: "Erro no upscale", description: "Nenhuma moeda foi debitada. Tente gerar novamente.", variant: "destructive" });
     } finally {
       setIsUpscaling(false);
       setProcessingMsg(null);
