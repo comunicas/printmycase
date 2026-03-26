@@ -55,7 +55,7 @@ const KnowledgeBase = () => {
 
       const { data: articles } = await supabase
         .from("kb_articles")
-        .select("category_id")
+        .select("category_id, title, content")
         .eq("active", true);
 
       const countMap: Record<string, number> = {};
@@ -66,6 +66,17 @@ const KnowledgeBase = () => {
       setCategories(
         cats.map((c) => ({ ...c, article_count: countMap[c.id] || 0 }))
       );
+
+      // Build FAQ items for JSON-LD (use first ~200 chars of content as answer)
+      if (articles) {
+        setFaqItems(
+          articles.slice(0, 30).map((a) => ({
+            question: a.title,
+            answer: a.content.replace(/[#*\-_]/g, "").slice(0, 300).trim(),
+          }))
+        );
+      }
+
       setLoading(false);
     };
     fetch();
