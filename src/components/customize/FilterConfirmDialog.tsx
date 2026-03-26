@@ -52,6 +52,8 @@ const FilterConfirmDialog = ({
           <span className="text-muted-foreground">moedas</span>
         </div>
 
+        <p className="text-[11px] text-muted-foreground text-center">Imagens por IA podem variar. Revise antes de finalizar.</p>
+
         {!hasEnough ? (
           <div className="text-center space-y-2">
             <p className="text-sm text-destructive font-medium">Saldo insuficiente</p>
