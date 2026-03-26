@@ -5,7 +5,7 @@ import AppHeader from "@/components/AppHeader";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 import { faqPageJsonLd } from "@/lib/merchant-jsonld";
-import { setPageSeo, SITE_URL } from "@/lib/seo";
+import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 import { Input } from "@/components/ui/input";
 import ScrollReveal from "@/components/ScrollReveal";
 import {
