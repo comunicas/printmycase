@@ -408,7 +408,7 @@ export function useCustomize(productId: string | undefined) {
         const errorMsg = data?.error || "Tente novamente.";
         toast({
           title: isInsufficientCoins ? "Moedas insuficientes" : "Erro no upscale",
-          description: isInsufficientCoins ? "Compre mais moedas para usar o upscale IA." : errorMsg,
+          description: isInsufficientCoins ? "Compre mais moedas para usar o upscale IA." : "Nenhuma moeda foi debitada. Tente gerar novamente.",
           variant: "destructive",
         });
         if (isInsufficientCoins) navigate("/coins");
