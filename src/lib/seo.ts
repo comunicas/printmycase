@@ -1,6 +1,34 @@
 const SITE_URL =
   typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
+const SITE_NAME = "Studio PrintMyCase";
+
+/** Helper to inject a JSON-LD script and return a cleanup function */
+export function injectJsonLd(id: string, data: object): () => void {
+  let script = document.querySelector(`script[data-seo="${id}"]`) as HTMLScriptElement | null;
+  if (!script) {
+    script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-seo", id);
+    document.head.appendChild(script);
+  }
+  script.textContent = JSON.stringify(data);
+  return () => { script?.remove(); };
+}
+
+/** Build a BreadcrumbList JSON-LD object */
+export function breadcrumbJsonLd(items: { name: string; url?: string }[]) {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      ...(item.url ? { item: item.url } : {}),
+    })),
+  };
+}
+
 function setMeta(attr: string, key: string, content: string) {
   let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
   if (!el) {
