@@ -73,7 +73,7 @@ const GalleryTab = ({ onSelect }: GalleryTabProps) => {
         {images.length === 0 ? (
           <p className="text-center text-xs text-muted-foreground py-6">Nenhuma imagem nesta galeria.</p>
         ) : (
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-4 gap-1">
             {images.map(img => (
               <button
                 key={img.id}
