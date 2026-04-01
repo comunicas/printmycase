@@ -38,6 +38,8 @@ const RequestModel = () => {
     const { error } = await supabase.from("model_requests").insert({
       phone: phone.replace(/\D/g, ""),
       model_name: modelName.trim(),
+      user_id: user?.id,
+    } as any);
     });
     setLoading(false);
     if (error) {
