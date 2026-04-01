@@ -190,6 +190,8 @@ const Customize = () => {
         onOpenChange={setShowGalleryPicker}
         onSelect={c.handleGalleryImageSelect}
       />
+
+      <IntroDialog open={showIntro} onOpenChange={setShowIntro} />
     </div>
   );
 };
