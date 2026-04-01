@@ -159,6 +159,7 @@ async function enqueueOrderEmail(
   } else {
     console.log(`[email] Enqueued ${params.templateName}:`, JSON.stringify({ msgId, to: params.userEmail }));
     await supabaseAdmin.from("email_send_log").insert({
+      message_id: messageId,
       recipient_email: params.userEmail,
       template_name: params.templateName,
       status: "pending",
