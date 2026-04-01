@@ -1,40 +1,53 @@
 
 
-## Limpar Mensagens Presas + Corrigir Causa Raiz
+## Otimizar Imagens de Coleções e Galeria (Performance)
 
-### Situação atual
+### Problema
 
-| msg_id | read_ct | Assunto | Erro |
-|--------|---------|---------|------|
-| 1 | 16.752 | Pedido #30ab — Em Análise | missing idempotency_key |
-| 2 | 16.342 | Pedido #cef7 — Cancelado | missing idempotency_key |
-| 3 | 16.341 | Pedido #f4d6 — Cancelado | missing idempotency_key |
-| 4 | 16.338 | Pedido #4cbb — Cancelado | missing idempotency_key |
-| 5 | 15.179 | Pedido #a4bc — Cancelado | missing idempotency_key |
+O Lighthouse aponta **~14 MB** de imagens na landing page, majoritariamente PNGs de 1-1.4 MB (designs de coleções, 1024x1024) e JPGs de 2-2.5 MB (galeria pública, 2304x3456). Essas imagens foram uploadadas antes do sistema de otimização automática ser implementado. A edge function `optimize-existing-images` existente **não faz conversão real** — apenas renomeia o blob para `.webp` sem reprocessar.
 
-Todas sem `message_id`, então a lógica de retry/DLQ do `process-email-queue` não as move — ficam presas eternamente.
+### Solução (2 frentes)
 
-### Plano
+**Frente 1 — Frontend: helper de transformação de URL (impacto imediato)**
 
-**1. Limpar as 5 mensagens presas (migração SQL)**
+Criar uma função `getOptimizedImageUrl(url, width)` em `src/lib/image-utils.ts` que, para URLs do Supabase Storage (`/object/public/`), troca o path para `/render/image/public/` e adiciona `?width=X&resize=contain&quality=80`. Isso usa o recurso nativo de transformação de imagem do Storage — sem re-upload necessário.
 
-Chamar `pgmq.delete` para cada `msg_id` de 1 a 5 na fila `transactional_emails`.
+Aplicar nos componentes:
+- `Landing.tsx` — designs de coleção (width=400)
+- `AiCoinsSection.tsx` — galeria pública (width=400)
+- `CollectionCard.tsx` — cover de coleção (width=400)
+- `ProductGallery.tsx` — thumbnails (width=80) e imagem principal (width=600)
 
-**2. Corrigir `stripe-webhook/index.ts` — adicionar `idempotency_key` e `message_id`**
+**Frente 2 — Edge function: otimização permanente com ImageScript**
 
-O webhook do Stripe enfileira emails via `enqueue_email` com HTML inline mas sem `idempotency_key`, `message_id` ou `purpose`. Corrigir para incluir:
-- `idempotency_key`: baseado no `order_id` + tipo (ex: `order-confirmed-{order_id}`)
-- `message_id`: UUID gerado
-- `purpose: "transactional"`
+Reescrever `optimize-existing-images/index.ts` usando a biblioteca `ImageScript` (pure JS, compatível com Deno) para:
+1. Download do original
+2. Decode (PNG/JPG)
+3. Resize para max 800px
+4. Encode como WebP (quality 80)
+5. Upload do resultado
+6. Atualizar referências no banco
 
-**3. Corrigir `process-email-queue` — proteção contra `message_id` nulo**
+### Detalhes Técnicos
 
-Adicionar fallback: se `message_id` for nulo, usar `read_ct` como contador de tentativas e mover para DLQ após `MAX_RETRIES`. Isso evita que mensagens sem `message_id` fiquem presas novamente.
+**Novo helper (`src/lib/image-utils.ts`)**
+```typescript
+export function getOptimizedUrl(url: string, width = 400, quality = 80): string {
+  if (!url || !url.includes('/storage/v1/object/public/')) return url;
+  return url.replace(
+    '/storage/v1/object/public/',
+    `/storage/v1/render/image/public/`
+  ) + `?width=${width}&resize=contain&quality=${quality}`;
+}
+```
 
-**4. Deploy das edge functions atualizadas**
+**Componentes atualizados** — cada `<img src={url}>` com imagens do storage passa a usar `getOptimizedUrl(url, targetWidth)`.
 
-### Resultado
-- 5 mensagens presas removidas imediatamente
-- Novos emails do Stripe terão identificação correta
-- Sistema resiliente contra mensagens sem `message_id`
+**Edge function** — importar `ImageScript` de `https://deno.land/x/imagescript@1.3.0/mod.ts`, usar `Image.decode()` para ler, `.resize()` para redimensionar, `.encodeWebP()` para converter.
+
+### Resultado esperado
+- Frente 1: redução imediata de ~14 MB para ~1-2 MB na landing (imagens servidas redimensionadas on-the-fly)
+- Frente 2: otimização permanente dos assets (menor latência futura, sem transformação on-the-fly)
+- 3 arquivos de código modificados + 1 edge function reescrita
+- Nenhuma mudança no banco de dados
 
