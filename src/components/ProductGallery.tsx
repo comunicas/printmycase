@@ -59,7 +59,7 @@ const ProductGallery = forwardRef<HTMLDivElement, ProductGalleryProps>(
                   )}
                 >
                   <img
-                    src={img}
+                    src={getOptimizedUrl(img, 80)}
                     alt={`${productName} - ${i >= productCount ? "Ilustrativa" : "Miniatura"} ${i + 1}`}
                     width={64}
                     height={64}

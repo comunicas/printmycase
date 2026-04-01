@@ -14,7 +14,7 @@ const CollectionCard = ({ collection }: CollectionCardProps) => (
       <div className="aspect-square overflow-hidden bg-muted flex items-center justify-center">
         {collection.cover_image ? (
           <img
-            src={collection.cover_image}
+            src={getOptimizedUrl(collection.cover_image, 400)}
             alt={collection.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"

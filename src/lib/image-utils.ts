@@ -1,5 +1,15 @@
 import { PHONE_W, PHONE_H } from "./customize-types";
 
+/** Transform a Supabase Storage public URL into an on-the-fly optimized URL.
+ *  Uses Supabase Image Transformation (render/image) for resize + WebP. */
+export function getOptimizedUrl(url: string, width = 400, quality = 80): string {
+  if (!url || !url.includes("/storage/v1/object/public/")) return url;
+  return (
+    url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/") +
+    `?width=${width}&resize=contain&quality=${quality}`
+  );
+}
+
 /** Load image dimensions from a src URL or data URL */
 export function getImageResolution(src: string): Promise<{ w: number; h: number }> {
   return new Promise((resolve, reject) => {

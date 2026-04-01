@@ -88,7 +88,7 @@ const AiCoinsSection = () => {
                     className={`group relative ${aspect} rounded-xl overflow-hidden ring-1 ring-white/10 shadow-lg shadow-black/30 break-inside-avoid`}
                   >
                     <img
-                      src={img.public_image_url || img.image_url}
+                      src={getOptimizedUrl(img.public_image_url || img.image_url, 400)}
                       alt={img.filter_name || "Geração IA"}
                       loading="lazy"
                       decoding="async"
