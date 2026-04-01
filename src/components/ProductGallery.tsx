@@ -32,7 +32,7 @@ const ProductGallery = forwardRef<HTMLDivElement, ProductGalleryProps>(
         <h2 className="sr-only">Galeria de imagens</h2>
         <div className="relative aspect-square w-full rounded-xl border bg-card overflow-hidden">
           <img
-            src={allImages[selectedIndex]}
+            src={getOptimizedUrl(allImages[selectedIndex], 600)}
             alt={`${productName} - Imagem ${selectedIndex + 1}`}
             width={600}
             height={600}
