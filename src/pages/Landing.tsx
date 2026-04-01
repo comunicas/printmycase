@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAllDesigns } from "@/hooks/useCollectionDesigns";
 import { formatPrice } from "@/lib/types";
 import SeoHead from "@/components/SeoHead";
+import { getOptimizedUrl } from "@/lib/image-utils";
 import AppHeader from "@/components/AppHeader";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
