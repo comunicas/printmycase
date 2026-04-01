@@ -1,53 +1,20 @@
 
 
-## Otimizar Imagens de Coleções e Galeria (Performance)
+## Adicionar preconnect para Clarity + Verificar Code Splitting
 
-### Problema
+### Situação Atual
 
-O Lighthouse aponta **~14 MB** de imagens na landing page, majoritariamente PNGs de 1-1.4 MB (designs de coleções, 1024x1024) e JPGs de 2-2.5 MB (galeria pública, 2304x3456). Essas imagens foram uploadadas antes do sistema de otimização automática ser implementado. A edge function `optimize-existing-images` existente **não faz conversão real** — apenas renomeia o blob para `.webp` sem reprocessar.
+- **Code splitting já está implementado** — todas as rotas exceto Landing já usam `React.lazy()` (linhas 12-36 do App.tsx). O bundle principal já está otimizado.
+- **Clarity** já tem `dns-prefetch` (linha 33 do index.html) mas falta o `preconnect` completo.
 
-### Solução (2 frentes)
+### Mudança Necessária
 
-**Frente 1 — Frontend: helper de transformação de URL (impacto imediato)**
+**Arquivo: `index.html`** — 1 linha adicionada
 
-Criar uma função `getOptimizedImageUrl(url, width)` em `src/lib/image-utils.ts` que, para URLs do Supabase Storage (`/object/public/`), troca o path para `/render/image/public/` e adiciona `?width=X&resize=contain&quality=80`. Isso usa o recurso nativo de transformação de imagem do Storage — sem re-upload necessário.
+Adicionar `<link rel="preconnect" href="https://scripts.clarity.ms" />` antes do `dns-prefetch` existente na linha 33. Isso estabelece a conexão TCP+TLS antecipadamente, economizando ~50-100ms no carregamento do script do Clarity.
 
-Aplicar nos componentes:
-- `Landing.tsx` — designs de coleção (width=400)
-- `AiCoinsSection.tsx` — galeria pública (width=400)
-- `CollectionCard.tsx` — cover de coleção (width=400)
-- `ProductGallery.tsx` — thumbnails (width=80) e imagem principal (width=600)
-
-**Frente 2 — Edge function: otimização permanente com ImageScript**
-
-Reescrever `optimize-existing-images/index.ts` usando a biblioteca `ImageScript` (pure JS, compatível com Deno) para:
-1. Download do original
-2. Decode (PNG/JPG)
-3. Resize para max 800px
-4. Encode como WebP (quality 80)
-5. Upload do resultado
-6. Atualizar referências no banco
-
-### Detalhes Técnicos
-
-**Novo helper (`src/lib/image-utils.ts`)**
-```typescript
-export function getOptimizedUrl(url: string, width = 400, quality = 80): string {
-  if (!url || !url.includes('/storage/v1/object/public/')) return url;
-  return url.replace(
-    '/storage/v1/object/public/',
-    `/storage/v1/render/image/public/`
-  ) + `?width=${width}&resize=contain&quality=${quality}`;
-}
-```
-
-**Componentes atualizados** — cada `<img src={url}>` com imagens do storage passa a usar `getOptimizedUrl(url, targetWidth)`.
-
-**Edge function** — importar `ImageScript` de `https://deno.land/x/imagescript@1.3.0/mod.ts`, usar `Image.decode()` para ler, `.resize()` para redimensionar, `.encodeWebP()` para converter.
-
-### Resultado esperado
-- Frente 1: redução imediata de ~14 MB para ~1-2 MB na landing (imagens servidas redimensionadas on-the-fly)
-- Frente 2: otimização permanente dos assets (menor latência futura, sem transformação on-the-fly)
-- 3 arquivos de código modificados + 1 edge function reescrita
-- Nenhuma mudança no banco de dados
+### Resultado
+- 1 arquivo, 1 linha adicionada
+- Conexão com Clarity estabelecida mais cedo
+- Code splitting já está em vigor — nenhuma mudança necessária no App.tsx
 
