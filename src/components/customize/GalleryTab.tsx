@@ -73,7 +73,7 @@ const GalleryTab = ({ onSelect }: GalleryTabProps) => {
         {images.length === 0 ? (
           <p className="text-center text-xs text-muted-foreground py-6">Nenhuma imagem nesta galeria.</p>
         ) : (
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-4 gap-1">
             {images.map(img => (
               <button
                 key={img.id}
@@ -94,12 +94,12 @@ const GalleryTab = ({ onSelect }: GalleryTabProps) => {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-4 gap-1.5">
       {galleries.map(g => (
         <button
           key={g.id}
           onClick={() => handleSelectGallery(g)}
-          className="rounded-xl border border-border bg-card p-2 text-left hover:border-primary transition-colors group"
+          className="rounded-lg border border-border bg-card p-1.5 text-left hover:border-primary transition-colors group"
         >
           {g.cover_image ? (
             <img src={g.cover_image} alt={g.name} className="w-full aspect-square object-cover rounded-lg mb-1.5" loading="lazy" />
