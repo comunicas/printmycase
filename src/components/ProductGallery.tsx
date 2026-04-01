@@ -1,5 +1,6 @@
 import { useState, forwardRef } from "react";
 import { cn } from "@/lib/utils";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 interface ProductGalleryProps {
   images: string[];
