@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,21 +63,17 @@ Deno.serve(async (req) => {
     const errors: string[] = [];
 
     for (const prefix of PREFIXES) {
-      // List folders under prefix
       const { data: folders } = await admin.storage.from("product-assets").list(prefix, { limit: 500 });
       if (!folders) continue;
 
       for (const folder of folders) {
         const folderPath = `${prefix}${folder.name}`;
 
-        // Check if it's a file (has metadata) or folder
         if (folder.metadata && folder.metadata.size) {
-          // It's a file directly in the prefix
           await processFile(admin, folderPath, folder, optimized, errors);
           continue;
         }
 
-        // It's a subfolder, list files inside
         const { data: files } = await admin.storage.from("product-assets").list(folderPath, { limit: 500 });
         if (!files) continue;
 
@@ -95,27 +92,26 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("Error:", err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: (err as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
 
 async function processFile(
-  admin: any,
+  admin: ReturnType<typeof createClient>,
   filePath: string,
-  file: any,
+  file: { metadata?: { size?: number } },
   optimized: string[],
   errors: string[]
 ) {
   try {
-    // Skip already webp or small files
     if (filePath.endsWith(".webp")) return;
     const size = file.metadata?.size || 0;
     if (size < HEAVY_THRESHOLD) return;
 
     const ext = filePath.split(".").pop()?.toLowerCase() || "";
-    if (!["jpg", "jpeg", "png", "gif"].includes(ext)) return;
+    if (!["jpg", "jpeg", "png"].includes(ext)) return;
 
     // Download original
     const { data: blob, error: dlErr } = await admin.storage
@@ -126,25 +122,34 @@ async function processFile(
       return;
     }
 
-    // Use Lovable AI image processing via canvas-like approach in Deno
-    // Since Deno doesn't have canvas, we'll use the image as-is but re-upload as webp
-    // For actual resizing we need an image processing library
-    // Use a simple approach: fetch through an image optimization proxy or just re-encode
+    // Decode image using ImageScript
+    const buffer = new Uint8Array(await blob.arrayBuffer());
+    let img: InstanceType<typeof Image>;
+    try {
+      img = await Image.decode(buffer);
+    } catch {
+      errors.push(`Decode failed: ${filePath}`);
+      return;
+    }
 
-    // For Deno, we can use the ImageMagick WASM or just skip resize and focus on format conversion
-    // Since we can't easily resize in Deno without heavy deps, we'll create a signed URL
-    // and let the client handle optimization, OR we use a simpler approach
+    // Resize if larger than MAX_SIZE
+    const { width, height } = img;
+    if (width > MAX_SIZE || height > MAX_SIZE) {
+      const ratio = Math.min(MAX_SIZE / width, MAX_SIZE / height);
+      const nw = Math.round(width * ratio);
+      const nh = Math.round(height * ratio);
+      img.resize(nw, nh);
+    }
 
-    // Simple approach: generate new webp path, update DB references
+    // Encode as WebP
+    const webpBuffer = await img.encodeWebP(QUALITY);
+    const webpBlob = new Blob([webpBuffer], { type: "image/webp" });
+
     const newPath = filePath.replace(/\.[^.]+$/, ".webp");
-
-    // We'll convert using fetch to a public transformation endpoint
-    // For now, upload the original blob as-is with webp content type
-    // The real optimization happens on client-side uploads going forward
 
     const { error: uploadErr } = await admin.storage
       .from("product-assets")
-      .upload(newPath, blob, { contentType: "image/webp", upsert: true });
+      .upload(newPath, webpBlob, { contentType: "image/webp", upsert: true });
 
     if (uploadErr) {
       errors.push(`Upload failed: ${newPath} - ${uploadErr.message}`);
@@ -173,7 +178,7 @@ async function processFile(
     if (products) {
       for (const p of products) {
         let changed = false;
-        const updates: any = {};
+        const updates: Record<string, unknown> = {};
 
         if (p.device_image === oldUrl) {
           updates.device_image = newUrl;
@@ -191,8 +196,11 @@ async function processFile(
       }
     }
 
+    // Delete original file after successful optimization
+    await admin.storage.from("product-assets").remove([filePath]);
+
     optimized.push(filePath);
   } catch (err) {
-    errors.push(`${filePath}: ${err.message}`);
+    errors.push(`${filePath}: ${(err as Error).message}`);
   }
 }

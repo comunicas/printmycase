@@ -1,5 +1,6 @@
 import { useState, forwardRef } from "react";
 import { cn } from "@/lib/utils";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 interface ProductGalleryProps {
   images: string[];
@@ -31,7 +32,7 @@ const ProductGallery = forwardRef<HTMLDivElement, ProductGalleryProps>(
         <h2 className="sr-only">Galeria de imagens</h2>
         <div className="relative aspect-square w-full rounded-xl border bg-card overflow-hidden">
           <img
-            src={allImages[selectedIndex]}
+            src={getOptimizedUrl(allImages[selectedIndex], 600)}
             alt={`${productName} - Imagem ${selectedIndex + 1}`}
             width={600}
             height={600}
@@ -58,7 +59,7 @@ const ProductGallery = forwardRef<HTMLDivElement, ProductGalleryProps>(
                   )}
                 >
                   <img
-                    src={img}
+                    src={getOptimizedUrl(img, 80)}
                     alt={`${productName} - ${i >= productCount ? "Ilustrativa" : "Miniatura"} ${i + 1}`}
                     width={64}
                     height={64}

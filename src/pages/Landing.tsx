@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAllDesigns } from "@/hooks/useCollectionDesigns";
 import { formatPrice } from "@/lib/types";
 import SeoHead from "@/components/SeoHead";
+import { getOptimizedUrl } from "@/lib/image-utils";
 import AppHeader from "@/components/AppHeader";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
@@ -187,7 +188,7 @@ const Landing = () => {
                     >
                       <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
                         <img
-                          src={design.image_url}
+                          src={getOptimizedUrl(design.image_url, 400)}
                           alt={design.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
