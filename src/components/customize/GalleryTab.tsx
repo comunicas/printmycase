@@ -99,7 +99,7 @@ const GalleryTab = ({ onSelect }: GalleryTabProps) => {
         <button
           key={g.id}
           onClick={() => handleSelectGallery(g)}
-          className="rounded-xl border border-border bg-card p-2 text-left hover:border-primary transition-colors group"
+          className="rounded-lg border border-border bg-card p-1.5 text-left hover:border-primary transition-colors group"
         >
           {g.cover_image ? (
             <img src={g.cover_image} alt={g.name} className="w-full aspect-square object-cover rounded-lg mb-1.5" loading="lazy" />

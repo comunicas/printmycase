@@ -182,7 +182,7 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
               Outros
             </p>
           )}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             {uncategorized.map(renderFilterButton)}
           </div>
         </div>
