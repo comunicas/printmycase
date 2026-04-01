@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Smartphone, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from "@/components/AppHeader";
 import FormCard from "@/components/forms/FormCard";
@@ -14,6 +15,7 @@ import SeoHead from "@/components/SeoHead";
 const RequestModel = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [phone, setPhone] = useState("");
   const [modelName, setModelName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,7 +38,8 @@ const RequestModel = () => {
     const { error } = await supabase.from("model_requests").insert({
       phone: phone.replace(/\D/g, ""),
       model_name: modelName.trim(),
-    });
+      user_id: user?.id,
+    } as any);
     setLoading(false);
     if (error) {
       toast({ title: "Erro ao enviar", description: "Tente novamente mais tarde.", variant: "destructive" });
