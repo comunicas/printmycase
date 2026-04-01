@@ -1,35 +1,36 @@
 
 
-## Adicionar Mensagem "Moedas Não Debitadas" em Todos os Erros de Geração IA
+## Corrigir Tratamento de Erro no Checkout
 
 ### Problema
-Quando filtro IA ou upscale IA falham, o toast de erro não informa que as moedas não foram cobradas, causando insegurança no usuário.
+O `handleCheckout` em `Checkout.tsx` tem acesso inseguro a `err.message` no `catch` (linha 216), e não protege contra falha de `fetch` em URLs de imagem expiradas. Isso causou o erro de script que impediu o usuário de finalizar a compra da Capa Galaxy A15.
 
-### Solução
-Atualizar 4 pontos de erro em `src/hooks/useCustomize.tsx` para incluir a mensagem "Nenhuma moeda foi debitada. Tente gerar novamente."
+### Correções
 
-### Alterações — arquivo único: `src/hooks/useCustomize.tsx`
+**Arquivo: `src/pages/Checkout.tsx`**
 
-**1. Filtro IA — erro na resposta (linha 354)**
-- De: `description: errorMsg`
-- Para: `description: "Nenhuma moeda foi debitada. Tente gerar novamente."`
+**1. Proteger `err.message` no catch (linha 214-216)**
+```typescript
+// De:
+} catch (err: any) {
+  console.error("Checkout error:", err?.message);
+  toast({ title: "Erro no checkout", description: err.message || "Tente novamente.", variant: "destructive" });
 
-**2. Filtro IA — catch genérico (linha 380)**
-- De: `toast({ title: "Erro ao aplicar filtro", variant: "destructive" })`
-- Para: `toast({ title: "Erro ao aplicar filtro", description: "Nenhuma moeda foi debitada. Tente gerar novamente.", variant: "destructive" })`
+// Para:
+} catch (err: any) {
+  const msg = err?.message || "Tente novamente.";
+  console.error("Checkout error:", msg);
+  toast({ title: "Erro no checkout", description: msg, variant: "destructive" });
+```
 
-**3. Upscale IA — erro na resposta (linha 411)**
-- De: `description: errorMsg`
-- Para: `description: "Nenhuma moeda foi debitada. Tente gerar novamente."`
+**2. Proteger upload de imagens com try/catch individual (linhas 146-171)**
+Envolver cada bloco de upload em try/catch para dar mensagem específica ao usuário se uma imagem falhar, ao invés de crash genérico.
 
-**4. Upscale IA — catch genérico (linha 436)**
-- De: `toast({ title: "Erro no upscale", variant: "destructive" })`
-- Para: `toast({ title: "Erro no upscale", description: "Nenhuma moeda foi debitada. Tente gerar novamente.", variant: "destructive" })`
-
-**Nota:** Os casos de "Moedas insuficientes" mantêm a mensagem atual (não houve tentativa de geração, então não faz sentido dizer que não foi debitado).
+**3. Adicionar timeout no fetch de imagem**
+Os `fetch(customization.image)` podem travar se a URL expirou. Adicionar `AbortController` com timeout de 15s.
 
 ### Resultado
-- 1 arquivo modificado, 4 pontos de erro atualizados
-- Ambos os fluxos de geração IA (filtro e upscale) cobertos
-- Usuário fica tranquilo que não perdeu moedas ao ver qualquer erro
+- 1 arquivo modificado
+- Checkout resiliente a erros de upload/rede
+- Mensagens de erro claras ao usuário
 
