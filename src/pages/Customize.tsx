@@ -32,6 +32,7 @@ const Customize = () => {
         productImage={c.product?.images?.[0] || c.product?.device_image}
         draftSaved={c.draftSaved}
         currentSlug={c.product?.slug}
+        onShowIntro={() => setShowIntro(true)}
       />
 
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-0 px-4 lg:px-0 overflow-hidden">
