@@ -4,6 +4,7 @@ import { Sparkles, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import ScrollReveal from "@/components/ScrollReveal";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 const showcaseImages = [
   "/lovable-uploads/ai-showcase-1-sm.webp",
