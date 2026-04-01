@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -134,26 +134,71 @@ interface IntroDialogProps {
 
 const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const [animating, setAnimating] = useState(false);
+  const [displayStep, setDisplayStep] = useState(0);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, []);
+
+  const goTo = (next: number) => {
+    if (animating || next === step) return;
+    const dir = next > step ? 1 : -1;
+    setDirection(dir);
+    setAnimating(true);
+    // After exit animation, swap content and enter
+    timeoutRef.current = setTimeout(() => {
+      setDisplayStep(next);
+      setStep(next);
+      timeoutRef.current = setTimeout(() => setAnimating(false), 300);
+    }, 150);
+  };
 
   const handleClose = () => {
     localStorage.setItem("customize_intro_seen", "true");
     setStep(0);
+    setDisplayStep(0);
     onOpenChange(false);
   };
 
   const isLast = step === steps.length - 1;
-  const current = steps[step];
+  const current = steps[displayStep];
   const Illustration = current.illustration;
+
+  // During first 150ms: exit (slide out). After: enter (slide in).
+  const exitPhase = animating && displayStep === step ? false : animating;
+  const enterPhase = animating && displayStep === step;
+
+  let transform = "translateX(0)";
+  let opacity = "1";
+  if (exitPhase) {
+    transform = `translateX(${direction * -30}%)`;
+    opacity = "0";
+  } else if (enterPhase) {
+    // Content just swapped, animating in from opposite side
+    // We use a brief no-transition reset then animate
+  }
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent className="max-w-xs p-0 gap-0 rounded-2xl overflow-hidden">
-        <div className={`flex flex-col items-center text-center px-6 pt-8 pb-6 ${current.isWelcome ? "bg-gradient-to-b from-primary/5 to-transparent" : ""}`}>
-          <div className="w-[120px] h-[120px] flex items-center justify-center mb-4">
-            <Illustration />
+        <div className="overflow-hidden">
+          <div
+            className={`flex flex-col items-center text-center px-6 pt-8 pb-6 ${current.isWelcome ? "bg-gradient-to-b from-primary/5 to-transparent" : ""}`}
+            style={{
+              transform: exitPhase ? `translateX(${direction * -30}%)` : "translateX(0)",
+              opacity: exitPhase ? 0 : 1,
+              transition: "transform 300ms ease-out, opacity 200ms ease-out",
+            }}
+          >
+            <div className="w-[120px] h-[120px] flex items-center justify-center mb-4">
+              <Illustration />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-1">{current.title}</h3>
+            <p className="text-sm text-muted-foreground">{current.description}</p>
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-1">{current.title}</h3>
-          <p className="text-sm text-muted-foreground">{current.description}</p>
         </div>
 
         {/* Dots */}
@@ -161,8 +206,8 @@ const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
           {steps.map((_, i) => (
             <button
               key={i}
-              onClick={() => setStep(i)}
-              className={`w-2 h-2 rounded-full transition-all ${
+              onClick={() => goTo(i)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
                 i === step ? "bg-primary w-4" : "bg-muted-foreground/30"
               }`}
             />
@@ -174,8 +219,8 @@ const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setStep(step - 1)}
-            disabled={step === 0}
+            onClick={() => goTo(step - 1)}
+            disabled={step === 0 || animating}
             className="gap-1"
           >
             <ChevronLeft className="w-4 h-4" /> Anterior
@@ -186,7 +231,7 @@ const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
               Entendi!
             </Button>
           ) : (
-            <Button size="sm" onClick={() => setStep(step + 1)} className="gap-1">
+            <Button size="sm" onClick={() => goTo(step + 1)} disabled={animating} className="gap-1">
               Próximo <ChevronRight className="w-4 h-4" />
             </Button>
           )}
