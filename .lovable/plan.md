@@ -1,20 +1,37 @@
 
 
-## Cards em 4 Colunas nas Tabs de Customização
+## Intro Tutorial — Modal com Carrossel na Página de Customização
+
+### Conceito
+Um Dialog modal com 4-5 slides ilustrativos que aparece automaticamente na primeira visita à página `/customize/*`. Cada slide explica um passo do fluxo (upload → ajustes → filtros IA → galeria → finalizar compra). O estado "já viu" é salvo em `localStorage`. Um link "Como funciona?" no header permite reassistir.
 
 ### Mudanças
 
-**1. `src/components/customize/GalleryTab.tsx`**
-- Linha 97: trocar `grid-cols-2` por `grid-cols-4` no grid de categorias de galeria
-- Linha 76: manter `grid-cols-3` nas imagens internas (já são thumbnails menores) ou subir para `grid-cols-4`
-- Reduzir padding/gap dos cards para caber em 4 colunas (~80px cada em 390px)
+**1. Novo componente: `src/components/customize/IntroDialog.tsx`**
+- Dialog modal usando `@/components/ui/dialog`
+- Carrossel com 4-5 slides, cada um com ícone (Lucide), título curto e descrição de 1 linha:
+  1. **Envie sua imagem** — Upload ou tire uma foto do celular
+  2. **Ajuste posição e tamanho** — Arraste, redimensione e rotacione
+  3. **Aplique Filtros IA** — Transforme sua imagem com estilos artísticos
+  4. **Escolha da Galeria** — Use uma imagem pronta da nossa galeria
+  5. **Finalize a compra** — Clique em Continuar para concluir
+- Indicadores de progresso (dots) + botões Próximo/Anterior
+- Botão "Entendi!" no último slide fecha e salva `localStorage.setItem("customize_intro_seen", "true")`
+- Props: `open`, `onOpenChange`
 
-**2. `src/components/customize/AiFiltersList.tsx`**
-- Linhas 172 e 185: trocar `grid-cols-3` por `grid-cols-4` nos grids de filtros
-- Ajustar tamanhos de texto/badges se necessário para caber nos cards menores
+**2. `src/pages/Customize.tsx`**
+- Adicionar state `showIntro` — inicializa como `!localStorage.getItem("customize_intro_seen")`
+- Renderizar `<IntroDialog open={showIntro} onOpenChange={setShowIntro} />`
 
-### Resultado
-- 2 arquivos modificados
-- Cards de galeria e filtros em 4 colunas
-- Mais conteúdo visível sem scroll
+**3. `src/components/customize/CustomizeHeader.tsx`**
+- Adicionar prop `onShowIntro`
+- Adicionar ícone `HelpCircle` (Lucide) como botão ao lado do seletor de modelo ou do CoinBalance
+- Ao clicar, chama `onShowIntro()` para reabrir o modal
+
+### Detalhes técnicos
+- localStorage key: `customize_intro_seen`
+- Sem dependência de banco — funciona offline e sem autenticação
+- Animação simples de slide horizontal entre os passos via CSS transform
+- 3 arquivos: 1 novo + 2 editados
+- Zero impacto em performance (componente leve, renderizado sob demanda)
 
