@@ -135,6 +135,7 @@ async function enqueueOrderEmail(
   const shortId = params.orderId.slice(0, 8);
   const statusLabel = statusLabels[params.newStatus] ?? params.newStatus;
 
+  const messageId = crypto.randomUUID();
   const payload = {
     to: params.userEmail,
     from: FROM,
@@ -142,6 +143,10 @@ async function enqueueOrderEmail(
     subject: `Pedido #${shortId} — ${statusLabel}`,
     html,
     purpose: "transactional",
+    message_id: messageId,
+    idempotency_key: `${params.templateName}-${params.orderId}`,
+    label: params.templateName,
+    queued_at: new Date().toISOString(),
   };
 
   const { data: msgId, error } = await supabaseAdmin.rpc("enqueue_email", {
@@ -154,6 +159,7 @@ async function enqueueOrderEmail(
   } else {
     console.log(`[email] Enqueued ${params.templateName}:`, JSON.stringify({ msgId, to: params.userEmail }));
     await supabaseAdmin.from("email_send_log").insert({
+      message_id: messageId,
       recipient_email: params.userEmail,
       template_name: params.templateName,
       status: "pending",
