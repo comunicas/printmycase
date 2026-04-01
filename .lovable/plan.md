@@ -1,37 +1,28 @@
 
 
-## Intro Tutorial — Modal com Carrossel na Página de Customização
-
-### Conceito
-Um Dialog modal com 4-5 slides ilustrativos que aparece automaticamente na primeira visita à página `/customize/*`. Cada slide explica um passo do fluxo (upload → ajustes → filtros IA → galeria → finalizar compra). O estado "já viu" é salvo em `localStorage`. Um link "Como funciona?" no header permite reassistir.
+## Intro Dialog — Slide de Boas-Vindas + Ilustrações SVG Inline
 
 ### Mudanças
 
-**1. Novo componente: `src/components/customize/IntroDialog.tsx`**
-- Dialog modal usando `@/components/ui/dialog`
-- Carrossel com 4-5 slides, cada um com ícone (Lucide), título curto e descrição de 1 linha:
-  1. **Envie sua imagem** — Upload ou tire uma foto do celular
-  2. **Ajuste posição e tamanho** — Arraste, redimensione e rotacione
-  3. **Aplique Filtros IA** — Transforme sua imagem com estilos artísticos
-  4. **Escolha da Galeria** — Use uma imagem pronta da nossa galeria
-  5. **Finalize a compra** — Clique em Continuar para concluir
-- Indicadores de progresso (dots) + botões Próximo/Anterior
-- Botão "Entendi!" no último slide fecha e salva `localStorage.setItem("customize_intro_seen", "true")`
-- Props: `open`, `onOpenChange`
+**Arquivo: `src/components/customize/IntroDialog.tsx`**
 
-**2. `src/pages/Customize.tsx`**
-- Adicionar state `showIntro` — inicializa como `!localStorage.getItem("customize_intro_seen")`
-- Renderizar `<IntroDialog open={showIntro} onOpenChange={setShowIntro} />`
+1. **Novo slide 0 — Boas-vindas ao Studio PrintMyCase**
+   - Logo do Studio (`/logo-printmycase-sm.webp`) + título "Bem-vindo ao Studio PrintMyCase"
+   - Descrição: "Crie sua capinha personalizada em poucos passos"
+   - Fundo com gradiente sutil da marca
 
-**3. `src/components/customize/CustomizeHeader.tsx`**
-- Adicionar prop `onShowIntro`
-- Adicionar ícone `HelpCircle` (Lucide) como botão ao lado do seletor de modelo ou do CoinBalance
-- Ao clicar, chama `onShowIntro()` para reabrir o modal
+2. **Substituir ícones Lucide por SVGs ilustrativos inline** em cada slide:
+   - **Slide 1 (Upload)**: Ilustração SVG de mão segurando celular com seta de upload
+   - **Slide 2 (Ajustar)**: SVG de celular com imagem sendo arrastada/redimensionada (setas de movimento)
+   - **Slide 3 (Filtros IA)**: SVG de imagem com varinha mágica/estrelas de transformação
+   - **Slide 4 (Galeria)**: SVG de grid de thumbnails com cursor selecionando uma
+   - **Slide 5 (Compra)**: SVG de capinha finalizada com checkmark/carrinho
+
+3. **Ajustes visuais**: Aumentar a área da ilustração para ~120x120px, manter o layout compacto do modal
 
 ### Detalhes técnicos
-- localStorage key: `customize_intro_seen`
-- Sem dependência de banco — funciona offline e sem autenticação
-- Animação simples de slide horizontal entre os passos via CSS transform
-- 3 arquivos: 1 novo + 2 editados
-- Zero impacto em performance (componente leve, renderizado sob demanda)
+- Cada SVG é um componente React inline (sem arquivos externos)
+- O slide de boas-vindas usa `<img src="/logo-printmycase-sm.webp">` já disponível em `/public/`
+- Array `steps` passa de 5 para 6 itens; campo `illustration` substitui `icon`
+- 1 arquivo editado
 
