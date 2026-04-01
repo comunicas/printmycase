@@ -12,7 +12,7 @@ import { pixelTrackPurchase } from "@/lib/meta-pixel";
 
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
-import logoPrintMyCase from "@/assets/logo-printmycase-sm.webp";
+
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
