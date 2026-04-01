@@ -141,33 +141,57 @@ const Checkout = () => {
       let editedImageUrl: string | null = null;
       const ts = Date.now();
 
+      const fetchWithTimeout = async (url: string, timeoutMs = 15000): Promise<Blob> => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, { signal: controller.signal });
+          if (!res.ok) throw new Error(`Fetch falhou: ${res.status}`);
+          return await res.blob();
+        } finally {
+          clearTimeout(timer);
+        }
+      };
+
       // Upload raw image (original user upload, untouched)
-      const rawSrc = customization.rawImage || customization.image;
-      if (rawSrc) {
-        const blob = await fetch(rawSrc).then((r) => r.blob());
-        const ext = customization.imageFileName?.split(".").pop() || "png";
-        const path = `${user.id}/original_${ts}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
-        if (uploadError) throw new Error("Erro ao fazer upload da imagem original: " + uploadError.message);
-        rawImageUrl = path;
+      try {
+        const rawSrc = customization.rawImage || customization.image;
+        if (rawSrc) {
+          const blob = await fetchWithTimeout(rawSrc);
+          const ext = customization.imageFileName?.split(".").pop() || "png";
+          const path = `${user.id}/original_${ts}.${ext}`;
+          const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
+          if (uploadError) throw uploadError;
+          rawImageUrl = path;
+        }
+      } catch (e: any) {
+        throw new Error("Erro ao enviar imagem original. Verifique sua conexão e tente novamente.");
       }
 
       // Upload optimized image (after filters/upscale, max quality)
-      if (customization.image) {
-        const blob = await fetch(customization.image).then((r) => r.blob());
-        const path = `${user.id}/optimized_${ts}.jpg`;
-        const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
-        if (uploadError) throw new Error("Erro ao fazer upload da imagem otimizada: " + uploadError.message);
-        originalImageUrl = path;
+      try {
+        if (customization.image) {
+          const blob = await fetchWithTimeout(customization.image);
+          const path = `${user.id}/optimized_${ts}.jpg`;
+          const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
+          if (uploadError) throw uploadError;
+          originalImageUrl = path;
+        }
+      } catch (e: any) {
+        throw new Error("Erro ao enviar imagem otimizada. Verifique sua conexão e tente novamente.");
       }
 
       // Upload final image (snapshot with frame positioning)
-      if (customization.editedImage) {
-        const blob = await fetch(customization.editedImage).then((r) => r.blob());
-        const path = `${user.id}/final_${ts}.jpg`;
-        const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
-        if (uploadError) throw new Error("Erro ao fazer upload da imagem final: " + uploadError.message);
-        editedImageUrl = path;
+      try {
+        if (customization.editedImage) {
+          const blob = await fetchWithTimeout(customization.editedImage);
+          const path = `${user.id}/final_${ts}.jpg`;
+          const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
+          if (uploadError) throw uploadError;
+          editedImageUrl = path;
+        }
+      } catch (e: any) {
+        throw new Error("Erro ao enviar imagem final. Verifique sua conexão e tente novamente.");
       }
 
       const cleanZip = addressData.zipInput.replace(/\D/g, "");
