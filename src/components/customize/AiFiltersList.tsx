@@ -169,7 +169,7 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
             {category.name}
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             {items.map(renderFilterButton)}
           </div>
         </div>
