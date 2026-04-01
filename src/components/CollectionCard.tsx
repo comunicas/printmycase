@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImageIcon } from "lucide-react";
 import type { Collection } from "@/hooks/useCollections";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 interface CollectionCardProps {
   collection: Collection;
