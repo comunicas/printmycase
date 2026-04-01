@@ -17,7 +17,7 @@ import WhyPrintMyCase from "@/components/WhyPrintMyCase";
 import FaqSection from "@/components/FaqSection";
 import PaymentBadges from "@/components/PaymentBadges";
 
-import logoPrintMyCase from "@/assets/logo-printmycase-sm.webp";
+
 
 const testimonials = [
 { name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
@@ -284,7 +284,7 @@ const Landing = () => {
         <footer className="border-t bg-card py-10 px-5">
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
             <div className="space-y-3">
-              <img src={logoPrintMyCase} alt="PrintMyCase" className="h-12 w-auto" loading="lazy" width="48" height="48" />
+              <img src="/logo-printmycase-sm.webp" alt="PrintMyCase" className="h-12 w-auto" loading="lazy" width="48" height="48" />
               <p className="text-muted-foreground leading-relaxed">
                 Capas personalizadas com tecnologia de impressão profissional. Qualidade premium direto na sua porta.
               </p>

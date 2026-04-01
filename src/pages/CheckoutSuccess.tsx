@@ -12,7 +12,7 @@ import { pixelTrackPurchase } from "@/lib/meta-pixel";
 
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
-import logoPrintMyCase from "@/assets/logo-printmycase-sm.webp";
+
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
@@ -78,7 +78,7 @@ const CheckoutSuccess = () => {
       <main className="flex-1 flex items-center justify-center p-5">
         <Card className="w-full max-w-md">
           <CardContent className="pt-8 pb-8 space-y-6 text-center">
-            <img src={logoPrintMyCase} alt="PrintMyCase" className="h-20 mx-auto" />
+            <img src="/logo-printmycase-sm.webp" alt="PrintMyCase" className="h-20 mx-auto" />
 
             <div className="mx-auto w-20 h-20 rounded-full bg-green-100 flex items-center justify-center animate-scale-in">
               <CheckCircle className="w-10 h-10 text-green-600" />
