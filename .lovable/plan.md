@@ -1,28 +1,22 @@
 
 
-## Intro Dialog — Slide de Boas-Vindas + Ilustrações SVG Inline
+## Animação de Slide Horizontal na Intro
 
-### Mudanças
+### Mudança
 
 **Arquivo: `src/components/customize/IntroDialog.tsx`**
 
-1. **Novo slide 0 — Boas-vindas ao Studio PrintMyCase**
-   - Logo do Studio (`/logo-printmycase-sm.webp`) + título "Bem-vindo ao Studio PrintMyCase"
-   - Descrição: "Crie sua capinha personalizada em poucos passos"
-   - Fundo com gradiente sutil da marca
+Envolver o conteúdo dos slides em um container com `overflow-hidden` e usar CSS `transform: translateX()` + `transition` para animar a troca entre passos:
 
-2. **Substituir ícones Lucide por SVGs ilustrativos inline** em cada slide:
-   - **Slide 1 (Upload)**: Ilustração SVG de mão segurando celular com seta de upload
-   - **Slide 2 (Ajustar)**: SVG de celular com imagem sendo arrastada/redimensionada (setas de movimento)
-   - **Slide 3 (Filtros IA)**: SVG de imagem com varinha mágica/estrelas de transformação
-   - **Slide 4 (Galeria)**: SVG de grid de thumbnails com cursor selecionando uma
-   - **Slide 5 (Compra)**: SVG de capinha finalizada com checkmark/carrinho
+- Container wrapper com `overflow-hidden` e `position: relative`
+- Conteúdo do slide atual recebe `transform: translateX(0)` com `transition: transform 300ms ease-out`
+- Ao avançar: slide sai para a esquerda (`-100%`), novo entra da direita (`+100%`)
+- Ao voltar: slide sai para a direita (`+100%`), novo entra da esquerda (`-100%`)
+- Usar state `direction` (`1` ou `-1`) atualizado nos handlers de navegação para determinar a direção
+- Usar `key={step}` no conteúdo para forçar re-render com a animação correta
 
-3. **Ajustes visuais**: Aumentar a área da ilustração para ~120x120px, manter o layout compacto do modal
-
-### Detalhes técnicos
-- Cada SVG é um componente React inline (sem arquivos externos)
-- O slide de boas-vindas usa `<img src="/logo-printmycase-sm.webp">` já disponível em `/public/`
-- Array `steps` passa de 5 para 6 itens; campo `illustration` substitui `icon`
+### Resultado
 - 1 arquivo editado
+- Transição suave de 300ms entre slides
+- Direção da animação coerente com navegação (esquerda/direita)
 
