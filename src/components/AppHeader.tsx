@@ -47,7 +47,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
             <img
               alt="PrintMyCase"
               className="h-14 sm:h-16 w-auto transition-all duration-300"
-              src={logoWebp}
+              src="/logo-printmycase-sm.webp"
               fetchPriority="high"
               width="64"
               height="64"
