@@ -40,7 +40,6 @@ const RequestModel = () => {
       model_name: modelName.trim(),
       user_id: user?.id,
     } as any);
-    });
     setLoading(false);
     if (error) {
       toast({ title: "Erro ao enviar", description: "Tente novamente mais tarde.", variant: "destructive" });
