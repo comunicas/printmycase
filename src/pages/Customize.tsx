@@ -12,6 +12,7 @@ import LoginDialog from "@/components/customize/LoginDialog";
 import TermsDialog from "@/components/customize/TermsDialog";
 import GalleryPicker from "@/components/customize/GalleryPicker";
 import { useCustomize } from "@/hooks/useCustomize.tsx";
+import IntroDialog from "@/components/customize/IntroDialog";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,7 @@ const Customize = () => {
   const c = useCustomize(id);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
+  const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
