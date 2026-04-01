@@ -1,31 +1,127 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, Move, Sparkles, Image, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+/* ── SVG Illustrations ── */
+
+const WelcomeIllustration = () => (
+  <div className="flex flex-col items-center gap-3">
+    <img src="/logo-printmycase-sm.webp" alt="PrintMyCase" className="w-16 h-16 rounded-xl" />
+    <div className="w-20 h-1 rounded-full bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
+  </div>
+);
+
+const UploadIllustration = () => (
+  <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Phone body */}
+    <rect x="28" y="10" width="44" height="80" rx="8" className="stroke-primary" strokeWidth="2.5" fill="none" />
+    <rect x="32" y="18" width="36" height="60" rx="2" className="fill-primary/5" />
+    {/* Upload arrow */}
+    <path d="M50 58 L50 35" className="stroke-primary" strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M42 43 L50 35 L58 43" className="stroke-primary" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    {/* Cloud hint */}
+    <path d="M38 55 C34 55 32 52 32 49 C32 46 34 44 37 44 C38 40 42 38 46 38 C50 38 53 40 54 43 C58 43 61 46 61 49 C61 52 59 55 55 55" className="stroke-primary/50" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+  </svg>
+);
+
+const AdjustIllustration = () => (
+  <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Phone body */}
+    <rect x="28" y="10" width="44" height="80" rx="8" className="stroke-primary" strokeWidth="2.5" fill="none" />
+    {/* Image placeholder inside */}
+    <rect x="35" y="28" width="30" height="30" rx="3" className="fill-primary/10 stroke-primary/40" strokeWidth="1.5" strokeDasharray="4 2" />
+    {/* Move arrows */}
+    <path d="M50 22 L50 26 M50 62 L50 66" className="stroke-primary" strokeWidth="2" strokeLinecap="round" />
+    <path d="M30 45 L34 45 M66 45 L70 45" className="stroke-primary" strokeWidth="2" strokeLinecap="round" />
+    <path d="M50 20 L48 23 M50 20 L52 23" className="stroke-primary" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M50 68 L48 65 M50 68 L52 65" className="stroke-primary" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M28 45 L31 43 M28 45 L31 47" className="stroke-primary" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M72 45 L69 43 M72 45 L69 47" className="stroke-primary" strokeWidth="1.5" strokeLinecap="round" />
+    {/* Resize corner */}
+    <path d="M60 53 L65 58" className="stroke-primary" strokeWidth="2" strokeLinecap="round" />
+    <path d="M62 58 L65 58 L65 55" className="stroke-primary" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const AiFilterIllustration = () => (
+  <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Image frame */}
+    <rect x="20" y="22" width="42" height="42" rx="6" className="stroke-primary/40" strokeWidth="2" fill="none" />
+    <rect x="24" y="26" width="34" height="34" rx="2" className="fill-primary/5" />
+    {/* Landscape in image */}
+    <path d="M24 52 L34 42 L44 48 L52 38 L58 46 L58 56 C58 57.1 57.1 58 56 58 L26 58 C24.9 58 24 57.1 24 56 Z" className="fill-primary/15" />
+    {/* Magic wand */}
+    <line x1="58" y1="30" x2="78" y2="18" className="stroke-primary" strokeWidth="2.5" strokeLinecap="round" />
+    <rect x="56" y="28" width="5" height="5" rx="1" className="fill-primary" transform="rotate(-35 58 30)" />
+    {/* Sparkles */}
+    <circle cx="72" cy="32" r="1.5" className="fill-primary" />
+    <circle cx="80" cy="26" r="1" className="fill-primary/60" />
+    <circle cx="68" cy="22" r="1" className="fill-primary/60" />
+    <path d="M75 36 L76 38 L78 37 L77 39 L79 40 L77 41 L78 43 L76 42 L75 44 L74 42 L72 43 L73 41 L71 40 L73 39 L72 37 L74 38 Z" className="fill-primary/80" />
+  </svg>
+);
+
+const GalleryIllustration = () => (
+  <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Grid of thumbnails */}
+    <rect x="18" y="20" width="26" height="26" rx="4" className="fill-primary/10 stroke-primary/30" strokeWidth="1.5" />
+    <rect x="48" y="20" width="26" height="26" rx="4" className="fill-primary/10 stroke-primary/30" strokeWidth="1.5" />
+    <rect x="18" y="50" width="26" height="26" rx="4" className="fill-primary/10 stroke-primary/30" strokeWidth="1.5" />
+    <rect x="48" y="50" width="26" height="26" rx="4" className="fill-primary/10 stroke-primary/30" strokeWidth="1.5" />
+    {/* Selected highlight on top-right */}
+    <rect x="48" y="20" width="26" height="26" rx="4" className="fill-primary/20 stroke-primary" strokeWidth="2.5" />
+    {/* Check on selected */}
+    <path d="M56 33 L60 37 L68 29" className="stroke-primary" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    {/* Cursor pointer */}
+    <path d="M78 42 L78 52 L82 48 L86 50 L87 47 L83 46 L85 42 Z" className="fill-primary/70 stroke-primary" strokeWidth="1" />
+  </svg>
+);
+
+const CheckoutIllustration = () => (
+  <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Phone case outline */}
+    <rect x="30" y="12" width="40" height="70" rx="10" className="stroke-primary" strokeWidth="2.5" fill="none" />
+    <rect x="34" y="20" width="32" height="50" rx="4" className="fill-primary/10" />
+    {/* Image inside case */}
+    <path d="M34 55 L42 45 L50 50 L58 40 L66 48 L66 66 C66 68.2 64.2 70 62 70 L38 70 C35.8 70 34 68.2 34 66 Z" className="fill-primary/20" />
+    {/* Checkmark circle */}
+    <circle cx="72" cy="22" r="12" className="fill-primary" />
+    <path d="M66 22 L70 26 L78 18" className="stroke-white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+/* ── Steps Data ── */
 
 const steps = [
   {
-    icon: Upload,
+    illustration: WelcomeIllustration,
+    title: "Bem-vindo ao Studio PrintMyCase",
+    description: "Crie sua capinha personalizada em poucos passos",
+    isWelcome: true,
+  },
+  {
+    illustration: UploadIllustration,
     title: "Envie sua imagem",
     description: "Faça upload ou tire uma foto direto do celular",
   },
   {
-    icon: Move,
+    illustration: AdjustIllustration,
     title: "Ajuste posição e tamanho",
     description: "Arraste, redimensione e rotacione livremente",
   },
   {
-    icon: Sparkles,
+    illustration: AiFilterIllustration,
     title: "Aplique Filtros IA",
     description: "Transforme sua imagem com estilos artísticos",
   },
   {
-    icon: Image,
+    illustration: GalleryIllustration,
     title: "Escolha da Galeria",
     description: "Use uma imagem pronta da nossa galeria",
   },
   {
-    icon: ShoppingCart,
+    illustration: CheckoutIllustration,
     title: "Finalize a compra",
     description: "Clique em Continuar para concluir seu pedido",
   },
@@ -47,14 +143,14 @@ const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
 
   const isLast = step === steps.length - 1;
   const current = steps[step];
-  const Icon = current.icon;
+  const Illustration = current.illustration;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent className="max-w-xs p-0 gap-0 rounded-2xl overflow-hidden">
-        <div className="flex flex-col items-center text-center px-6 pt-8 pb-6">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Icon className="w-8 h-8 text-primary" />
+        <div className={`flex flex-col items-center text-center px-6 pt-8 pb-6 ${current.isWelcome ? "bg-gradient-to-b from-primary/5 to-transparent" : ""}`}>
+          <div className="w-[120px] h-[120px] flex items-center justify-center mb-4">
+            <Illustration />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-1">{current.title}</h3>
           <p className="text-sm text-muted-foreground">{current.description}</p>
