@@ -1,4 +1,4 @@
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, HelpCircle } from "lucide-react";
 import CoinBalance from "@/components/CoinBalance";
 import { Button } from "@/components/ui/button";
 import ModelSelector from "./ModelSelector";
@@ -9,9 +9,10 @@ interface CustomizeHeaderProps {
   productImage?: string | null;
   draftSaved?: boolean;
   currentSlug?: string;
+  onShowIntro?: () => void;
 }
 
-const CustomizeHeader = ({ productName, onBack, productImage, draftSaved, currentSlug }: CustomizeHeaderProps) => (
+const CustomizeHeader = ({ productName, onBack, productImage, draftSaved, currentSlug, onShowIntro }: CustomizeHeaderProps) => (
   <div className="flex items-center justify-between px-3 py-1.5 flex-shrink-0">
     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={onBack}>
       <ArrowLeft className="w-5 h-5" />
@@ -33,7 +34,14 @@ const CustomizeHeader = ({ productName, onBack, productImage, draftSaved, curren
       </span>
     </div>
 
-    <CoinBalance />
+    <div className="flex items-center gap-1">
+      {onShowIntro && (
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={onShowIntro}>
+          <HelpCircle className="w-4 h-4" />
+        </Button>
+      )}
+      <CoinBalance />
+    </div>
   </div>
 );
 

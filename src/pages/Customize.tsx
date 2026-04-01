@@ -12,6 +12,7 @@ import LoginDialog from "@/components/customize/LoginDialog";
 import TermsDialog from "@/components/customize/TermsDialog";
 import GalleryPicker from "@/components/customize/GalleryPicker";
 import { useCustomize } from "@/hooks/useCustomize.tsx";
+import IntroDialog from "@/components/customize/IntroDialog";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,7 @@ const Customize = () => {
   const c = useCustomize(id);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
+  const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
@@ -30,6 +32,7 @@ const Customize = () => {
         productImage={c.product?.images?.[0] || c.product?.device_image}
         draftSaved={c.draftSaved}
         currentSlug={c.product?.slug}
+        onShowIntro={() => setShowIntro(true)}
       />
 
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-0 px-4 lg:px-0 overflow-hidden">
@@ -188,6 +191,8 @@ const Customize = () => {
         onOpenChange={setShowGalleryPicker}
         onSelect={c.handleGalleryImageSelect}
       />
+
+      <IntroDialog open={showIntro} onOpenChange={setShowIntro} />
     </div>
   );
 };
