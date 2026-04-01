@@ -15,6 +15,7 @@ import SeoHead from "@/components/SeoHead";
 const RequestModel = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [phone, setPhone] = useState("");
   const [modelName, setModelName] = useState("");
   const [loading, setLoading] = useState(false);
