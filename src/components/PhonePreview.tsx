@@ -178,6 +178,13 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
     e.target.value = '';
   };
 
+  const FRAME_ASPECT = 532 / 260; // ~2.046
+
+  const isOrthogonal = rotation % 180 !== 0;
+  const effectiveScale = isOrthogonal
+    ? (scale / 100) * FRAME_ASPECT
+    : scale / 100;
+
   const buildImageStyle = (src: string) => ({
     backgroundImage: `url("${src}")`,
     backgroundSize: "cover",
