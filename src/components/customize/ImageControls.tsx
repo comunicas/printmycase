@@ -45,7 +45,7 @@ const ImageControls = ({
 
   return (
     <div className="w-full max-w-xs sm:max-w-sm lg:max-w-none">
-      <Tabs defaultValue={hasImage ? "ajustes" : "galeria"}>
+      <Tabs defaultValue="ajustes">
         <TabsList className={`grid w-full h-9 ${colsClass}`}>
           <TabsTrigger value="ajustes" className="gap-1.5 text-xs">
             <SlidersHorizontal className="w-3.5 h-3.5" />
