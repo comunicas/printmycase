@@ -57,13 +57,30 @@ const OrdersManager = () => {
       designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
     }
 
-    const enriched: OrderRow[] = rows.map((o) => ({
-      ...o,
-      product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
-      product_image: nameMap.get(o.product_id)?.image,
-      design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
-      design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
-    }));
+    // Resolve customer names
+    const userIds = [...new Set(rows.map((o) => o.user_id))];
+    const profileMap = new Map<string, string>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+      profiles?.forEach((p) => profileMap.set(p.id, p.full_name));
+    }
+
+    const enriched: OrderRow[] = rows.map((o) => {
+      const shipping = o.shipping_address as Record<string, any> | null;
+      return {
+        ...o,
+        product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
+        product_image: nameMap.get(o.product_id)?.image,
+        design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
+        design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
+        customer_name: profileMap.get(o.user_id) || undefined,
+        customer_city: shipping?.city || undefined,
+        customer_state: shipping?.state || undefined,
+      };
+    });
     setOrders(enriched);
 
     const inputs: Record<string, string> = {};
