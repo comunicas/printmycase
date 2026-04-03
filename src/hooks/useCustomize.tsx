@@ -306,8 +306,9 @@ export function useCustomize(productId: string | undefined) {
     }
   }, [pendingFile, processImageFile]);
 
-  const requireAuth = useCallback(() => {
+  const requireAuth = useCallback((reason?: "filter" | "upscale") => {
     if (user) return true;
+    setLoginReason(reason ?? null);
     setShowLoginDialog(true);
     return false;
   }, [user]);
