@@ -20,6 +20,7 @@ interface CustomizationData {
   rawImage: string | null;
   image: string | null;
   editedImage: string | null;
+  previewImage: string | null;
   imageFileName: string | null;
   scale: number;
   rotation: number;
