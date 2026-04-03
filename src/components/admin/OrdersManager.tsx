@@ -16,6 +16,9 @@ type OrderRow = Tables<"orders"> & {
   product_image?: string;
   design_name?: string;
   design_image?: string;
+  customer_name?: string;
+  customer_city?: string;
+  customer_state?: string;
 };
 
 const PAGE_SIZE = 10;
