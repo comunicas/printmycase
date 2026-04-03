@@ -89,6 +89,7 @@ const Checkout = () => {
           rawImage: imgUrl,
           image: imgUrl,
           editedImage: editedUrl,
+          previewImage: null,
           imageFileName: null,
           scale: cd.scale ?? 100,
           rotation: cd.rotation ?? 0,
