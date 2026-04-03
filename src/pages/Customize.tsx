@@ -22,13 +22,7 @@ const Customize = () => {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
-  const [showUploadSpotlight, setShowUploadSpotlight] = useState(() => !localStorage.getItem("customize_upload_seen"));
   const spotlightInputRef = useRef<HTMLInputElement>(null);
-
-  const dismissSpotlight = useCallback(() => {
-    setShowUploadSpotlight(false);
-    localStorage.setItem("customize_upload_seen", "1");
-  }, []);
 
   const handleSpotlightUpload = useCallback(() => {
     spotlightInputRef.current?.click();
@@ -38,15 +32,13 @@ const Customize = () => {
     const file = e.target.files?.[0];
     if (file) {
       c.handleImageUpload(file);
-      dismissSpotlight();
     }
     e.target.value = "";
-  }, [c.handleImageUpload, dismissSpotlight]);
+  }, [c.handleImageUpload]);
 
   const handleSpotlightGallery = useCallback(() => {
-    dismissSpotlight();
     setShowGalleryPicker(true);
-  }, [dismissSpotlight]);
+  }, []);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
@@ -222,7 +214,8 @@ const Customize = () => {
       <IntroDialog open={showIntro} onOpenChange={setShowIntro} />
 
       <UploadSpotlight
-        open={showUploadSpotlight && !c.image}
+        open={!c.image}
+        modelName={c.productName}
         onUploadClick={handleSpotlightUpload}
         onGalleryClick={handleSpotlightGallery}
       />

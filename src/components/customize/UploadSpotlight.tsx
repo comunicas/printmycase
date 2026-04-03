@@ -2,25 +2,27 @@ import { Upload, ImageIcon } from "lucide-react";
 
 interface UploadSpotlightProps {
   open: boolean;
+  modelName: string;
   onUploadClick: () => void;
   onGalleryClick: () => void;
 }
 
-const UploadSpotlight = ({ open, onUploadClick, onGalleryClick }: UploadSpotlightProps) => {
+const UploadSpotlight = ({ open, modelName, onUploadClick, onGalleryClick }: UploadSpotlightProps) => {
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-300">
       <div className="flex flex-col items-center gap-5 bg-background rounded-2xl p-8 mx-4 max-w-sm w-full shadow-2xl border border-border animate-in zoom-in-95 duration-300">
-        {/* Animated upload icon */}
         <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
           <Upload className="w-10 h-10 text-primary" />
         </div>
 
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-bold text-foreground">Comece enviando sua foto</h2>
+          <h2 className="text-xl font-bold text-foreground">
+            Personalize sua capa {modelName}
+          </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Sua foto, do pet, da família… nós transformamos em arte!
+            Envie uma foto sua, do pet, da família… nós transformamos na capa perfeita para o seu {modelName}!
           </p>
         </div>
 
