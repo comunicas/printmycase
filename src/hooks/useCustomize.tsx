@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type RefObject } from "react";
+import html2canvas from "html2canvas";
 import { clarityEvent } from "@/lib/clarity";
 import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
 import { useNavigate } from "react-router-dom";
