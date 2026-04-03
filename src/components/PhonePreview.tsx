@@ -16,6 +16,7 @@ interface PhonePreviewProps {
   onUpscaleClick?: () => void;
   previewImageUrl?: string | null;
   onGalleryClick?: () => void;
+  captureRef?: React.RefObject<HTMLDivElement>;
 }
 
 const CROSSFADE_MS = 200;
