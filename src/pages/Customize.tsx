@@ -220,6 +220,19 @@ const Customize = () => {
       />
 
       <IntroDialog open={showIntro} onOpenChange={setShowIntro} />
+
+      <UploadSpotlight
+        open={showUploadSpotlight && !c.image}
+        onUploadClick={handleSpotlightUpload}
+        onGalleryClick={handleSpotlightGallery}
+      />
+      <input
+        ref={spotlightInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleSpotlightFile}
+      />
     </div>
   );
 };
