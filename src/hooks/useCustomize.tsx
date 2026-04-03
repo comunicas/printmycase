@@ -50,6 +50,7 @@ export function useCustomize(productId: string | undefined) {
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [loginReason, setLoginReason] = useState<"filter" | "upscale" | null>(null);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [processingMsg, setProcessingMsg] = useState<string | null>(null);
