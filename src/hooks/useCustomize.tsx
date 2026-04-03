@@ -495,12 +495,21 @@ export function useCustomize(productId: string | undefined) {
 
     try {
       const finalImage = await renderSnapshot(image, scale, position, rotation);
-      const customData = { rawImage, image, editedImage: finalImage, imageFileName, scale, position, rotation };
+
+      // Generate preview with device mockup
+      let previewImage: string | null = null;
+      if (product.device_image) {
+        try {
+          previewImage = await renderPreviewWithMockup(image, product.device_image, scale, position, rotation);
+        } catch { /* ignore if device image fails */ }
+      }
+
+      const customData = { rawImage, image, editedImage: finalImage, previewImage, imageFileName, scale, position, rotation };
       try {
         sessionStorage.setItem("customization", JSON.stringify(customData));
       } catch {
         try {
-          sessionStorage.setItem("customization", JSON.stringify({ ...customData, rawImage: null, image: null }));
+          sessionStorage.setItem("customization", JSON.stringify({ ...customData, rawImage: null, image: null, previewImage: null }));
         } catch {
           toast({ title: "Erro ao salvar customização", variant: "destructive" });
           return;
@@ -513,6 +522,7 @@ export function useCustomize(productId: string | undefined) {
           let optimizedPath: string | null = null;
           let finalPath: string | null = null;
           let filteredPath: string | null = null;
+          let previewPath: string | null = null;
 
           // 1. Raw image (original upload, never changes)
           const rawSrc = rawImage || originalImage || image;
@@ -549,9 +559,17 @@ export function useCustomize(productId: string | undefined) {
             filteredPath = path;
           }
 
+          // 5. Preview image (mockup with device frame)
+          if (previewImage) {
+            const blob = await fetch(previewImage).then(r => r.blob());
+            const path = `${user.id}/pending_preview_${ts}.png`;
+            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
+            previewPath = path;
+          }
+
           await upsertPending(
             product.id,
-            { scale, position, rotation, activeFilter: activeFilterId, filteredImagePath: filteredPath, filterHistory: filterHistory.map(h => h.filterId) },
+            { scale, position, rotation, activeFilter: activeFilterId, filteredImagePath: filteredPath, previewImagePath: previewPath, filterHistory: filterHistory.map(h => h.filterId) },
             optimizedPath,
             finalPath,
             rawPath,
