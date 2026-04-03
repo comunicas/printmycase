@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,6 +24,10 @@ const typeLabels: Record<string, string> = {
   original: "Original",
 };
 
+/** Check if a URL is an expired signed URL */
+const isExpiredSignedUrl = (url: string) =>
+  url.includes("/sign/") || url.includes("token=");
+
 const MyGenerations = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -32,28 +36,52 @@ const MyGenerations = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  /** Resolve image URL — refresh signed URL if the stored one is expired */
+  const resolveImageUrl = useCallback(async (gen: Generation): Promise<string> => {
+    if (!isExpiredSignedUrl(gen.image_url)) return gen.image_url;
+    // Fallback: generate a fresh signed URL from storage_path
+    if (!gen.storage_path) return gen.image_url;
+    const { data } = await supabase.storage
+      .from("customizations")
+      .createSignedUrl(gen.storage_path, 3600);
+    return data?.signedUrl || gen.image_url;
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     (async () => {
       const { data, error } = await supabase
-        .from("user_ai_generations" as any)
+        .from("user_ai_generations")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(100);
-      if (!error && data) setGenerations(data as unknown as Generation[]);
+      if (error || !data) {
+        setLoading(false);
+        return;
+      }
+      const gens = data as unknown as Generation[];
+      // Resolve any expired signed URLs
+      const resolved = await Promise.all(
+        gens.map(async (g) => {
+          if (isExpiredSignedUrl(g.image_url)) {
+            const freshUrl = await resolveImageUrl(g);
+            return { ...g, image_url: freshUrl };
+          }
+          return g;
+        })
+      );
+      setGenerations(resolved);
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, resolveImageUrl]);
 
   const handleDelete = async (gen: Generation) => {
     setDeleting(gen.id);
     try {
-      // Delete from storage
       if (gen.storage_path) {
         await supabase.storage.from("customizations").remove([gen.storage_path]);
       }
-      // Delete record
-      await supabase.from("user_ai_generations" as any).delete().eq("id", gen.id);
+      await supabase.from("user_ai_generations").delete().eq("id", gen.id);
       setGenerations((prev) => prev.filter((g) => g.id !== gen.id));
       toast({ title: "Imagem removida" });
     } catch {
@@ -85,7 +113,6 @@ const MyGenerations = () => {
     return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
 
-  // Group by session_id
   const grouped = generations.reduce<Record<string, Generation[]>>((acc, gen) => {
     const key = gen.session_id || gen.id;
     if (!acc[key]) acc[key] = [];
@@ -133,30 +160,17 @@ const MyGenerations = () => {
                           onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none'; }}
                         />
                       </div>
-                      {/* Overlay with actions */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 gap-1">
                         <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="flex-1 h-7 text-xs"
-                            onClick={() => handleDownload(gen)}
-                          >
+                          <Button size="sm" variant="secondary" className="flex-1 h-7 text-xs" onClick={() => handleDownload(gen)}>
                             <Download className="h-3 w-3 mr-1" />
                             Baixar
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="h-7 w-7 p-0"
-                            onClick={() => handleDelete(gen)}
-                            disabled={deleting === gen.id}
-                          >
+                          <Button size="sm" variant="destructive" className="h-7 w-7 p-0" onClick={() => handleDelete(gen)} disabled={deleting === gen.id}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
-                      {/* Badge */}
                       <div className="absolute top-1.5 left-1.5">
                         <span className="inline-flex items-center rounded-md bg-background/80 backdrop-blur px-1.5 py-0.5 text-[10px] font-medium text-foreground">
                           {typeLabels[gen.generation_type] || gen.generation_type}

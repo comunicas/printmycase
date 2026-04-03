@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
         .from("user_ai_generations")
         .insert({
           user_id: userId,
-          image_url: signedData.signedUrl,
+          image_url: publicImageUrl,
           storage_path: storagePath,
           generation_type: "upscale",
           source_image_url: inputImage,
