@@ -170,6 +170,7 @@ const Customize = () => {
         open={c.showLoginDialog}
         onOpenChange={c.setShowLoginDialog}
         redirectUrl={window.location.href}
+        reason={c.loginReason}
       />
 
       <UpscaleConfirmDialog

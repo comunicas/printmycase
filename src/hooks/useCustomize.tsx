@@ -50,6 +50,7 @@ export function useCustomize(productId: string | undefined) {
   const [pendingFilterId, setPendingFilterId] = useState<string | null>(null);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [loginReason, setLoginReason] = useState<"filter" | "upscale" | null>(null);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [processingMsg, setProcessingMsg] = useState<string | null>(null);
@@ -267,13 +268,13 @@ export function useCustomize(productId: string | undefined) {
           title: "Qualidade baixa para impressão",
           description: `${res.w}×${res.h}px — use o Upscale IA para melhorar.`,
           variant: "destructive",
-          action: <ToastAction altText="Upscale IA" onClick={() => { if (!user) { setShowLoginDialog(true); return; } setShowUpscaleDialog(true); }}>✨ Upscale IA</ToastAction>,
+          action: <ToastAction altText="Upscale IA" onClick={() => { if (!user) { setLoginReason("upscale"); setShowLoginDialog(true); return; } setShowUpscaleDialog(true); }}>✨ Upscale IA</ToastAction>,
         });
       } else if (res.w < 800 || res.h < 1600) {
         toast({
           title: "Qualidade pode melhorar",
           description: `${res.w}×${res.h}px — use o Upscale IA para qualidade de impressão ideal.`,
-          action: <ToastAction altText="Upscale IA" onClick={() => { if (!user) { setShowLoginDialog(true); return; } setShowUpscaleDialog(true); }}>✨ Upscale IA</ToastAction>,
+          action: <ToastAction altText="Upscale IA" onClick={() => { if (!user) { setLoginReason("upscale"); setShowLoginDialog(true); return; } setShowUpscaleDialog(true); }}>✨ Upscale IA</ToastAction>,
         });
       }
       const { url, compressed } = await compressImage(originalDataUrl);
@@ -305,14 +306,15 @@ export function useCustomize(productId: string | undefined) {
     }
   }, [pendingFile, processImageFile]);
 
-  const requireAuth = useCallback(() => {
+  const requireAuth = useCallback((reason?: "filter" | "upscale") => {
     if (user) return true;
+    setLoginReason(reason ?? null);
     setShowLoginDialog(true);
     return false;
   }, [user]);
 
   const handleFilterClick = useCallback((filterId: string) => {
-    if (!requireAuth()) return;
+    if (!requireAuth("filter")) return;
     if (!image || applyingFilterId) return;
     // Clicking the last applied filter => undo it
     if (activeFilterId === filterId && filterHistory.length > 0) {
@@ -385,7 +387,7 @@ export function useCustomize(productId: string | undefined) {
   }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost, filters, filterHistory, sessionId]);
 
   const handleUpscaleClick = useCallback(() => {
-    if (!requireAuth()) return;
+    if (!requireAuth("upscale")) return;
     if (!image || isUpscaling || isHD) return;
     setShowUpscaleDialog(true);
   }, [requireAuth, image, isUpscaling, isHD]);
@@ -573,7 +575,7 @@ export function useCustomize(productId: string | undefined) {
     filters, filterCategories, activeFilterId, applyingFilterId, pendingFilterId, filteredImage, filterHistory,
     // dialog state
     showUpscaleDialog, setShowUpscaleDialog, setPendingFilterId,
-    showLoginDialog, setShowLoginDialog,
+    showLoginDialog, setShowLoginDialog, loginReason,
     showTermsDialog, setShowTermsDialog, handleTermsAccept,
     // costs
     coinBalance, aiFilterCost, aiUpscaleCost,
