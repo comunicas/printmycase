@@ -203,6 +203,7 @@ const Checkout = () => {
         contrast: customization.contrast,
         activeFilter: customization.activeFilter,
         position: customization.position,
+        preview_image_url: previewImageUrl,
       };
 
       const { data, error } = await supabase.functions.invoke("create-checkout", {
