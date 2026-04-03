@@ -1,39 +1,24 @@
 
+## Corrigir Imagem Não Cobrindo o Frame Inteiro
 
-## Tela de Explicação antes do Login (Filtros IA / Upscale)
-
-### Problema Atual
-Quando o usuário não logado clica em um filtro IA ou no Upscale, o `LoginDialog` abre diretamente. Embora tenha um banner "Ganhe 50 moedas grátis!", não há contexto sobre **por que** o login é necessário nem o que o usuário ganhará ao se cadastrar — ele pode achar que é um paywall e abandonar.
+### Problema
+O `backgroundSize` atual usa um valor percentual único (`${scale * (100 / oversize)}%`), que dimensiona a imagem pela **largura** do container. Se a imagem tem proporção diferente do frame do celular (≈1:2), a altura não cobre o frame — surgem espaços em cima e embaixo.
 
 ### Solução
-Adicionar um **estado intermediário** ao `LoginDialog` — uma tela de "motivo" que aparece antes do formulário de login/signup. Essa tela explica o benefício e só depois mostra o formulário.
 
-### Mudanças
+**Arquivo: `src/components/PhonePreview.tsx`** — função `buildImageStyle`
 
-**1. `src/components/customize/LoginDialog.tsx`**
-- Adicionar uma nova prop opcional `reason?: "filter" | "upscale" | null` para indicar o contexto
-- Adicionar um estado `showReason` que começa `true` quando `reason` é passado
-- Renderizar uma **tela de explicação** antes do formulário:
-  - Ícone contextual (varinha mágica para filtro, estrela para upscale)
-  - Título: "Para usar Filtros IA" ou "Para usar o Upscale IA"
-  - Texto: "Crie sua conta gratuita e receba **50 moedas grátis** para começar a usar agora mesmo!"
-  - Bullet points: "✓ Filtros artísticos com IA", "✓ Upscale 4x de resolução", "✓ Sem compromisso"
-  - Botão primário "Criar conta grátis" → avança para o formulário (tab signup)
-  - Link "Já tenho conta" → avança para o formulário (tab login)
-- Quando o usuário clica num dos botões, `showReason` vira `false` e o formulário existente aparece normalmente
+Trocar a estratégia de sizing: usar `background-size: cover` como base (garante cobertura total sempre) e aplicar o zoom via `transform: scale()` no elemento da imagem.
 
-**2. `src/hooks/useCustomize.tsx`**
-- Adicionar estado `loginReason: "filter" | "upscale" | null`
-- Em `requireAuth()`: setar o reason antes de abrir o dialog
-- Nos handlers de upscale via toast: setar reason como `"upscale"`
-- Exportar `loginReason` no return
-
-**3. `src/pages/Customize.tsx`**
-- Passar a nova prop `reason={c.loginReason}` ao `LoginDialog`
+Mudanças:
+1. `backgroundSize` → `"cover"` (fixo, sempre cobre o frame)
+2. Remover o container oversized (`oversize`/`offset`) — não é mais necessário pois `cover` + `transform` fazem o trabalho
+3. Adicionar `transform: scale(${scale / 100})` junto com a rotação existente
+4. O container da imagem passa a ter `width: 100%; height: 100%` com `transform-origin: center`
+5. Ajustar a sensibilidade do drag proporcionalmente (já existe no código)
 
 ### Resultado
-- 3 arquivos editados
-- Usuário entende o valor antes de ver o formulário
-- Conversão esperada maior por contexto + urgência ("50 moedas grátis agora")
-- Zero impacto nos usuários já logados
-
+- 1 arquivo editado
+- Imagem sempre cobre 100% do frame, independente da proporção
+- Zoom funciona via scale CSS em vez de background-size percentual
+- Drag e pinch continuam funcionando normalmente
