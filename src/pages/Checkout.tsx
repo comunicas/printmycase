@@ -24,8 +24,6 @@ interface CustomizationData {
   imageFileName: string | null;
   scale: number;
   rotation: number;
-  brightness: number;
-  contrast: number;
   activeFilter: string | null;
   position: { x: number; y: number };
 }
