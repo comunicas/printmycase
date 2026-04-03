@@ -10,6 +10,7 @@ import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory, type 
 import {
   compressImage,
   renderSnapshot,
+  renderPreviewWithMockup,
   getImageResolution,
   uploadForAI,
 } from "@/lib/image-utils";
