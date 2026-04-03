@@ -241,7 +241,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             onPointerUp={onPointerUp}
           >
             {image && !isDragging && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
+              <div data-capture-ignore className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
               </div>
             )}
