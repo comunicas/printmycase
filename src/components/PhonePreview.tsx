@@ -178,18 +178,16 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
     e.target.value = '';
   };
 
-  const oversize = Math.max(150, scale * 1.25);
-  const offset = -(oversize - 100) / 2;
-
   const buildImageStyle = (src: string) => ({
     backgroundImage: `url("${src}")`,
-    backgroundSize: `${scale * (100 / oversize)}%`,
+    backgroundSize: "cover",
     backgroundPosition: `${position.x}% ${position.y}%`,
     backgroundRepeat: "no-repeat" as const,
-    width: `${oversize}%`,
-    height: `${oversize}%`,
-    left: `${offset}%`,
-    top: `${offset}%`,
+    width: "100%",
+    height: "100%",
+    left: "0",
+    top: "0",
+    transformOrigin: "center center",
   });
 
   return (
