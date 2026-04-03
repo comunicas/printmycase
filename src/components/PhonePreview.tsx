@@ -178,23 +178,18 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
     e.target.value = '';
   };
 
-  const FRAME_ASPECT = 532 / 260; // ~2.046
-
-  const isOrthogonal = rotation % 180 !== 0;
-  const effectiveScale = isOrthogonal
-    ? (scale / 100) * FRAME_ASPECT
-    : scale / 100;
+  const oversize = Math.max(150, scale * 1.25);
+  const offset = -(oversize - 100) / 2;
 
   const buildImageStyle = (src: string) => ({
     backgroundImage: `url("${src}")`,
-    backgroundSize: "cover",
+    backgroundSize: `${scale * (100 / oversize)}%`,
     backgroundPosition: `${position.x}% ${position.y}%`,
     backgroundRepeat: "no-repeat" as const,
-    width: "100%",
-    height: "100%",
-    left: "0",
-    top: "0",
-    transformOrigin: "center center",
+    width: `${oversize}%`,
+    height: `${oversize}%`,
+    left: `${offset}%`,
+    top: `${offset}%`,
   });
 
   return (
@@ -207,7 +202,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
               className="absolute pointer-events-none"
               style={{
                 ...buildImageStyle(prevImage),
-                transform: `rotate(${rotation}deg) scale(${effectiveScale})`,
+                transform: `rotate(${rotation}deg)`,
                 opacity: fadeIn ? 0 : 1,
                 transition: `opacity ${CROSSFADE_MS}ms ease-in-out, transform 0.3s ease`,
               }}
@@ -219,7 +214,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
               className="absolute pointer-events-none"
               style={{
                 ...buildImageStyle(displayImage),
-                transform: `rotate(${rotation}deg) scale(${effectiveScale})`,
+                transform: `rotate(${rotation}deg)`,
                 opacity: prevImage ? (fadeIn ? 1 : 0) : 1,
                 transition: isSnapping
                   ? `background-position 0.2s ease-out, transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out`

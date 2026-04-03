@@ -1,30 +1,39 @@
 
 
-## Auto-expandir zoom ao rotacionar para cobrir o frame
+## Tela de Explicação antes do Login (Filtros IA / Upscale)
 
-### Problema
-Ao rotacionar 90°/270°, a imagem (originalmente portrait) fica em landscape dentro do frame portrait, criando espaços cinza em cima e embaixo. O `background-size: cover` cobre baseado na orientação original, mas com rotação o eixo mais curto da imagem fica alinhado ao eixo mais longo do frame.
+### Problema Atual
+Quando o usuário não logado clica em um filtro IA ou no Upscale, o `LoginDialog` abre diretamente. Embora tenha um banner "Ganhe 50 moedas grátis!", não há contexto sobre **por que** o login é necessário nem o que o usuário ganhará ao se cadastrar — ele pode achar que é um paywall e abandonar.
 
 ### Solução
+Adicionar um **estado intermediário** ao `LoginDialog` — uma tela de "motivo" que aparece antes do formulário de login/signup. Essa tela explica o benefício e só depois mostra o formulário.
 
-**Arquivo: `src/components/PhonePreview.tsx`**
+### Mudanças
 
-Calcular um fator de escala mínimo quando a rotação é 90° ou 270° para garantir cobertura total. O frame tem aspect ratio ~1:2.046 (260/532). Quando a imagem é rotacionada 90°, o `cover` precisa de escala extra proporcional ao aspect ratio do frame:
+**1. `src/components/customize/LoginDialog.tsx`**
+- Adicionar uma nova prop opcional `reason?: "filter" | "upscale" | null` para indicar o contexto
+- Adicionar um estado `showReason` que começa `true` quando `reason` é passado
+- Renderizar uma **tela de explicação** antes do formulário:
+  - Ícone contextual (varinha mágica para filtro, estrela para upscale)
+  - Título: "Para usar Filtros IA" ou "Para usar o Upscale IA"
+  - Texto: "Crie sua conta gratuita e receba **50 moedas grátis** para começar a usar agora mesmo!"
+  - Bullet points: "✓ Filtros artísticos com IA", "✓ Upscale 4x de resolução", "✓ Sem compromisso"
+  - Botão primário "Criar conta grátis" → avança para o formulário (tab signup)
+  - Link "Já tenho conta" → avança para o formulário (tab login)
+- Quando o usuário clica num dos botões, `showReason` vira `false` e o formulário existente aparece normalmente
 
-- Para rotação 0°/180°: scale mínimo = `scale / 100` (como hoje)
-- Para rotação 90°/270°: scale mínimo = `scale / 100 * (frameH / frameW)` ≈ `scale / 100 * 2.046`
+**2. `src/hooks/useCustomize.tsx`**
+- Adicionar estado `loginReason: "filter" | "upscale" | null`
+- Em `requireAuth()`: setar o reason antes de abrir o dialog
+- Nos handlers de upscale via toast: setar reason como `"upscale"`
+- Exportar `loginReason` no return
 
-Mudança no `buildImageStyle` e nos estilos de transform:
-1. Calcular `effectiveScale`: se rotação é 90° ou 270°, multiplicar o scale pelo aspect ratio do frame (~532/260 ≈ 2.046) para garantir cobertura
-2. Aplicar `transform: rotate(${rotation}deg) scale(${effectiveScale})` nos layers de imagem
-
-**Arquivo: `src/hooks/useCustomize.tsx`**
-
-Nenhuma mudança necessária — o ajuste é puramente visual no componente de preview.
+**3. `src/pages/Customize.tsx`**
+- Passar a nova prop `reason={c.loginReason}` ao `LoginDialog`
 
 ### Resultado
-- 1 arquivo editado (`PhonePreview.tsx`)
-- Ao girar 90°, a imagem auto-escala para cobrir o frame inteiro
-- O slider de zoom continua funcionando normalmente sobre o fator base
-- Sem espaços cinza em nenhuma rotação
+- 3 arquivos editados
+- Usuário entende o valor antes de ver o formulário
+- Conversão esperada maior por contexto + urgência ("50 moedas grátis agora")
+- Zero impacto nos usuários já logados
 
