@@ -32,15 +32,13 @@ const Customize = () => {
     const file = e.target.files?.[0];
     if (file) {
       c.handleImageUpload(file);
-      dismissSpotlight();
     }
     e.target.value = "";
-  }, [c.handleImageUpload, dismissSpotlight]);
+  }, [c.handleImageUpload]);
 
   const handleSpotlightGallery = useCallback(() => {
-    dismissSpotlight();
     setShowGalleryPicker(true);
-  }, [dismissSpotlight]);
+  }, []);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
