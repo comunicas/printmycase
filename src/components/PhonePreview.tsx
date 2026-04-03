@@ -16,11 +16,12 @@ interface PhonePreviewProps {
   onUpscaleClick?: () => void;
   previewImageUrl?: string | null;
   onGalleryClick?: () => void;
+  captureRef?: React.RefObject<HTMLDivElement>;
 }
 
 const CROSSFADE_MS = 200;
 
-const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, captureRef }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -195,7 +196,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
   return (
     <div className="flex flex-col items-center gap-2 lg:gap-3">
       <div className="relative">
-        <div className="relative h-[min(410px,50dvh)] aspect-[260/532] lg:h-[70vh] lg:w-auto lg:aspect-[260/532] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
+        <div ref={captureRef} className="relative h-[min(410px,50dvh)] aspect-[260/532] lg:h-[70vh] lg:w-auto lg:aspect-[260/532] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
           {/* Previous image layer (fading out) */}
           {prevImage && (
             <div
@@ -240,7 +241,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             onPointerUp={onPointerUp}
           >
             {image && !isDragging && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
+              <div data-capture-ignore className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
               </div>
             )}
@@ -276,7 +277,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             )}
           </div>
           {isProcessing && (
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
+            <div data-capture-ignore className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <span className="text-xs font-medium text-muted-foreground mt-2">{processingMessage || "Processando..."}</span>
             </div>

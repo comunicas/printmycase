@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type RefObject } from "react";
+import html2canvas from "html2canvas";
 import { clarityEvent } from "@/lib/clarity";
 import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +20,7 @@ import { useCoinSettings } from "@/hooks/useCoinSettings";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 import { ToastAction } from "@/components/ui/toast";
 
-export function useCustomize(productId: string | undefined) {
+export function useCustomize(productId: string | undefined, phoneCaptureRef?: RefObject<HTMLDivElement>) {
   const { product, loading: productLoading } = useProduct(productId);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -496,9 +497,22 @@ export function useCustomize(productId: string | undefined) {
     try {
       const finalImage = await renderSnapshot(image, scale, position, rotation);
 
-      // Generate preview with device mockup
+      // Generate "Imagem Posição" — screenshot of the actual phone preview DOM
       let previewImage: string | null = null;
-      if (product.device_image) {
+      if (phoneCaptureRef?.current) {
+        try {
+          const canvas = await html2canvas(phoneCaptureRef.current, {
+            useCORS: true,
+            allowTaint: true,
+            scale: 2,
+            backgroundColor: null,
+            ignoreElements: (el) => el.hasAttribute("data-capture-ignore"),
+          });
+          previewImage = canvas.toDataURL("image/png");
+        } catch { /* fallback: try canvas-based mockup */ }
+      }
+      // Fallback to canvas-based mockup if DOM capture failed
+      if (!previewImage && product.device_image) {
         try {
           previewImage = await renderPreviewWithMockup(image, product.device_image, scale, position, rotation);
         } catch { /* ignore if device image fails */ }
