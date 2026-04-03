@@ -161,7 +161,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const falResult = await falResponse.json();
     const outputImage = falResult?.image;
     const outputUrl = outputImage?.url;
     const outputWidth = outputImage?.width ?? 0;
