@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useRef, type RefObject } from "react";
-import html2canvas from "html2canvas";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { clarityEvent } from "@/lib/clarity";
 import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +10,7 @@ import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory, type 
 import {
   compressImage,
   renderSnapshot,
-  renderPreviewWithMockup,
+  renderPhoneMockup,
   getImageResolution,
   uploadForAI,
 } from "@/lib/image-utils";
@@ -20,7 +19,7 @@ import { useCoinSettings } from "@/hooks/useCoinSettings";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 import { ToastAction } from "@/components/ui/toast";
 
-export function useCustomize(productId: string | undefined, phoneCaptureRef?: RefObject<HTMLDivElement>) {
+export function useCustomize(productId: string | undefined) {
   const { product, loading: productLoading } = useProduct(productId);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -497,26 +496,11 @@ export function useCustomize(productId: string | undefined, phoneCaptureRef?: Re
     try {
       const finalImage = await renderSnapshot(image, scale, position, rotation);
 
-      // Generate "Imagem Posição" — screenshot of the actual phone preview DOM
+      // Generate "Imagem Posição" — canvas-based phone mockup with rounded frame
       let previewImage: string | null = null;
-      if (phoneCaptureRef?.current) {
-        try {
-          const canvas = await html2canvas(phoneCaptureRef.current, {
-            useCORS: true,
-            allowTaint: true,
-            scale: 2,
-            backgroundColor: null,
-            ignoreElements: (el) => el.hasAttribute("data-capture-ignore"),
-          });
-          previewImage = canvas.toDataURL("image/png");
-        } catch { /* fallback: try canvas-based mockup */ }
-      }
-      // Fallback to canvas-based mockup if DOM capture failed
-      if (!previewImage && product.device_image) {
-        try {
-          previewImage = await renderPreviewWithMockup(image, product.device_image, scale, position, rotation);
-        } catch { /* ignore if device image fails */ }
-      }
+      try {
+        previewImage = await renderPhoneMockup(image, scale, position, rotation);
+      } catch { /* ignore */ }
 
       const customData = { rawImage, image, editedImage: finalImage, previewImage, imageFileName, scale, position, rotation };
       try {
