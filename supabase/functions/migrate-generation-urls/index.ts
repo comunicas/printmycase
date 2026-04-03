@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
       .from("user_ai_generations")
       .select("id, storage_path, image_url")
       .or("image_url.ilike.%/sign/%,image_url.ilike.%token=%")
-      .limit(30);
+      .limit(10);
 
     if (fetchErr || !records) {
       return new Response(JSON.stringify({ error: "Failed to fetch records", detail: fetchErr?.message }), {
