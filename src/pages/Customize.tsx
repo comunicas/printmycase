@@ -214,7 +214,8 @@ const Customize = () => {
       <IntroDialog open={showIntro} onOpenChange={setShowIntro} />
 
       <UploadSpotlight
-        open={showUploadSpotlight && !c.image}
+        open={!c.image}
+        modelName={c.productName}
         onUploadClick={handleSpotlightUpload}
         onGalleryClick={handleSpotlightGallery}
       />
