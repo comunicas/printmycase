@@ -1,53 +1,74 @@
 
+## Corrigir “Imagem Posição” para ser um print da tela de customização
 
-## Melhorar UX do Card de Pedidos + Imagem Posição + Screenshot da Customização
+### O que está errado hoje
+Hoje a “Imagem Posição” ainda nasce de `renderSnapshot(...)`, que gera só a arte recortada no frame lógico.  
+Mesmo o `renderPreviewWithMockup(...)` atual ainda é uma composição em canvas da arte + moldura do aparelho, não um “print” da tela de customização como o usuário realmente configurou.
 
-### Problemas Identificados
+### Objetivo
+Fazer com que **“Imagem Posição”** seja um **screenshot visual da área de customização** já configurada pelo usuário, mostrando o celular como ele vê na tela.
 
-1. **Label "Final" confuso** — deve ser renomeado para "Imagem Posição" (é o render da imagem posicionada no frame)
-2. **Falta screenshot visual da customização** — o admin não vê como ficou a capinha no celular; apenas a imagem cortada. Precisamos salvar um "print" da página de customização (imagem com o mockup do celular) e disponibilizar para visualização e download
-3. **Card de pedido pode melhorar** — adicionar informações do cliente (endereço resumido), melhorar layout das imagens com tamanhos maiores e botão de download
+### Abordagem
+Em vez de tratar “Imagem Posição” como um render técnico de imagem, vou tratá-la como **captura do preview real da customização**.
 
-### Mudanças
+### Implementação
 
-**1. `src/components/admin/OrderImagesPreviewer.tsx`**
-- Renomear label "Final" para "Imagem Posição"
-- Adicionar 4a imagem: "Preview" (screenshot da capinha no mockup) — campo `preview_image_url` do `customization_data`
-- Aumentar thumbnails de 56x80 para 64x96 para melhor visualização
-- Adicionar botão de download em cada imagem no lightbox (além do link de nova aba já existente)
-- No lightbox, mostrar a imagem maior com botão "Baixar" explícito
+**1. `src/pages/Customize.tsx`**
+- Criar um `ref` para a área visual que representa a customização final
+- Passar esse `ref` para o preview principal
+- Garantir que overlays temporários não entrem na captura:
+  - spotlight
+  - loading de IA
+  - preview temporário de hover dos filtros
+  - hints de arraste
 
-**2. `src/components/admin/OrdersManager.tsx`**
-- Mostrar endereço resumido do cliente (cidade/estado do `shipping_address`)
-- Mostrar nome do cliente (buscar do perfil via `user_id`)
-- Layout mais organizado com seções claras
+**2. `src/components/PhonePreview.tsx`**
+- Permitir receber um `captureRef` ou envolver o mockup principal em um container identificável
+- Marcar elementos que não devem entrar no screenshot
+- Garantir que a área capturada seja exatamente o “celular na tela”, com o enquadramento visual do usuário
 
-**3. `src/hooks/useCustomize.tsx` (handleContinue)**
-- Após o `renderSnapshot`, gerar um segundo render que inclui o mockup do celular (o frame + a imagem posicionada) — uma "preview image"
-- Upload como `pending_preview_{ts}.png` no storage
-- Salvar o path como `preview_image_url` no `customization_data` do pending checkout
+**3. Nova estratégia de captura**
+- Substituir o uso de `renderSnapshot(...)` como fonte da “Imagem Posição”
+- Criar uma nova função utilitária para gerar um screenshot do preview real da customização
+- Essa função deve capturar o DOM renderizado do preview, não apenas reconstruir a arte via canvas
+- Se necessário, adicionar uma lib de captura de DOM compatível com React/Vite
 
-**4. `src/pages/Checkout.tsx` (handleCheckout)**
-- Gerar o mesmo preview com mockup e fazer upload como `preview_{ts}.png`
-- Incluir `preview_image_url` no payload do `create-checkout`
+**4. `src/hooks/useCustomize.tsx`**
+- No `handleContinue`, gerar:
+  - imagem técnica separada, se ainda precisarmos para produção
+  - nova **Imagem Posição = screenshot do preview da customização**
+- Salvar essa captura no storage e gravar no pending checkout
+- Atualizar os nomes dos campos para evitar ambiguidade entre:
+  - recorte técnico
+  - screenshot visual da customização
 
-**5. `src/lib/image-utils.ts`**
-- Nova função `renderPreviewWithMockup(imgSrc, deviceImage, scale, position, rotation)` que renderiza a imagem posicionada dentro de um frame visual do celular — simulando o que o usuário vê no `PhonePreview`
-- Retorna um data URL PNG com a capinha completa
+**5. `src/pages/Checkout.tsx`**
+- Repetir a mesma lógica no checkout final
+- Enviar a captura visual como a imagem principal de “Imagem Posição”
+- Manter consistência entre pedido pendente e pedido finalizado
 
-### Detalhes Técnicos
+**6. `src/components/admin/OrderImagesPreviewer.tsx`**
+- Fazer “Imagem Posição” apontar para o novo screenshot da customização
+- Se o recorte técnico continuar existindo, exibir com outro nome, por exemplo:
+  - “Recorte técnico”
+- Remover a confusão entre “Preview” e “Imagem Posição”
 
-- A "Imagem Posição" já existe (é o `edited_image_url` / `renderSnapshot`) — apenas renomear o label
-- O "Preview" é uma nova imagem que inclui o mockup do dispositivo como frame visual, criada via canvas
-- A imagem do dispositivo (`device_image`) já está disponível no produto e é passada ao checkout
-- No `OrderImagesPreviewer`, o campo `preview_image_url` será lido do `customization_data` JSON
-- Download implementado com `<a download>` no lightbox
-- Endereço do cliente vem do campo `shipping_address` (JSONB) já presente no order — sem queries adicionais
+### Resultado esperado
+- “Imagem Posição” passa a mostrar o que o usuário realmente viu ao customizar
+- O admin deixa de ver uma imagem crua e passa a ver um print fiel da customização
+- O recorte técnico pode continuar salvo, mas não será mais confundido com a imagem de posição
 
-### Resultado
-- 5 arquivos editados
-- Admin vê 4 imagens: Original, Otimizada, Imagem Posição, Preview (mockup)
-- Cada imagem com download direto
-- Informações do cliente visíveis no card
-- Labels claros e intuitivos
+### Detalhes técnicos
+- O código atual usa canvas para reconstruir a composição; isso não atende ao pedido porque não é um screenshot real da UI
+- A captura deve ser feita do preview DOM já renderizado
+- Vou excluir elementos transitórios da captura para não poluir a imagem final
+- Se houver limitação de CORS com assets externos, a captura deve usar URLs seguras/carregadas no mesmo contexto já usado pelo preview
+
+### Arquivos envolvidos
+- `src/pages/Customize.tsx`
+- `src/components/PhonePreview.tsx`
+- `src/hooks/useCustomize.tsx`
+- `src/pages/Checkout.tsx`
+- `src/components/admin/OrderImagesPreviewer.tsx`
+- possivelmente `src/lib/image-utils.ts` ou um novo utilitário específico de captura
 
