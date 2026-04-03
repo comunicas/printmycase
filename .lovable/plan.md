@@ -1,59 +1,47 @@
 
 
-## Code Review: Implementação de Imagem Posição + Limpeza de Legados
+## Corrigir Imagens Quebradas nas Gerações de Usuários
 
-### Problemas Encontrados
+### Problema
+As imagens em `user_ai_generations.image_url` armazenam **URLs assinadas com expiração de 1 hora** (`createSignedUrl(storagePath, 3600)`). Após expirar, as imagens ficam quebradas na página "Minhas Gerações", no admin, e na galeria pública.
 
-**1. Campos legados `brightness` e `contrast` no Checkout**
-- `src/pages/Checkout.tsx` (linhas 27-28, 96-97, 214-215): O `CustomizationData` interface e o payload do checkout ainda incluem `brightness` e `contrast`, que foram removidos do editor de customização. Estão sempre fixos em `100` — código morto.
+O bucket `customizations` é **privado**, então não é possível usar URLs públicas dele diretamente.
 
-**2. `data-capture-ignore` órfão no PhonePreview**
-- `src/components/PhonePreview.tsx` (linhas 243, 279): O atributo `data-capture-ignore` era usado pelo `html2canvas` (já removido). Agora não serve para nada — é legado da implementação anterior.
+### Solução
+Copiar cada imagem gerada para o bucket **público** `product-assets` e salvar a URL pública permanente no campo `image_url`. Assim, nenhuma URL expira.
 
-**3. JSDoc duplicado/legado em `image-utils.ts`**
-- Linha 158: `/** Render a preview image with the device mockup frame overlaid */` — comentário fantasma da função antiga `renderPreviewWithMockup` que já não existe. A linha 159 tem o JSDoc correto.
+### Implementação
 
-**4. `previewImage` não restaurado no fallback do Checkout**
-- `src/pages/Checkout.tsx` (linha 92): Quando o checkout recupera do DB, `previewImage` é forçado a `null`. Deveria tentar restaurar de `cd.previewImagePath` via signed URL para que o mockup seja reenviado corretamente no upload.
+**1. `supabase/functions/apply-ai-filter/index.ts`**
+- Após upload no bucket `customizations`, **também copiar** a imagem para `product-assets/generations/{userId}/{filename}`
+- Gerar URL pública com `getPublicUrl()` (sem expiração)
+- Salvar essa URL pública em `image_url` no insert de `user_ai_generations`
+- Manter `storage_path` apontando para `customizations` (para o fluxo de customização que usa signed URLs)
 
-**5. `previewImagePath` salvo no `customization_data` do pending mas nunca restaurado**
-- `src/hooks/useCustomize.tsx` (linha 570): O `previewImagePath` é salvo dentro do `customization_data`, mas no restore do pending checkout (linhas 143-171) nunca é recuperado. Resultado: se o usuário volta da sessão, a "Imagem Posição" é perdida.
+**2. `supabase/functions/upscale-image/index.ts`**
+- Mesma lógica: copiar para `product-assets/generations/` e usar URL pública no `image_url`
 
-**6. Variável `errorMsg` declarada mas nunca usada**
-- `src/hooks/useCustomize.tsx` (linha 411): `const errorMsg = data?.error || "Tente novamente.";` — variável declarada e nunca consumida.
+**3. `src/pages/MyGenerations.tsx`**
+- Usar `image_url` diretamente (agora será pública e permanente)
+- Adicionar fallback: se `image_url` contém `/sign/`, gerar nova signed URL via `storage_path` on-the-fly
 
-**7. ARCHITECTURE.md desatualizado**
-- Não menciona `renderPhoneMockup` nem o fluxo de "Imagem Posição"
-- Não documenta os 4 tipos de imagem (Original, Otimizada, Recorte, Imagem Posição)
-- Não documenta os componentes `UploadSpotlight`, `IntroDialog`, `GalleryPicker`, `GalleryTab`, `TermsDialog`, `ModelSelector` na árvore de pastas
-- Não lista edge functions mais recentes: `handle-email-suppression`, `handle-email-unsubscribe`, `optimize-existing-images`, `prerender`, `preview-transactional-email`, `process-email-queue`, `send-transactional-email`, `sitemap`, `upload-gallery-zip`, `verify-coin-purchase`
+**4. Migração de dados existentes — Edge function ou script**
+- Criar lógica para migrar registros existentes: ler `storage_path` do bucket `customizations`, copiar para `product-assets/generations/`, atualizar `image_url` com URL pública
 
-### Correções Propostas
+### Detalhes técnicos
+```text
+Fluxo atual (quebrado):
+  Edge fn → upload customizations (privado) → createSignedUrl(1h) → salva em image_url → EXPIRA
 
-**1. `src/pages/Checkout.tsx`**
-- Remover `brightness` e `contrast` do `CustomizationData` interface
-- Remover do fallback restore (linhas 96-97)
-- Remover do `customizationPayload` (linhas 214-215)
-- Restaurar `previewImage` do DB via `cd.previewImagePath` + signed URL no fallback
-
-**2. `src/components/PhonePreview.tsx`**
-- Remover atributos `data-capture-ignore` (2 ocorrencias)
-
-**3. `src/lib/image-utils.ts`**
-- Remover JSDoc fantasma da linha 158
-
-**4. `src/hooks/useCustomize.tsx`**
-- Remover variável `errorMsg` não usada (linha 411)
-- Remover a segunda `errorMsg` não usada no `handleFilterConfirm` (linha 354, se existir)
-
-**5. `ARCHITECTURE.md`**
-- Adicionar seção "Pipeline de Imagens" documentando os 4 tipos
-- Atualizar árvore de pastas com componentes novos
-- Atualizar lista de edge functions
-- Documentar `renderPhoneMockup` em `image-utils.ts`
+Fluxo novo (permanente):
+  Edge fn → upload customizations (privado)
+         → copia para product-assets/generations/ (público)
+         → getPublicUrl() → salva em image_url → NUNCA EXPIRA
+```
 
 ### Resultado
-- 5 arquivos editados
-- Zero código morto remanescente
-- Documentação atualizada e fiel ao estado atual
+- Todas as imagens de gerações ficam permanentemente acessíveis
+- Zero impacto no fluxo de customização (continua usando signed URLs do bucket privado)
+- Imagens existentes migradas para URLs públicas
+- 2 edge functions editadas + 1 arquivo frontend ajustado
 
