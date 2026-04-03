@@ -71,6 +71,7 @@ const Customize = () => {
             onUpscaleClick={!c.isHD && c.image ? c.handleUpscaleClick : undefined}
             previewImageUrl={previewImageUrl}
             onGalleryClick={() => setShowGalleryPicker(true)}
+            captureRef={phoneCaptureRef}
           />
         </div>
 

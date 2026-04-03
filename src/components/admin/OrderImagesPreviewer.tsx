@@ -64,8 +64,8 @@ const OrderImagesPreviewer = ({ customizationData }: Props) => {
   const items = [
     { label: "Original", state: raw, path: rawPath },
     { label: "Otimizada", state: optimized, path: optimizedPath },
-    { label: "Imagem Posição", state: final_, path: finalPath },
-    { label: "Preview", state: preview, path: previewPath },
+    { label: "Recorte", state: final_, path: finalPath },
+    { label: "Imagem Posição", state: preview, path: previewPath },
   ];
 
   const handleDownload = async (url: string, label: string) => {
