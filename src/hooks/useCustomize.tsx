@@ -268,13 +268,13 @@ export function useCustomize(productId: string | undefined) {
           title: "Qualidade baixa para impressão",
           description: `${res.w}×${res.h}px — use o Upscale IA para melhorar.`,
           variant: "destructive",
-          action: <ToastAction altText="Upscale IA" onClick={() => { if (!user) { setShowLoginDialog(true); return; } setShowUpscaleDialog(true); }}>✨ Upscale IA</ToastAction>,
+          action: <ToastAction altText="Upscale IA" onClick={() => { if (!user) { setLoginReason("upscale"); setShowLoginDialog(true); return; } setShowUpscaleDialog(true); }}>✨ Upscale IA</ToastAction>,
         });
       } else if (res.w < 800 || res.h < 1600) {
         toast({
           title: "Qualidade pode melhorar",
           description: `${res.w}×${res.h}px — use o Upscale IA para qualidade de impressão ideal.`,
-          action: <ToastAction altText="Upscale IA" onClick={() => { if (!user) { setShowLoginDialog(true); return; } setShowUpscaleDialog(true); }}>✨ Upscale IA</ToastAction>,
+          action: <ToastAction altText="Upscale IA" onClick={() => { if (!user) { setLoginReason("upscale"); setShowLoginDialog(true); return; } setShowUpscaleDialog(true); }}>✨ Upscale IA</ToastAction>,
         });
       }
       const { url, compressed } = await compressImage(originalDataUrl);
