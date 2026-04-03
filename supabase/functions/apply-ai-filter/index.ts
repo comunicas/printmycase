@@ -218,7 +218,8 @@ Deno.serve(async (req) => {
       });
     }
     const imgBytes = new Uint8Array(await imgRes.arrayBuffer());
-    const storagePath = `${userId}/filter_${Date.now()}.jpg`;
+    const filename = `filter_${Date.now()}.jpg`;
+    const storagePath = `${userId}/${filename}`;
     const { error: uploadError } = await serviceClient.storage
       .from("customizations")
       .upload(storagePath, imgBytes, { contentType: "image/jpeg", upsert: true });
@@ -238,6 +239,21 @@ Deno.serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Copy to public bucket for permanent URL
+    const publicPath = `generations/${userId}/${filename}`;
+    let publicImageUrl = signedData.signedUrl; // fallback
+    try {
+      await serviceClient.storage
+        .from("product-assets")
+        .upload(publicPath, imgBytes, { contentType: "image/jpeg", upsert: true });
+      const { data: pubData } = serviceClient.storage
+        .from("product-assets")
+        .getPublicUrl(publicPath);
+      if (pubData?.publicUrl) publicImageUrl = pubData.publicUrl;
+    } catch (e) {
+      console.warn("Failed to copy to public bucket:", e?.message);
     }
 
     // Deduct coins
