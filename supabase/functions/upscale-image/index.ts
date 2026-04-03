@@ -76,11 +76,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log("Calling fal-ai/aura-sr for upscale");
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120_000);
+    console.log("Calling fal-ai/aura-sr for upscale (queue mode)");
 
-    const falResponse = await fetch("https://fal.run/fal-ai/aura-sr", {
+    // Submit to fal.ai queue
+    const submitRes = await fetch("https://queue.fal.run/fal-ai/aura-sr", {
       method: "POST",
       headers: {
         Authorization: `Key ${falApiKey}`,
@@ -91,17 +90,73 @@ Deno.serve(async (req) => {
         upscale_factor: 4,
         overlapping_tiles: true,
       }),
-      signal: controller.signal,
     });
 
-    clearTimeout(timeout);
-
-    if (!falResponse.ok) {
-      const errText = await falResponse.text();
-      const sanitizedErr = errText.length > 500 ? errText.substring(0, 500) + "...[truncated]" : errText;
-      console.error("Fal.ai upscale error:", sanitizedErr);
+    if (!submitRes.ok) {
+      const errText = await submitRes.text();
+      console.error("Fal.ai queue submit error:", errText.substring(0, 500));
       return new Response(JSON.stringify({ error: "Erro no upscale de IA" }), {
         status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { request_id } = await submitRes.json();
+    if (!request_id) {
+      return new Response(JSON.stringify({ error: "Falha ao iniciar upscale" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Queued upscale request:", request_id);
+
+    // Poll for result (max ~150s with 3s intervals = 50 attempts)
+    const MAX_POLLS = 50;
+    const POLL_INTERVAL = 3000;
+    let falResult: any = null;
+
+    for (let i = 0; i < MAX_POLLS; i++) {
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL));
+
+      const statusRes = await fetch(
+        `https://queue.fal.run/fal-ai/aura-sr/requests/${request_id}/status`,
+        { headers: { Authorization: `Key ${falApiKey}` } }
+      );
+      if (!statusRes.ok) {
+        await statusRes.text();
+        continue;
+      }
+      const statusData = await statusRes.json();
+
+      if (statusData.status === "COMPLETED") {
+        // Fetch the actual result
+        const resultRes = await fetch(
+          `https://queue.fal.run/fal-ai/aura-sr/requests/${request_id}`,
+          { headers: { Authorization: `Key ${falApiKey}` } }
+        );
+        if (resultRes.ok) {
+          falResult = await resultRes.json();
+        } else {
+          await resultRes.text();
+        }
+        break;
+      }
+
+      if (statusData.status === "FAILED") {
+        console.error("Fal.ai upscale failed:", JSON.stringify(statusData));
+        return new Response(JSON.stringify({ error: "Erro no upscale de IA" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // IN_QUEUE or IN_PROGRESS — keep polling
+    }
+
+    if (!falResult) {
+      console.error("Upscale timed out after polling");
+      return new Response(JSON.stringify({ error: "Tempo limite excedido. Tente novamente." }), {
+        status: 504,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
