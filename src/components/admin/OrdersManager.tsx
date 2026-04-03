@@ -191,6 +191,12 @@ const OrdersManager = () => {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground font-mono">{order.id.slice(0, 8)}</p>
+                      {order.customer_name && (
+                        <p className="text-xs text-muted-foreground">
+                          👤 {order.customer_name}
+                          {order.customer_city && ` · ${order.customer_city}/${order.customer_state}`}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </p>
