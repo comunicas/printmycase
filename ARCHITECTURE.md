@@ -38,6 +38,8 @@
 /knowledge-base/:cat/:slug → Artigo individual
 /legal/:slug         → Documentos legais (termos, privacidade)
 /request-model       → Solicitar modelo de celular não disponível
+/my-generations      → Galeria de gerações IA do usuário [auth]
+/unsubscribe         → Descadastro de emails
 /admin               → Painel admin (produtos + pedidos) [auth + admin]
 /login               → Login
 /signup              → Cadastro
@@ -59,15 +61,21 @@ src/
 ├── components/
 │   ├── ui/              # Componentes base shadcn/ui
 │   ├── admin/           # ProductsTable, ProductFormDialog, BulkPriceDialog,
-│   │                    # AiFiltersManager, ModelRequestsManager, DeviceImageUpload,
+│   │                    # AiFiltersManager, AiFilterCategoriesManager,
+│   │                    # AiGenerationsManager, AiImageGenerator,
+│   │                    # ModelRequestsManager, DeviceImageUpload,
 │   │                    # CollectionsManager, CollectionDesignsManager, CoinsManager,
-│   │                    # FaqManager, KbCategoriesManager, KbArticlesManager,
-│   │                    # LegalDocsManager, GalleryImagesManager, AiGenerationsManager,
-│   │                    # OrdersManager, OrderImagesPreviewer
+│   │                    # CoinPackagesManager, FaqManager, KbCategoriesManager,
+│   │                    # KbArticlesManager, LegalDocsManager, GalleryImagesManager,
+│   │                    # ImageGalleriesManager, UserGenerationsManager,
+│   │                    # OrdersManager, OrderImagesPreviewer, ConfirmDialog,
+│   │                    # ProductImagesUpload
 │   ├── checkout/        # AddressForm, OrderSummary
 │   ├── customize/       # AdjustmentsPanel, AiFiltersList, ContinueBar,
 │   │                    # CustomizeHeader, FilterConfirmDialog, ImageControls,
-│   │                    # LoginDialog, UpscaleConfirmDialog
+│   │                    # LoginDialog, UpscaleConfirmDialog, UploadSpotlight,
+│   │                    # IntroDialog, GalleryPicker, GalleryTab, TermsDialog,
+│   │                    # ModelSelector
 │   ├── forms/           # FormCard, SubmitButton
 │   ├── AppHeader.tsx
 │   ├── AuthGuard.tsx
@@ -77,8 +85,14 @@ src/
 │   ├── ProductDetails.tsx
 │   ├── ProductGallery.tsx
 │   ├── ProductInfo.tsx
+│   ├── CollectionCard.tsx
+│   ├── CoinBalance.tsx
+│   ├── ScrollReveal.tsx
 │   ├── SeoHead.tsx
 │   ├── StarRating.tsx
+│   ├── PaymentBadges.tsx
+│   ├── PendingCheckoutCards.tsx
+│   ├── GoogleIcon.tsx
 │   └── UserMenu.tsx
 ├── contexts/
 │   └── AuthContext.tsx   # Provider centralizado de autenticação
@@ -89,21 +103,28 @@ src/
 │   ├── useCoins.ts      # Saldo e transações de moedas AI
 │   ├── useCoinSettings.ts # Configurações de custo das moedas
 │   ├── useCollections.ts  # Query de coleções e designs
+│   ├── useCollectionDesigns.ts # Query de designs de coleção
 │   ├── useCustomize.tsx   # Lógica completa do editor de customização
 │   ├── usePendingCheckout.ts # Gerenciamento de checkouts pendentes
+│   ├── usePendingCount.ts # Contagem de checkouts pendentes
+│   ├── useClarityFunnel.ts # Tracking de funil com Clarity
+│   ├── useScrollAnimation.ts # Animações baseadas em scroll
 │   └── use-toast.ts
 ├── integrations/
-│   └── supabase/        # Client e types gerados automaticamente
+│   ├── supabase/        # Client e types gerados automaticamente
+│   └── lovable/         # Integração Lovable Cloud
 ├── lib/
 │   ├── types.ts         # Product, ProductColor, ProductSpec, formatPrice
 │   ├── constants.ts     # Constantes da aplicação
 │   ├── clarity.ts       # Helpers para Microsoft Clarity
 │   ├── meta-pixel.ts    # Helpers para Meta Pixel (pixelEvent, pixelTrackPurchase)
-│   ├── customize-types.ts # Tipos do editor de customização
-│   ├── image-utils.ts   # Utilitários de processamento de imagem
+│   ├── customize-types.ts # Tipos do editor de customização (PHONE_W, PHONE_H, DEFAULTS)
+│   ├── image-utils.ts   # Utilitários de processamento de imagem (ver Pipeline de Imagens)
 │   ├── masks.ts         # Máscaras de input (CEP, telefone)
 │   ├── shipping.ts      # Cálculo de frete
 │   ├── products.ts      # Helpers de produto
+│   ├── seo.ts           # Helpers de SEO
+│   ├── merchant-jsonld.ts # JSON-LD para merchant/organization
 │   └── utils.ts         # cn() (clsx + tailwind-merge)
 ├── pages/               # 20+ páginas (maioria com lazy loading)
 ├── App.tsx              # Router + AuthProvider + Suspense
@@ -112,20 +133,32 @@ src/
 
 supabase/
 └── functions/
-    ├── _shared/              # Templates de email (signup, recovery, etc.)
-    ├── admin-sync-stripe/    # Sincroniza produto individual com Stripe
-    ├── apply-ai-filter/      # Aplica filtro IA via Fal.ai (style transfer)
-    ├── auth-email-hook/      # Hook de email customizado (templates React)
-    ├── bulk-sync-stripe/     # Sincroniza todos os produtos com Stripe
-    ├── cleanup-pending-checkouts/ # Limpa checkouts pendentes expirados
-    ├── create-checkout/      # Cria Stripe Checkout Session
-    ├── create-coin-checkout/ # Cria Stripe Checkout Session para compra de moedas
-    ├── delete-account/       # Deleta conta + avatar + cascade
-    ├── generate-gallery-image/ # Gera imagens para galeria via IA
-    ├── meta-capi/            # Envia eventos server-side para Meta Conversions API
-    ├── notify-order-status/  # Envia email de atualização de status
-    ├── stripe-webhook/       # Processa eventos do Stripe (payment + Purchase CAPI)
-    └── upscale-image/        # Upscale de imagem via IA
+    ├── _shared/                    # Templates de email (signup, recovery, etc.)
+    │   ├── email-templates/        # Templates de auth emails
+    │   └── transactional-email-templates/ # Templates transacionais (order status)
+    ├── admin-sync-stripe/          # Sincroniza produto individual com Stripe
+    ├── apply-ai-filter/            # Aplica filtro IA via Fal.ai (style transfer)
+    ├── auth-email-hook/            # Hook de email customizado (templates React)
+    ├── bulk-sync-stripe/           # Sincroniza todos os produtos com Stripe
+    ├── cleanup-pending-checkouts/  # Limpa checkouts pendentes expirados
+    ├── create-checkout/            # Cria Stripe Checkout Session
+    ├── create-coin-checkout/       # Cria Stripe Checkout Session para compra de moedas
+    ├── delete-account/             # Deleta conta + avatar + cascade
+    ├── generate-gallery-image/     # Gera imagens para galeria via IA
+    ├── handle-email-suppression/   # Processa bounces/complaints de email
+    ├── handle-email-unsubscribe/   # Processa unsubscribe de email
+    ├── meta-capi/                  # Envia eventos server-side para Meta Conversions API
+    ├── notify-order-status/        # Envia email de atualização de status
+    ├── optimize-existing-images/   # Otimiza imagens já existentes no storage
+    ├── prerender/                  # Pre-rendering para SEO/bots
+    ├── preview-transactional-email/ # Preview de templates transacionais
+    ├── process-email-queue/        # Processa fila de emails (pgmq)
+    ├── send-transactional-email/   # Envia email transacional via Resend
+    ├── sitemap/                    # Geração dinâmica de sitemap.xml
+    ├── stripe-webhook/             # Processa eventos do Stripe (payment + Purchase CAPI)
+    ├── upload-gallery-zip/         # Upload em lote de imagens de galeria via ZIP
+    ├── upscale-image/              # Upscale de imagem via IA
+    └── verify-coin-purchase/       # Verifica compra de moedas via webhook
 ```
 
 ## Modelo de Dados
@@ -167,7 +200,9 @@ interface Product {
 | `ai_filters` | Filtros IA configuráveis (modelo Fal.ai, prompt, imagem de estilo, categoria) |
 | `ai_filter_categories` | Categorias para agrupamento dos filtros IA |
 | `ai_generated_images` | Imagens geradas por IA (prompt, seed, URLs) |
+| `user_ai_generations` | Gerações IA individuais dos usuários (filtros, upscale) |
 | `coin_settings` | Configurações do sistema de moedas (custos, bônus) |
+| `coin_packages` | Pacotes de moedas disponíveis para compra |
 | `coin_transactions` | Histórico de transações de moedas por usuário |
 | `collections` | Coleções de designs prontos |
 | `collection_designs` | Designs individuais dentro de coleções (com Stripe) |
@@ -177,6 +212,12 @@ interface Product {
 | `kb_categories` | Categorias da base de conhecimento |
 | `kb_articles` | Artigos da base de conhecimento |
 | `legal_documents` | Documentos legais (termos, privacidade) |
+| `image_galleries` | Galerias de imagens temáticas |
+| `gallery_images` | Imagens dentro de galerias |
+| `email_send_log` | Log de envio de emails |
+| `email_send_state` | Estado da fila de envio de emails |
+| `email_unsubscribe_tokens` | Tokens de descadastro de email |
+| `suppressed_emails` | Emails suprimidos (bounces/complaints) |
 
 ### Enums
 
@@ -193,6 +234,37 @@ interface Product {
 | `email-assets` | Público | Assets dos templates de email |
 | `product-assets` | Público | Imagens de produtos e dispositivos |
 
+## Pipeline de Imagens
+
+Cada pedido armazena **4 tipos de imagem** no bucket `customizations`:
+
+| # | Nome | Storage path | Descrição |
+|---|------|-------------|-----------|
+| 1 | **Original** | `{uid}/original_{ts}.{ext}` | Upload cru do usuário, sem nenhum processamento |
+| 2 | **Otimizada** | `{uid}/optimized_{ts}.jpg` | Após compressão, filtros IA e/ou upscale |
+| 3 | **Recorte** | `{uid}/final_{ts}.jpg` | Arte técnica — snapshot da imagem posicionada no frame lógico (`renderSnapshot`) |
+| 4 | **Imagem Posição** | `{uid}/preview_{ts}.png` | Mockup visual do celular — gerada por `renderPhoneMockup()` (canvas 2D com borda arredondada + frame escuro) |
+
+### Funções de renderização (`src/lib/image-utils.ts`)
+
+| Função | Uso |
+|--------|-----|
+| `compressImage()` | Redimensiona imagens do upload para max 1200×2400 |
+| `compressForAI()` | Compressão otimizada para processamento IA (640×1136) |
+| `uploadForAI()` | Compress + upload para storage + signed URL para edge functions |
+| `getImageResolution()` | Retorna dimensões naturais de uma imagem |
+| `getOptimizedUrl()` | Transforma URL de storage em URL otimizada (render/image) |
+| `optimizeForUpload()` | Converte File para WebP otimizado (para uploads de produto) |
+| `renderSnapshot()` | Gera recorte técnico da imagem no frame lógico (PHONE_W × PHONE_H) |
+| `renderPhoneMockup()` | Gera mockup visual do celular com borda arredondada e frame escuro (canvas 2x) |
+
+### Fluxo de persistência
+
+1. **handleContinue** (useCustomize): gera `renderSnapshot` + `renderPhoneMockup`, salva ambos no sessionStorage e no storage (pending checkout)
+2. **Checkout**: recupera do sessionStorage ou fallback do DB (via signed URLs, incluindo `previewImagePath`)
+3. **create-checkout** (edge function): recebe os 4 paths e grava no `customization_data` do order
+4. **OrderImagesPreviewer** (admin): exibe as 4 imagens com lightbox e download direto
+
 ## Arquitetura
 
 ### AuthContext Centralizado
@@ -204,8 +276,8 @@ Interface: `{ user, profile, loading, signOut, refetchProfile }`
 ### Lazy Loading de Rotas
 
 Páginas pesadas usam `React.lazy()` com `Suspense` + `LoadingSpinner`:
-- **Lazy**: `Admin`, `Catalog`, `Product`, `Customize`, `Checkout`, `Orders`, `Profile`, `Collections`, `CollectionPage`, `DesignPage`, `Coins`, `KnowledgeBase`, `KbCategory`, `KbArticle`
-- **Estáticas**: `Landing`, `Login`, `Signup`, `ResetPassword`, `CheckoutSuccess`, `NotFound`, `RequestModel`, `LegalDocument`
+- **Lazy**: `Admin`, `Catalog`, `Product`, `Customize`, `Checkout`, `Orders`, `Profile`, `Collections`, `CollectionPage`, `DesignPage`, `Coins`, `KnowledgeBase`, `KbCategory`, `KbArticle`, `MyGenerations`
+- **Estáticas**: `Landing`, `Login`, `Signup`, `ResetPassword`, `CheckoutSuccess`, `NotFound`, `RequestModel`, `LegalDocument`, `Unsubscribe`
 
 ### Filtros IA
 
@@ -238,6 +310,7 @@ Moedas virtuais para uso de recursos de IA (filtros, upscale). Bônus concedido 
 | `create-checkout` | Cria Stripe Checkout Session para pedido |
 | `create-coin-checkout` | Cria Stripe Checkout Session para compra de moedas |
 | `stripe-webhook` | Processa webhooks Stripe + dispara Purchase via Meta CAPI |
+| `verify-coin-purchase` | Verifica compra de moedas via webhook Stripe |
 | `meta-capi` | Envia eventos server-side para Meta Conversions API |
 | `apply-ai-filter` | Aplica filtro IA via Fal.ai (style transfer) |
 | `upscale-image` | Upscale de imagem via IA |
@@ -248,6 +321,15 @@ Moedas virtuais para uso de recursos de IA (filtros, upscale). Bônus concedido 
 | `notify-order-status` | Envia email ao atualizar status do pedido |
 | `auth-email-hook` | Hook de email customizado (templates React) |
 | `cleanup-pending-checkouts` | Limpa checkouts pendentes expirados |
+| `optimize-existing-images` | Otimiza imagens já existentes no storage |
+| `prerender` | Pre-rendering de páginas para SEO/bots |
+| `sitemap` | Geração dinâmica de sitemap.xml |
+| `send-transactional-email` | Envia email transacional via Resend |
+| `process-email-queue` | Processa fila de emails (pgmq) |
+| `preview-transactional-email` | Preview de templates transacionais |
+| `handle-email-suppression` | Processa bounces/complaints de email |
+| `handle-email-unsubscribe` | Processa unsubscribe de email |
+| `upload-gallery-zip` | Upload em lote de imagens de galeria via ZIP |
 
 ## Analytics e Rastreamento
 
@@ -269,7 +351,7 @@ Edge function `meta-capi` recebe eventos do `stripe-webhook` e envia para a Grap
 |--------|------|-------------|-------|
 | `PageView` | Browser | index.html (automático) | — |
 | `ViewContent` | Browser | Product.tsx | `content_name`, `content_ids`, `content_type`, `value`, `currency` |
-| `AddToCart` | Browser | useCustomize.tsx | `content_name`, `content_ids`, `content_type`, `value`, `currency` |
+| `AddToCart` | Browser + Server | useCustomize.tsx | `content_name`, `content_ids`, `content_type`, `value`, `currency` |
 | `InitiateCheckout` | Browser | Checkout.tsx | `content_ids`, `content_type`, `value`, `currency` |
 | `Purchase` | Browser + Server | CheckoutSuccess.tsx + stripe-webhook | `value`, `currency`, `content_ids` — deduplicado via `event_id` |
 | `CompleteRegistration` | Browser | Signup.tsx + LoginDialog.tsx | — |
