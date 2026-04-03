@@ -1,74 +1,60 @@
 
-## Corrigir “Imagem Posição” para ser um print da tela de customização
 
-### O que está errado hoje
-Hoje a “Imagem Posição” ainda nasce de `renderSnapshot(...)`, que gera só a arte recortada no frame lógico.  
-Mesmo o `renderPreviewWithMockup(...)` atual ainda é uma composição em canvas da arte + moldura do aparelho, não um “print” da tela de customização como o usuário realmente configurou.
+## Corrigir captura da "Imagem Posição" — html2canvas falhando silenciosamente
 
-### Objetivo
-Fazer com que **“Imagem Posição”** seja um **screenshot visual da área de customização** já configurada pelo usuário, mostrando o celular como ele vê na tela.
+### Diagnóstico
+O `html2canvas` está falhando na captura do DOM do PhonePreview. Isso acontece porque:
+- O preview usa CSS `background-image` com data URLs muito grandes
+- Transforms CSS (rotate, scale via background-size/position) não são bem suportados pelo html2canvas
+- O fallback `renderPreviewWithMockup` também falha silenciosamente (provavelmente CORS no `device_image`)
+- Resultado: `preview_image_url` fica null — o pedido só salva o `edited_image_url` (recorte cru do renderSnapshot)
 
-### Abordagem
-Em vez de tratar “Imagem Posição” como um render técnico de imagem, vou tratá-la como **captura do preview real da customização**.
+### Solução
+Abandonar `html2canvas` e melhorar o `renderPreviewWithMockup` canvas-based para gerar uma imagem fiel ao visual do celular — com bordas arredondadas e frame escuro, simulando visualmente o que o usuário vê.
 
 ### Implementação
 
-**1. `src/pages/Customize.tsx`**
-- Criar um `ref` para a área visual que representa a customização final
-- Passar esse `ref` para o preview principal
-- Garantir que overlays temporários não entrem na captura:
-  - spotlight
-  - loading de IA
-  - preview temporário de hover dos filtros
-  - hints de arraste
+**1. `src/lib/image-utils.ts` — melhorar `renderPreviewWithMockup`**
+- Adicionar bordas arredondadas no canvas (clip com roundRect) para simular o visual do celular
+- Desenhar o frame escuro (border do PhonePreview) ao redor
+- Se não houver `device_image`, desenhar um frame genérico com rounded rect + borda escura
+- Criar nova função `renderPhoneMockup(imgSrc, scale, position, rotation)` que não depende de device_image — usa apenas canvas com clip arredondado + borda
 
-**2. `src/components/PhonePreview.tsx`**
-- Permitir receber um `captureRef` ou envolver o mockup principal em um container identificável
-- Marcar elementos que não devem entrar no screenshot
-- Garantir que a área capturada seja exatamente o “celular na tela”, com o enquadramento visual do usuário
+**2. `src/hooks/useCustomize.tsx` — simplificar captura**
+- Remover dependência do `html2canvas` e do `phoneCaptureRef`
+- No `handleContinue`, gerar `previewImage` usando a nova `renderPhoneMockup()` (100% canvas, sem DOM)
+- Isso é determinístico e nunca falha por CORS
 
-**3. Nova estratégia de captura**
-- Substituir o uso de `renderSnapshot(...)` como fonte da “Imagem Posição”
-- Criar uma nova função utilitária para gerar um screenshot do preview real da customização
-- Essa função deve capturar o DOM renderizado do preview, não apenas reconstruir a arte via canvas
-- Se necessário, adicionar uma lib de captura de DOM compatível com React/Vite
+**3. `src/pages/Customize.tsx`**
+- Remover `phoneCaptureRef` (não mais necessário)
+- Remover prop `captureRef` do PhonePreview
 
-**4. `src/hooks/useCustomize.tsx`**
-- No `handleContinue`, gerar:
-  - imagem técnica separada, se ainda precisarmos para produção
-  - nova **Imagem Posição = screenshot do preview da customização**
-- Salvar essa captura no storage e gravar no pending checkout
-- Atualizar os nomes dos campos para evitar ambiguidade entre:
-  - recorte técnico
-  - screenshot visual da customização
+**4. `src/components/PhonePreview.tsx`**
+- Remover prop `captureRef` (cleanup)
 
-**5. `src/pages/Checkout.tsx`**
-- Repetir a mesma lógica no checkout final
-- Enviar a captura visual como a imagem principal de “Imagem Posição”
-- Manter consistência entre pedido pendente e pedido finalizado
+**5. `package.json`**
+- Remover dependência `html2canvas` (não mais usada)
 
-**6. `src/components/admin/OrderImagesPreviewer.tsx`**
-- Fazer “Imagem Posição” apontar para o novo screenshot da customização
-- Se o recorte técnico continuar existindo, exibir com outro nome, por exemplo:
-  - “Recorte técnico”
-- Remover a confusão entre “Preview” e “Imagem Posição”
+### Detalhes técnicos da `renderPhoneMockup`
+```text
+┌─────────────────┐
+│  borda escura    │  ← ctx.fillStyle = "#333", roundRect
+│ ┌─────────────┐ │
+│ │             │ │
+│ │  imagem do  │ │  ← mesmo cálculo de scale/position/rotation
+│ │  usuário    │ │     do renderSnapshot, com clip roundRect
+│ │             │ │
+│ └─────────────┘ │
+└─────────────────┘
+```
+- Canvas 520x1064 (2x do frame 260x532)
+- Clip com borderRadius ~44px (2x do 2.2rem)
+- Borda de 8px (#333) ao redor
+- Resultado: imagem PNG que parece exatamente o preview do celular
 
-### Resultado esperado
-- “Imagem Posição” passa a mostrar o que o usuário realmente viu ao customizar
-- O admin deixa de ver uma imagem crua e passa a ver um print fiel da customização
-- O recorte técnico pode continuar salvo, mas não será mais confundido com a imagem de posição
-
-### Detalhes técnicos
-- O código atual usa canvas para reconstruir a composição; isso não atende ao pedido porque não é um screenshot real da UI
-- A captura deve ser feita do preview DOM já renderizado
-- Vou excluir elementos transitórios da captura para não poluir a imagem final
-- Se houver limitação de CORS com assets externos, a captura deve usar URLs seguras/carregadas no mesmo contexto já usado pelo preview
-
-### Arquivos envolvidos
-- `src/pages/Customize.tsx`
-- `src/components/PhonePreview.tsx`
-- `src/hooks/useCustomize.tsx`
-- `src/pages/Checkout.tsx`
-- `src/components/admin/OrderImagesPreviewer.tsx`
-- possivelmente `src/lib/image-utils.ts` ou um novo utilitário específico de captura
+### Resultado
+- "Imagem Posição" mostra o mockup visual do celular com a imagem posicionada
+- Sem dependência de captura de DOM (nunca falha)
+- Sem CORS issues
+- Visualmente fiel ao que o usuário vê na tela de customização
 
