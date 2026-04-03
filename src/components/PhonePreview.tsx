@@ -276,7 +276,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             )}
           </div>
           {isProcessing && (
-            <div data-capture-ignore className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <span className="text-xs font-medium text-muted-foreground mt-2">{processingMessage || "Processando..."}</span>
             </div>

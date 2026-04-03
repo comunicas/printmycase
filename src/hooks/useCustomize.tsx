@@ -408,7 +408,6 @@ export function useCustomize(productId: string | undefined) {
       });
       if (error || (!data?.imageUrl && !data?.image)) {
         const isInsufficientCoins = data?.error === "Saldo insuficiente" || error?.message?.includes("402");
-        const errorMsg = data?.error || "Tente novamente.";
         toast({
           title: isInsufficientCoins ? "Moedas insuficientes" : "Erro no upscale",
           description: isInsufficientCoins ? "Compre mais moedas para usar o upscale IA." : "Nenhuma moeda foi debitada. Tente gerar novamente.",

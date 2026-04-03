@@ -212,8 +212,6 @@ const Checkout = () => {
       const customizationPayload = {
         scale: customization.scale,
         rotation: customization.rotation,
-        brightness: customization.brightness,
-        contrast: customization.contrast,
         activeFilter: customization.activeFilter,
         position: customization.position,
         preview_image_url: previewImageUrl,

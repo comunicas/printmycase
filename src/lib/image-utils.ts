@@ -155,7 +155,6 @@ export function optimizeForUpload(
   });
 }
 
-/** Render a preview image with the device mockup frame overlaid */
 /** Render a phone mockup entirely via canvas — no DOM capture needed.
  *  Draws the user image inside a rounded-rect phone frame with dark border. */
 export function renderPhoneMockup(
