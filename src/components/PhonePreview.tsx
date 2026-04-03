@@ -178,18 +178,16 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
     e.target.value = '';
   };
 
-  const oversize = Math.max(150, scale * 1.25);
-  const offset = -(oversize - 100) / 2;
-
   const buildImageStyle = (src: string) => ({
     backgroundImage: `url("${src}")`,
-    backgroundSize: `${scale * (100 / oversize)}%`,
+    backgroundSize: "cover",
     backgroundPosition: `${position.x}% ${position.y}%`,
     backgroundRepeat: "no-repeat" as const,
-    width: `${oversize}%`,
-    height: `${oversize}%`,
-    left: `${offset}%`,
-    top: `${offset}%`,
+    width: "100%",
+    height: "100%",
+    left: "0",
+    top: "0",
+    transformOrigin: "center center",
   });
 
   return (
@@ -202,7 +200,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
               className="absolute pointer-events-none"
               style={{
                 ...buildImageStyle(prevImage),
-                transform: `rotate(${rotation}deg)`,
+                transform: `rotate(${rotation}deg) scale(${scale / 100})`,
                 opacity: fadeIn ? 0 : 1,
                 transition: `opacity ${CROSSFADE_MS}ms ease-in-out, transform 0.3s ease`,
               }}
@@ -214,7 +212,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
               className="absolute pointer-events-none"
               style={{
                 ...buildImageStyle(displayImage),
-                transform: `rotate(${rotation}deg)`,
+                transform: `rotate(${rotation}deg) scale(${scale / 100})`,
                 opacity: prevImage ? (fadeIn ? 1 : 0) : 1,
                 transition: isSnapping
                   ? `background-position 0.2s ease-out, transform 0.3s ease, opacity ${CROSSFADE_MS}ms ease-in-out`
