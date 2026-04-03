@@ -20,6 +20,7 @@ interface CustomizationData {
   rawImage: string | null;
   image: string | null;
   editedImage: string | null;
+  previewImage: string | null;
   imageFileName: string | null;
   scale: number;
   rotation: number;
@@ -88,6 +89,7 @@ const Checkout = () => {
           rawImage: imgUrl,
           image: imgUrl,
           editedImage: editedUrl,
+          previewImage: null,
           imageFileName: null,
           scale: cd.scale ?? 100,
           rotation: cd.rotation ?? 0,
@@ -194,6 +196,17 @@ const Checkout = () => {
         throw new Error("Erro ao enviar imagem final. Verifique sua conexão e tente novamente.");
       }
 
+      // Upload preview image (mockup with device frame)
+      let previewImageUrl: string | null = null;
+      try {
+        if (customization.previewImage) {
+          const blob = await fetchWithTimeout(customization.previewImage);
+          const path = `${user.id}/preview_${ts}.png`;
+          const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
+          if (!uploadError) previewImageUrl = path;
+        }
+      } catch { /* non-critical */ }
+
       const cleanZip = addressData.zipInput.replace(/\D/g, "");
       const customizationPayload = {
         scale: customization.scale,
@@ -202,6 +215,7 @@ const Checkout = () => {
         contrast: customization.contrast,
         activeFilter: customization.activeFilter,
         position: customization.position,
+        preview_image_url: previewImageUrl,
       };
 
       const { data, error } = await supabase.functions.invoke("create-checkout", {

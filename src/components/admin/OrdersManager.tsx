@@ -16,6 +16,9 @@ type OrderRow = Tables<"orders"> & {
   product_image?: string;
   design_name?: string;
   design_image?: string;
+  customer_name?: string;
+  customer_city?: string;
+  customer_state?: string;
 };
 
 const PAGE_SIZE = 10;
@@ -54,13 +57,30 @@ const OrdersManager = () => {
       designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
     }
 
-    const enriched: OrderRow[] = rows.map((o) => ({
-      ...o,
-      product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
-      product_image: nameMap.get(o.product_id)?.image,
-      design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
-      design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
-    }));
+    // Resolve customer names
+    const userIds = [...new Set(rows.map((o) => o.user_id))];
+    const profileMap = new Map<string, string>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+      profiles?.forEach((p) => profileMap.set(p.id, p.full_name));
+    }
+
+    const enriched: OrderRow[] = rows.map((o) => {
+      const shipping = o.shipping_address as Record<string, any> | null;
+      return {
+        ...o,
+        product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
+        product_image: nameMap.get(o.product_id)?.image,
+        design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
+        design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
+        customer_name: profileMap.get(o.user_id) || undefined,
+        customer_city: shipping?.city || undefined,
+        customer_state: shipping?.state || undefined,
+      };
+    });
     setOrders(enriched);
 
     const inputs: Record<string, string> = {};
@@ -171,6 +191,12 @@ const OrdersManager = () => {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground font-mono">{order.id.slice(0, 8)}</p>
+                      {order.customer_name && (
+                        <p className="text-xs text-muted-foreground">
+                          👤 {order.customer_name}
+                          {order.customer_city && ` · ${order.customer_city}/${order.customer_state}`}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </p>
