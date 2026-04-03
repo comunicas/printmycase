@@ -387,7 +387,7 @@ export function useCustomize(productId: string | undefined) {
   }, [pendingFilterId, image, originalImage, user, navigate, toast, refreshCoins, setImageWithResolution, coinBalance, aiFilterCost, aiUpscaleCost, filters, filterHistory, sessionId]);
 
   const handleUpscaleClick = useCallback(() => {
-    if (!requireAuth()) return;
+    if (!requireAuth("upscale")) return;
     if (!image || isUpscaling || isHD) return;
     setShowUpscaleDialog(true);
   }, [requireAuth, image, isUpscaling, isHD]);
