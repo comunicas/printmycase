@@ -27,7 +27,7 @@ const reasonConfig = {
   filter: {
     icon: Wand2,
     title: "Para usar Filtros IA",
-    description: "Transforme suas fotos com filtros artísticos powered by IA",
+    description: "Suas fotos, agora com qualidade profissional usando IA do Studio PrintMyCase",
   },
   upscale: {
     icon: Sparkles,
