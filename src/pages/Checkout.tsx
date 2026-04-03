@@ -196,6 +196,17 @@ const Checkout = () => {
         throw new Error("Erro ao enviar imagem final. Verifique sua conexão e tente novamente.");
       }
 
+      // Upload preview image (mockup with device frame)
+      let previewImageUrl: string | null = null;
+      try {
+        if (customization.previewImage) {
+          const blob = await fetchWithTimeout(customization.previewImage);
+          const path = `${user.id}/preview_${ts}.png`;
+          const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
+          if (!uploadError) previewImageUrl = path;
+        }
+      } catch { /* non-critical */ }
+
       const cleanZip = addressData.zipInput.replace(/\D/g, "");
       const customizationPayload = {
         scale: customization.scale,
