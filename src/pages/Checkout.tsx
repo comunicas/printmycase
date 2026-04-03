@@ -83,16 +83,19 @@ const Checkout = () => {
         let editedUrl: string | null = null;
         if (pending.edited_image_path) editedUrl = await getSignedUrl(pending.edited_image_path);
         if (pending.original_image_path) imgUrl = await getSignedUrl(pending.original_image_path);
+        // Restore preview image from storage if available
+        let previewUrl: string | null = null;
+        if (cd.previewImagePath) {
+          previewUrl = await getSignedUrl(cd.previewImagePath);
+        }
         setCustomization({
           rawImage: imgUrl,
           image: imgUrl,
           editedImage: editedUrl,
-          previewImage: null,
+          previewImage: previewUrl,
           imageFileName: null,
           scale: cd.scale ?? 100,
           rotation: cd.rotation ?? 0,
-          brightness: 100,
-          contrast: 100,
           activeFilter: cd.activeFilter ?? null,
           position: cd.position ?? { x: 50, y: 50 },
         });
