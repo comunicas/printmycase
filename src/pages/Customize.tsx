@@ -18,8 +18,7 @@ import UploadSpotlight from "@/components/customize/UploadSpotlight";
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const phoneCaptureRef = useRef<HTMLDivElement>(null);
-  const c = useCustomize(id, phoneCaptureRef);
+  const c = useCustomize(id);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));

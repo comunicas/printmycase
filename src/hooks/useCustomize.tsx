@@ -496,26 +496,11 @@ export function useCustomize(productId: string | undefined) {
     try {
       const finalImage = await renderSnapshot(image, scale, position, rotation);
 
-      // Generate "Imagem Posição" — screenshot of the actual phone preview DOM
+      // Generate "Imagem Posição" — canvas-based phone mockup with rounded frame
       let previewImage: string | null = null;
-      if (phoneCaptureRef?.current) {
-        try {
-          const canvas = await html2canvas(phoneCaptureRef.current, {
-            useCORS: true,
-            allowTaint: true,
-            scale: 2,
-            backgroundColor: null,
-            ignoreElements: (el) => el.hasAttribute("data-capture-ignore"),
-          });
-          previewImage = canvas.toDataURL("image/png");
-        } catch { /* fallback: try canvas-based mockup */ }
-      }
-      // Fallback to canvas-based mockup if DOM capture failed
-      if (!previewImage && product.device_image) {
-        try {
-          previewImage = await renderPreviewWithMockup(image, product.device_image, scale, position, rotation);
-        } catch { /* ignore if device image fails */ }
-      }
+      try {
+        previewImage = await renderPhoneMockup(image, scale, position, rotation);
+      } catch { /* ignore */ }
 
       const customData = { rawImage, image, editedImage: finalImage, previewImage, imageFileName, scale, position, rotation };
       try {

@@ -156,9 +156,10 @@ export function optimizeForUpload(
 }
 
 /** Render a preview image with the device mockup frame overlaid */
-export function renderPreviewWithMockup(
+/** Render a phone mockup entirely via canvas — no DOM capture needed.
+ *  Draws the user image inside a rounded-rect phone frame with dark border. */
+export function renderPhoneMockup(
   imgSrc: string,
-  deviceImageSrc: string,
   scale: number,
   position: { x: number; y: number },
   rotation: number,
@@ -167,32 +168,49 @@ export function renderPreviewWithMockup(
     const userImg = new window.Image();
     userImg.crossOrigin = "anonymous";
 
-    const deviceImg = new window.Image();
-    deviceImg.crossOrigin = "anonymous";
-
-    let loaded = 0;
-    const onReady = () => {
-      loaded++;
-      if (loaded < 2) return;
-
-      // Canvas at 2x for quality
-      const cw = PHONE_W * 2;
-      const ch = PHONE_H * 2;
+    userImg.onload = () => {
+      // 2x for quality
+      const BORDER = 10;
+      const RADIUS = 48;
+      const cw = PHONE_W * 2 + BORDER * 2;
+      const ch = PHONE_H * 2 + BORDER * 2;
       const canvas = document.createElement("canvas");
       canvas.width = cw;
       canvas.height = ch;
       const ctx = canvas.getContext("2d")!;
 
-      // Draw user image (same logic as renderSnapshot but at 2x)
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, cw, ch);
+      // Transparent background
+      ctx.clearRect(0, 0, cw, ch);
 
+      // Draw dark phone border (outer rounded rect)
+      ctx.fillStyle = "#333333";
+      ctx.beginPath();
+      ctx.roundRect(0, 0, cw, ch, RADIUS + BORDER / 2);
+      ctx.fill();
+
+      // Inner area dimensions
+      const innerX = BORDER;
+      const innerY = BORDER;
+      const innerW = PHONE_W * 2;
+      const innerH = PHONE_H * 2;
+
+      // Clip to inner rounded rect
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(innerX, innerY, innerW, innerH, RADIUS);
+      ctx.clip();
+
+      // White background inside phone
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(innerX, innerY, innerW, innerH);
+
+      // Draw user image with same logic as renderSnapshot but offset by border
       const oversize = Math.max(150, scale * 1.25);
       const offset = -(oversize - 100) / 2;
-      const divW = cw * oversize / 100;
-      const divH = ch * oversize / 100;
-      const divLeft = cw * offset / 100;
-      const divTop = ch * offset / 100;
+      const divW = innerW * oversize / 100;
+      const divH = innerH * oversize / 100;
+      const divLeft = innerX + innerW * offset / 100;
+      const divTop = innerY + innerH * offset / 100;
       const bgSizePct = scale * (100 / oversize) / 100;
       const imgAspect = userImg.naturalWidth / userImg.naturalHeight;
       const divAspect = divW / divH;
@@ -202,34 +220,19 @@ export function renderPreviewWithMockup(
       const imgLeft = divLeft + (divW - imgW) * position.x / 100;
       const imgTop = divTop + (divH - imgH) * position.y / 100;
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(0, 0, cw, ch);
-      ctx.clip();
-      const cx = cw / 2;
-      const cy = ch / 2;
+      const cx = innerX + innerW / 2;
+      const cy = innerY + innerH / 2;
       ctx.translate(cx, cy);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.translate(-cx, -cy);
       ctx.drawImage(userImg, imgLeft, imgTop, imgW, imgH);
       ctx.restore();
 
-      // Overlay device frame
-      ctx.drawImage(deviceImg, 0, 0, cw, ch);
-
       resolve(canvas.toDataURL("image/png"));
     };
 
-    userImg.onload = onReady;
-    deviceImg.onload = onReady;
-    userImg.onerror = () => reject(new Error("Failed to load user image for preview"));
-    deviceImg.onerror = () => {
-      // If device image fails, just resolve without frame
-      loaded++;
-      onReady();
-    };
+    userImg.onerror = () => reject(new Error("Failed to load user image for mockup"));
     userImg.src = imgSrc;
-    deviceImg.src = deviceImageSrc;
   });
 }
 
