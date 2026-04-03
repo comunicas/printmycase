@@ -200,7 +200,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
               className="absolute pointer-events-none"
               style={{
                 ...buildImageStyle(prevImage),
-                transform: `rotate(${rotation}deg)`,
+                transform: `rotate(${rotation}deg) scale(${scale / 100})`,
                 opacity: fadeIn ? 0 : 1,
                 transition: `opacity ${CROSSFADE_MS}ms ease-in-out, transform 0.3s ease`,
               }}
