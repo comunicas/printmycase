@@ -20,7 +20,7 @@ import { useCoinSettings } from "@/hooks/useCoinSettings";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 import { ToastAction } from "@/components/ui/toast";
 
-export function useCustomize(productId: string | undefined) {
+export function useCustomize(productId: string | undefined, phoneCaptureRef?: RefObject<HTMLDivElement>) {
   const { product, loading: productLoading } = useProduct(productId);
   const { toast } = useToast();
   const { user } = useAuth();
