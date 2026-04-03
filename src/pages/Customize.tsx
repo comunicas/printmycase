@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PhonePreview from "@/components/PhonePreview";
 import { formatPrice } from "@/lib/types";
@@ -13,6 +13,7 @@ import TermsDialog from "@/components/customize/TermsDialog";
 import GalleryPicker from "@/components/customize/GalleryPicker";
 import { useCustomize } from "@/hooks/useCustomize.tsx";
 import IntroDialog from "@/components/customize/IntroDialog";
+import UploadSpotlight from "@/components/customize/UploadSpotlight";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,31 @@ const Customize = () => {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
+  const [showUploadSpotlight, setShowUploadSpotlight] = useState(() => !localStorage.getItem("customize_upload_seen"));
+  const spotlightInputRef = useRef<HTMLInputElement>(null);
+
+  const dismissSpotlight = useCallback(() => {
+    setShowUploadSpotlight(false);
+    localStorage.setItem("customize_upload_seen", "1");
+  }, []);
+
+  const handleSpotlightUpload = useCallback(() => {
+    spotlightInputRef.current?.click();
+  }, []);
+
+  const handleSpotlightFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      c.handleImageUpload(file);
+      dismissSpotlight();
+    }
+    e.target.value = "";
+  }, [c.handleImageUpload, dismissSpotlight]);
+
+  const handleSpotlightGallery = useCallback(() => {
+    dismissSpotlight();
+    setShowGalleryPicker(true);
+  }, [dismissSpotlight]);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
