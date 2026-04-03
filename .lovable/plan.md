@@ -1,23 +1,44 @@
 
 
-## Reforçar CTA de Upload na Primeira Interação
+## Modal de Destaque para Upload na Primeira Visita
 
-### Situação Atual
-Quando o usuário entra sem imagem, o PhonePreview mostra apenas um ícone discreto com "Envie sua foto" e a resolução recomendada — pouco chamativo e sem explicar que é a **foto dele**.
+### Ideia
+Em vez de apenas estilizar a área de upload dentro do preview, criar uma **modal de destaque (spotlight)** que aparece automaticamente na primeira visita — sobreposta ao preview, com foco total no upload. Após o usuário enviar a primeira imagem, a modal fecha e ele vê o editor normalmente.
 
-### Mudança
+### Como funciona
 
-**Arquivo: `src/components/PhonePreview.tsx`** (linhas 247-275)
+1. **Modal de Upload** — aparece sobre o PhonePreview quando não há imagem e é a primeira interação
+   - Fundo semi-transparente escuro (spotlight effect)
+   - Card central com:
+     - Ícone grande de upload animado
+     - "Comece enviando sua foto" (título)
+     - "Sua foto, do pet, da família… nós transformamos em arte!" (subtítulo)
+     - **Botão grande "Escolher foto"** que abre o file picker
+     - Link secundário discreto "Ou escolha da galeria"
+   - Fecha automaticamente quando o usuário faz upload ou seleciona da galeria
 
-Melhorar o estado vazio (sem imagem) para ser mais convidativo e claro:
+2. **Tab padrão muda para "Ajustes"** — em vez de abrir na galeria quando não há imagem, abre em ajustes (desabilitado visualmente) para reforçar o fluxo: upload → ajustes → filtros
 
-1. **Título mais direto**: trocar "Envie sua foto" por **"Envie sua foto aqui"** com texto de apoio **"Use uma foto sua, do pet, da família… a criatividade é sua!"**
-2. **Animação de atenção**: adicionar uma pulsação sutil (`animate-pulse`) no ícone para atrair o olhar na primeira visita
-3. **Botão de upload mais visível**: transformar a área clicável em um botão com borda tracejada e fundo mais destacado, estilo dropzone
-4. **Remover resolução recomendada** do estado inicial (informação técnica que confunde) — mover para após o upload
+### Mudanças
+
+**1. Novo componente: `src/components/customize/UploadSpotlight.tsx`**
+- Modal overlay com backdrop blur
+- Botão de upload que dispara o file picker do PhonePreview
+- Link "escolha da galeria" que abre o GalleryPicker
+- Controlado por prop `open` / `onOpenChange`
+- Aparece apenas quando: sem imagem + primeira visita (localStorage `customize_upload_seen`)
+
+**2. `src/components/customize/ImageControls.tsx`**
+- Linha 48: trocar `defaultValue={hasImage ? "ajustes" : "galeria"}` por `defaultValue="ajustes"` — sempre abre em Ajustes
+
+**3. `src/pages/Customize.tsx`**
+- Adicionar estado `showUploadSpotlight` (true se não há imagem + localStorage não tem `customize_upload_seen`)
+- Renderizar `<UploadSpotlight>` passando callbacks de upload e galeria
+- Marcar localStorage ao fechar
 
 ### Resultado
-- 1 arquivo editado
-- Usuário entende imediatamente que deve enviar uma foto pessoal
-- CTA mais visível e convidativo
+- 1 arquivo novo, 2 editados
+- Foco total no upload na primeira visita
+- Galeria deixa de ser tab padrão
+- Modal fecha sozinha após upload — zero fricção extra para usuários recorrentes
 
