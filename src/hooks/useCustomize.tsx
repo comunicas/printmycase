@@ -314,7 +314,7 @@ export function useCustomize(productId: string | undefined) {
   }, [user]);
 
   const handleFilterClick = useCallback((filterId: string) => {
-    if (!requireAuth()) return;
+    if (!requireAuth("filter")) return;
     if (!image || applyingFilterId) return;
     // Clicking the last applied filter => undo it
     if (activeFilterId === filterId && filterHistory.length > 0) {
