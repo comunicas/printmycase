@@ -88,7 +88,7 @@ const StoreLocator = () => {
         <ScrollReveal>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center flex-1">
-              Encontre uma Loja PrintMyCase
+              Presença real em 11 lojas ativas
             </h2>
           </div>
           <p className="text-center text-muted-foreground mb-10">
