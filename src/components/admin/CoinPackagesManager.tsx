@@ -116,7 +116,7 @@ const CoinPackagesManager = () => {
       </div>
 
       <div className="space-y-2">
-        {packages.map((pkg) => (
+        {paginated.map((pkg) => (
           <div key={pkg.id} className="grid grid-cols-[1fr_1fr_1fr_80px_60px_40px] gap-2 items-center border rounded-lg p-3 bg-card">
             <div className="space-y-0.5">
               <label className="text-[10px] text-muted-foreground">Moedas</label>
