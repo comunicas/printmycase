@@ -225,8 +225,6 @@ const Landing = () => {
           {/* Store Locator */}
           <StoreLocator />
 
-          {/* Benefits + Print Tech */}
-          <WhyPrintMyCase />
 
 
 
