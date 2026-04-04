@@ -58,6 +58,7 @@ const OrderStatusUpdateEmail = ({
   newStatus = 'paid',
   totalCents = 0,
   trackingCode,
+  rejectionReason,
 }: OrderStatusUpdateProps) => {
   const shortId = (orderId || '').slice(0, 8)
   const statusLabel = statusLabels[newStatus || ''] ?? newStatus
