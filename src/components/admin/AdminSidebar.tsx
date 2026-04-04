@@ -99,7 +99,7 @@ const AdminSidebar = ({ activeSection, onSectionChange, onOptimize, optimizing }
                     <SidebarMenuButton
                       isActive={activeSection === item.key}
                       tooltip={item.label}
-                      onClick={() => onSectionChange(item.key)}
+                      onClick={() => handleSelect(item.key)}
                     >
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.label}</span>}
