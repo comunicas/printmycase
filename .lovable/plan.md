@@ -1,73 +1,48 @@
 
 
-## Instagram, Waze e SEO Local para Lojas
+## Fix: StoreLocator Invisível na Landing Page
 
-### Visão geral
-Adicionar campos `instagram_url` e `slug` à tabela `stores`, implementar links de Instagram e "Como Chegar" (Waze) em cada card de loja, e injetar JSON-LD `LocalBusiness` para SEO local.
+### Problema Encontrado
 
-### Fase 1 — Migration: novos campos
+O componente `StoreLocator` está no DOM (section[5] dentro de `main`) com o heading "Lojas PrintMyCase — Capinhas Personalizadas em 12 Shopping Centers", mas tem `offsetHeight: 0`. Os dados carregam corretamente (12 lojas, status 200), porém a seção fica invisível.
 
-```sql
-ALTER TABLE public.stores
-  ADD COLUMN instagram_url text,
-  ADD COLUMN slug text;
+**Causa raiz**: O componente `ScrollReveal` usa `IntersectionObserver` com `threshold: 0.15`. O conteúdo começa com `opacity: 0` e `translateY(1.5rem)` (classe `sr-hidden`). Como o mapa Leaflet é renderizado dentro de um `ScrollReveal`, e o container do mapa depende de CSS Leaflet para ter altura, há um ciclo: o `ScrollReveal` mantém o conteúdo invisível esperando ele entrar na viewport, mas o conteúdo nunca aparece porque está invisível.
+
+### Solução
+
+**1 arquivo editado: `src/components/StoreLocator.tsx`**
+
+Remover os wrappers `ScrollReveal` de dentro do `StoreLocator`. O mapa Leaflet não funciona bem com animações de entrada porque precisa calcular dimensões no momento da renderização. A seção já fica posicionada entre blocos que têm suas próprias animações.
+
+Alternativa: manter o `ScrollReveal` apenas no título/subtítulo e remover do bloco do grid (mapa + lista), para que o mapa renderize imediatamente com dimensões corretas.
+
+```tsx
+// Título com ScrollReveal (ok - é só texto)
+<ScrollReveal>
+  <h2>...</h2>
+  <p>...</p>
+</ScrollReveal>
+
+// Grid sem ScrollReveal (mapa precisa de dimensões imediatas)
+<div className="grid md:grid-cols-2 gap-6">
+  {/* Map */}
+  <div className="relative rounded-2xl overflow-hidden shadow-sm h-[400px] md:h-[500px]">
+    {allBounds && <MapContainer ... />}
+  </div>
+  {/* Store List */}
+  <div>...</div>
+</div>
 ```
 
-Depois, popular os slugs existentes via INSERT tool (ex: `capinha-personalizada-shopping-center-3-sao-paulo`).
+### Teste Admin (já verificado)
+- CRUD de lojas funciona (toast "Loja atualizada" confirmado)
+- Campos Instagram URL e Slug SEO estão disponíveis no dialog
+- Geocodificação via Nominatim funciona
 
-### Fase 2 — Admin: campos no dialog (`StoresManager.tsx`)
-
-- Adicionar campos "Instagram URL" e "Slug (SEO)" no dialog de criação/edição
-- Auto-gerar slug a partir do nome + cidade quando vazio
-
-### Fase 3 — StoreLocator: links de ação + SEO
-
-**UI nos cards de loja:**
-- Botão/ícone Instagram (abre perfil em nova aba) — só aparece se `instagram_url` preenchido
-- Botão "Como Chegar" que abre Waze: `https://waze.com/ul?ll={lat},{lng}&navigate=yes`
-- Ambos discretos, ao lado do endereço, seguindo o estilo clean atual
-
-**JSON-LD `LocalBusiness`** injetado via `useEffect`:
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "Store",
-  "name": "PrintMyCase – Shopping Center 3",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "Av. Paulista, 2064",
-    "addressLocality": "São Paulo",
-    "addressRegion": "SP",
-    "addressCountry": "BR"
-  },
-  "geo": { "@type": "GeoCoordinates", "latitude": -23.5558, "longitude": -46.6621 },
-  "url": "https://studio.printmycase.com.br/#loja-shopping-center-3",
-  "sameAs": ["https://instagram.com/printmycase"],
-  "image": "https://studio.printmycase.com.br/og-image.png",
-  "parentOrganization": { "@type": "Organization", "name": "PrintMyCase" }
-}
-```
-
-**Semântica HTML:**
-- Usar `<article>` com `itemscope itemtype="https://schema.org/Store"` em cada card
-- `<address>` tag para endereços
-- `aria-label` nos botões de ação
-
-### Fase 4 — Título e copy SEO
-
-- H2: "Lojas PrintMyCase — Capinhas Personalizadas em {N} Shopping Centers"
-- Subtítulo: "Encontre a loja mais perto de você. Capinhas personalizadas com IA em shopping centers de São Paulo e Minas Gerais."
-- Ambos ricos em palavras-chave locais para capturar buscas tipo "capinha personalizada shopping paulista"
-
-### Arquivos editados
-1. **Migration SQL** — `ALTER TABLE stores ADD COLUMN instagram_url, slug`
-2. **`src/components/admin/StoresManager.tsx`** — campos instagram_url e slug no dialog
-3. **`src/components/StoreLocator.tsx`** — links Waze/Instagram, JSON-LD, semântica HTML, copy SEO
-4. **`src/integrations/supabase/types.ts`** — atualizado automaticamente
-
-### Resultado
-- Cada card de loja terá botão "Como Chegar" (Waze) e ícone Instagram
-- Google indexa cada loja como `LocalBusiness` com coordenadas e endereço estruturado
-- Buscas locais como "capinha personalizada shopping center 3" terão rich results
-- Admin pode gerenciar Instagram URL e slug SEO por loja
+### Após o fix, verificar
+- Mapa aparece visível na landing page
+- Pins roxos renderizam corretamente
+- Clique em loja destaca pin e card
+- Layout mobile (mapa em cima, lista embaixo)
+- Botão "Como Chegar" abre Waze
 
