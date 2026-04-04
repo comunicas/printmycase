@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Pencil, Trash2, Eye, EyeOff, MapPin } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, MapPin, Search, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,33 @@ const StoresManager = () => {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
+  const [geocoding, setGeocoding] = useState(false);
+
+  const handleGeocode = async () => {
+    if (!address.trim()) {
+      toast({ title: "Preencha o endereço primeiro", variant: "destructive" });
+      return;
+    }
+    setGeocoding(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=br`,
+        { headers: { "User-Agent": "PrintMyCase-Admin/1.0" } }
+      );
+      const data = await res.json();
+      if (data.length > 0) {
+        setLat(data[0].lat);
+        setLng(data[0].lon);
+        toast({ title: "Coordenadas encontradas" });
+      } else {
+        toast({ title: "Endereço não encontrado", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Erro ao buscar coordenadas", variant: "destructive" });
+    } finally {
+      setGeocoding(false);
+    }
+  };
 
   const fetchStores = useCallback(async () => {
     setLoading(true);
@@ -165,7 +192,7 @@ const StoresManager = () => {
                 <Input value={stateLabel} onChange={(e) => setStateLabel(e.target.value)} placeholder="São Paulo (SP)" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
               <div>
                 <Label>Latitude</Label>
                 <Input type="number" step="any" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-23.5558" />
@@ -174,6 +201,9 @@ const StoresManager = () => {
                 <Label>Longitude</Label>
                 <Input type="number" step="any" value={lng} onChange={(e) => setLng(e.target.value)} placeholder="-46.6621" />
               </div>
+              <Button type="button" variant="outline" size="icon" onClick={handleGeocode} disabled={geocoding} title="Buscar coordenadas pelo endereço">
+                {geocoding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </Button>
             </div>
             <div>
               <Label>Ordem</Label>
