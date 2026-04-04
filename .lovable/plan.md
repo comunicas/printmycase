@@ -1,23 +1,25 @@
 
 
-## Lazy Loading para Embeds do Instagram
+## Limitar posts exibidos na vitrine Instagram
 
 ### O que muda
 
 **1 arquivo editado: `src/components/InstagramShowcase.tsx`**
 
-Usar `IntersectionObserver` na seção inteira para adiar o carregamento dos embeds até que o usuário role até ela.
+Na query que busca os posts, adicionar `.limit(6)` para trazer no máximo 6 posts do banco. Isso garante que mesmo com muitos posts cadastrados no admin, a vitrine exibe apenas os 6 primeiros (ordenados por `sort_order`).
 
-### Implementação
+### Detalhe técnico
 
-- Adicionar um estado `inView` (booleano, inicia `false`) no `InstagramShowcase`
-- Observar a `section` com `IntersectionObserver` (rootMargin `200px` para iniciar antes de aparecer)
-- Renderizar os `InstaEmbed` apenas quando `inView === true`; antes disso, mostrar placeholders com altura fixa (~480px) e fundo `bg-muted/30` animado
-- Observer desconecta após primeira interseção (one-shot)
-- Reutilizar o hook `useScrollAnimation` existente no projeto ou implementar inline para manter o componente auto-contido
+Linha da query atual:
+```ts
+.order("sort_order")
+```
 
-### Resultado
-- Os iframes do Instagram (pesados, ~1MB cada) só carregam quando o usuário se aproxima da seção
-- Melhora LCP e tempo de carregamento inicial da landing page
-- Sem mudança visual — o conteúdo aparece igual ao entrar no viewport
+Passa a ser:
+```ts
+.order("sort_order")
+.limit(6)
+```
+
+Sem outras alterações. O admin continua cadastrando quantos posts quiser — apenas a vitrine pública limita a exibição.
 
