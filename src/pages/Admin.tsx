@@ -77,7 +77,7 @@ const Admin = () => {
         />
         <div className="flex-1 flex flex-col min-h-screen">
           <AppHeader breadcrumbs={[{ label: "Admin" }]} />
-          <div className="flex items-center gap-2 border-b px-4 h-10">
+          <div className="sticky top-14 z-40 flex items-center gap-2 border-b px-4 h-10 bg-background">
             <SidebarTrigger />
             <h1 className="text-lg font-semibold">Painel Admin</h1>
           </div>
