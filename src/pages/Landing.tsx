@@ -253,6 +253,9 @@ const Landing = () => {
             </div>
           </section>
 
+          {/* Store Locator */}
+          <StoreLocator />
+
           {/* FAQ */}
           <FaqSection />
 
