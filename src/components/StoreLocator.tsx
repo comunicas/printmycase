@@ -159,8 +159,8 @@ const StoreLocator = () => {
     <section className="py-16 px-5 bg-background" id="lojas" aria-label="Lojas PrintMyCase">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center flex-1">
-            Encontre a PrintMyCase em {stores.length} Shopping Centers
+          <h2 className="text-2xl md:text-3xl font-bold text-center flex-1 text-accent-foreground">
+            A rede de capas personalizadas que mais cresce no Brasil.
           </h2>
         </div>
         <p className="text-center text-muted-foreground mb-10">
