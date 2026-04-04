@@ -72,6 +72,7 @@ const groups: { label: string; items: { key: AdminSection; label: string; icon: 
     items: [
       { key: "kb-categories", label: "KB Categorias", icon: FolderOpen },
       { key: "kb-articles", label: "KB Artigos", icon: FileQuestion },
+      { key: "instagram-posts", label: "Instagram", icon: Instagram },
       { key: "faq", label: "FAQ Home", icon: Star },
       { key: "legal", label: "Legal", icon: FileText },
     ],

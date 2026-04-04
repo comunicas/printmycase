@@ -226,7 +226,7 @@ const Landing = () => {
           {/* Store Locator */}
           <StoreLocator />
 
-
+          <InstagramShowcase />
 
 
           {/* Testimonials */}

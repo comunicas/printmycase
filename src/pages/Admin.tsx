@@ -43,6 +43,7 @@ const sectionMap: Record<AdminSection, React.ComponentType> = {
   "coin-packages": CoinPackagesManager,
   "kb-categories": KbCategoriesManager,
   "kb-articles": KbArticlesManager,
+  "instagram-posts": InstagramPostsManager,
   faq: FaqManager,
   legal: LegalDocsManager,
 };
