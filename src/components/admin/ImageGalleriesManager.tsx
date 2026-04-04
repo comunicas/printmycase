@@ -152,6 +152,9 @@ const ImageGalleriesManager = () => {
     }
   };
 
+  const { paginated: paginatedGalleries, page: galleryPage, setPage: setGalleryPage, totalPages: galleryTotalPages, totalItems: galleryTotalItems } = usePagination(galleries, 10);
+  const { paginated: paginatedImages, page: imgPage, setPage: setImgPage, totalPages: imgTotalPages, totalItems: imgTotalItems } = usePagination(images, 12);
+
   if (loading) return <p className="text-muted-foreground">Carregando...</p>;
 
   // Gallery images detail view
