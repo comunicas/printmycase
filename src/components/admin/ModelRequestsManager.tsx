@@ -54,9 +54,11 @@ const ModelRequestsManager = () => {
     setDeleteTarget(null);
   };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(requests, 10);
+
   if (loading) return <LoadingSpinner />;
 
-  const { paginated, page, setPage, totalPages, totalItems } = usePagination(requests, 10);
+  return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Solicitações de Modelo</h2>
