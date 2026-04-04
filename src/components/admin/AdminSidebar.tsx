@@ -78,8 +78,13 @@ const groups: { label: string; items: { key: AdminSection; label: string; icon: 
 ];
 
 const AdminSidebar = ({ activeSection, onSectionChange, onOptimize, optimizing }: AdminSidebarProps) => {
-  const { state } = useSidebar();
+  const { state, isMobile, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
+
+  const handleSelect = (key: AdminSection) => {
+    onSectionChange(key);
+    if (isMobile) toggleSidebar();
+  };
 
   return (
     <Sidebar collapsible="icon">
