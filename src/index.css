@@ -133,18 +133,6 @@
   box-shadow: 0 0 20px hsl(25 95% 53% / 0.45), 0 0 60px hsl(25 95% 53% / 0.15);
 }
 
-/* Utility: parallax background */
-.parallax-bg {
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-}
-
-@supports (-webkit-touch-callout: none) {
-  .parallax-bg {
-    background-attachment: scroll;
-  }
-}
 
 /* Hide scrollbar utility */
 .scrollbar-hide {

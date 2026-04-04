@@ -13,7 +13,7 @@ import AppHeader from "@/components/AppHeader";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import AiCoinsSection from "@/components/AiCoinsSection";
-import WhyPrintMyCase from "@/components/WhyPrintMyCase";
+
 import FaqSection from "@/components/FaqSection";
 import StoreLocator from "@/components/StoreLocator";
 import PaymentBadges from "@/components/PaymentBadges";
@@ -225,8 +225,6 @@ const Landing = () => {
           {/* Store Locator */}
           <StoreLocator />
 
-          {/* Benefits + Print Tech */}
-          <WhyPrintMyCase />
 
 
 
