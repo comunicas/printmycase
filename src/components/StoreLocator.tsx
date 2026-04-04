@@ -3,32 +3,18 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { MapPin } from "lucide-react";
 import ScrollReveal from "@/components/ScrollReveal";
+import { supabase } from "@/integrations/supabase/client";
 import "leaflet/dist/leaflet.css";
 
 interface Store {
-  id: number;
+  id: string;
   name: string;
   address: string;
   state: string;
-  stateLabel: string;
-  position: [number, number];
+  state_label: string;
+  lat: number;
+  lng: number;
 }
-
-const stores: Store[] = [
-  { id: 1, name: "Shopping Center 3", address: "Av. Paulista, 2064 – Cerqueira César, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5558, -46.6621] },
-  { id: 2, name: "Mooca Plaza Shopping", address: "Rua Capitão Pacheco e Chaves, 313 – Vila Prudente, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5732, -46.5928] },
-  { id: 3, name: "Shopping Taboão", address: "Rodovia Régis Bittencourt, km 272 – Taboão da Serra – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.6265, -46.7588] },
-  { id: 4, name: "Internacional Shopping Guarulhos", address: "Rodovia Presidente Dutra, km 225 – Guarulhos – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.4656, -46.5322] },
-  { id: 5, name: "Shopping Boulevard Tatuapé", address: "Rua Gonçalves Crespo, 78 – Tatuapé, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5362, -46.5764] },
-  { id: 6, name: "Shopping Metrô Tatuapé", address: "Rua Domingos Agostim, 91 – Tatuapé, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5405, -46.5753] },
-  { id: 7, name: "Shopping Metrô Tucuruvi", address: "Av. Dr. Antonio Maria Laet, 566 – Tucuruvi, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.4793, -46.6027] },
-  { id: 8, name: "Shopping Bourbon", address: "Rua Palestra Itália, 500 – Perdizes, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5276, -46.6802] },
-  { id: 9, name: "Tietê Plaza Shopping", address: "Av. Raimundo Pereira de Magalhães, 1465 – Pirituba, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.4859, -46.7267] },
-  { id: 10, name: "Pátio Central Shopping", address: "Rua Olegário Maciel, 742 – Centro, Patos de Minas – MG", state: "MG", stateLabel: "Minas Gerais (MG)", position: [-18.5881, -46.5181] },
-  { id: 11, name: "Via Café Shopping Center", address: "Av. Princesa do Sul, 1500 – Jardim Andere, Varginha – MG", state: "MG", stateLabel: "Minas Gerais (MG)", position: [-21.5610, -45.4357] },
-];
-
-const allBounds = L.latLngBounds(stores.map(s => s.position)).pad(0.1);
 
 const createPinIcon = (active: boolean) =>
   L.divIcon({
@@ -42,20 +28,39 @@ const createPinIcon = (active: boolean) =>
     </svg>`,
   });
 
-function MapController({ position, resetKey }: { position: [number, number] | null; resetKey: number }) {
+function MapController({ position, resetKey, bounds }: { position: [number, number] | null; resetKey: number; bounds: L.LatLngBounds | null }) {
   const map = useMap();
   useEffect(() => {
     if (position) map.flyTo(position, 13, { duration: 0.8 });
   }, [position, map]);
   useEffect(() => {
-    if (resetKey > 0) map.flyToBounds(allBounds, { duration: 0.8 });
-  }, [resetKey, map]);
+    if (resetKey > 0 && bounds) map.flyToBounds(bounds, { duration: 0.8 });
+  }, [resetKey, map, bounds]);
   return null;
 }
 
 const StoreLocator = () => {
-  const [selected, setSelected] = useState<number | null>(null);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
+
+  useEffect(() => {
+    supabase
+      .from("stores")
+      .select("id, name, address, state, state_label, lat, lng")
+      .eq("active", true)
+      .order("sort_order")
+      .then(({ data }) => {
+        setStores((data as Store[]) ?? []);
+        setLoading(false);
+      });
+  }, []);
+
+  const allBounds = useMemo(() => {
+    if (stores.length === 0) return null;
+    return L.latLngBounds(stores.map(s => [s.lat, s.lng] as [number, number])).pad(0.1);
+  }, [stores]);
 
   const grouped = useMemo(() => {
     const groups: { label: string; stores: Store[] }[] = [];
@@ -63,15 +68,16 @@ const StoreLocator = () => {
     for (const s of stores) {
       if (!seen.has(s.state)) {
         seen.add(s.state);
-        groups.push({ label: s.stateLabel, stores: stores.filter(x => x.state === s.state) });
+        groups.push({ label: s.state_label, stores: stores.filter(x => x.state === s.state) });
       }
     }
     return groups;
-  }, []);
+  }, [stores]);
 
-  const selectedPosition = selected ? stores.find(s => s.id === selected)?.position ?? null : null;
+  const selectedStore = selected ? stores.find(s => s.id === selected) : null;
+  const selectedPosition: [number, number] | null = selectedStore ? [selectedStore.lat, selectedStore.lng] : null;
 
-  const handleSelect = (id: number) => {
+  const handleSelect = (id: string) => {
     setSelected(id);
     const el = document.getElementById(`store-card-${id}`);
     el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -82,13 +88,26 @@ const StoreLocator = () => {
     setResetKey(k => k + 1);
   };
 
+  if (loading) {
+    return (
+      <section className="py-16 px-5 bg-background">
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="h-8 w-64 mx-auto bg-muted rounded animate-pulse mb-4" />
+          <div className="h-4 w-96 mx-auto bg-muted rounded animate-pulse" />
+        </div>
+      </section>
+    );
+  }
+
+  if (stores.length === 0) return null;
+
   return (
     <section className="py-16 px-5 bg-background">
       <div className="max-w-5xl mx-auto">
         <ScrollReveal>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center flex-1">
-              Presença real em 11 lojas ativas
+              Presença real em {stores.length} lojas ativas
             </h2>
           </div>
           <p className="text-center text-muted-foreground mb-10">
@@ -100,31 +119,33 @@ const StoreLocator = () => {
           <div className="grid md:grid-cols-2 gap-6">
             {/* Map */}
             <div className="relative rounded-2xl overflow-hidden shadow-sm h-[400px] md:h-[500px]">
-              <MapContainer
-                bounds={allBounds}
-                scrollWheelZoom={false}
-                className="h-full w-full"
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                />
-                <MapController position={selectedPosition} resetKey={resetKey} />
-                {stores.map(store => (
-                  <Marker
-                    key={store.id}
-                    position={store.position}
-                    icon={createPinIcon(selected === store.id)}
-                    eventHandlers={{ click: () => handleSelect(store.id) }}
-                  >
-                    <Popup>
-                      <strong>{store.name}</strong>
-                      <br />
-                      <span className="text-xs">{store.address}</span>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
+              {allBounds && (
+                <MapContainer
+                  bounds={allBounds}
+                  scrollWheelZoom={false}
+                  className="h-full w-full"
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                  />
+                  <MapController position={selectedPosition} resetKey={resetKey} bounds={allBounds} />
+                  {stores.map(store => (
+                    <Marker
+                      key={store.id}
+                      position={[store.lat, store.lng]}
+                      icon={createPinIcon(selected === store.id)}
+                      eventHandlers={{ click: () => handleSelect(store.id) }}
+                    >
+                      <Popup>
+                        <strong>{store.name}</strong>
+                        <br />
+                        <span className="text-xs">{store.address}</span>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              )}
               {selected && (
                 <button
                   onClick={handleReset}

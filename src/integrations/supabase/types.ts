@@ -897,6 +897,45 @@ export type Database = {
         }
         Relationships: []
       }
+      stores: {
+        Row: {
+          active: boolean
+          address: string
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          sort_order: number
+          state: string
+          state_label: string
+        }
+        Insert: {
+          active?: boolean
+          address: string
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          sort_order?: number
+          state: string
+          state_label: string
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          sort_order?: number
+          state?: string
+          state_label?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string

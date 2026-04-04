@@ -1,7 +1,7 @@
 import {
   Package, Truck, Smartphone, Wand2, Coins, FileText,
   FolderOpen, FileQuestion, Star, Image as ImageIcon,
-  Sparkles, Layers, Settings, Users, Zap, Palette,
+  Sparkles, Layers, Settings, Users, Zap, Palette, MapPin,
 } from "lucide-react";
 import {
   Sidebar,
@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 
 export type AdminSection =
   | "orders" | "users" | "requests"
-  | "products" | "collections" | "designs"
+  | "products" | "collections" | "designs" | "stores"
   | "ai-filters" | "ai-categories" | "illustrations" | "galleries" | "ai-generations" | "user-generations"
   | "coin-transactions" | "coin-packages"
   | "kb-categories" | "kb-articles" | "faq" | "legal";
@@ -46,6 +46,7 @@ const groups: { label: string; items: { key: AdminSection; label: string; icon: 
       { key: "products", label: "Produtos", icon: Package },
       { key: "collections", label: "Coleções", icon: Palette },
       { key: "designs", label: "Designs", icon: ImageIcon },
+      { key: "stores", label: "Lojas", icon: MapPin },
     ],
   },
   {
