@@ -22,6 +22,8 @@ interface Store {
   active: boolean;
   sort_order: number;
   created_at: string;
+  instagram_url: string | null;
+  slug: string | null;
 }
 
 const StoresManager = () => {
