@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 
 export type AdminSection =
   | "orders" | "users" | "requests"
-  | "products" | "collections" | "designs"
+  | "products" | "collections" | "designs" | "stores"
   | "ai-filters" | "ai-categories" | "illustrations" | "galleries" | "ai-generations" | "user-generations"
   | "coin-transactions" | "coin-packages"
   | "kb-categories" | "kb-articles" | "faq" | "legal";
