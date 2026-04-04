@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 import {
   Dialog,
   DialogContent,
@@ -233,6 +235,8 @@ const AiFiltersManager = () => {
     fetchFilters();
   };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(filters, 10);
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -248,13 +252,15 @@ const AiFiltersManager = () => {
         <p className="text-muted-foreground text-center py-12">Nenhum filtro cadastrado.</p>
       ) : (
         <div className="space-y-2">
-          {filters.map((filter, idx) => (
+          {paginated.map((filter) => {
+            const globalIdx = filters.findIndex((f) => f.id === filter.id);
+            return (
             <div key={filter.id} className={`border rounded-xl p-4 bg-card flex flex-col sm:flex-row sm:items-center gap-3 ${!filter.active ? "opacity-50" : ""}`}>
               <div className="flex flex-col gap-0.5 mr-2">
-                <button onClick={() => handleMove(filter, "up")} disabled={idx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <button onClick={() => handleMove(filter, "up")} disabled={globalIdx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronUp className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleMove(filter, "down")} disabled={idx === filters.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <button onClick={() => handleMove(filter, "down")} disabled={globalIdx === filters.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
@@ -279,9 +285,12 @@ const AiFiltersManager = () => {
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

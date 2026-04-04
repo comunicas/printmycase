@@ -10,6 +10,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import FormField from "@/components/ui/form-field";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface FilterCategory {
   id: string;
@@ -85,6 +87,8 @@ const AiFilterCategoriesManager = () => {
     fetchData();
   };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(items, 10);
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -98,13 +102,15 @@ const AiFilterCategoriesManager = () => {
         <p className="text-muted-foreground text-center py-12">Nenhuma categoria cadastrada.</p>
       ) : (
         <div className="space-y-2">
-          {items.map((c, idx) => (
+          {paginated.map((c) => {
+            const globalIdx = items.findIndex((i) => i.id === c.id);
+            return (
             <div key={c.id} className={`border rounded-xl p-4 bg-card flex items-center gap-3 ${!c.active ? "opacity-50" : ""}`}>
               <div className="flex flex-col gap-0.5 mr-2">
-                <button onClick={() => handleMove(c, "up")} disabled={idx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <button onClick={() => handleMove(c, "up")} disabled={globalIdx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronUp className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleMove(c, "down")} disabled={idx === items.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <button onClick={() => handleMove(c, "down")} disabled={globalIdx === items.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
@@ -119,9 +125,12 @@ const AiFilterCategoriesManager = () => {
                 <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(c)}><Trash2 className="w-4 h-4" /></Button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

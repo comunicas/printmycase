@@ -10,6 +10,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import FormField from "@/components/ui/form-field";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface Faq {
   id: string;
@@ -126,6 +128,8 @@ const FaqManager = () => {
     fetchData();
   };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(faqs, 10);
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -139,13 +143,15 @@ const FaqManager = () => {
         <p className="text-muted-foreground text-center py-12">Nenhuma pergunta cadastrada.</p>
       ) : (
         <div className="space-y-2">
-          {faqs.map((faq, idx) => (
+          {paginated.map((faq) => {
+            const globalIdx = faqs.findIndex((f) => f.id === faq.id);
+            return (
             <div key={faq.id} className={`border rounded-xl p-4 bg-card flex flex-col sm:flex-row sm:items-center gap-3 ${!faq.active ? "opacity-50" : ""}`}>
               <div className="flex flex-col gap-0.5 mr-2">
-                <button onClick={() => handleMove(faq, "up")} disabled={idx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <button onClick={() => handleMove(faq, "up")} disabled={globalIdx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronUp className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleMove(faq, "down")} disabled={idx === faqs.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <button onClick={() => handleMove(faq, "down")} disabled={globalIdx === faqs.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
@@ -170,9 +176,12 @@ const FaqManager = () => {
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

@@ -11,6 +11,8 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import { formatPrice } from "@/lib/types";
 import type { Tables } from "@/integrations/supabase/types";
 import { optimizeForUpload } from "@/lib/image-utils";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 type Collection = Tables<"collections">;
 type Design = Tables<"collection_designs">;
@@ -55,6 +57,8 @@ const CollectionDesignsManager = () => {
   }, [selectedCollectionId]);
 
   useEffect(() => { fetchDesigns(); }, [fetchDesigns]);
+
+  const { paginated: paginatedDesigns, page: designPage, setPage: setDesignPage, totalPages: designTotalPages, totalItems: designTotalItems } = usePagination(designs, 12);
 
   const openNew = () => {
     setEditing(null);
@@ -153,26 +157,29 @@ const CollectionDesignsManager = () => {
       {loading ? <LoadingSpinner /> : designs.length === 0 ? (
         <p className="text-muted-foreground text-center py-12">Nenhum design nesta coleção.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {designs.map((d) => (
-            <div key={d.id} className="border rounded-xl overflow-hidden bg-card">
-              <div className="aspect-square overflow-hidden bg-muted">
-                <img src={d.image_url} alt={d.name} width={300} height={300} className="w-full h-full object-cover" loading="lazy" />
-              </div>
-              <div className="p-3 space-y-1">
-                <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
-                <p className="text-sm font-bold text-foreground">{formatPrice(d.price_cents / 100)}</p>
-                <div className="flex gap-1 pt-1">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleToggleActive(d)}>
-                    {d.active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(d)}><Pencil className="h-3.5 w-3.5" /></Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeleteTarget(d)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {paginatedDesigns.map((d) => (
+              <div key={d.id} className="border rounded-xl overflow-hidden bg-card">
+                <div className="aspect-square overflow-hidden bg-muted">
+                  <img src={d.image_url} alt={d.name} width={300} height={300} className="w-full h-full object-cover" loading="lazy" />
+                </div>
+                <div className="p-3 space-y-1">
+                  <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
+                  <p className="text-sm font-bold text-foreground">{formatPrice(d.price_cents / 100)}</p>
+                  <div className="flex gap-1 pt-1">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleToggleActive(d)}>
+                      {d.active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(d)}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeleteTarget(d)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          <Pagination page={designPage} totalPages={designTotalPages} onPageChange={setDesignPage} totalItems={designTotalItems} />
+        </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

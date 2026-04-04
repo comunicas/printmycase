@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Plus, Trash2, Upload, ChevronLeft, Image as ImageIcon, Eye, EyeOff } from "lucide-react";
 import { optimizeForUpload } from "@/lib/image-utils";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface Gallery {
   id: string;
@@ -150,6 +152,9 @@ const ImageGalleriesManager = () => {
     }
   };
 
+  const { paginated: paginatedGalleries, page: galleryPage, setPage: setGalleryPage, totalPages: galleryTotalPages, totalItems: galleryTotalItems } = usePagination(galleries, 10);
+  const { paginated: paginatedImages, page: imgPage, setPage: setImgPage, totalPages: imgTotalPages, totalItems: imgTotalItems } = usePagination(images, 12);
+
   if (loading) return <p className="text-muted-foreground">Carregando...</p>;
 
   // Gallery images detail view
@@ -180,22 +185,25 @@ const ImageGalleriesManager = () => {
         ) : images.length === 0 ? (
           <p className="text-muted-foreground text-center py-10">Nenhuma imagem. Envie um ZIP ou imagem individual.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {images.map(img => (
-              <div key={img.id} className={`relative group rounded-lg border overflow-hidden ${!img.active ? "opacity-40" : ""}`}>
-                <img src={img.url} alt={img.label} className="w-full aspect-square object-cover" />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
-                  <Button size="icon" variant="ghost" className="text-white h-8 w-8" onClick={() => toggleActive("image", img.id, !img.active)}>
-                    {img.active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </Button>
-                  <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => setDeleteTarget({ type: "image", item: img })}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {paginatedImages.map(img => (
+                <div key={img.id} className={`relative group rounded-lg border overflow-hidden ${!img.active ? "opacity-40" : ""}`}>
+                  <img src={img.url} alt={img.label} className="w-full aspect-square object-cover" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                    <Button size="icon" variant="ghost" className="text-white h-8 w-8" onClick={() => toggleActive("image", img.id, !img.active)}>
+                      {img.active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => setDeleteTarget({ type: "image", item: img })}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs truncate px-1 py-0.5 bg-background/80">{img.label}</p>
                 </div>
-                <p className="text-xs truncate px-1 py-0.5 bg-background/80">{img.label}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            <Pagination page={imgPage} totalPages={imgTotalPages} onPageChange={setImgPage} totalItems={imgTotalItems} />
+          </>
         )}
 
         <ConfirmDialog
@@ -236,7 +244,7 @@ const ImageGalleriesManager = () => {
         <p className="text-muted-foreground text-center py-10">Nenhuma galeria criada.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {galleries.map(g => (
+          {paginatedGalleries.map(g => (
             <div
               key={g.id}
               className={`rounded-lg border bg-card p-4 cursor-pointer hover:border-primary transition-colors ${!g.active ? "opacity-50" : ""}`}
@@ -267,6 +275,8 @@ const ImageGalleriesManager = () => {
           ))}
         </div>
       )}
+
+      <Pagination page={galleryPage} totalPages={galleryTotalPages} onPageChange={setGalleryPage} totalItems={galleryTotalItems} />
 
       <ConfirmDialog
         open={!!deleteTarget}

@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Upload, Trash2, GripVertical } from "lucide-react";
 import { optimizeForUpload } from "@/lib/image-utils";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface GalleryImage {
   id: string;
@@ -110,6 +112,8 @@ const GalleryImagesManager = () => {
     setImages(updated.map((img, i) => ({ ...img, sort_order: i })));
   };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(images, 12);
+
   if (loading) return <p className="text-muted-foreground">Carregando...</p>;
 
   return (
@@ -142,7 +146,9 @@ const GalleryImagesManager = () => {
       )}
 
       <div className="space-y-3">
-        {images.map((img, index) => (
+        {paginated.map((img, index) => {
+          const globalIndex = images.findIndex((i) => i.id === img.id);
+          return (
           <div
             key={img.id}
             className="flex items-center gap-4 rounded-lg border bg-card p-3"
@@ -151,7 +157,7 @@ const GalleryImagesManager = () => {
               <button
                 type="button"
                 onClick={() => moveImage(index, -1)}
-                disabled={index === 0}
+                disabled={globalIndex === 0}
                 className="text-muted-foreground hover:text-foreground disabled:opacity-30"
               >
                 <GripVertical className="w-4 h-4 rotate-180" />
@@ -159,7 +165,7 @@ const GalleryImagesManager = () => {
               <button
                 type="button"
                 onClick={() => moveImage(index, 1)}
-                disabled={index === images.length - 1}
+                disabled={globalIndex === images.length - 1}
                 className="text-muted-foreground hover:text-foreground disabled:opacity-30"
               >
                 <GripVertical className="w-4 h-4" />
@@ -198,8 +204,11 @@ const GalleryImagesManager = () => {
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
-        ))}
+          );
+        })}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <ConfirmDialog
         open={!!deleteTarget}

@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil } from "lucide-react";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface LegalDoc {
   slug: string;
@@ -46,11 +48,13 @@ const LegalDocsManager = () => {
     }
   };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(docs, 10);
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Documentos Legais</h2>
       <div className="space-y-3">
-        {docs.map((doc) => (
+        {paginated.map((doc) => (
           <div key={doc.slug} className="flex items-center justify-between p-4 border rounded-lg bg-card">
             <div>
               <p className="font-medium">{doc.title}</p>
@@ -68,6 +72,7 @@ const LegalDocsManager = () => {
           </div>
         ))}
       </div>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">

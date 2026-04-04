@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import ProductsTable from "@/components/admin/ProductsTable";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import BulkPriceDialog from "@/components/admin/BulkPriceDialog";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { type Product } from "@/lib/types";
 
 const ProductsManager = () => {
@@ -94,6 +96,8 @@ const ProductsManager = () => {
   const handleNew = () => { setEditingProduct(null); setDialogOpen(true); };
   const handleSaved = () => { setDialogOpen(false); setEditingProduct(null); fetchProducts(); };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(products, 10);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -141,13 +145,15 @@ const ProductsManager = () => {
       )}
 
       <ProductsTable
-        products={products}
+        products={paginated}
         loading={loading}
         onEdit={handleEdit}
         onToggleActive={handleToggleActive}
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
       />
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <ProductFormDialog open={dialogOpen} onOpenChange={setDialogOpen} product={editingProduct} onSaved={handleSaved} />
 

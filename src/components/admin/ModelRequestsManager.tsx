@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Trash2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface ModelRequest {
   id: string;
@@ -52,6 +54,8 @@ const ModelRequestsManager = () => {
     setDeleteTarget(null);
   };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(requests, 10);
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -70,7 +74,7 @@ const ModelRequestsManager = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {requests.map((r) => (
+          {paginated.map((r) => (
             <div key={r.id} className="border rounded-xl p-4 bg-card flex items-center justify-between gap-4">
               <div className="space-y-0.5 min-w-0">
                 <p className="text-sm font-medium text-foreground">{r.model_name}</p>
@@ -92,6 +96,7 @@ const ModelRequestsManager = () => {
           ))}
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
       <ConfirmDialog
         open={!!deleteTarget}
         onConfirm={confirmDelete}

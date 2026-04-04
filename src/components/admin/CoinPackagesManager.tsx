@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface CoinPackage {
   id: string;
@@ -96,6 +98,7 @@ const CoinPackagesManager = () => {
   if (loading) {
     return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(packages, 10);
 
   return (
     <div className="space-y-4">
@@ -113,7 +116,7 @@ const CoinPackagesManager = () => {
       </div>
 
       <div className="space-y-2">
-        {packages.map((pkg) => (
+        {paginated.map((pkg) => (
           <div key={pkg.id} className="grid grid-cols-[1fr_1fr_1fr_80px_60px_40px] gap-2 items-center border rounded-lg p-3 bg-card">
             <div className="space-y-0.5">
               <label className="text-[10px] text-muted-foreground">Moedas</label>
@@ -170,6 +173,8 @@ const CoinPackagesManager = () => {
           </div>
         ))}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <ConfirmDialog
         open={!!deleteId}

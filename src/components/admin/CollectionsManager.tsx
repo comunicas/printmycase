@@ -10,6 +10,8 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import type { Tables } from "@/integrations/supabase/types";
 import { optimizeForUpload } from "@/lib/image-utils";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 type Collection = Tables<"collections">;
 
@@ -107,6 +109,8 @@ const CollectionsManager = () => {
     if (!editing) setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
   };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(collections, 10);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -118,7 +122,7 @@ const CollectionsManager = () => {
         <p className="text-muted-foreground text-center py-12">Nenhuma coleção cadastrada.</p>
       ) : (
         <div className="space-y-3">
-          {collections.map((c) => (
+          {paginated.map((c) => (
             <div key={c.id} className="border rounded-xl p-4 bg-card flex items-center gap-4">
               {c.cover_image && <img src={c.cover_image} alt={c.name} className="w-16 h-12 rounded-lg object-cover flex-shrink-0" />}
               <div className="flex-1 min-w-0">
@@ -136,6 +140,8 @@ const CollectionsManager = () => {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
