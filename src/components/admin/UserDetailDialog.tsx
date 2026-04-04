@@ -131,7 +131,7 @@ const UserDetailDialog = ({ open, onClose, user }: UserDetailDialogProps) => {
                       <p className="text-xs text-muted-foreground">{fmtDate(o.created_at)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">{formatPrice(o.total_cents)}</p>
+                      <p className="font-semibold">{formatPrice(o.total_cents / 100)}</p>
                       {o.tracking_code && (
                         <p className="text-xs text-muted-foreground">Rastreio: {o.tracking_code}</p>
                       )}
