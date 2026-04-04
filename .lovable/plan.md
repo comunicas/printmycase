@@ -1,28 +1,34 @@
 
-## Resumo de Coins por Usuário + Paginação na Tab de Gerações
 
-### Mudanças
+## Adicionar Lista de Usuários Cadastrados no Admin
 
-**1. Substituir infinite scroll por paginação tradicional**
-- Remover `IntersectionObserver`, `sentinelRef`, `offsetRef`, `hasMore`
-- Usar paginação server-side com `page` state e `range(from, to)` no Supabase
-- Buscar count total com `select("*", { count: "exact", head: true })` para calcular `totalPages`
-- Reutilizar o componente `Pagination` já existente em `src/components/admin/Pagination.tsx`
-- PAGE_SIZE = 12 (grid visual)
+### Onde colocar
+Nova tab "Usuários" no painel admin, entre "Pedidos" e "Coleções". Ícone: `Users` do lucide-react.
 
-**2. Adicionar resumo/totalizador de coins gastos por usuário**
-- Nova query separada no mount: buscar todas as gerações agrupadas por `user_id` e `generation_type`, contando ocorrências
-- Calcular coins gastos: `count(filter) * ai_filter_cost + count(upscale) * ai_upscale_cost`
-- Exibir um painel resumo no topo com cards:
-  - Total de gerações
-  - Total de coins gastos (global)
-  - Top 5 usuários por gasto (nome + coins)
-- Buscar nomes dos top users via `profiles`
+### O que exibir
+- Tabela com: Nome, Email, Telefone, Data de cadastro, Saldo de coins, Qtd de pedidos
+- Busca por nome/email
+- Paginação (PAGE_SIZE = 10)
+- Card resumo no topo: total de usuários cadastrados
 
-### Arquivo editado
-- `src/components/admin/UserGenerationsManager.tsx`
+### Como buscar os dados
+- `profiles` table: id, full_name, phone, avatar_url, created_at (admin já tem SELECT via RLS)
+- Email: vem de `auth.users` que não é acessível via client SDK. Solução: criar uma **edge function** `admin-list-users` que usa `supabase.auth.admin.listUsers()` com service role key e retorna id + email, mapeando com profiles no frontend
+- Saldo de coins: usar a função `get_coin_balance(user_id)` existente, ou calcular client-side a partir de `coin_transactions`
+- Qtd de pedidos: query em `orders` agrupada por `user_id`
 
-### Detalhes técnicos
-- A query de resumo será: `SELECT user_id, generation_type, count(*) FROM user_ai_generations GROUP BY user_id, generation_type` — feita via RPC ou query simples iterando resultados
-- Como não temos RPC para agregação, faremos `select("user_id, generation_type")` com limit alto (1000) e agregaremos no client
-- Paginação: a query principal usa `.range(page * PAGE_SIZE, (page+1) * PAGE_SIZE - 1)` com count exact para total
+### Arquivos
+1. **Nova edge function**: `supabase/functions/admin-list-users/index.ts` — retorna lista de auth users (id, email, created_at) com verificação de admin role
+2. **Novo componente**: `src/components/admin/UsersManager.tsx` — tabela de usuários com busca e paginação
+3. **Editar**: `src/pages/Admin.tsx` — adicionar tab "Usuários"
+
+### Fluxo de dados
+```text
+UsersManager mount
+  ├─ fetch edge fn admin-list-users → { id, email, created_at }[]
+  ├─ fetch profiles (full_name, phone, avatar_url)
+  ├─ fetch coin_transactions (agregar saldo por user)
+  ├─ fetch orders count por user
+  └─ merge tudo por user_id → render tabela
+```
+
