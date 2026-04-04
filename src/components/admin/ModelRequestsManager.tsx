@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Trash2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface ModelRequest {
   id: string;
