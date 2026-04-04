@@ -2,8 +2,9 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Search, Users, Coins } from "lucide-react";
+import { Search, Users, Coins, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
+import UserDetailDialog from "@/components/admin/UserDetailDialog";
 
 interface AuthUser {
   id: string;
@@ -30,6 +31,9 @@ interface MergedUser {
   order_count: number;
 }
 
+type SortKey = "created_at" | "full_name" | "coin_balance" | "order_count";
+type SortDir = "asc" | "desc";
+
 const PAGE_SIZE = 10;
 
 const UsersManager = () => {
@@ -37,6 +41,11 @@ const UsersManager = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("created_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [selectedUser, setSelectedUser] = useState<MergedUser | null>(null);
 
   useEffect(() => {
     fetchAll();
@@ -45,30 +54,24 @@ const UsersManager = () => {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      // 1. Fetch auth users via edge function
       const { data: authData, error: authError } = await supabase.functions.invoke("admin-list-users");
       if (authError) throw authError;
       const authUsers: AuthUser[] = authData?.users || [];
 
-      // 2. Fetch profiles
       const { data: profiles } = await supabase.from("profiles").select("id, full_name, phone, avatar_url, created_at");
 
-      // 3. Fetch coin balances from coin_transactions
       const { data: transactions } = await supabase
         .from("coin_transactions")
         .select("user_id, amount, expires_at");
 
-      // 4. Fetch order counts
       const { data: orders } = await supabase
         .from("orders")
         .select("user_id")
         .neq("status", "pending");
 
-      // Build lookup maps
       const profileMap = new Map<string, Profile>();
       (profiles || []).forEach((p) => profileMap.set(p.id, p));
 
-      // Calculate balances (same logic as get_coin_balance)
       const now = new Date();
       const balanceMap = new Map<string, number>();
       (transactions || []).forEach((t) => {
@@ -79,13 +82,11 @@ const UsersManager = () => {
         }
       });
 
-      // Count orders per user
       const orderCountMap = new Map<string, number>();
       (orders || []).forEach((o) => {
         orderCountMap.set(o.user_id, (orderCountMap.get(o.user_id) || 0) + 1);
       });
 
-      // Merge
       const merged: MergedUser[] = authUsers.map((au) => {
         const profile = profileMap.get(au.id);
         return {
@@ -100,8 +101,6 @@ const UsersManager = () => {
         };
       });
 
-      // Sort by created_at desc
-      merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setUsers(merged);
     } catch (err: any) {
       console.error("Error fetching users:", err);
@@ -111,15 +110,46 @@ const UsersManager = () => {
   };
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return users;
-    const q = search.toLowerCase();
-    return users.filter(
-      (u) =>
-        u.full_name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        (u.phone && u.phone.includes(q))
-    );
-  }, [users, search]);
+    let result = users;
+
+    // Search filter
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (u) =>
+          u.full_name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          (u.phone && u.phone.includes(q))
+      );
+    }
+
+    // Date range filter
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      result = result.filter((u) => new Date(u.created_at) >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo + "T23:59:59");
+      result = result.filter((u) => new Date(u.created_at) <= to);
+    }
+
+    // Sort
+    result = [...result].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "full_name") {
+        cmp = a.full_name.localeCompare(b.full_name);
+      } else if (sortKey === "coin_balance") {
+        cmp = a.coin_balance - b.coin_balance;
+      } else if (sortKey === "order_count") {
+        cmp = a.order_count - b.order_count;
+      } else {
+        cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return result;
+  }, [users, search, dateFrom, dateTo, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = useMemo(
@@ -127,13 +157,29 @@ const UsersManager = () => {
     [filtered, page]
   );
 
-  // Reset page when search changes
+  // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [search]);
+  }, [search, dateFrom, dateTo, sortKey, sortDir]);
 
   const fmtDate = (d: string) =>
     new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3.5 h-3.5 ml-1 inline opacity-40" />;
+    return sortDir === "asc"
+      ? <ArrowUp className="w-3.5 h-3.5 ml-1 inline text-primary" />
+      : <ArrowDown className="w-3.5 h-3.5 ml-1 inline text-primary" />;
+  };
 
   return (
     <div className="space-y-6">
@@ -166,15 +212,45 @@ const UsersManager = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome, email ou telefone…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      {/* Filters */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, email ou telefone…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex items-end gap-2">
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">De</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-10 px-3 rounded-md border bg-background text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Até</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-10 px-3 rounded-md border bg-background text-sm"
+            />
+          </div>
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => { setDateFrom(""); setDateTo(""); }}
+              className="h-10 px-3 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Limpar
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -185,12 +261,20 @@ const UsersManager = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
+                <TableHead className="cursor-pointer select-none" onClick={() => handleSort("full_name")}>
+                  Nome <SortIcon col="full_name" />
+                </TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Telefone</TableHead>
-                <TableHead>Cadastro</TableHead>
-                <TableHead className="text-right">Coins</TableHead>
-                <TableHead className="text-right">Pedidos</TableHead>
+                <TableHead className="cursor-pointer select-none" onClick={() => handleSort("created_at")}>
+                  Cadastro <SortIcon col="created_at" />
+                </TableHead>
+                <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("coin_balance")}>
+                  Coins <SortIcon col="coin_balance" />
+                </TableHead>
+                <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("order_count")}>
+                  Pedidos <SortIcon col="order_count" />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -202,7 +286,11 @@ const UsersManager = () => {
                 </TableRow>
               ) : (
                 paginated.map((u) => (
-                  <TableRow key={u.id}>
+                  <TableRow
+                    key={u.id}
+                    className="cursor-pointer"
+                    onClick={() => setSelectedUser(u)}
+                  >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {u.avatar_url ? (
@@ -219,9 +307,7 @@ const UsersManager = () => {
                     <TableCell className="text-sm">{u.phone || "—"}</TableCell>
                     <TableCell className="text-sm">{fmtDate(u.created_at)}</TableCell>
                     <TableCell className="text-right">
-                      <span className="inline-flex items-center gap-1 text-sm">
-                        🪙 {u.coin_balance}
-                      </span>
+                      <span className="inline-flex items-center gap-1 text-sm">🪙 {u.coin_balance}</span>
                     </TableCell>
                     <TableCell className="text-right text-sm">{u.order_count}</TableCell>
                   </TableRow>
@@ -238,6 +324,13 @@ const UsersManager = () => {
           />
         </>
       )}
+
+      {/* User Detail Dialog */}
+      <UserDetailDialog
+        open={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        user={selectedUser}
+      />
     </div>
   );
 };
