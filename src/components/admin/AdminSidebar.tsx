@@ -46,6 +46,7 @@ const groups: { label: string; items: { key: AdminSection; label: string; icon: 
       { key: "products", label: "Produtos", icon: Package },
       { key: "collections", label: "Coleções", icon: Palette },
       { key: "designs", label: "Designs", icon: ImageIcon },
+      { key: "stores", label: "Lojas", icon: MapPin },
     ],
   },
   {
