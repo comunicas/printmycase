@@ -204,8 +204,11 @@ const GalleryImagesManager = () => {
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
-        ))}
+          );
+        })}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <ConfirmDialog
         open={!!deleteTarget}
