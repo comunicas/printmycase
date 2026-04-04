@@ -142,7 +142,7 @@ const ProductsManager = () => {
         </div>
       )}
 
-      <ProductsTable
+      <ProductsTablePaginated
         products={products}
         loading={loading}
         onEdit={handleEdit}
