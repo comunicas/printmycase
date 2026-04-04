@@ -92,7 +92,7 @@ const StoreLocator = () => {
             </h2>
           </div>
           <p className="text-center text-muted-foreground mb-10">
-            Visite uma de nossas lojas físicas
+            A PrintMyCase já opera em shopping centers estratégicos, com expansão contínua para novas regiões.
           </p>
         </ScrollReveal>
 
