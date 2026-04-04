@@ -146,7 +146,9 @@ const GalleryImagesManager = () => {
       )}
 
       <div className="space-y-3">
-        {images.map((img, index) => (
+        {paginated.map((img, index) => {
+          const globalIndex = images.findIndex((i) => i.id === img.id);
+          return (
           <div
             key={img.id}
             className="flex items-center gap-4 rounded-lg border bg-card p-3"
