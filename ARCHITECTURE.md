@@ -60,16 +60,18 @@ Landing → Catálogo → Produto → Customizar → Checkout → Pedidos
 src/
 ├── components/
 │   ├── ui/              # Componentes base shadcn/ui
-│   ├── admin/           # ProductsTable, ProductFormDialog, BulkPriceDialog,
-│   │                    # AiFiltersManager, AiFilterCategoriesManager,
-│   │                    # AiGenerationsManager, AiImageGenerator,
-│   │                    # ModelRequestsManager, DeviceImageUpload,
-│   │                    # CollectionsManager, CollectionDesignsManager, CoinsManager,
+│   ├── admin/           # AdminSidebar, ProductsTable, ProductFormDialog,
+│   │                    # BulkPriceDialog, AiFiltersManager,
+│   │                    # AiFilterCategoriesManager, AiGenerationsManager,
+│   │                    # AiImageGenerator, ModelRequestsManager,
+│   │                    # DeviceImageUpload, CollectionsManager,
+│   │                    # CollectionDesignsManager, CoinsManager,
 │   │                    # CoinPackagesManager, FaqManager, KbCategoriesManager,
 │   │                    # KbArticlesManager, LegalDocsManager, GalleryImagesManager,
 │   │                    # ImageGalleriesManager, UserGenerationsManager,
-│   │                    # OrdersManager, OrderImagesPreviewer, ConfirmDialog,
-│   │                    # ProductImagesUpload
+│   │                    # UsersManager, UserDetailDialog, OrdersManager,
+│   │                    # OrderDetailDialog, OrderImagesPreviewer,
+│   │                    # Pagination, ConfirmDialog, ProductImagesUpload
 │   ├── checkout/        # AddressForm, OrderSummary
 │   ├── customize/       # AdjustmentsPanel, AiFiltersList, ContinueBar,
 │   │                    # CustomizeHeader, FilterConfirmDialog, ImageControls,
