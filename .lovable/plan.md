@@ -1,29 +1,38 @@
 
 
-## Refinar visual do InstagramShowcase — Minimalista
+## Fix: Instagram Embeds conflicting with React DOM
 
-### O que muda
+### Problem
+Instagram's `embed.js` script replaces the `blockquote` elements with iframes. Since React manages those DOM nodes, when React tries to update or unmount, it fails with `removeChild` errors because the original nodes no longer exist.
 
-**1 arquivo editado: `src/components/InstagramShowcase.tsx`**
+### Solution
+Use a ref-based approach where each embed container is managed outside React's virtual DOM. Instead of rendering `blockquote` elements as JSX, inject them via `innerHTML` on a ref'd div. This way Instagram can freely replace the content without conflicting with React.
 
-Simplificar ao máximo:
-- Remover o heading "Siga a PrintMyCase no Instagram" e o subtítulo
-- Remover `ScrollReveal` (animações desnecessárias para minimalismo)
-- Manter apenas os embeds nativos (vídeo/post) em grid limpo
-- Manter o link `@printmycasebr` no final, discreto
-- Remover background `bg-muted/30` — fundo transparente
-- Reduzir padding vertical
-- Grid: 3 colunas desktop, scroll horizontal mobile (sem mudança estrutural)
+### Changes
 
-### Resultado visual
+**1 file edited: `src/components/InstagramShowcase.tsx`**
 
-```text
-┌─────────────────────────────────────────────┐
-│  [embed 1]    [embed 2]    [embed 3]        │
-│                                             │
-│            @printmycasebr                   │
-└─────────────────────────────────────────────┘
+- Create a sub-component `InstaEmbed` that:
+  - Uses a `ref` on a wrapper `div`
+  - On mount, sets `ref.current.innerHTML` with the blockquote HTML
+  - Calls `window.instgrm.Embeds.process()` after injection
+  - Returns an empty div (React never touches the inner content)
+- Remove the direct `blockquote` JSX rendering
+- Keep the data fetching, layout grid, and `@printmycasebr` link unchanged
+
+### Key code pattern
+
+```tsx
+const InstaEmbed = ({ url }: { url: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${url}" data-instgrm-version="14" style="..."></blockquote>`;
+    loadEmbedScript();
+  }, [url]);
+  return <div ref={ref} />;
+};
 ```
 
-Apenas os embeds nativos do Instagram (com vídeo interativo) e o link do perfil embaixo. Nada mais.
+This isolates Instagram's DOM mutations from React's reconciliation, eliminating the `removeChild` error.
 
