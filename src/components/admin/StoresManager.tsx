@@ -41,6 +41,8 @@ const StoresManager = () => {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [slug, setSlug] = useState("");
   const [geocoding, setGeocoding] = useState(false);
 
   const handleGeocode = async () => {
