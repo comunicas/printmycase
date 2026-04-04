@@ -49,6 +49,7 @@ const InstagramShowcase = () => {
       .select("id, post_url, caption")
       .eq("active", true)
       .order("sort_order")
+      .limit(6)
       .then(({ data }) => {
         if (data?.length) setPosts(data as InstaPost[]);
       });
