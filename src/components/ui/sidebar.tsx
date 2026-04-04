@@ -175,13 +175,13 @@ const Sidebar = React.forwardRef<
         <div className="md:hidden">
           {openMobile && (
             <div
-              className="fixed inset-0 z-50 bg-black/50"
+              className="fixed inset-0 z-[60] bg-black/50"
               onClick={() => setOpenMobile(false)}
             />
           )}
           <div
             className={cn(
-              "fixed inset-y-0 z-50 flex w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground transition-transform duration-200",
+              "fixed inset-y-0 z-[60] flex w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground transition-transform duration-200",
               side === "left" ? "left-0" : "right-0",
               openMobile
                 ? "translate-x-0"
