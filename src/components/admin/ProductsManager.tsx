@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProductsTable from "@/components/admin/ProductsTable";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import BulkPriceDialog from "@/components/admin/BulkPriceDialog";
 import Pagination from "@/components/admin/Pagination";
 import { usePagination } from "@/hooks/usePagination";
-import BulkPriceDialog from "@/components/admin/BulkPriceDialog";
 import { type Product } from "@/lib/types";
 
 const ProductsManager = () => {
