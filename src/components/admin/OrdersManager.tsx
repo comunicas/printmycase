@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import LoadingSpinner from "@/components/ui/loading-spinner";
-import OrderImagesPreviewer from "@/components/admin/OrderImagesPreviewer";
+import OrderDetailDialog from "@/components/admin/OrderDetailDialog";
 import { statusLabels } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
@@ -23,12 +22,23 @@ type OrderRow = Tables<"orders"> & {
 
 const PAGE_SIZE = 10;
 
+const statusColorMap: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  paid: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  analyzing: "bg-blue-100 text-blue-800 border-blue-300",
+  customizing: "bg-blue-100 text-blue-800 border-blue-300",
+  producing: "bg-purple-100 text-purple-800 border-purple-300",
+  shipped: "bg-indigo-100 text-indigo-800 border-indigo-300",
+  delivered: "bg-green-100 text-green-800 border-green-300",
+  cancelled: "bg-red-100 text-red-800 border-red-300",
+};
+
 const OrdersManager = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [trackingInputs, setTrackingInputs] = useState<Record<string, string>>({});
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const { toast } = useToast();
 
   const fetchOrders = useCallback(async () => {
@@ -46,25 +56,17 @@ const OrdersManager = () => {
     const productIds = rows.map((o) => o.product_id);
     const nameMap = await resolveProductInfo(productIds);
 
-    // Resolve design info
     const designIds = [...new Set(rows.map((o) => o.design_id).filter(Boolean))] as string[];
     const designMap = new Map<string, { name: string; image: string }>();
     if (designIds.length > 0) {
-      const { data: designs } = await supabase
-        .from("collection_designs")
-        .select("id, name, image_url")
-        .in("id", designIds);
+      const { data: designs } = await supabase.from("collection_designs").select("id, name, image_url").in("id", designIds);
       designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
     }
 
-    // Resolve customer names
     const userIds = [...new Set(rows.map((o) => o.user_id))];
     const profileMap = new Map<string, string>();
     if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", userIds);
+      const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", userIds);
       profiles?.forEach((p) => profileMap.set(p.id, p.full_name));
     }
 
@@ -82,10 +84,6 @@ const OrdersManager = () => {
       };
     });
     setOrders(enriched);
-
-    const inputs: Record<string, string> = {};
-    rows.forEach((o) => { if (o.tracking_code) inputs[o.id] = o.tracking_code; });
-    setTrackingInputs(inputs);
     setLoading(false);
   }, [toast]);
 
@@ -101,15 +99,12 @@ const OrdersManager = () => {
     } else {
       toast({ title: `Status atualizado para "${statusLabels[newStatus]}"` });
       setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: newStatus as Database["public"]["Enums"]["order_status"] } : o));
-      supabase.functions.invoke("notify-order-status", {
-        body: { order_id: orderId, new_status: newStatus },
-      }).catch((err) => console.warn("[notify] email error:", err));
+      setSelectedOrder((prev) => prev?.id === orderId ? { ...prev, status: newStatus as Database["public"]["Enums"]["order_status"] } : prev);
+      supabase.functions.invoke("notify-order-status", { body: { order_id: orderId, new_status: newStatus } }).catch(() => {});
     }
   };
 
-  const handleSaveTracking = async (orderId: string) => {
-    const code = trackingInputs[orderId]?.trim();
-    if (!code) return;
+  const handleSaveTracking = async (orderId: string, code: string) => {
     const { error } = await supabase
       .from("orders")
       .update({ tracking_code: code, status: "shipped" as Database["public"]["Enums"]["order_status"] })
@@ -119,9 +114,7 @@ const OrdersManager = () => {
     } else {
       toast({ title: "Código de rastreio salvo" });
       fetchOrders();
-      supabase.functions.invoke("notify-order-status", {
-        body: { order_id: orderId, new_status: "shipped" },
-      }).catch((err) => console.warn("[notify] email error:", err));
+      supabase.functions.invoke("notify-order-status", { body: { order_id: orderId, new_status: "shipped" } }).catch(() => {});
     }
   };
 
@@ -129,7 +122,6 @@ const OrdersManager = () => {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-  // Reset page when filter changes
   useEffect(() => { setPage(0); }, [statusFilter]);
 
   return (
@@ -164,33 +156,29 @@ const OrdersManager = () => {
         <p className="text-muted-foreground text-center py-12">Nenhum pedido encontrado.</p>
       ) : (
         <>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {paginated.map((order) => (
-              <div key={order.id} className="border rounded-xl p-4 bg-card space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex-shrink-0">
-                      {order.design_image ? (
-                        <>
-                          <img src={order.design_image} alt={order.design_name} className="w-10 h-10 rounded-lg object-cover" />
-                          {order.product_image && (
-                            <img src={order.product_image} alt={order.product_name} className="w-5 h-5 rounded object-cover absolute -bottom-0.5 -right-0.5 border border-card" />
-                          )}
-                        </>
-                      ) : order.product_image ? (
-                        <img src={order.product_image} alt={order.product_name} className="w-10 h-10 rounded-lg object-cover" />
-                      ) : null}
-                    </div>
-                    <div className="space-y-0.5">
+              <div
+                key={order.id}
+                onClick={() => setSelectedOrder(order)}
+                className="border rounded-xl p-3 bg-card cursor-pointer hover:border-primary/50 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {(order.design_image || order.product_image) && (
+                      <img
+                        src={order.design_image || order.product_image}
+                        alt=""
+                        className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                      />
+                    )}
+                    <div className="min-w-0 space-y-0.5">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                        <p className="text-sm font-medium text-foreground truncate max-w-[220px]">
                           {order.design_name ? `${order.design_name} — ${order.product_name}` : (order.product_name ?? order.product_id)}
                         </p>
-                        {order.design_id && (
-                          <span className="inline-flex rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">Coleção</span>
-                        )}
+                        <span className="text-xs text-muted-foreground font-mono">#{order.id.slice(0, 8)}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground font-mono">{order.id.slice(0, 8)}</p>
                       {order.customer_name && (
                         <p className="text-xs text-muted-foreground">
                           👤 {order.customer_name}
@@ -202,40 +190,17 @@ const OrdersManager = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <select
-                      value={order.status}
-                      onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      className="h-8 rounded-md border bg-background px-2 text-xs font-medium"
-                      aria-label="Status do pedido"
-                    >
-                      {Object.entries(statusLabels).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    <span className="font-semibold text-sm">{formatPrice(order.total_cents / 100)}</span>
-                    {order.shipping_cents != null && (
-                      <span className="text-xs text-muted-foreground">(frete {formatPrice(order.shipping_cents / 100)})</span>
-                    )}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${statusColorMap[order.status] || ""}`}>
+                      {statusLabels[order.status]}
+                    </span>
+                    <span className="font-semibold text-sm whitespace-nowrap">{formatPrice(order.total_cents / 100)}</span>
                   </div>
-                </div>
-                <OrderImagesPreviewer customizationData={(order.customization_data as Record<string, any>) ?? null} />
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Código de rastreio"
-                    value={trackingInputs[order.id] ?? ""}
-                    onChange={(e) => setTrackingInputs((prev) => ({ ...prev, [order.id]: e.target.value }))}
-                    className="max-w-xs text-sm font-mono"
-                  />
-                  <Button size="sm" variant="outline" onClick={() => handleSaveTracking(order.id)} disabled={!trackingInputs[order.id]?.trim()}>
-                    Salvar
-                  </Button>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-6">
               <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
@@ -245,6 +210,14 @@ const OrdersManager = () => {
           )}
         </>
       )}
+
+      <OrderDetailDialog
+        order={selectedOrder}
+        open={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        onStatusChange={handleStatusChange}
+        onSaveTracking={handleSaveTracking}
+      />
     </div>
   );
 };
