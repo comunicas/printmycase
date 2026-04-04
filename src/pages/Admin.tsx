@@ -67,28 +67,28 @@ const Admin = () => {
   const ActiveManager = sectionMap[activeSection];
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader breadcrumbs={[{ label: "Admin" }]} />
-      <SidebarProvider>
-        <div className="flex w-full min-h-[calc(100vh-3.5rem)]">
-          <AdminSidebar
-            activeSection={activeSection}
-            onSectionChange={setActiveSection}
-            onOptimize={handleOptimize}
-            optimizing={optimizing}
-          />
+    <SidebarProvider>
+      <div className="min-h-screen bg-background flex w-full">
+        <AdminSidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          onOptimize={handleOptimize}
+          optimizing={optimizing}
+        />
+        <div className="flex-1 flex flex-col min-h-screen">
+          <AppHeader breadcrumbs={[{ label: "Admin" }]} />
+          <div className="flex items-center gap-2 border-b px-4 h-10">
+            <SidebarTrigger />
+            <h1 className="text-lg font-semibold">Painel Admin</h1>
+          </div>
           <main className="flex-1 overflow-auto">
-            <div className="flex items-center gap-2 border-b px-4 h-10">
-              <SidebarTrigger />
-              <h1 className="text-lg font-semibold">Painel Admin</h1>
-            </div>
             <div className="max-w-5xl mx-auto px-5 py-6">
               <ActiveManager />
             </div>
           </main>
         </div>
-      </SidebarProvider>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
