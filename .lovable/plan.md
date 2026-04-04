@@ -1,22 +1,34 @@
 
-## Remover bloco "Proteção e estilo em cada detalhe" (WhyPrintMyCase)
 
-### O que será feito
+## Verificacao e Limpeza de Assets Orfaos
 
-**1. Deletar o componente `src/components/WhyPrintMyCase.tsx`**
+### Resultado da verificacao visual
 
-**2. Editar `src/pages/Landing.tsx`**
-- Remover import do `WhyPrintMyCase` (linha 16)
-- Remover `<WhyPrintMyCase />` e o comentário associado (linhas 228-229)
+A landing page foi percorrida inteira e o fluxo esta correto:
 
-**3. Limpar CSS órfão em `src/index.css`**
-- Remover a classe `.parallax-bg` e seu bloco `@supports` (linhas 136-147), já que nenhum outro componente a utiliza
+1. Hero (banner principal)
+2. Como Funciona (3 passos)
+3. Vitrine de designs (grid de colecoes)
+4. AI Coins (galeria de imagens IA)
+5. Store Locator (mapa + lista + CTA licenciado)
+6. Depoimentos (3 cards)
+7. FAQ
+8. CTA Final
+9. Footer
 
-**4. Assets órfãos (opcionais para limpeza futura)**
-- `src/assets/logo-epson.webp`, `src/assets/logo-precisioncore.webp`, `src/assets/printmycase-hero-optimized.webp` — só eram usados pelo WhyPrintMyCase
+Nenhum espaco vazio, gap visual ou bloco orfao foi encontrado. O bloco WhyPrintMyCase foi removido com sucesso.
 
-**5. Sem alterações em documentação**
-- ARCHITECTURE.md e README.md não mencionam esse bloco, portanto não precisam de atualização
+### Limpeza de assets
 
-### Resultado
-A landing page ficará: Hero → Como Funciona → Vitrine → AI Coins → Lojas → Depoimentos → FAQ → CTA Final
+Busca completa no codebase confirmou que **nenhum arquivo** referencia estes 3 assets:
+
+- `src/assets/logo-epson.webp`
+- `src/assets/logo-precisioncore.webp`
+- `src/assets/printmycase-hero-optimized.webp`
+
+**Acao**: Deletar os 3 arquivos de `src/assets/`.
+
+### Detalhes tecnicos
+- Apenas exclusao de arquivos, sem impacto em nenhum componente
+- O asset `hero-bg-optimized.webp` e `logo-printmycase.png` continuam em uso e serao mantidos
+
