@@ -240,7 +240,7 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
           </div>
 
           {/* Imagens */}
-          <OrderImagesPreviewer customizationData={order.customization_data ?? null} />
+          <OrderImagesPreviewer customizationData={(order.customization_data as Record<string, any>) ?? null} />
         </div>
       </DialogContent>
     </Dialog>
