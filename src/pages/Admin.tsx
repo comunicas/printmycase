@@ -91,6 +91,7 @@ const Admin = () => {
 
           <TabsContent value="products"><ProductsManager /></TabsContent>
           <TabsContent value="orders"><OrdersManager /></TabsContent>
+          <TabsContent value="users"><UsersManager /></TabsContent>
           <TabsContent value="collections">
             <Tabs defaultValue="col-list" className="w-full">
               <TabsList className="mb-4">
