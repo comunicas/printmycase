@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import OrderDetailDialog from "@/components/admin/OrderDetailDialog";
-import { statusLabels, statusColorMap, type AdminAdminOrderRow } from "@/lib/constants";
+import { statusLabels, statusColorMap, type AdminOrderRow } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
 
