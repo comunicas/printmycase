@@ -28,6 +28,7 @@ type PublicFilter = "all" | "public" | "private";
 
 const UserGenerationsManager = () => {
   const { toast } = useToast();
+  const { getSetting, loading: coinSettingsLoading } = useCoinSettings();
   const [images, setImages] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -35,6 +36,7 @@ const UserGenerationsManager = () => {
   const [lightboxImage, setLightboxImage] = useState<Generation | null>(null);
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
   const [publicFilter, setPublicFilter] = useState<PublicFilter>("all");
+  const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
   const sentinelRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
   const loadingRef = useRef(false);
