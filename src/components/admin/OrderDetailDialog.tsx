@@ -55,6 +55,7 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
   const shipping = order.shipping_address as Record<string, any> | null;
   const currentStep = getStepIndex(order.status);
   const isCancelled = order.status === "cancelled";
+  const isRejected = order.status === "rejected";
 
   const handleSave = async () => {
     if (!trackingInput.trim()) return;
