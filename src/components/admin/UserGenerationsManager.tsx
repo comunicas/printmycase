@@ -4,8 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Trash2, Maximize2, Eye, EyeOff, Filter } from "lucide-react";
+import { Trash2, Maximize2, Eye, EyeOff, Filter, Coins, User } from "lucide-react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { useCoinSettings } from "@/hooks/useCoinSettings";
 
 const PAGE_SIZE = 12;
 
@@ -20,13 +21,14 @@ type Generation = {
   session_id: string | null;
   created_at: string;
   public: boolean;
+  userName?: string;
 };
-
 type FilterType = "all" | "filter" | "upscale" | "original";
 type PublicFilter = "all" | "public" | "private";
 
 const UserGenerationsManager = () => {
   const { toast } = useToast();
+  const { getSetting } = useCoinSettings();
   const [images, setImages] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -34,6 +36,7 @@ const UserGenerationsManager = () => {
   const [lightboxImage, setLightboxImage] = useState<Generation | null>(null);
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
   const [publicFilter, setPublicFilter] = useState<PublicFilter>("all");
+  const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
   const sentinelRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
   const loadingRef = useRef(false);
@@ -58,6 +61,28 @@ const UserGenerationsManager = () => {
     );
   };
 
+  /** Fetch profile names for a batch of user_ids */
+  const fetchProfiles = async (userIds: string[]) => {
+    const missing = userIds.filter((id) => !profilesMap[id]);
+    if (missing.length === 0) return;
+    const unique = [...new Set(missing)];
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", unique);
+    if (data) {
+      const map: Record<string, string> = {};
+      data.forEach((p) => { map[p.id] = p.full_name || "Sem nome"; });
+      setProfilesMap((prev) => ({ ...prev, ...map }));
+    }
+  };
+
+  const getCoinCost = (type: string) => {
+    if (type === "filter") return getSetting("ai_filter_cost", 1);
+    if (type === "upscale") return getSetting("ai_upscale_cost", 1);
+    return 0;
+  };
+
   const fetchImages = useCallback(async (reset = false) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
@@ -77,6 +102,10 @@ const UserGenerationsManager = () => {
 
     const { data } = await query;
     const rows = await resolveUrls((data ?? []) as Generation[]);
+
+    // Fetch profile names for these rows
+    const userIds = rows.map((r) => r.user_id);
+    fetchProfiles(userIds);
 
     if (reset) {
       setImages(rows);
@@ -311,16 +340,26 @@ const UserGenerationsManager = () => {
               )}
             </button>
             <div className="p-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                 <span className="bg-muted px-1.5 py-0.5 rounded text-foreground font-medium">
                   {typeLabel(img.generation_type)}
                 </span>
-                {img.filter_name && <span>{img.filter_name}</span>}
+                {img.filter_name && (
+                  <span className="bg-accent px-1.5 py-0.5 rounded text-accent-foreground font-medium">
+                    {img.filter_name}
+                  </span>
+                )}
+                {getCoinCost(img.generation_type) > 0 && (
+                  <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium">
+                    <Coins className="h-3 w-3" /> {getCoinCost(img.generation_type)}
+                  </span>
+                )}
                 <span>·</span>
                 <span>Passo {img.step_number}</span>
               </div>
-              <div className="text-xs text-muted-foreground truncate" title={img.user_id}>
-                Usuário: {img.user_id.slice(0, 8)}…
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate" title={profilesMap[img.user_id] || img.user_id}>
+                <User className="h-3 w-3 shrink-0" />
+                {profilesMap[img.user_id] || `${img.user_id.slice(0, 8)}…`}
               </div>
               <div className="text-xs text-muted-foreground">
                 {new Date(img.created_at).toLocaleDateString("pt-BR")} {new Date(img.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -366,9 +405,20 @@ const UserGenerationsManager = () => {
                 <span className="bg-muted px-2 py-0.5 rounded text-foreground font-medium">
                   {typeLabel(lightboxImage.generation_type)}
                 </span>
-                {lightboxImage.filter_name && <span>{lightboxImage.filter_name}</span>}
+                {lightboxImage.filter_name && (
+                  <span className="bg-accent px-2 py-0.5 rounded text-accent-foreground font-medium">
+                    {lightboxImage.filter_name}
+                  </span>
+                )}
+                {getCoinCost(lightboxImage.generation_type) > 0 && (
+                  <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium">
+                    <Coins className="h-3 w-3" /> {getCoinCost(lightboxImage.generation_type)} moeda(s)
+                  </span>
+                )}
                 <span>Passo {lightboxImage.step_number}</span>
-                <span>Usuário: {lightboxImage.user_id.slice(0, 8)}…</span>
+                <span className="inline-flex items-center gap-1">
+                  <User className="h-3 w-3" /> {profilesMap[lightboxImage.user_id] || `${lightboxImage.user_id.slice(0, 8)}…`}
+                </span>
                 <span>{new Date(lightboxImage.created_at).toLocaleDateString("pt-BR")}</span>
               </div>
               <div className="flex gap-2">
