@@ -40,6 +40,8 @@ const InstaEmbed = ({ url }: { url: string }) => {
 
 const InstagramShowcase = () => {
   const [posts, setPosts] = useState<InstaPost[]>([]);
+  const [inView, setInView] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     supabase
@@ -52,18 +54,42 @@ const InstagramShowcase = () => {
       });
   }, []);
 
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || inView) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [posts, inView]);
+
   if (!posts.length) return null;
 
   return (
-    <section className="py-8 px-5" aria-label="Instagram PrintMyCase">
+    <section ref={sectionRef} className="py-8 px-5" aria-label="Instagram PrintMyCase">
       <div className="max-w-6xl mx-auto">
-        <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
-          {posts.map((p) => (
-            <div key={p.id} className="min-w-[300px] snap-center md:min-w-0">
-              <InstaEmbed url={p.post_url} />
-            </div>
-          ))}
-        </div>
+        {inView ? (
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
+            {posts.map((p) => (
+              <div key={p.id} className="min-w-[300px] snap-center md:min-w-0">
+                <InstaEmbed url={p.post_url} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex gap-6 md:grid md:grid-cols-3">
+            {posts.map((p) => (
+              <div key={p.id} className="min-w-[300px] md:min-w-0 h-[480px] bg-muted/30 animate-pulse rounded-xl" />
+            ))}
+          </div>
+        )}
 
         <div className="text-center mt-6">
           <a
