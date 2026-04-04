@@ -58,6 +58,8 @@ const CollectionDesignsManager = () => {
 
   useEffect(() => { fetchDesigns(); }, [fetchDesigns]);
 
+  const { paginated: paginatedDesigns, page: designPage, setPage: setDesignPage, totalPages: designTotalPages, totalItems: designTotalItems } = usePagination(designs, 12);
+
   const openNew = () => {
     setEditing(null);
     setName(""); setSlug(""); setImageUrl(""); setPriceCents(4990); setSortOrder(0);
