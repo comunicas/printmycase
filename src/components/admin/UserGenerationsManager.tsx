@@ -61,6 +61,28 @@ const UserGenerationsManager = () => {
     );
   };
 
+  /** Fetch profile names for a batch of user_ids */
+  const fetchProfiles = async (userIds: string[]) => {
+    const missing = userIds.filter((id) => !profilesMap[id]);
+    if (missing.length === 0) return;
+    const unique = [...new Set(missing)];
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", unique);
+    if (data) {
+      const map: Record<string, string> = {};
+      data.forEach((p) => { map[p.id] = p.full_name || "Sem nome"; });
+      setProfilesMap((prev) => ({ ...prev, ...map }));
+    }
+  };
+
+  const getCoinCost = (type: string) => {
+    if (type === "filter") return getSetting("ai_filter_cost", 1);
+    if (type === "upscale") return getSetting("ai_upscale_cost", 1);
+    return 0;
+  };
+
   const fetchImages = useCallback(async (reset = false) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
@@ -80,6 +102,10 @@ const UserGenerationsManager = () => {
 
     const { data } = await query;
     const rows = await resolveUrls((data ?? []) as Generation[]);
+
+    // Fetch profile names for these rows
+    const userIds = rows.map((r) => r.user_id);
+    fetchProfiles(userIds);
 
     if (reset) {
       setImages(rows);
