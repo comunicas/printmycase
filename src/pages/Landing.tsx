@@ -222,6 +222,9 @@ const Landing = () => {
           {/* AI Coins */}
           <AiCoinsSection />
 
+          {/* Store Locator */}
+          <StoreLocator />
+
           {/* Benefits + Print Tech */}
           <WhyPrintMyCase />
 
