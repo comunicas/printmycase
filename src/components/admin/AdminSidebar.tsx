@@ -1,7 +1,7 @@
 import {
   Package, Truck, Smartphone, Wand2, Coins, FileText,
   FolderOpen, FileQuestion, Star, Image as ImageIcon,
-  Sparkles, Layers, Settings, Users, Zap, Palette, MapPin,
+  Sparkles, Layers, Settings, Users, Zap, Palette, MapPin, Instagram,
 } from "lucide-react";
 import {
   Sidebar,
