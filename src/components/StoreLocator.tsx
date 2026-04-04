@@ -158,16 +158,14 @@ const StoreLocator = () => {
   return (
     <section className="py-16 px-5 bg-background" id="lojas" aria-label="Lojas PrintMyCase">
       <div className="max-w-5xl mx-auto">
-        <ScrollReveal>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center flex-1">
-              Lojas PrintMyCase — Capinhas Personalizadas em {stores.length} Shopping Centers
-            </h2>
-          </div>
-          <p className="text-center text-muted-foreground mb-10">
-            Encontre a loja mais perto de você. Capinhas personalizadas com IA em shopping centers de São Paulo e Minas Gerais.
-          </p>
-        </ScrollReveal>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center flex-1">
+            Lojas PrintMyCase — Capinhas Personalizadas em {stores.length} Shopping Centers
+          </h2>
+        </div>
+        <p className="text-center text-muted-foreground mb-10">
+          Encontre a loja mais perto de você. Capinhas personalizadas com IA em shopping centers de São Paulo e Minas Gerais.
+        </p>
 
         <div className="grid md:grid-cols-2 gap-6">
             {/* Map */}
