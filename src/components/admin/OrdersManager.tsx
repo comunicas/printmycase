@@ -89,18 +89,24 @@ const OrdersManager = () => {
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
+  const handleStatusChange = async (orderId: string, newStatus: string, rejectionReason?: string) => {
+    const updateData: Record<string, any> = { status: newStatus as Database["public"]["Enums"]["order_status"] };
+    if (newStatus === "rejected" && rejectionReason) {
+      updateData.rejection_reason = rejectionReason;
+    } else if (newStatus !== "rejected") {
+      updateData.rejection_reason = null;
+    }
     const { error } = await supabase
       .from("orders")
-      .update({ status: newStatus as Database["public"]["Enums"]["order_status"] })
+      .update(updateData)
       .eq("id", orderId);
     if (error) {
       toast({ title: "Erro ao atualizar status", description: error.message, variant: "destructive" });
     } else {
       toast({ title: `Status atualizado para "${statusLabels[newStatus]}"` });
-      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: newStatus as Database["public"]["Enums"]["order_status"] } : o));
-      setSelectedOrder((prev) => prev?.id === orderId ? { ...prev, status: newStatus as Database["public"]["Enums"]["order_status"] } : prev);
-      supabase.functions.invoke("notify-order-status", { body: { order_id: orderId, new_status: newStatus } }).catch(() => {});
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: newStatus as Database["public"]["Enums"]["order_status"], rejection_reason: updateData.rejection_reason } : o));
+      setSelectedOrder((prev) => prev?.id === orderId ? { ...prev, status: newStatus as Database["public"]["Enums"]["order_status"], rejection_reason: updateData.rejection_reason } : prev);
+      supabase.functions.invoke("notify-order-status", { body: { order_id: orderId, new_status: newStatus, rejection_reason: rejectionReason || null } }).catch(() => {});
     }
   };
 

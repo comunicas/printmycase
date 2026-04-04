@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     }
 
     // --- Parse body ---
-    const { order_id, new_status } = await req.json();
+    const { order_id, new_status, rejection_reason } = await req.json();
     if (!order_id || !new_status) {
       return new Response(
         JSON.stringify({ error: "order_id and new_status required" }),
@@ -114,6 +114,7 @@ Deno.serve(async (req) => {
             newStatus: new_status,
             totalCents: order.total_cents,
             trackingCode: order.tracking_code,
+            rejectionReason: rejection_reason || null,
           },
         },
       }

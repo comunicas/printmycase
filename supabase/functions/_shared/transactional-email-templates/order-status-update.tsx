@@ -20,12 +20,12 @@ const LOGO_URL = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/pub
 const APP_URL = 'https://studio.printmycase.com.br'
 
 const statusLabels: Record<string, string> = {
-  pending: 'Pendente',
-  paid: 'Pago',
-  analyzing: 'Em Análise',
-  customizing: 'Customizando',
+  pending: 'Pagamento Pendente',
+  paid: 'Pagamento Confirmado',
+  analyzing: 'Analisando Imagem',
+  rejected: 'Imagem Recusada',
   producing: 'Produzindo',
-  shipped: 'Enviado',
+  shipped: 'Transporte',
   delivered: 'Entregue',
   cancelled: 'Cancelado',
 }
@@ -34,7 +34,7 @@ const statusColors: Record<string, string> = {
   pending: '#9ca3af',
   paid: '#22c55e',
   analyzing: '#f59e0b',
-  customizing: '#8b5cf6',
+  rejected: '#ea580c',
   producing: '#3b82f6',
   shipped: '#06b6d4',
   delivered: '#10b981',
@@ -48,6 +48,7 @@ interface OrderStatusUpdateProps {
   newStatus?: string
   totalCents?: number
   trackingCode?: string | null
+  rejectionReason?: string | null
 }
 
 const OrderStatusUpdateEmail = ({
@@ -57,6 +58,7 @@ const OrderStatusUpdateEmail = ({
   newStatus = 'paid',
   totalCents = 0,
   trackingCode,
+  rejectionReason,
 }: OrderStatusUpdateProps) => {
   const shortId = (orderId || '').slice(0, 8)
   const statusLabel = statusLabels[newStatus || ''] ?? newStatus
@@ -90,6 +92,17 @@ const OrderStatusUpdateEmail = ({
               </strong>
             </Text>
           </Section>
+
+          {newStatus === 'rejected' && rejectionReason ? (
+            <Section style={rejectionCard}>
+              <Text style={{ ...detailText, color: '#9a3412', fontWeight: '600' as const, margin: '0 0 6px' }}>
+                Motivo da recusa:
+              </Text>
+              <Text style={{ fontSize: '14px', color: '#7c2d12', lineHeight: '1.5', margin: '0' }}>
+                {rejectionReason}
+              </Text>
+            </Section>
+          ) : null}
 
           {newStatus === 'shipped' && trackingCode ? (
             <Section style={{ paddingTop: '16px' }}>
@@ -189,6 +202,13 @@ const trackingLink = {
   textDecoration: 'none',
   backgroundColor: 'transparent',
   padding: '0',
+}
+const rejectionCard = {
+  backgroundColor: '#fff7ed',
+  borderRadius: '12px',
+  padding: '16px 20px',
+  marginTop: '16px',
+  border: '1px solid #fed7aa',
 }
 const button = {
   display: 'inline-block' as const,
