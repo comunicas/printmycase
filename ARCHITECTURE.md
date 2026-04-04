@@ -338,6 +338,8 @@ Moedas virtuais para uso de recursos de IA (filtros, upscale). Bônus concedido 
 | `handle-email-suppression` | Processa bounces/complaints de email |
 | `handle-email-unsubscribe` | Processa unsubscribe de email |
 | `upload-gallery-zip` | Upload em lote de imagens de galeria via ZIP |
+| `admin-list-users` | Lista usuários com paginação (admin) |
+| `migrate-generation-urls` | Migra URLs de gerações para novo formato |
 
 ## Analytics e Rastreamento
 
