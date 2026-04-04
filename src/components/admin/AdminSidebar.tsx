@@ -78,8 +78,13 @@ const groups: { label: string; items: { key: AdminSection; label: string; icon: 
 ];
 
 const AdminSidebar = ({ activeSection, onSectionChange, onOptimize, optimizing }: AdminSidebarProps) => {
-  const { state } = useSidebar();
+  const { state, isMobile, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
+
+  const handleSelect = (key: AdminSection) => {
+    onSectionChange(key);
+    if (isMobile) toggleSidebar();
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -94,7 +99,7 @@ const AdminSidebar = ({ activeSection, onSectionChange, onOptimize, optimizing }
                     <SidebarMenuButton
                       isActive={activeSection === item.key}
                       tooltip={item.label}
-                      onClick={() => onSectionChange(item.key)}
+                      onClick={() => handleSelect(item.key)}
                     >
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.label}</span>}

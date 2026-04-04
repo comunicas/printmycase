@@ -169,7 +169,7 @@ const OrdersManager = () => {
                 onClick={() => setSelectedOrder(order)}
                 className="border rounded-xl p-3 bg-card cursor-pointer hover:border-primary/50 transition-colors"
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="flex items-center gap-3 min-w-0">
                     {(order.design_image || order.product_image) && (
                       <img
@@ -179,12 +179,10 @@ const OrdersManager = () => {
                       />
                     )}
                     <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-medium text-foreground truncate max-w-[220px]">
-                          {order.design_name ? `${order.design_name} — ${order.product_name}` : (order.product_name ?? order.product_id)}
-                        </p>
-                        <span className="text-xs text-muted-foreground font-mono">#{order.id.slice(0, 8)}</span>
-                      </div>
+                      <p className="text-sm font-medium text-foreground truncate max-w-[160px] sm:max-w-[220px]">
+                        {order.design_name ? `${order.design_name} — ${order.product_name}` : (order.product_name ?? order.product_id)}
+                      </p>
+                      <span className="text-xs text-muted-foreground font-mono">#{order.id.slice(0, 8)}</span>
                       {order.customer_name && (
                         <p className="text-xs text-muted-foreground">
                           👤 {order.customer_name}
@@ -196,7 +194,7 @@ const OrdersManager = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-3 ml-auto sm:ml-0 flex-shrink-0">
                     <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${statusColorMap[order.status] || ""}`}>
                       {statusLabels[order.status]}
                     </span>
