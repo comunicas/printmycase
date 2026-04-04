@@ -86,7 +86,7 @@ const StoresManager = () => {
 
   const openNew = () => {
     setEditing(null);
-    setName(""); setAddress(""); setState(""); setStateLabel(""); setLat(""); setLng(""); setSortOrder(0);
+    setName(""); setAddress(""); setState(""); setStateLabel(""); setLat(""); setLng(""); setSortOrder(0); setInstagramUrl(""); setSlug("");
     setDialogOpen(true);
   };
 
