@@ -96,6 +96,8 @@ const ProductsManager = () => {
   const handleNew = () => { setEditingProduct(null); setDialogOpen(true); };
   const handleSaved = () => { setDialogOpen(false); setEditingProduct(null); fetchProducts(); };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(products, 10);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
