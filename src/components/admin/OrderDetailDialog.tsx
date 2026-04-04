@@ -22,8 +22,8 @@ interface OrderRow {
   total_cents: number;
   shipping_cents?: number | null;
   tracking_code?: string | null;
-  shipping_address?: Record<string, any> | null;
-  customization_data?: Record<string, any> | null;
+  shipping_address?: any;
+  customization_data?: any;
   created_at: string;
 }
 
