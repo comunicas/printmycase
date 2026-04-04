@@ -1,36 +1,22 @@
 
-## CTA "Seja um Licenciado" abaixo do mapa de lojas
+## Remover bloco "Proteção e estilo em cada detalhe" (WhyPrintMyCase)
 
-### O que muda
+### O que será feito
 
-**1 arquivo editado: `src/components/StoreLocator.tsx`**
+**1. Deletar o componente `src/components/WhyPrintMyCase.tsx`**
 
-Adicionar um bloco de CTA após o grid (mapa + lista), ainda dentro da `section#lojas`, com:
+**2. Editar `src/pages/Landing.tsx`**
+- Remover import do `WhyPrintMyCase` (linha 16)
+- Remover `<WhyPrintMyCase />` e o comentário associado (linhas 228-229)
 
-- Texto: "Torne-se um licenciado PrintMyCase e leve para sua região uma operação moderna, escalável e conectada ao varejo físico."
-- Botão "Seja um Licenciado" com link para `https://wa.me/5511994824122`, abrindo em nova aba
-- Estilo consistente com o design da landing: texto centralizado em `text-muted-foreground`, botão primário com ícone WhatsApp (MessageCircle do Lucide, já que não há ícone WhatsApp nativo)
+**3. Limpar CSS órfão em `src/index.css`**
+- Remover a classe `.parallax-bg` e seu bloco `@supports` (linhas 136-147), já que nenhum outro componente a utiliza
 
-### Posição no código
+**4. Assets órfãos (opcionais para limpeza futura)**
+- `src/assets/logo-epson.webp`, `src/assets/logo-precisioncore.webp`, `src/assets/printmycase-hero-optimized.webp` — só eram usados pelo WhyPrintMyCase
 
-Após a linha 277 (fechamento do `</div>` do grid), antes do fechamento do `</div>` do `max-w-5xl`:
+**5. Sem alterações em documentação**
+- ARCHITECTURE.md e README.md não mencionam esse bloco, portanto não precisam de atualização
 
-```tsx
-{/* CTA Licenciado */}
-<div className="mt-10 text-center">
-  <p className="text-muted-foreground mb-4 max-w-2xl mx-auto">
-    Torne-se um licenciado PrintMyCase e leve para sua região uma operação moderna, escalável e conectada ao varejo físico.
-  </p>
-  <a
-    href="https://wa.me/5511994824122"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-medium px-6 py-3 rounded-full hover:bg-primary/90 transition-colors"
-  >
-    <MessageCircle className="w-4 h-4" />
-    Seja um Licenciado
-  </a>
-</div>
-```
-
-Importar `MessageCircle` do Lucide (já disponível no projeto).
+### Resultado
+A landing page ficará: Hero → Como Funciona → Vitrine → AI Coins → Lojas → Depoimentos → FAQ → CTA Final
