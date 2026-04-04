@@ -34,7 +34,7 @@ const statusColors: Record<string, string> = {
   pending: '#9ca3af',
   paid: '#22c55e',
   analyzing: '#f59e0b',
-  customizing: '#8b5cf6',
+  rejected: '#ea580c',
   producing: '#3b82f6',
   shipped: '#06b6d4',
   delivered: '#10b981',
