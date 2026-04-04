@@ -124,6 +124,8 @@ const KbArticlesManager = () => {
 
   const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? "";
 
+  const { paginated: paginatedArticles, page, setPage, totalPages, totalItems } = usePagination(filtered, 10);
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -150,13 +152,15 @@ const KbArticlesManager = () => {
         <p className="text-muted-foreground text-center py-12">Nenhum artigo cadastrado.</p>
       ) : (
         <div className="space-y-2">
-          {filtered.map((a, idx) => (
+          {paginatedArticles.map((a) => {
+            const globalIdx = filtered.findIndex((x) => x.id === a.id);
+            return (
             <div key={a.id} className={`border rounded-xl p-4 bg-card flex flex-col sm:flex-row sm:items-center gap-3 ${!a.active ? "opacity-50" : ""}`}>
               <div className="flex flex-col gap-0.5 mr-2">
-                <button onClick={() => handleMove(a, "up")} disabled={idx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <button onClick={() => handleMove(a, "up")} disabled={globalIdx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronUp className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleMove(a, "down")} disabled={idx === filtered.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <button onClick={() => handleMove(a, "down")} disabled={globalIdx === filtered.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
@@ -172,9 +176,12 @@ const KbArticlesManager = () => {
                 <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(a)}><Trash2 className="w-4 h-4" /></Button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">

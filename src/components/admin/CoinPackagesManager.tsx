@@ -174,6 +174,8 @@ const CoinPackagesManager = () => {
         ))}
       </div>
 
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
+
       <ConfirmDialog
         open={!!deleteId}
         onConfirm={handleDelete}

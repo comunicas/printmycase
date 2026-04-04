@@ -165,7 +165,7 @@ const GalleryImagesManager = () => {
               <button
                 type="button"
                 onClick={() => moveImage(index, 1)}
-                disabled={index === images.length - 1}
+                disabled={globalIndex === images.length - 1}
                 className="text-muted-foreground hover:text-foreground disabled:opacity-30"
               >
                 <GripVertical className="w-4 h-4" />
