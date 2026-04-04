@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import { MapPin, Navigation, Instagram } from "lucide-react";
+import { MapPin, Navigation, Instagram, MessageCircle } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { injectJsonLd } from "@/lib/seo";
@@ -275,6 +275,22 @@ const StoreLocator = () => {
               ))}
             </div>
           </div>
+
+        {/* CTA Licenciado */}
+        <div className="mt-10 text-center">
+          <p className="text-muted-foreground mb-4 max-w-2xl mx-auto">
+            Torne-se um licenciado PrintMyCase e leve para sua região uma operação moderna, escalável e conectada ao varejo físico.
+          </p>
+          <a
+            href="https://wa.me/5511994824122"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-medium px-6 py-3 rounded-full hover:bg-primary/90 transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Seja um Licenciado
+          </a>
+        </div>
       </div>
     </section>
   );
