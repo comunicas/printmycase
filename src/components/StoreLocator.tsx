@@ -28,6 +28,8 @@ const stores: Store[] = [
   { id: 11, name: "Via Café Shopping Center", address: "Av. Princesa do Sul, 1500 – Jardim Andere, Varginha – MG", state: "MG", stateLabel: "Minas Gerais (MG)", position: [-21.5610, -45.4357] },
 ];
 
+const allBounds = L.latLngBounds(stores.map(s => s.position)).pad(0.1);
+
 const createPinIcon = (active: boolean) =>
   L.divIcon({
     className: "",
@@ -40,16 +42,20 @@ const createPinIcon = (active: boolean) =>
     </svg>`,
   });
 
-function FlyToStore({ position }: { position: [number, number] | null }) {
+function MapController({ position, resetKey }: { position: [number, number] | null; resetKey: number }) {
   const map = useMap();
   useEffect(() => {
-    if (position) map.flyTo(position, 15, { duration: 1 });
+    if (position) map.flyTo(position, 13, { duration: 0.8 });
   }, [position, map]);
+  useEffect(() => {
+    if (resetKey > 0) map.flyToBounds(allBounds, { duration: 0.8 });
+  }, [resetKey, map]);
   return null;
 }
 
 const StoreLocator = () => {
   const [selected, setSelected] = useState<number | null>(null);
+  const [resetKey, setResetKey] = useState(0);
 
   const grouped = useMemo(() => {
     const groups: { label: string; stores: Store[] }[] = [];
@@ -71,13 +77,20 @@ const StoreLocator = () => {
     el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
+  const handleReset = () => {
+    setSelected(null);
+    setResetKey(k => k + 1);
+  };
+
   return (
     <section className="py-16 px-5 bg-background">
       <div className="max-w-5xl mx-auto">
         <ScrollReveal>
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-2">
-            Encontre uma Loja PrintMyCase
-          </h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center flex-1">
+              Encontre uma Loja PrintMyCase
+            </h2>
+          </div>
           <p className="text-center text-muted-foreground mb-10">
             Visite uma de nossas lojas físicas
           </p>
@@ -86,10 +99,9 @@ const StoreLocator = () => {
         <ScrollReveal delay={150}>
           <div className="grid md:grid-cols-2 gap-6">
             {/* Map */}
-            <div className="rounded-2xl overflow-hidden shadow-sm h-[400px] md:h-[500px]">
+            <div className="relative rounded-2xl overflow-hidden shadow-sm h-[400px] md:h-[500px]">
               <MapContainer
-                center={[-23.55, -46.63]}
-                zoom={10}
+                bounds={allBounds}
                 scrollWheelZoom={false}
                 className="h-full w-full"
               >
@@ -97,7 +109,7 @@ const StoreLocator = () => {
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
                   url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 />
-                <FlyToStore position={selectedPosition} />
+                <MapController position={selectedPosition} resetKey={resetKey} />
                 {stores.map(store => (
                   <Marker
                     key={store.id}
@@ -113,6 +125,14 @@ const StoreLocator = () => {
                   </Marker>
                 ))}
               </MapContainer>
+              {selected && (
+                <button
+                  onClick={handleReset}
+                  className="absolute top-3 right-3 z-[1000] bg-background/90 backdrop-blur-sm text-xs font-medium text-primary px-3 py-1.5 rounded-full shadow-sm border border-border hover:bg-background transition-colors"
+                >
+                  Ver todas as lojas
+                </button>
+              )}
             </div>
 
             {/* Store List */}
