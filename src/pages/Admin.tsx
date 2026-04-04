@@ -63,6 +63,9 @@ const Admin = () => {
             <TabsTrigger value="orders" className="gap-1.5">
               <Truck className="w-4 h-4" /> Pedidos
             </TabsTrigger>
+            <TabsTrigger value="users" className="gap-1.5">
+              <Users className="w-4 h-4" /> Usuários
+            </TabsTrigger>
             <TabsTrigger value="collections" className="gap-1.5">
               <Palette className="w-4 h-4" /> Coleções
             </TabsTrigger>
