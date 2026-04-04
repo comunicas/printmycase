@@ -174,7 +174,7 @@ const UsersManager = () => {
     }
   };
 
-  const SortIcon = ({ col }: { col: SortKey }) => {
+  const renderSortIcon = (col: SortKey) => {
     if (sortKey !== col) return <ArrowUpDown className="w-3.5 h-3.5 ml-1 inline opacity-40" />;
     return sortDir === "asc"
       ? <ArrowUp className="w-3.5 h-3.5 ml-1 inline text-primary" />
@@ -262,18 +262,18 @@ const UsersManager = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="cursor-pointer select-none" onClick={() => handleSort("full_name")}>
-                  Nome <SortIcon col="full_name" />
+                  Nome {renderSortIcon("full_name")}
                 </TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Telefone</TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => handleSort("created_at")}>
-                  Cadastro <SortIcon col="created_at" />
+                  Cadastro {renderSortIcon("created_at")}
                 </TableHead>
                 <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("coin_balance")}>
-                  Coins <SortIcon col="coin_balance" />
+                  Coins {renderSortIcon("coin_balance")}
                 </TableHead>
                 <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("order_count")}>
-                  Pedidos <SortIcon col="order_count" />
+                  Pedidos {renderSortIcon("order_count")}
                 </TableHead>
               </TableRow>
             </TableHeader>
