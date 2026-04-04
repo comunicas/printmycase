@@ -103,6 +103,7 @@ const StoresManager = () => {
       toast({ title: "Preencha todos os campos obrigatórios", variant: "destructive" });
       return;
     }
+    const autoSlug = slug.trim() || name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const payload = {
       name: name.trim(),
       address: address.trim(),
@@ -111,6 +112,8 @@ const StoresManager = () => {
       lat: parseFloat(lat),
       lng: parseFloat(lng),
       sort_order: sortOrder,
+      instagram_url: instagramUrl.trim() || null,
+      slug: autoSlug,
     };
 
     if (editing) {
