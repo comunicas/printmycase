@@ -214,6 +214,14 @@ const StoresManager = () => {
               </Button>
             </div>
             <div>
+              <Label>Instagram URL</Label>
+              <Input value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/printmycase" />
+            </div>
+            <div>
+              <Label>Slug (SEO)</Label>
+              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="auto-gerado se vazio" />
+            </div>
+            <div>
               <Label>Ordem</Label>
               <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
             </div>
