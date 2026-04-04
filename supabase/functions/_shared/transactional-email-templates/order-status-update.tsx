@@ -20,12 +20,12 @@ const LOGO_URL = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/pub
 const APP_URL = 'https://studio.printmycase.com.br'
 
 const statusLabels: Record<string, string> = {
-  pending: 'Pendente',
-  paid: 'Pago',
-  analyzing: 'Em Análise',
-  customizing: 'Customizando',
+  pending: 'Pagamento Pendente',
+  paid: 'Pagamento Confirmado',
+  analyzing: 'Analisando Imagem',
+  rejected: 'Imagem Recusada',
   producing: 'Produzindo',
-  shipped: 'Enviado',
+  shipped: 'Transporte',
   delivered: 'Entregue',
   cancelled: 'Cancelado',
 }
