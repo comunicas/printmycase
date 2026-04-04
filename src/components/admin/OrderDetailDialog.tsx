@@ -121,6 +121,9 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
             {isCancelled && (
               <p className="text-xs text-red-600 font-medium mt-2">Pedido cancelado</p>
             )}
+            {isRejected && (
+              <p className="text-xs text-orange-600 font-medium mt-2">Imagem recusada pelo administrador</p>
+            )}
           </div>
 
           {/* Cliente */}
