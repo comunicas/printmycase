@@ -38,6 +38,26 @@ const UserGenerationsManager = () => {
   const offsetRef = useRef(0);
   const loadingRef = useRef(false);
 
+  /** Detect expired signed URLs */
+  const isExpiredSignedUrl = (url: string) =>
+    url.includes("/sign/") || url.includes("token=");
+
+  /** Resolve URLs: refresh signed URLs for rows with expired ones */
+  const resolveUrls = async (rows: Generation[]): Promise<Generation[]> => {
+    return Promise.all(
+      rows.map(async (row) => {
+        if (!isExpiredSignedUrl(row.image_url)) return row;
+        if (!row.storage_path) return row;
+        const { data } = await supabase.storage
+          .from("customizations")
+          .createSignedUrl(row.storage_path, 3600);
+        return data?.signedUrl
+          ? { ...row, image_url: data.signedUrl }
+          : row;
+      })
+    );
+  };
+
   const fetchImages = useCallback(async (reset = false) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
@@ -56,7 +76,7 @@ const UserGenerationsManager = () => {
     if (publicFilter === "private") query = query.eq("public", false);
 
     const { data } = await query;
-    const rows = (data ?? []) as Generation[];
+    const rows = await resolveUrls((data ?? []) as Generation[]);
 
     if (reset) {
       setImages(rows);
