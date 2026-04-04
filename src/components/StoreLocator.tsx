@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { MapPin, Navigation, Instagram } from "lucide-react";
-import ScrollReveal from "@/components/ScrollReveal";
+
 import { supabase } from "@/integrations/supabase/client";
 import { injectJsonLd } from "@/lib/seo";
 import "leaflet/dist/leaflet.css";
