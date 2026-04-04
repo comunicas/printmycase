@@ -1,46 +1,40 @@
 
 
-## Ajustes no StoreLocator: UX clean, pins roxos, reposicionar
+## Ajustes no StoreLocator: Manter Todos os Pins Visíveis
 
-### Mudanças
+### Resultado do Teste
 
-**1. Reposicionar na Landing (`src/pages/Landing.tsx`)**
-- Mover `<StoreLocator />` de depois dos Depoimentos para logo depois de `<AiCoinsSection />` (após linha 223, antes de `<WhyPrintMyCase />`)
+- Pins roxos renderizam corretamente no mapa CartoDB clean
+- Clicar em um card destaca o card (borda roxa) e faz flyTo no mapa com o pin ampliado
+- Layout mobile funciona (mapa em cima, lista embaixo)
+- **Problema encontrado**: ao selecionar uma loja, `flyTo(position, 15)` faz zoom excessivo, mostrando apenas 1 pin. O usuario quer todos os pins visiveis
+- **Problema encontrado**: zoom inicial (10) centrado em SP nao mostra as 2 lojas de MG (Patos de Minas e Varginha)
 
-**2. Redesign do componente (`src/components/StoreLocator.tsx`)**
+### Plano de Correção
 
-**Pins roxos da marca** — trocar os ícones Leaflet padrão por SVG markers customizados inline usando `L.divIcon` com cor `hsl(265, 83%, 57%)` (a primary da marca). O pin ativo fica com opacidade/escala maior. Isso elimina dependência de URLs externas para ícones.
+**1 arquivo editado: `src/components/StoreLocator.tsx`**
 
-**Mapa clean** — usar tile layer com estilo mais limpo: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png` (CartoDB Positron — gratuito, sem API key, visual minimalista cinza claro)
+**Ajuste 1 — Zoom inicial mostrando todos os pins:**
+- Remover `center` e `zoom` fixos do `MapContainer`
+- Usar `bounds` calculado com `L.latLngBounds(stores.map(s => s.position)).pad(0.1)` para que o mapa inicie mostrando todas as 11 lojas (SP + MG)
 
-**UX alinhada com o resto da landing:**
-- Fundo `bg-background` em vez de `bg-muted/30` (consistente com as outras seções)
-- Remover emoji 📍 dos labels de estado, usar apenas texto com `text-xs uppercase tracking-wider` (mais clean)
-- Cards de loja mais compactos: padding `p-2.5`, fonte menor
-- Mapa com `rounded-2xl` e sombra suave (`shadow-sm`)
-- Seção com `py-16` mantido
+**Ajuste 2 — Ao selecionar loja, destacar pin mas NÃO fazer flyTo zoom 15:**
+- No `FlyToStore`, em vez de `map.flyTo(position, 15)`, usar `map.flyTo(position, 13)` com zoom mais moderado, OU melhor: fazer `map.flyTo(position, 12)` para manter contexto das lojas vizinhas
+- Alternativa preferida: usar `map.setView(position, 13)` sem animação agressiva, mantendo mais contexto geográfico
 
-**3. Resultado visual**
-
-```text
-┌─ Seção "Encontre uma Loja" ──────────────────────────┐
-│                                                       │
-│  ┌── Mapa CartoDB clean ──┐  ┌── Lista scroll ─────┐ │
-│  │                        │  │ SÃO PAULO (SP)      │ │
-│  │   🟣 🟣               │  │ ┌ Shopping Center 3 ┐│ │
-│  │      🟣   🟣          │  │ │ Av. Paulista...   ││ │
-│  │   🟣                  │  │ └───────────────────┘│ │
-│  │                        │  │ ┌ Mooca Plaza      ┐│ │
-│  │                        │  │ │ Rua Cap. Pach... ││ │
-│  └────────────────────────┘  │ └───────────────────┘│ │
-│                               │ ...                  │ │
-│                               └─────────────────────┘ │
-└───────────────────────────────────────────────────────┘
-```
+**Ajuste 3 — Botão "Ver todas as lojas" para resetar zoom:**
+- Adicionar um pequeno botão/link "Ver todas" abaixo do titulo ou no canto do mapa que reseta o zoom para os bounds iniciais com todas as lojas
 
 ### Detalhes técnicos
-- `L.divIcon` com SVG inline: círculo roxo com borda branca (12px) — sem dependência externa
-- Pin ativo: escala 1.3x + sombra glow roxa
-- Tile: CartoDB Positron (`cartocdn.com/light_all`) — sem chave, atribuição OSM mantida
-- Nenhuma dependência nova
+
+```tsx
+// Calcular bounds de todas as lojas
+const allBounds = L.latLngBounds(stores.map(s => s.position)).pad(0.1);
+
+// MapContainer com bounds em vez de center/zoom
+<MapContainer bounds={allBounds} scrollWheelZoom={false} ...>
+
+// FlyToStore com zoom moderado
+if (position) map.flyTo(position, 13, { duration: 0.8 });
+```
 
