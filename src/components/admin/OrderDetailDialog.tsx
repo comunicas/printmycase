@@ -3,49 +3,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import OrderImagesPreviewer from "@/components/admin/OrderImagesPreviewer";
-import { statusLabels, statusFlow, statusIcons, getStepIndex } from "@/lib/constants";
+import { statusLabels, statusFlow, statusIcons, getStepIndex, statusColorMap, type AdminOrderRow } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
-import type { Database } from "@/integrations/supabase/types";
-
-interface OrderRow {
-  id: string;
-  product_id: string;
-  product_name?: string;
-  product_image?: string;
-  design_id?: string | null;
-  design_name?: string;
-  design_image?: string;
-  customer_name?: string;
-  customer_city?: string;
-  customer_state?: string;
-  status: Database["public"]["Enums"]["order_status"];
-  total_cents: number;
-  shipping_cents?: number | null;
-  tracking_code?: string | null;
-  shipping_address?: any;
-  customization_data?: any;
-  created_at: string;
-  rejection_reason?: string | null;
-}
 
 interface Props {
-  order: OrderRow | null;
+  order: AdminOrderRow | null;
   open: boolean;
   onClose: () => void;
   onStatusChange: (orderId: string, newStatus: string, rejectionReason?: string) => Promise<void>;
   onSaveTracking: (orderId: string, code: string) => Promise<void>;
 }
-
-const statusColorMap: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  paid: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  analyzing: "bg-blue-100 text-blue-800 border-blue-300",
-  rejected: "bg-orange-100 text-orange-800 border-orange-300",
-  producing: "bg-purple-100 text-purple-800 border-purple-300",
-  shipped: "bg-indigo-100 text-indigo-800 border-indigo-300",
-  delivered: "bg-green-100 text-green-800 border-green-300",
-  cancelled: "bg-red-100 text-red-800 border-red-300",
-};
 
 const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTracking }: Props) => {
   const [trackingInput, setTrackingInput] = useState("");

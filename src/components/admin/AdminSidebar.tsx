@@ -1,6 +1,6 @@
 import {
   Package, Truck, Smartphone, Wand2, Coins, FileText,
-  BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon,
+  FolderOpen, FileQuestion, Star, Image as ImageIcon,
   Sparkles, Layers, Settings, Users, Zap, Palette,
 } from "lucide-react";
 import {

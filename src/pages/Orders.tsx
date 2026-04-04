@@ -22,7 +22,7 @@ type OrderWithProduct = Tables<"orders"> & {
 
 const PAGE_SIZE = 8;
 
-const activeStatuses = ["pending", "paid", "analyzing", "customizing", "producing", "rejected"];
+const activeStatuses = ["pending", "paid", "analyzing", "producing", "rejected"];
 const doneStatuses = ["shipped", "delivered"];
 
 function filterByTab(orders: OrderWithProduct[], tab: string) {
