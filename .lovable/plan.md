@@ -1,47 +1,59 @@
 
 
-## Corrigir Imagens Quebradas nas Gerações de Usuários
+## Implementar Paginação em Todas as Listas do Admin
 
-### Problema
-As imagens em `user_ai_generations.image_url` armazenam **URLs assinadas com expiração de 1 hora** (`createSignedUrl(storagePath, 3600)`). Após expirar, as imagens ficam quebradas na página "Minhas Gerações", no admin, e na galeria pública.
+### Análise do Estado Atual
 
-O bucket `customizations` é **privado**, então não é possível usar URLs públicas dele diretamente.
+**Já têm paginação:**
+- `OrdersManager` — paginação client-side (PAGE_SIZE=10)
+- `UserGenerationsManager` — infinite scroll
+- `AiGenerationsManager` — infinite scroll
 
-### Solução
-Copiar cada imagem gerada para o bucket **público** `product-assets` e salvar a URL pública permanente no campo `image_url`. Assim, nenhuma URL expira.
+**Precisam de paginação (renderizam tudo de uma vez):**
+1. `ProductsTable` — lista de produtos (pode crescer muito)
+2. `ModelRequestsManager` — solicitações de modelo
+3. `CoinsManager` — transações (limit 200, sem paginação visual)
+4. `AiFiltersManager` — filtros IA
+5. `FaqManager` — perguntas FAQ
+6. `KbArticlesManager` — artigos KB
+7. `KbCategoriesManager` — categorias KB
+8. `CollectionsManager` — coleções
+9. `CollectionDesignsManager` — designs de coleção
+10. `CoinPackagesManager` — pacotes de moedas
+11. `GalleryImagesManager` — imagens ilustrativas
+12. `ImageGalleriesManager` — galerias custom (lista + imagens dentro)
+13. `AiFilterCategoriesManager` — categorias de filtros
+14. `LegalDocsManager` — documentos legais
+
+### Abordagem
+
+Criar um **componente reutilizável `Pagination`** e um **hook `usePagination`** para evitar duplicar lógica em cada manager.
 
 ### Implementação
 
-**1. `supabase/functions/apply-ai-filter/index.ts`**
-- Após upload no bucket `customizations`, **também copiar** a imagem para `product-assets/generations/{userId}/{filename}`
-- Gerar URL pública com `getPublicUrl()` (sem expiração)
-- Salvar essa URL pública em `image_url` no insert de `user_ai_generations`
-- Manter `storage_path` apontando para `customizations` (para o fluxo de customização que usa signed URLs)
+**1. Novo componente: `src/components/admin/Pagination.tsx`**
+- Botões "Anterior" / "Próximo" + indicador "Página X de Y"
+- Props: `page`, `totalPages`, `onPageChange`
+- Aparece apenas quando `totalPages > 1`
 
-**2. `supabase/functions/upscale-image/index.ts`**
-- Mesma lógica: copiar para `product-assets/generations/` e usar URL pública no `image_url`
+**2. Novo hook: `src/hooks/usePagination.ts`**
+- Recebe array de items e `pageSize` (default 10)
+- Retorna `{ paginated, page, setPage, totalPages }`
+- Reset automático para página 0 quando items mudam
 
-**3. `src/pages/MyGenerations.tsx`**
-- Usar `image_url` diretamente (agora será pública e permanente)
-- Adicionar fallback: se `image_url` contém `/sign/`, gerar nova signed URL via `storage_path` on-the-fly
+**3. Integrar em cada manager (14 arquivos)**
+- Importar `usePagination` + `Pagination`
+- Passar a lista filtrada (se houver filtro) pelo hook
+- Renderizar `paginated` ao invés do array completo
+- Adicionar `<Pagination />` após a lista
 
-**4. Migração de dados existentes — Edge function ou script**
-- Criar lógica para migrar registros existentes: ler `storage_path` do bucket `customizations`, copiar para `product-assets/generations/`, atualizar `image_url` com URL pública
-
-### Detalhes técnicos
-```text
-Fluxo atual (quebrado):
-  Edge fn → upload customizations (privado) → createSignedUrl(1h) → salva em image_url → EXPIRA
-
-Fluxo novo (permanente):
-  Edge fn → upload customizations (privado)
-         → copia para product-assets/generations/ (público)
-         → getPublicUrl() → salva em image_url → NUNCA EXPIRA
-```
+**PAGE_SIZE por manager:**
+- Listas com cards detalhados (Products, Orders, Requests, Transactions, Filters, FAQs, Articles): **10 por página**
+- Grids visuais (Designs, Gallery Images, Custom Gallery Images): **12 por página**
+- Listas curtas (Categories, Legal, Coin Packages): **10 por página**
 
 ### Resultado
-- Todas as imagens de gerações ficam permanentemente acessíveis
-- Zero impacto no fluxo de customização (continua usando signed URLs do bucket privado)
-- Imagens existentes migradas para URLs públicas
-- 2 edge functions editadas + 1 arquivo frontend ajustado
+- 2 novos arquivos (Pagination + usePagination)
+- 14 managers editados
+- UX consistente com navegação por páginas em todas as tabs
 
