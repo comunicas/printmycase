@@ -164,7 +164,7 @@ const StoreLocator = () => {
           </h2>
         </div>
         <p className="text-center text-muted-foreground mb-10">
-          Encontre a loja mais perto de você. Capinhas personalizadas com IA em shopping centers de São Paulo e Minas Gerais.
+          Presença física consolidada, produção local e expansão contínua em shopping centers e varejistas estratégicos.
         </p>
 
         <div className="grid md:grid-cols-2 gap-6">
