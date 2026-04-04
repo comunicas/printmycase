@@ -112,6 +112,8 @@ const GalleryImagesManager = () => {
     setImages(updated.map((img, i) => ({ ...img, sort_order: i })));
   };
 
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(images, 12);
+
   if (loading) return <p className="text-muted-foreground">Carregando...</p>;
 
   return (
