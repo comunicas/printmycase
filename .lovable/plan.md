@@ -1,56 +1,73 @@
 
 
-## Geocodificação Automática das Lojas
+## Instagram, Waze e SEO Local para Lojas
 
-### Abordagem
+### Visão geral
+Adicionar campos `instagram_url` e `slug` à tabela `stores`, implementar links de Instagram e "Como Chegar" (Waze) em cada card de loja, e injetar JSON-LD `LocalBusiness` para SEO local.
 
-Usar a API gratuita **Nominatim (OpenStreetMap)** para converter endereços em coordenadas precisas. Sem API key, sem custo.
+### Fase 1 — Migration: novos campos
 
-**Endpoint:** `https://nominatim.openstreetmap.org/search?q={endereço}&format=json&limit=1`
-
-### Implementação
-
-**1. Botão "Buscar Coordenadas" no StoresManager (`src/components/admin/StoresManager.tsx`)**
-
-- Adicionar um botão ao lado dos campos Lat/Lng no dialog de criação/edição
-- Ao clicar, faz fetch no Nominatim com o endereço preenchido
-- Preenche automaticamente os campos `lat` e `lng` com o resultado
-- Mostra toast de erro se não encontrar o endereço
-
-**2. Geocodificar lojas existentes (script one-shot)**
-
-- Criar um script temporário que busca todas as lojas no banco, geocodifica cada uma via Nominatim (respeitando rate limit de 1 req/s), e atualiza as coordenadas via migration
-
-### Detalhes técnicos
-
-```tsx
-// No dialog do StoresManager
-const geocode = async () => {
-  if (!address.trim()) return;
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?` +
-    `q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=br`
-  );
-  const data = await res.json();
-  if (data.length > 0) {
-    setLat(data[0].lat);
-    setLng(data[0].lon);
-    toast({ title: "Coordenadas encontradas" });
-  } else {
-    toast({ title: "Endereço não encontrado", variant: "destructive" });
-  }
-};
+```sql
+ALTER TABLE public.stores
+  ADD COLUMN instagram_url text,
+  ADD COLUMN slug text;
 ```
 
-### Limitações do Nominatim
-- Rate limit: 1 request por segundo (suficiente para uso admin)
-- Precisão: boa para endereços comerciais/shoppings no Brasil
-- Sem custo, sem cadastro
+Depois, popular os slugs existentes via INSERT tool (ex: `capinha-personalizada-shopping-center-3-sao-paulo`).
 
-### Alternativas pagas (caso precise mais precisão)
-- **Google Geocoding API** — mais precisa, requer API key + billing
-- **Mapbox Geocoding** — bom custo-benefício, requer API key gratuita até 100k req/mês
+### Fase 2 — Admin: campos no dialog (`StoresManager.tsx`)
 
-### Recomendação
-Nominatim é suficiente para o caso de uso (admin adicionando lojas ocasionalmente). Implementar o botão no dialog + atualizar as 11 lojas existentes.
+- Adicionar campos "Instagram URL" e "Slug (SEO)" no dialog de criação/edição
+- Auto-gerar slug a partir do nome + cidade quando vazio
+
+### Fase 3 — StoreLocator: links de ação + SEO
+
+**UI nos cards de loja:**
+- Botão/ícone Instagram (abre perfil em nova aba) — só aparece se `instagram_url` preenchido
+- Botão "Como Chegar" que abre Waze: `https://waze.com/ul?ll={lat},{lng}&navigate=yes`
+- Ambos discretos, ao lado do endereço, seguindo o estilo clean atual
+
+**JSON-LD `LocalBusiness`** injetado via `useEffect`:
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Store",
+  "name": "PrintMyCase – Shopping Center 3",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Av. Paulista, 2064",
+    "addressLocality": "São Paulo",
+    "addressRegion": "SP",
+    "addressCountry": "BR"
+  },
+  "geo": { "@type": "GeoCoordinates", "latitude": -23.5558, "longitude": -46.6621 },
+  "url": "https://studio.printmycase.com.br/#loja-shopping-center-3",
+  "sameAs": ["https://instagram.com/printmycase"],
+  "image": "https://studio.printmycase.com.br/og-image.png",
+  "parentOrganization": { "@type": "Organization", "name": "PrintMyCase" }
+}
+```
+
+**Semântica HTML:**
+- Usar `<article>` com `itemscope itemtype="https://schema.org/Store"` em cada card
+- `<address>` tag para endereços
+- `aria-label` nos botões de ação
+
+### Fase 4 — Título e copy SEO
+
+- H2: "Lojas PrintMyCase — Capinhas Personalizadas em {N} Shopping Centers"
+- Subtítulo: "Encontre a loja mais perto de você. Capinhas personalizadas com IA em shopping centers de São Paulo e Minas Gerais."
+- Ambos ricos em palavras-chave locais para capturar buscas tipo "capinha personalizada shopping paulista"
+
+### Arquivos editados
+1. **Migration SQL** — `ALTER TABLE stores ADD COLUMN instagram_url, slug`
+2. **`src/components/admin/StoresManager.tsx`** — campos instagram_url e slug no dialog
+3. **`src/components/StoreLocator.tsx`** — links Waze/Instagram, JSON-LD, semântica HTML, copy SEO
+4. **`src/integrations/supabase/types.ts`** — atualizado automaticamente
+
+### Resultado
+- Cada card de loja terá botão "Como Chegar" (Waze) e ícone Instagram
+- Google indexa cada loja como `LocalBusiness` com coordenadas e endereço estruturado
+- Buscas locais como "capinha personalizada shopping center 3" terão rich results
+- Admin pode gerenciar Instagram URL e slug SEO por loja
 
