@@ -25,9 +25,21 @@ const loadEmbedScript = () => {
   document.body.appendChild(s);
 };
 
+const InstaEmbed = ({ url }: { url: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${url}" data-instgrm-version="14" style="background:var(--background);border:1px solid hsl(var(--border));border-radius:var(--radius);margin:0 auto;max-width:540px;width:100%;"></blockquote>`;
+    const t = setTimeout(loadEmbedScript, 100);
+    return () => clearTimeout(t);
+  }, [url]);
+
+  return <div ref={ref} />;
+};
+
 const InstagramShowcase = () => {
   const [posts, setPosts] = useState<InstaPost[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase
@@ -40,37 +52,15 @@ const InstagramShowcase = () => {
       });
   }, []);
 
-  useEffect(() => {
-    if (posts.length > 0) {
-      const t = setTimeout(loadEmbedScript, 100);
-      return () => clearTimeout(t);
-    }
-  }, [posts]);
-
   if (!posts.length) return null;
 
   return (
     <section className="py-8 px-5" aria-label="Instagram PrintMyCase">
       <div className="max-w-6xl mx-auto">
-        <div
-          ref={containerRef}
-          className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0"
-        >
+        <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
           {posts.map((p) => (
             <div key={p.id} className="min-w-[300px] snap-center md:min-w-0">
-              <blockquote
-                className="instagram-media"
-                data-instgrm-permalink={p.post_url}
-                data-instgrm-version="14"
-                style={{
-                  background: "var(--background)",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                  margin: "0 auto",
-                  maxWidth: "540px",
-                  width: "100%",
-                }}
-              />
+              <InstaEmbed url={p.post_url} />
             </div>
           ))}
         </div>
