@@ -170,8 +170,9 @@ const StoreLocator = () => {
         <div className="grid md:grid-cols-2 gap-6">
             {/* Map */}
             <div className="relative rounded-2xl overflow-hidden shadow-sm h-[400px] md:h-[500px]">
-              {allBounds && (
+              {allBounds ? (
                 <MapContainer
+                  key="store-map"
                   bounds={allBounds}
                   scrollWheelZoom={false}
                   className="h-full w-full"
@@ -196,6 +197,8 @@ const StoreLocator = () => {
                     </Marker>
                   ))}
                 </MapContainer>
+              ) : (
+                <div className="h-full w-full bg-muted animate-pulse rounded-2xl" />
               )}
               {selected && (
                 <button
