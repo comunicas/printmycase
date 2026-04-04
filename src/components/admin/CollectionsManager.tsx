@@ -10,6 +10,8 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import type { Tables } from "@/integrations/supabase/types";
 import { optimizeForUpload } from "@/lib/image-utils";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 type Collection = Tables<"collections">;
 

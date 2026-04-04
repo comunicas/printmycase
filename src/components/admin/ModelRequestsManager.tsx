@@ -72,7 +72,7 @@ const ModelRequestsManager = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {requests.map((r) => (
+          {paginated.map((r) => (
             <div key={r.id} className="border rounded-xl p-4 bg-card flex items-center justify-between gap-4">
               <div className="space-y-0.5 min-w-0">
                 <p className="text-sm font-medium text-foreground">{r.model_name}</p>
@@ -94,6 +94,7 @@ const ModelRequestsManager = () => {
           ))}
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
       <ConfirmDialog
         open={!!deleteTarget}
         onConfirm={confirmDelete}

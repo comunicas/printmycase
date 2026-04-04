@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Plus, Trash2, Upload, ChevronLeft, Image as ImageIcon, Eye, EyeOff } from "lucide-react";
 import { optimizeForUpload } from "@/lib/image-utils";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 interface Gallery {
   id: string;

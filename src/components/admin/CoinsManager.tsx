@@ -243,32 +243,42 @@ const CoinsManager = () => {
         ))}
       </div>
 
-      {/* Transactions list */}
-      {loading ? (
-        <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-      ) : transactions.length === 0 ? (
-        <p className="text-muted-foreground text-center py-12">Nenhuma transação encontrada.</p>
-      ) : (
-        <div className="space-y-2">
-          {transactions.map((tx) => (
-            <div key={tx.id} className="flex items-center gap-3 border rounded-lg p-3 bg-card">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{tx.description || typeLabels[tx.type] || tx.type}</p>
-                <p className="text-xs text-muted-foreground font-mono">{tx.user_id.slice(0, 8)}…</p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(tx.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                  {" · Expira: "}
-                  {new Date(tx.expires_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-                </p>
-              </div>
-              <span className={`font-bold text-sm ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
-                {tx.amount > 0 ? "+" : ""}{tx.amount}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      <PaginatedTransactions transactions={transactions} loading={loading} />
     </div>
+  );
+};
+
+const PaginatedTransactions = ({ transactions, loading }: { transactions: Transaction[]; loading: boolean }) => {
+  const { paginated, page, setPage, totalPages, totalItems } = usePagination(transactions, 10);
+
+  if (loading) {
+    return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  }
+  if (transactions.length === 0) {
+    return <p className="text-muted-foreground text-center py-12">Nenhuma transação encontrada.</p>;
+  }
+  return (
+    <>
+      <div className="space-y-2">
+        {paginated.map((tx) => (
+          <div key={tx.id} className="flex items-center gap-3 border rounded-lg p-3 bg-card">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{tx.description || typeLabels[tx.type] || tx.type}</p>
+              <p className="text-xs text-muted-foreground font-mono">{tx.user_id.slice(0, 8)}…</p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(tx.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                {" · Expira: "}
+                {new Date(tx.expires_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+              </p>
+            </div>
+            <span className={`font-bold text-sm ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
+              {tx.amount > 0 ? "+" : ""}{tx.amount}
+            </span>
+          </div>
+        ))}
+      </div>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
+    </>
   );
 };
 

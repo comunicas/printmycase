@@ -11,6 +11,8 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import { formatPrice } from "@/lib/types";
 import type { Tables } from "@/integrations/supabase/types";
 import { optimizeForUpload } from "@/lib/image-utils";
+import Pagination from "@/components/admin/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 type Collection = Tables<"collections">;
 type Design = Tables<"collection_designs">;
