@@ -174,7 +174,7 @@ const UsersManager = () => {
     }
   };
 
-  const SortIcon = ({ col }: { col: SortKey }) => {
+  const renderSortIcon = (col: SortKey) => {
     if (sortKey !== col) return <ArrowUpDown className="w-3.5 h-3.5 ml-1 inline opacity-40" />;
     return sortDir === "asc"
       ? <ArrowUp className="w-3.5 h-3.5 ml-1 inline text-primary" />
