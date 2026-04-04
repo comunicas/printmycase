@@ -186,7 +186,7 @@ const ImageGalleriesManager = () => {
           <p className="text-muted-foreground text-center py-10">Nenhuma imagem. Envie um ZIP ou imagem individual.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {images.map(img => (
+            {paginatedImages.map(img => (
               <div key={img.id} className={`relative group rounded-lg border overflow-hidden ${!img.active ? "opacity-40" : ""}`}>
                 <img src={img.url} alt={img.label} className="w-full aspect-square object-cover" />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
@@ -201,6 +201,8 @@ const ImageGalleriesManager = () => {
               </div>
             ))}
           </div>
+
+          <Pagination page={imgPage} totalPages={imgTotalPages} onPageChange={setImgPage} totalItems={imgTotalItems} />
         )}
 
         <ConfirmDialog
