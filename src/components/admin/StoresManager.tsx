@@ -22,6 +22,8 @@ interface Store {
   active: boolean;
   sort_order: number;
   created_at: string;
+  instagram_url: string | null;
+  slug: string | null;
 }
 
 const StoresManager = () => {
@@ -39,6 +41,8 @@ const StoresManager = () => {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [slug, setSlug] = useState("");
   const [geocoding, setGeocoding] = useState(false);
 
   const handleGeocode = async () => {
@@ -82,7 +86,7 @@ const StoresManager = () => {
 
   const openNew = () => {
     setEditing(null);
-    setName(""); setAddress(""); setState(""); setStateLabel(""); setLat(""); setLng(""); setSortOrder(0);
+    setName(""); setAddress(""); setState(""); setStateLabel(""); setLat(""); setLng(""); setSortOrder(0); setInstagramUrl(""); setSlug("");
     setDialogOpen(true);
   };
 
@@ -90,6 +94,7 @@ const StoresManager = () => {
     setEditing(s);
     setName(s.name); setAddress(s.address); setState(s.state); setStateLabel(s.state_label);
     setLat(String(s.lat)); setLng(String(s.lng)); setSortOrder(s.sort_order);
+    setInstagramUrl(s.instagram_url || ""); setSlug(s.slug || "");
     setDialogOpen(true);
   };
 
@@ -98,6 +103,7 @@ const StoresManager = () => {
       toast({ title: "Preencha todos os campos obrigatórios", variant: "destructive" });
       return;
     }
+    const autoSlug = slug.trim() || name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const payload = {
       name: name.trim(),
       address: address.trim(),
@@ -106,6 +112,8 @@ const StoresManager = () => {
       lat: parseFloat(lat),
       lng: parseFloat(lng),
       sort_order: sortOrder,
+      instagram_url: instagramUrl.trim() || null,
+      slug: autoSlug,
     };
 
     if (editing) {
@@ -204,6 +212,14 @@ const StoresManager = () => {
               <Button type="button" variant="outline" size="icon" onClick={handleGeocode} disabled={geocoding} title="Buscar coordenadas pelo endereço">
                 {geocoding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               </Button>
+            </div>
+            <div>
+              <Label>Instagram URL</Label>
+              <Input value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/printmycase" />
+            </div>
+            <div>
+              <Label>Slug (SEO)</Label>
+              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="auto-gerado se vazio" />
             </div>
             <div>
               <Label>Ordem</Label>

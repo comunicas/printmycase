@@ -903,9 +903,11 @@ export type Database = {
           address: string
           created_at: string
           id: string
+          instagram_url: string | null
           lat: number
           lng: number
           name: string
+          slug: string | null
           sort_order: number
           state: string
           state_label: string
@@ -915,9 +917,11 @@ export type Database = {
           address: string
           created_at?: string
           id?: string
+          instagram_url?: string | null
           lat: number
           lng: number
           name: string
+          slug?: string | null
           sort_order?: number
           state: string
           state_label: string
@@ -927,9 +931,11 @@ export type Database = {
           address?: string
           created_at?: string
           id?: string
+          instagram_url?: string | null
           lat?: number
           lng?: number
           name?: string
+          slug?: string | null
           sort_order?: number
           state?: string
           state_label?: string

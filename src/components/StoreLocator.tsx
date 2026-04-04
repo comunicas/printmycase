@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import { MapPin } from "lucide-react";
+import { MapPin, Navigation, Instagram } from "lucide-react";
 import ScrollReveal from "@/components/ScrollReveal";
 import { supabase } from "@/integrations/supabase/client";
+import { injectJsonLd } from "@/lib/seo";
 import "leaflet/dist/leaflet.css";
 
 interface Store {
@@ -14,6 +15,8 @@ interface Store {
   state_label: string;
   lat: number;
   lng: number;
+  instagram_url: string | null;
+  slug: string | null;
 }
 
 const createPinIcon = (active: boolean) =>
@@ -39,6 +42,15 @@ function MapController({ position, resetKey, bounds }: { position: [number, numb
   return null;
 }
 
+const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
+
+function parseAddressParts(address: string) {
+  const parts = address.split("–").map(p => p.trim());
+  const streetAddress = parts[0] || address;
+  const locality = parts.length >= 2 ? parts[parts.length - 2] : "";
+  return { streetAddress, locality };
+}
+
 const StoreLocator = () => {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +60,7 @@ const StoreLocator = () => {
   useEffect(() => {
     supabase
       .from("stores")
-      .select("id, name, address, state, state_label, lat, lng")
+      .select("id, name, address, state, state_label, lat, lng, instagram_url, slug")
       .eq("active", true)
       .order("sort_order")
       .then(({ data }) => {
@@ -56,6 +68,48 @@ const StoreLocator = () => {
         setLoading(false);
       });
   }, []);
+
+  // JSON-LD LocalBusiness structured data
+  useEffect(() => {
+    if (stores.length === 0) return;
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "Lojas PrintMyCase",
+      numberOfItems: stores.length,
+      itemListElement: stores.map((s, i) => {
+        const { streetAddress, locality } = parseAddressParts(s.address);
+        const storeData: Record<string, unknown> = {
+          "@type": "ListItem",
+          position: i + 1,
+          item: {
+            "@type": "Store",
+            name: `PrintMyCase – ${s.name}`,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress,
+              addressLocality: locality,
+              addressRegion: s.state,
+              addressCountry: "BR",
+            },
+            geo: {
+              "@type": "GeoCoordinates",
+              latitude: s.lat,
+              longitude: s.lng,
+            },
+            url: `${SITE_URL}/#loja-${s.slug || s.id}`,
+            image: `${SITE_URL}/og-image.png`,
+            parentOrganization: { "@type": "Organization", name: "PrintMyCase" },
+          },
+        };
+        if (s.instagram_url) {
+          (storeData.item as Record<string, unknown>).sameAs = [s.instagram_url];
+        }
+        return storeData;
+      }),
+    };
+    return injectJsonLd("store-locator", jsonLd);
+  }, [stores]);
 
   const allBounds = useMemo(() => {
     if (stores.length === 0) return null;
@@ -102,16 +156,16 @@ const StoreLocator = () => {
   if (stores.length === 0) return null;
 
   return (
-    <section className="py-16 px-5 bg-background">
+    <section className="py-16 px-5 bg-background" id="lojas" aria-label="Lojas PrintMyCase">
       <div className="max-w-5xl mx-auto">
         <ScrollReveal>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center flex-1">
-              Presença real em {stores.length} lojas ativas
+              Lojas PrintMyCase — Capinhas Personalizadas em {stores.length} Shopping Centers
             </h2>
           </div>
           <p className="text-center text-muted-foreground mb-10">
-            A PrintMyCase já opera em shopping centers estratégicos, com expansão contínua para novas regiões.
+            Encontre a loja mais perto de você. Capinhas personalizadas com IA em shopping centers de São Paulo e Minas Gerais.
           </p>
         </ScrollReveal>
 
@@ -165,11 +219,13 @@ const StoreLocator = () => {
                   </p>
                   <div className="space-y-1.5">
                     {group.stores.map(store => (
-                      <button
+                      <article
                         key={store.id}
                         id={`store-card-${store.id}`}
+                        itemScope
+                        itemType="https://schema.org/Store"
                         onClick={() => handleSelect(store.id)}
-                        className={`w-full text-left rounded-lg border p-2.5 transition-all duration-200 ${
+                        className={`w-full text-left rounded-lg border p-2.5 transition-all duration-200 cursor-pointer ${
                           selected === store.id
                             ? "ring-2 ring-primary bg-primary/5 border-primary/30"
                             : "border-border hover:border-primary/20 hover:bg-accent/50"
@@ -177,12 +233,42 @@ const StoreLocator = () => {
                       >
                         <div className="flex items-start gap-2">
                           <MapPin className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${selected === store.id ? "text-primary" : "text-muted-foreground"}`} />
-                          <div>
-                            <p className="text-sm font-medium text-foreground leading-tight">{store.name}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{store.address}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground leading-tight" itemProp="name">{store.name}</p>
+                            <address className="not-italic text-xs text-muted-foreground mt-0.5 leading-snug" itemProp="address">
+                              {store.address}
+                            </address>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <a
+                                href={`https://waze.com/ul?ll=${store.lat},${store.lng}&navigate=yes`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                aria-label={`Como chegar em ${store.name} via Waze`}
+                                className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                              >
+                                <Navigation className="w-3 h-3" />
+                                Como Chegar
+                              </a>
+                              {store.instagram_url && (
+                                <a
+                                  href={store.instagram_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  aria-label={`Instagram de ${store.name}`}
+                                  className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-primary"
+                                >
+                                  <Instagram className="w-3 h-3" />
+                                  Instagram
+                                </a>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </button>
+                        <meta itemProp="latitude" content={String(store.lat)} />
+                        <meta itemProp="longitude" content={String(store.lng)} />
+                      </article>
                     ))}
                   </div>
                 </div>
