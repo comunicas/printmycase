@@ -269,6 +269,12 @@ Cada pedido armazena **4 tipos de imagem** no bucket `customizations`:
 
 ## Arquitetura
 
+### Painel Admin
+
+O admin usa layout com `AdminSidebar` (shadcn `Sidebar` com `collapsible="icon"`) + painel principal. Seções são controladas via `useState<AdminSection>` sem rotas — single-page com renderização condicional. A sidebar fecha automaticamente ao selecionar uma seção no mobile. Grupos: Operações (Pedidos, Usuários, Solicitações), Catálogo (Produtos, Coleções, Designs), IA & Galeria, Financeiro, Conteúdo.
+
+Tipos e constantes compartilhados (`statusColorMap`, `AdminOrderRow`, `statusLabels`) ficam centralizados em `src/lib/constants.ts`.
+
 ### AuthContext Centralizado
 
 `AuthProvider` encapsula toda a aplicação e gerencia `getSession()` + `onAuthStateChange` em um único listener. Todos os componentes consomem `useAuth()` (re-exportado de `useAuthContext`) sem criar instâncias duplicadas.
