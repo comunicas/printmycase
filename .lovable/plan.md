@@ -1,67 +1,56 @@
 
 
-## Gerenciamento de Lojas via Admin
+## Geocodificação Automática das Lojas
 
-### Visão geral
-Criar uma tabela `stores` no banco de dados e um componente `StoresManager` no painel admin para incluir, editar e deletar lojas. O `StoreLocator` da landing passará a consumir dados do banco em vez de dados hardcoded.
+### Abordagem
 
-### Fase 1 — Tabela `stores` (migration)
+Usar a API gratuita **Nominatim (OpenStreetMap)** para converter endereços em coordenadas precisas. Sem API key, sem custo.
 
-```sql
-CREATE TABLE public.stores (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  address text NOT NULL,
-  state text NOT NULL,
-  state_label text NOT NULL,
-  lat double precision NOT NULL,
-  lng double precision NOT NULL,
-  active boolean NOT NULL DEFAULT true,
-  sort_order integer NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+**Endpoint:** `https://nominatim.openstreetmap.org/search?q={endereço}&format=json&limit=1`
 
-ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
+### Implementação
 
-CREATE POLICY "Admins can manage stores" ON public.stores
-  FOR ALL TO authenticated
-  USING (has_role(auth.uid(), 'admin'))
-  WITH CHECK (has_role(auth.uid(), 'admin'));
+**1. Botão "Buscar Coordenadas" no StoresManager (`src/components/admin/StoresManager.tsx`)**
 
-CREATE POLICY "Anyone can view active stores" ON public.stores
-  FOR SELECT TO public
-  USING (active = true);
+- Adicionar um botão ao lado dos campos Lat/Lng no dialog de criação/edição
+- Ao clicar, faz fetch no Nominatim com o endereço preenchido
+- Preenche automaticamente os campos `lat` e `lng` com o resultado
+- Mostra toast de erro se não encontrar o endereço
+
+**2. Geocodificar lojas existentes (script one-shot)**
+
+- Criar um script temporário que busca todas as lojas no banco, geocodifica cada uma via Nominatim (respeitando rate limit de 1 req/s), e atualiza as coordenadas via migration
+
+### Detalhes técnicos
+
+```tsx
+// No dialog do StoresManager
+const geocode = async () => {
+  if (!address.trim()) return;
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?` +
+    `q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=br`
+  );
+  const data = await res.json();
+  if (data.length > 0) {
+    setLat(data[0].lat);
+    setLng(data[0].lon);
+    toast({ title: "Coordenadas encontradas" });
+  } else {
+    toast({ title: "Endereço não encontrado", variant: "destructive" });
+  }
+};
 ```
 
-Inserir as 11 lojas atuais como dados iniciais.
+### Limitações do Nominatim
+- Rate limit: 1 request por segundo (suficiente para uso admin)
+- Precisão: boa para endereços comerciais/shoppings no Brasil
+- Sem custo, sem cadastro
 
-### Fase 2 — Admin: `StoresManager`
+### Alternativas pagas (caso precise mais precisão)
+- **Google Geocoding API** — mais precisa, requer API key + billing
+- **Mapbox Geocoding** — bom custo-benefício, requer API key gratuita até 100k req/mês
 
-**Novo arquivo: `src/components/admin/StoresManager.tsx`**
-
-Seguindo o padrão dos outros managers (ex: `CollectionsManager`):
-- Tabela com colunas: Nome, Endereço, Estado, Lat/Lng, Ativo, Ações
-- Dialog de criação/edição com campos: nome, endereço, estado, state_label, lat, lng, active, sort_order
-- Botão de deletar com confirmação
-- Toggle de ativo/inativo
-
-**Arquivos editados:**
-- `src/components/admin/AdminSidebar.tsx` — adicionar seção "stores" (ícone `MapPin`) no grupo "Catálogo" ou novo grupo "Presença"
-- `src/pages/Admin.tsx` — importar e registrar `StoresManager` no `sectionMap`
-
-### Fase 3 — `StoreLocator` dinâmico
-
-**Arquivo editado: `src/components/StoreLocator.tsx`**
-- Remover array hardcoded de lojas
-- Buscar do banco: `supabase.from("stores").select("*").eq("active", true).order("sort_order")`
-- Adaptar interface para usar `lat`/`lng` em vez de `position: [number, number]`
-- Mostrar loading skeleton enquanto carrega
-- Título dinâmico: `Presença real em {count} lojas ativas`
-
-### Resultado
-- Admin pode adicionar novas lojas com nome, endereço e coordenadas
-- Admin pode editar qualquer campo de uma loja existente
-- Admin pode desativar ou deletar lojas
-- Landing page reflete mudanças automaticamente
-- RLS garante que apenas admins podem gerenciar, público vê apenas lojas ativas
+### Recomendação
+Nominatim é suficiente para o caso de uso (admin adicionando lojas ocasionalmente). Implementar o botão no dialog + atualizar as 11 lojas existentes.
 
