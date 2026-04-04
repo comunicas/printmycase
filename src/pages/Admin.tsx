@@ -22,6 +22,7 @@ import CollectionsManager from "@/components/admin/CollectionsManager";
 import CollectionDesignsManager from "@/components/admin/CollectionDesignsManager";
 import AiFilterCategoriesManager from "@/components/admin/AiFilterCategoriesManager";
 import UsersManager from "@/components/admin/UsersManager";
+import StoresManager from "@/components/admin/StoresManager";
 
 const sectionMap: Record<AdminSection, React.ComponentType> = {
   orders: OrdersManager,
