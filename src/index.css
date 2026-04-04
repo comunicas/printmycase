@@ -86,6 +86,16 @@
     --border: 240 5% 33%;
     --input: 240 5% 33%;
     --ring: 265 83% 75%;
+
+    --sidebar-background: 240 3% 15%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 265 83% 75%;
+    --sidebar-primary-foreground: 265 83% 15%;
+    --sidebar-accent: 265 87% 15%;
+    --sidebar-accent-foreground: 265 83% 75%;
+    --sidebar-border: 240 5% 33%;
+    --sidebar-ring: 265 83% 75%;
+
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
