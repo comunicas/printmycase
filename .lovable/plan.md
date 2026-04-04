@@ -1,48 +1,36 @@
 
+## CTA "Seja um Licenciado" abaixo do mapa de lojas
 
-## Fix: StoreLocator Invisível na Landing Page
-
-### Problema Encontrado
-
-O componente `StoreLocator` está no DOM (section[5] dentro de `main`) com o heading "Lojas PrintMyCase — Capinhas Personalizadas em 12 Shopping Centers", mas tem `offsetHeight: 0`. Os dados carregam corretamente (12 lojas, status 200), porém a seção fica invisível.
-
-**Causa raiz**: O componente `ScrollReveal` usa `IntersectionObserver` com `threshold: 0.15`. O conteúdo começa com `opacity: 0` e `translateY(1.5rem)` (classe `sr-hidden`). Como o mapa Leaflet é renderizado dentro de um `ScrollReveal`, e o container do mapa depende de CSS Leaflet para ter altura, há um ciclo: o `ScrollReveal` mantém o conteúdo invisível esperando ele entrar na viewport, mas o conteúdo nunca aparece porque está invisível.
-
-### Solução
+### O que muda
 
 **1 arquivo editado: `src/components/StoreLocator.tsx`**
 
-Remover os wrappers `ScrollReveal` de dentro do `StoreLocator`. O mapa Leaflet não funciona bem com animações de entrada porque precisa calcular dimensões no momento da renderização. A seção já fica posicionada entre blocos que têm suas próprias animações.
+Adicionar um bloco de CTA após o grid (mapa + lista), ainda dentro da `section#lojas`, com:
 
-Alternativa: manter o `ScrollReveal` apenas no título/subtítulo e remover do bloco do grid (mapa + lista), para que o mapa renderize imediatamente com dimensões corretas.
+- Texto: "Torne-se um licenciado PrintMyCase e leve para sua região uma operação moderna, escalável e conectada ao varejo físico."
+- Botão "Seja um Licenciado" com link para `https://wa.me/5511994824122`, abrindo em nova aba
+- Estilo consistente com o design da landing: texto centralizado em `text-muted-foreground`, botão primário com ícone WhatsApp (MessageCircle do Lucide, já que não há ícone WhatsApp nativo)
+
+### Posição no código
+
+Após a linha 277 (fechamento do `</div>` do grid), antes do fechamento do `</div>` do `max-w-5xl`:
 
 ```tsx
-// Título com ScrollReveal (ok - é só texto)
-<ScrollReveal>
-  <h2>...</h2>
-  <p>...</p>
-</ScrollReveal>
-
-// Grid sem ScrollReveal (mapa precisa de dimensões imediatas)
-<div className="grid md:grid-cols-2 gap-6">
-  {/* Map */}
-  <div className="relative rounded-2xl overflow-hidden shadow-sm h-[400px] md:h-[500px]">
-    {allBounds && <MapContainer ... />}
-  </div>
-  {/* Store List */}
-  <div>...</div>
+{/* CTA Licenciado */}
+<div className="mt-10 text-center">
+  <p className="text-muted-foreground mb-4 max-w-2xl mx-auto">
+    Torne-se um licenciado PrintMyCase e leve para sua região uma operação moderna, escalável e conectada ao varejo físico.
+  </p>
+  <a
+    href="https://wa.me/5511994824122"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-medium px-6 py-3 rounded-full hover:bg-primary/90 transition-colors"
+  >
+    <MessageCircle className="w-4 h-4" />
+    Seja um Licenciado
+  </a>
 </div>
 ```
 
-### Teste Admin (já verificado)
-- CRUD de lojas funciona (toast "Loja atualizada" confirmado)
-- Campos Instagram URL e Slug SEO estão disponíveis no dialog
-- Geocodificação via Nominatim funciona
-
-### Após o fix, verificar
-- Mapa aparece visível na landing page
-- Pins roxos renderizam corretamente
-- Clique em loja destaca pin e card
-- Layout mobile (mapa em cima, lista embaixo)
-- Botão "Como Chegar" abre Waze
-
+Importar `MessageCircle` do Lucide (já disponível no projeto).
