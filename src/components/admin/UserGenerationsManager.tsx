@@ -340,16 +340,26 @@ const UserGenerationsManager = () => {
               )}
             </button>
             <div className="p-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                 <span className="bg-muted px-1.5 py-0.5 rounded text-foreground font-medium">
                   {typeLabel(img.generation_type)}
                 </span>
-                {img.filter_name && <span>{img.filter_name}</span>}
+                {img.filter_name && (
+                  <span className="bg-accent px-1.5 py-0.5 rounded text-accent-foreground font-medium">
+                    {img.filter_name}
+                  </span>
+                )}
+                {getCoinCost(img.generation_type) > 0 && (
+                  <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium">
+                    <Coins className="h-3 w-3" /> {getCoinCost(img.generation_type)}
+                  </span>
+                )}
                 <span>·</span>
                 <span>Passo {img.step_number}</span>
               </div>
-              <div className="text-xs text-muted-foreground truncate" title={img.user_id}>
-                Usuário: {img.user_id.slice(0, 8)}…
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate" title={profilesMap[img.user_id] || img.user_id}>
+                <User className="h-3 w-3 shrink-0" />
+                {profilesMap[img.user_id] || `${img.user_id.slice(0, 8)}…`}
               </div>
               <div className="text-xs text-muted-foreground">
                 {new Date(img.created_at).toLocaleDateString("pt-BR")} {new Date(img.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
