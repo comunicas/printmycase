@@ -1,7 +1,7 @@
 import {
   Package, Truck, Smartphone, Wand2, Coins, FileText,
   FolderOpen, FileQuestion, Star, Image as ImageIcon,
-  Sparkles, Layers, Settings, Users, Zap, Palette, MapPin,
+  Sparkles, Layers, Settings, Users, Zap, Palette, MapPin, Instagram,
 } from "lucide-react";
 import {
   Sidebar,
@@ -22,7 +22,7 @@ export type AdminSection =
   | "products" | "collections" | "designs" | "stores"
   | "ai-filters" | "ai-categories" | "illustrations" | "galleries" | "ai-generations" | "user-generations"
   | "coin-transactions" | "coin-packages"
-  | "kb-categories" | "kb-articles" | "faq" | "legal";
+  | "kb-categories" | "kb-articles" | "faq" | "legal" | "instagram-posts";
 
 interface AdminSidebarProps {
   activeSection: AdminSection;
@@ -72,6 +72,7 @@ const groups: { label: string; items: { key: AdminSection; label: string; icon: 
     items: [
       { key: "kb-categories", label: "KB Categorias", icon: FolderOpen },
       { key: "kb-articles", label: "KB Artigos", icon: FileQuestion },
+      { key: "instagram-posts", label: "Instagram", icon: Instagram },
       { key: "faq", label: "FAQ Home", icon: Star },
       { key: "legal", label: "Legal", icon: FileText },
     ],

@@ -23,6 +23,7 @@ import CollectionDesignsManager from "@/components/admin/CollectionDesignsManage
 import AiFilterCategoriesManager from "@/components/admin/AiFilterCategoriesManager";
 import UsersManager from "@/components/admin/UsersManager";
 import StoresManager from "@/components/admin/StoresManager";
+import InstagramPostsManager from "@/components/admin/InstagramPostsManager";
 
 const sectionMap: Record<AdminSection, React.ComponentType> = {
   orders: OrdersManager,
@@ -42,6 +43,7 @@ const sectionMap: Record<AdminSection, React.ComponentType> = {
   "coin-packages": CoinPackagesManager,
   "kb-categories": KbCategoriesManager,
   "kb-articles": KbArticlesManager,
+  "instagram-posts": InstagramPostsManager,
   faq: FaqManager,
   legal: LegalDocsManager,
 };

@@ -538,6 +538,33 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_posts: {
+        Row: {
+          active: boolean
+          caption: string | null
+          created_at: string
+          id: string
+          post_url: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          caption?: string | null
+          created_at?: string
+          id?: string
+          post_url: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          caption?: string | null
+          created_at?: string
+          id?: string
+          post_url?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       kb_articles: {
         Row: {
           active: boolean
