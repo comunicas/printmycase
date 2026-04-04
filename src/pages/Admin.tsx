@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette, Settings, Layers, Zap } from "lucide-react";
+import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette, Settings, Layers, Zap, Users } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import CoinPackagesManager from "@/components/admin/CoinPackagesManager";
 import CollectionsManager from "@/components/admin/CollectionsManager";
 import CollectionDesignsManager from "@/components/admin/CollectionDesignsManager";
 import AiFilterCategoriesManager from "@/components/admin/AiFilterCategoriesManager";
+import UsersManager from "@/components/admin/UsersManager";
 
 const Admin = () => {
   const [optimizing, setOptimizing] = useState(false);
@@ -62,6 +63,9 @@ const Admin = () => {
             <TabsTrigger value="orders" className="gap-1.5">
               <Truck className="w-4 h-4" /> Pedidos
             </TabsTrigger>
+            <TabsTrigger value="users" className="gap-1.5">
+              <Users className="w-4 h-4" /> Usuários
+            </TabsTrigger>
             <TabsTrigger value="collections" className="gap-1.5">
               <Palette className="w-4 h-4" /> Coleções
             </TabsTrigger>
@@ -87,6 +91,7 @@ const Admin = () => {
 
           <TabsContent value="products"><ProductsManager /></TabsContent>
           <TabsContent value="orders"><OrdersManager /></TabsContent>
+          <TabsContent value="users"><UsersManager /></TabsContent>
           <TabsContent value="collections">
             <Tabs defaultValue="col-list" className="w-full">
               <TabsList className="mb-4">
