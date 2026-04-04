@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import { MapPin, Navigation, Instagram } from "lucide-react";
+import { MapPin, Navigation, Instagram, MessageCircle } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { injectJsonLd } from "@/lib/seo";
