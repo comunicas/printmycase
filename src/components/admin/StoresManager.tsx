@@ -192,7 +192,7 @@ const StoresManager = () => {
                 <Input value={stateLabel} onChange={(e) => setStateLabel(e.target.value)} placeholder="São Paulo (SP)" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
               <div>
                 <Label>Latitude</Label>
                 <Input type="number" step="any" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-23.5558" />
@@ -201,6 +201,9 @@ const StoresManager = () => {
                 <Label>Longitude</Label>
                 <Input type="number" step="any" value={lng} onChange={(e) => setLng(e.target.value)} placeholder="-46.6621" />
               </div>
+              <Button type="button" variant="outline" size="icon" onClick={handleGeocode} disabled={geocoding} title="Buscar coordenadas pelo endereço">
+                {geocoding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </Button>
             </div>
             <div>
               <Label>Ordem</Label>
