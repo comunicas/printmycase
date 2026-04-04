@@ -668,6 +668,7 @@ export type Database = {
           design_id: string | null
           id: string
           product_id: string
+          rejection_reason: string | null
           shipping_address: Json | null
           shipping_cents: number | null
           status: Database["public"]["Enums"]["order_status"]
@@ -683,6 +684,7 @@ export type Database = {
           design_id?: string | null
           id?: string
           product_id: string
+          rejection_reason?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -698,6 +700,7 @@ export type Database = {
           design_id?: string | null
           id?: string
           product_id?: string
+          rejection_reason?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
           status?: Database["public"]["Enums"]["order_status"]
