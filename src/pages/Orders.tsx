@@ -22,7 +22,7 @@ type OrderWithProduct = Tables<"orders"> & {
 
 const PAGE_SIZE = 8;
 
-const activeStatuses = ["pending", "paid", "analyzing", "customizing", "producing"];
+const activeStatuses = ["pending", "paid", "analyzing", "customizing", "producing", "rejected"];
 const doneStatuses = ["shipped", "delivered"];
 
 function filterByTab(orders: OrderWithProduct[], tab: string) {
@@ -40,6 +40,16 @@ const OrderProgress = ({ status }: { status: string }) => {
       <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
         <Icon className="w-4 h-4" />
         {statusLabels.cancelled}
+      </div>
+    );
+  }
+
+  if (status === "rejected") {
+    const Icon = statusIcons.rejected;
+    return (
+      <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-100 rounded-lg px-3 py-2">
+        <Icon className="w-4 h-4" />
+        {statusLabels.rejected}
       </div>
     );
   }
@@ -255,6 +265,13 @@ const Orders = () => {
 
                         {/* Status progress */}
                         <OrderProgress status={order.status} />
+
+                        {order.status === "rejected" && order.rejection_reason && (
+                          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm space-y-1">
+                            <p className="font-semibold text-orange-800">Motivo da recusa:</p>
+                            <p className="text-orange-700">{order.rejection_reason}</p>
+                          </div>
+                        )}
 
                         {/* Footer */}
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
