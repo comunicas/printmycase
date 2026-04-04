@@ -1,40 +1,67 @@
 
 
-## Ajustes no StoreLocator: Manter Todos os Pins Visíveis
+## Gerenciamento de Lojas via Admin
 
-### Resultado do Teste
+### Visão geral
+Criar uma tabela `stores` no banco de dados e um componente `StoresManager` no painel admin para incluir, editar e deletar lojas. O `StoreLocator` da landing passará a consumir dados do banco em vez de dados hardcoded.
 
-- Pins roxos renderizam corretamente no mapa CartoDB clean
-- Clicar em um card destaca o card (borda roxa) e faz flyTo no mapa com o pin ampliado
-- Layout mobile funciona (mapa em cima, lista embaixo)
-- **Problema encontrado**: ao selecionar uma loja, `flyTo(position, 15)` faz zoom excessivo, mostrando apenas 1 pin. O usuario quer todos os pins visiveis
-- **Problema encontrado**: zoom inicial (10) centrado em SP nao mostra as 2 lojas de MG (Patos de Minas e Varginha)
+### Fase 1 — Tabela `stores` (migration)
 
-### Plano de Correção
+```sql
+CREATE TABLE public.stores (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  address text NOT NULL,
+  state text NOT NULL,
+  state_label text NOT NULL,
+  lat double precision NOT NULL,
+  lng double precision NOT NULL,
+  active boolean NOT NULL DEFAULT true,
+  sort_order integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-**1 arquivo editado: `src/components/StoreLocator.tsx`**
+ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
 
-**Ajuste 1 — Zoom inicial mostrando todos os pins:**
-- Remover `center` e `zoom` fixos do `MapContainer`
-- Usar `bounds` calculado com `L.latLngBounds(stores.map(s => s.position)).pad(0.1)` para que o mapa inicie mostrando todas as 11 lojas (SP + MG)
+CREATE POLICY "Admins can manage stores" ON public.stores
+  FOR ALL TO authenticated
+  USING (has_role(auth.uid(), 'admin'))
+  WITH CHECK (has_role(auth.uid(), 'admin'));
 
-**Ajuste 2 — Ao selecionar loja, destacar pin mas NÃO fazer flyTo zoom 15:**
-- No `FlyToStore`, em vez de `map.flyTo(position, 15)`, usar `map.flyTo(position, 13)` com zoom mais moderado, OU melhor: fazer `map.flyTo(position, 12)` para manter contexto das lojas vizinhas
-- Alternativa preferida: usar `map.setView(position, 13)` sem animação agressiva, mantendo mais contexto geográfico
-
-**Ajuste 3 — Botão "Ver todas as lojas" para resetar zoom:**
-- Adicionar um pequeno botão/link "Ver todas" abaixo do titulo ou no canto do mapa que reseta o zoom para os bounds iniciais com todas as lojas
-
-### Detalhes técnicos
-
-```tsx
-// Calcular bounds de todas as lojas
-const allBounds = L.latLngBounds(stores.map(s => s.position)).pad(0.1);
-
-// MapContainer com bounds em vez de center/zoom
-<MapContainer bounds={allBounds} scrollWheelZoom={false} ...>
-
-// FlyToStore com zoom moderado
-if (position) map.flyTo(position, 13, { duration: 0.8 });
+CREATE POLICY "Anyone can view active stores" ON public.stores
+  FOR SELECT TO public
+  USING (active = true);
 ```
+
+Inserir as 11 lojas atuais como dados iniciais.
+
+### Fase 2 — Admin: `StoresManager`
+
+**Novo arquivo: `src/components/admin/StoresManager.tsx`**
+
+Seguindo o padrão dos outros managers (ex: `CollectionsManager`):
+- Tabela com colunas: Nome, Endereço, Estado, Lat/Lng, Ativo, Ações
+- Dialog de criação/edição com campos: nome, endereço, estado, state_label, lat, lng, active, sort_order
+- Botão de deletar com confirmação
+- Toggle de ativo/inativo
+
+**Arquivos editados:**
+- `src/components/admin/AdminSidebar.tsx` — adicionar seção "stores" (ícone `MapPin`) no grupo "Catálogo" ou novo grupo "Presença"
+- `src/pages/Admin.tsx` — importar e registrar `StoresManager` no `sectionMap`
+
+### Fase 3 — `StoreLocator` dinâmico
+
+**Arquivo editado: `src/components/StoreLocator.tsx`**
+- Remover array hardcoded de lojas
+- Buscar do banco: `supabase.from("stores").select("*").eq("active", true).order("sort_order")`
+- Adaptar interface para usar `lat`/`lng` em vez de `position: [number, number]`
+- Mostrar loading skeleton enquanto carrega
+- Título dinâmico: `Presença real em {count} lojas ativas`
+
+### Resultado
+- Admin pode adicionar novas lojas com nome, endereço e coordenadas
+- Admin pode editar qualquer campo de uma loja existente
+- Admin pode desativar ou deletar lojas
+- Landing page reflete mudanças automaticamente
+- RLS garante que apenas admins podem gerenciar, público vê apenas lojas ativas
 
