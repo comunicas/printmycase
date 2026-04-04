@@ -94,6 +94,7 @@ const StoresManager = () => {
     setEditing(s);
     setName(s.name); setAddress(s.address); setState(s.state); setStateLabel(s.state_label);
     setLat(String(s.lat)); setLng(String(s.lng)); setSortOrder(s.sort_order);
+    setInstagramUrl(s.instagram_url || ""); setSlug(s.slug || "");
     setDialogOpen(true);
   };
 
