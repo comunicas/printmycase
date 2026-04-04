@@ -1,37 +1,24 @@
 
 
-## Corrigir Sidebar Aparecendo Abaixo do Header
+## Corrigir Sidebar Mobile: Primeiro Item Escondido Atrás do Header
 
 ### Problema
-O `SidebarProvider` envolve apenas o conteúdo abaixo do `AppHeader`. Como o componente `Sidebar` usa posicionamento fixo/sticky relativo ao seu provider, ele começa abaixo do header em vez de ocupar a altura total da viewport.
+A sidebar mobile e o `AppHeader` usam ambos `z-50`. Como o `AppHeader` é renderizado depois no DOM (dentro do flex-1), ele aparece por cima da sidebar, escondendo o grupo "Operações" e o item "Pedidos" no topo.
 
 ### Solução
 
-**1 arquivo editado: `src/pages/Admin.tsx`**
+**1 arquivo editado: `src/components/ui/sidebar.tsx`**
 
-Mover o `SidebarProvider` para envolver tudo (incluindo o header), e ajustar o layout para que o header fique em cima (full-width) e o flex com sidebar + conteúdo fique abaixo:
+No bloco mobile do componente `Sidebar` (linhas 173-196), mudar o z-index do backdrop e do painel de `z-50` para `z-[60]`:
 
-```tsx
-return (
-  <SidebarProvider>
-    <div className="min-h-screen bg-background flex w-full">
-      <AdminSidebar ... />
-      <div className="flex-1 flex flex-col min-h-screen">
-        <AppHeader breadcrumbs={[{ label: "Admin" }]} />
-        <div className="flex items-center gap-2 border-b px-4 h-10">
-          <SidebarTrigger />
-          <h1 className="text-lg font-semibold">Painel Admin</h1>
-        </div>
-        <main className="flex-1 overflow-auto">
-          <div className="max-w-5xl mx-auto px-5 py-6">
-            <ActiveManager />
-          </div>
-        </main>
-      </div>
-    </div>
-  </SidebarProvider>
-);
-```
+- Linha 178: backdrop `fixed inset-0 z-50` → `fixed inset-0 z-[60]`
+- Linha 184: painel `fixed inset-y-0 z-50` → `fixed inset-y-0 z-[60]`
 
-A mudança principal: `SidebarProvider` envolve tudo, a `Sidebar` fica como irmã direta do conteúdo principal dentro do flex container, e o `AppHeader` fica dentro da coluna de conteúdo (não acima do provider). Isso faz a sidebar ocupar a altura total da tela, alinhada ao topo.
+Isso garante que a sidebar mobile fique acima do `AppHeader` (`z-50`), tornando todos os itens do menu visíveis incluindo "Operações" e "Pedidos".
+
+### Resultado
+- Sidebar mobile aparece por cima do header
+- Todos os itens do menu ficam visíveis e clicáveis
+- Auto-close ao selecionar item continua funcionando (já implementado)
+- Nenhum impacto no layout desktop
 
