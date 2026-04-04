@@ -144,14 +144,16 @@ const ProductsManager = () => {
         </div>
       )}
 
-      <ProductsTablePaginated
-        products={products}
+      <ProductsTable
+        products={paginated}
         loading={loading}
         onEdit={handleEdit}
         onToggleActive={handleToggleActive}
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
       />
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} />
 
       <ProductFormDialog open={dialogOpen} onOpenChange={setDialogOpen} product={editingProduct} onSaved={handleSaved} />
 
