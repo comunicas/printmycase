@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette, Settings, Layers, Zap, Users } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import AdminSidebar, { type AdminSection } from "@/components/admin/AdminSidebar";
 import ProductsManager from "@/components/admin/ProductsManager";
 import OrdersManager from "@/components/admin/OrdersManager";
 import AiFiltersManager from "@/components/admin/AiFiltersManager";
@@ -24,7 +23,29 @@ import CollectionDesignsManager from "@/components/admin/CollectionDesignsManage
 import AiFilterCategoriesManager from "@/components/admin/AiFilterCategoriesManager";
 import UsersManager from "@/components/admin/UsersManager";
 
+const sectionMap: Record<AdminSection, React.ComponentType> = {
+  orders: OrdersManager,
+  users: UsersManager,
+  requests: ModelRequestsManager,
+  products: ProductsManager,
+  collections: CollectionsManager,
+  designs: CollectionDesignsManager,
+  "ai-filters": AiFiltersManager,
+  "ai-categories": AiFilterCategoriesManager,
+  illustrations: GalleryImagesManager,
+  galleries: ImageGalleriesManager,
+  "ai-generations": AiGenerationsManager,
+  "user-generations": UserGenerationsManager,
+  "coin-transactions": CoinsManager,
+  "coin-packages": CoinPackagesManager,
+  "kb-categories": KbCategoriesManager,
+  "kb-articles": KbArticlesManager,
+  faq: FaqManager,
+  legal: LegalDocsManager,
+};
+
 const Admin = () => {
+  const [activeSection, setActiveSection] = useState<AdminSection>("orders");
   const [optimizing, setOptimizing] = useState(false);
 
   const handleOptimize = async () => {
@@ -43,143 +64,30 @@ const Admin = () => {
     }
   };
 
+  const ActiveManager = sectionMap[activeSection];
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader breadcrumbs={[{ label: "Admin" }]} />
-      <main className="max-w-5xl mx-auto px-5 py-10">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Painel Admin</h1>
-          <Button variant="outline" size="sm" onClick={handleOptimize} disabled={optimizing} className="gap-1.5">
-            <Zap className="w-4 h-4" />
-            {optimizing ? "Otimizando…" : "Otimizar Imagens"}
-          </Button>
+      <SidebarProvider>
+        <div className="flex w-full min-h-[calc(100vh-3.5rem)]">
+          <AdminSidebar
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+            onOptimize={handleOptimize}
+            optimizing={optimizing}
+          />
+          <main className="flex-1 overflow-auto">
+            <div className="flex items-center gap-2 border-b px-4 h-10">
+              <SidebarTrigger />
+              <h1 className="text-lg font-semibold">Painel Admin</h1>
+            </div>
+            <div className="max-w-5xl mx-auto px-5 py-6">
+              <ActiveManager />
+            </div>
+          </main>
         </div>
-
-        <Tabs defaultValue="products" className="w-full">
-          <TabsList className="mb-6 w-full flex-wrap h-auto gap-1 justify-start">
-            <TabsTrigger value="products" className="gap-1.5">
-              <Package className="w-4 h-4" /> Produtos
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="gap-1.5">
-              <Truck className="w-4 h-4" /> Pedidos
-            </TabsTrigger>
-            <TabsTrigger value="users" className="gap-1.5">
-              <Users className="w-4 h-4" /> Usuários
-            </TabsTrigger>
-            <TabsTrigger value="collections" className="gap-1.5">
-              <Palette className="w-4 h-4" /> Coleções
-            </TabsTrigger>
-            <TabsTrigger value="kb" className="gap-1.5">
-              <BookOpen className="w-4 h-4" /> Base de Conhecimento
-            </TabsTrigger>
-            <TabsTrigger value="requests" className="gap-1.5">
-              <Smartphone className="w-4 h-4" /> Solicitações
-            </TabsTrigger>
-            <TabsTrigger value="ai-filters" className="gap-1.5">
-              <Wand2 className="w-4 h-4" /> Filtros IA
-            </TabsTrigger>
-            <TabsTrigger value="coins" className="gap-1.5">
-              <Coins className="w-4 h-4" /> Moedas
-            </TabsTrigger>
-            <TabsTrigger value="gallery" className="gap-1.5">
-              <ImageIcon className="w-4 h-4" /> Galeria
-            </TabsTrigger>
-            <TabsTrigger value="legal" className="gap-1.5">
-              <FileText className="w-4 h-4" /> Legal
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="products"><ProductsManager /></TabsContent>
-          <TabsContent value="orders"><OrdersManager /></TabsContent>
-          <TabsContent value="users"><UsersManager /></TabsContent>
-          <TabsContent value="collections">
-            <Tabs defaultValue="col-list" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="col-list" className="gap-1.5">
-                  <Palette className="w-4 h-4" /> Coleções
-                </TabsTrigger>
-                <TabsTrigger value="col-designs" className="gap-1.5">
-                  <ImageIcon className="w-4 h-4" /> Designs
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="col-list"><CollectionsManager /></TabsContent>
-              <TabsContent value="col-designs"><CollectionDesignsManager /></TabsContent>
-            </Tabs>
-          </TabsContent>
-          <TabsContent value="kb">
-            <Tabs defaultValue="kb-categories" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="kb-categories" className="gap-1.5">
-                  <FolderOpen className="w-4 h-4" /> Categorias
-                </TabsTrigger>
-                <TabsTrigger value="kb-articles" className="gap-1.5">
-                  <FileQuestion className="w-4 h-4" /> Artigos
-                </TabsTrigger>
-                <TabsTrigger value="kb-faq" className="gap-1.5">
-                  <Star className="w-4 h-4" /> FAQ Home
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="kb-categories"><KbCategoriesManager /></TabsContent>
-              <TabsContent value="kb-articles"><KbArticlesManager /></TabsContent>
-              <TabsContent value="kb-faq"><FaqManager /></TabsContent>
-            </Tabs>
-          </TabsContent>
-          <TabsContent value="requests"><ModelRequestsManager /></TabsContent>
-          <TabsContent value="ai-filters">
-            <Tabs defaultValue="af-list" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="af-list" className="gap-1.5">
-                  <Wand2 className="w-4 h-4" /> Filtros
-                </TabsTrigger>
-                <TabsTrigger value="af-categories" className="gap-1.5">
-                  <Layers className="w-4 h-4" /> Categorias
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="af-list"><AiFiltersManager /></TabsContent>
-              <TabsContent value="af-categories"><AiFilterCategoriesManager /></TabsContent>
-            </Tabs>
-          </TabsContent>
-          <TabsContent value="coins">
-            <Tabs defaultValue="coins-transactions" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="coins-transactions" className="gap-1.5">
-                  <Coins className="w-4 h-4" /> Transações
-                </TabsTrigger>
-                <TabsTrigger value="coins-packages" className="gap-1.5">
-                  <Settings className="w-4 h-4" /> Pacotes
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="coins-transactions"><CoinsManager /></TabsContent>
-              <TabsContent value="coins-packages"><CoinPackagesManager /></TabsContent>
-            </Tabs>
-          </TabsContent>
-          <TabsContent value="gallery">
-            <Tabs defaultValue="gallery-illustrations" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="gallery-illustrations" className="gap-1.5">
-                  <ImageIcon className="w-4 h-4" /> Ilustrativas
-                </TabsTrigger>
-                <TabsTrigger value="gallery-generations" className="gap-1.5">
-                  <Sparkles className="w-4 h-4" /> Gerações
-                </TabsTrigger>
-                <TabsTrigger value="gallery-custom" className="gap-1.5">
-                  <Layers className="w-4 h-4" /> Galerias Custom
-                </TabsTrigger>
-                <TabsTrigger value="gallery-user-generations" className="gap-1.5">
-                  <Sparkles className="w-4 h-4" /> Gerações Usuários
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="gallery-illustrations"><GalleryImagesManager /></TabsContent>
-              <TabsContent value="gallery-custom">
-                <ImageGalleriesManager />
-              </TabsContent>
-              <TabsContent value="gallery-generations"><AiGenerationsManager /></TabsContent>
-              <TabsContent value="gallery-user-generations"><UserGenerationsManager /></TabsContent>
-            </Tabs>
-          </TabsContent>
-          <TabsContent value="legal"><LegalDocsManager /></TabsContent>
-        </Tabs>
-      </main>
+      </SidebarProvider>
     </div>
   );
 };
