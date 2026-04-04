@@ -22,7 +22,7 @@ export type AdminSection =
   | "products" | "collections" | "designs" | "stores"
   | "ai-filters" | "ai-categories" | "illustrations" | "galleries" | "ai-generations" | "user-generations"
   | "coin-transactions" | "coin-packages"
-  | "kb-categories" | "kb-articles" | "faq" | "legal";
+  | "kb-categories" | "kb-articles" | "faq" | "legal" | "instagram-posts";
 
 interface AdminSidebarProps {
   activeSection: AdminSection;
