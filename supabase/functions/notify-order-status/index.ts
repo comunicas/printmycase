@@ -114,6 +114,7 @@ Deno.serve(async (req) => {
             newStatus: new_status,
             totalCents: order.total_cents,
             trackingCode: order.tracking_code,
+            rejectionReason: rejection_reason || null,
           },
         },
       }

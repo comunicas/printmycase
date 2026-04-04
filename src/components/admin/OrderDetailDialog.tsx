@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,13 +25,14 @@ interface OrderRow {
   shipping_address?: any;
   customization_data?: any;
   created_at: string;
+  rejection_reason?: string | null;
 }
 
 interface Props {
   order: OrderRow | null;
   open: boolean;
   onClose: () => void;
-  onStatusChange: (orderId: string, newStatus: string) => Promise<void>;
+  onStatusChange: (orderId: string, newStatus: string, rejectionReason?: string) => Promise<void>;
   onSaveTracking: (orderId: string, code: string) => Promise<void>;
 }
 
@@ -49,6 +50,15 @@ const statusColorMap: Record<string, string> = {
 const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTracking }: Props) => {
   const [trackingInput, setTrackingInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [submittingReject, setSubmittingReject] = useState(false);
+
+  // Reset reject form when order changes
+  useEffect(() => {
+    setShowRejectForm(false);
+    setRejectionReason("");
+  }, [order?.id]);
 
   if (!order) return null;
 
@@ -62,6 +72,25 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
     setSaving(true);
     await onSaveTracking(order.id, trackingInput.trim());
     setSaving(false);
+  };
+
+  const handleStatusSelect = (newStatus: string) => {
+    if (newStatus === "rejected") {
+      setShowRejectForm(true);
+      setRejectionReason("");
+    } else {
+      setShowRejectForm(false);
+      onStatusChange(order.id, newStatus);
+    }
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectionReason.trim()) return;
+    setSubmittingReject(true);
+    await onStatusChange(order.id, "rejected", rejectionReason.trim());
+    setShowRejectForm(false);
+    setRejectionReason("");
+    setSubmittingReject(false);
   };
 
   return (
@@ -122,7 +151,15 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
               <p className="text-xs text-red-600 font-medium mt-2">Pedido cancelado</p>
             )}
             {isRejected && (
-              <p className="text-xs text-orange-600 font-medium mt-2">Imagem recusada pelo administrador</p>
+              <div className="mt-2">
+                <p className="text-xs text-orange-600 font-medium">Imagem recusada pelo administrador</p>
+                {order.rejection_reason && (
+                  <div className="mt-1.5 p-2.5 bg-orange-50 border border-orange-200 rounded-lg">
+                    <p className="text-xs text-orange-700 font-medium mb-0.5">Motivo:</p>
+                    <p className="text-sm text-orange-900">{order.rejection_reason}</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -179,8 +216,8 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
               <div className="flex items-center gap-2">
                 <label className="text-xs text-muted-foreground whitespace-nowrap">Status:</label>
                 <select
-                  value={order.status}
-                  onChange={(e) => onStatusChange(order.id, e.target.value)}
+                  value={showRejectForm ? "rejected" : order.status}
+                  onChange={(e) => handleStatusSelect(e.target.value)}
                   className="h-8 rounded-md border bg-background px-2 text-xs font-medium"
                 >
                   {Object.entries(statusLabels).map(([v, l]) => (
@@ -200,6 +237,32 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
                 </Button>
               </div>
             </div>
+
+            {/* Reject form */}
+            {showRejectForm && (
+              <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg space-y-2">
+                <p className="text-sm font-medium text-orange-800">Justificativa para recusa (obrigatório)</p>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Descreva o motivo da recusa da imagem..."
+                  className="w-full min-h-[80px] p-2 border border-orange-300 rounded-md text-sm bg-white resize-y focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button size="sm" variant="outline" onClick={() => setShowRejectForm(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                    disabled={!rejectionReason.trim() || submittingReject}
+                    onClick={handleConfirmReject}
+                  >
+                    {submittingReject ? "Salvando..." : "Confirmar Recusa"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Data */}

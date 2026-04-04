@@ -93,6 +93,17 @@ const OrderStatusUpdateEmail = ({
             </Text>
           </Section>
 
+          {newStatus === 'rejected' && rejectionReason ? (
+            <Section style={rejectionCard}>
+              <Text style={{ ...detailText, color: '#9a3412', fontWeight: '600' as const, margin: '0 0 6px' }}>
+                Motivo da recusa:
+              </Text>
+              <Text style={{ fontSize: '14px', color: '#7c2d12', lineHeight: '1.5', margin: '0' }}>
+                {rejectionReason}
+              </Text>
+            </Section>
+          ) : null}
+
           {newStatus === 'shipped' && trackingCode ? (
             <Section style={{ paddingTop: '16px' }}>
               <Text style={detailText}>Código de rastreio:</Text>
