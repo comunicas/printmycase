@@ -4,41 +4,19 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import OrderDetailDialog from "@/components/admin/OrderDetailDialog";
-import { statusLabels } from "@/lib/constants";
+import { statusLabels, statusColorMap, type AdminOrderRow } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
-import type { Tables } from "@/integrations/supabase/types";
 import type { Database } from "@/integrations/supabase/types";
-
-type OrderRow = Tables<"orders"> & {
-  product_name?: string;
-  product_image?: string;
-  design_name?: string;
-  design_image?: string;
-  customer_name?: string;
-  customer_city?: string;
-  customer_state?: string;
-};
 
 const PAGE_SIZE = 10;
 
-const statusColorMap: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  paid: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  analyzing: "bg-blue-100 text-blue-800 border-blue-300",
-  rejected: "bg-orange-100 text-orange-800 border-orange-300",
-  producing: "bg-purple-100 text-purple-800 border-purple-300",
-  shipped: "bg-indigo-100 text-indigo-800 border-indigo-300",
-  delivered: "bg-green-100 text-green-800 border-green-300",
-  cancelled: "bg-red-100 text-red-800 border-red-300",
-};
-
 const OrdersManager = () => {
-  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [orders, setOrders] = useState<AdminOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(0);
-  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrderRow | null>(null);
   const { toast } = useToast();
 
   const fetchOrders = useCallback(async () => {
@@ -70,7 +48,7 @@ const OrdersManager = () => {
       profiles?.forEach((p) => profileMap.set(p.id, p.full_name));
     }
 
-    const enriched: OrderRow[] = rows.map((o) => {
+    const enriched: AdminOrderRow[] = rows.map((o) => {
       const shipping = o.shipping_address as Record<string, any> | null;
       return {
         ...o,

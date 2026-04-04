@@ -60,16 +60,18 @@ Landing → Catálogo → Produto → Customizar → Checkout → Pedidos
 src/
 ├── components/
 │   ├── ui/              # Componentes base shadcn/ui
-│   ├── admin/           # ProductsTable, ProductFormDialog, BulkPriceDialog,
-│   │                    # AiFiltersManager, AiFilterCategoriesManager,
-│   │                    # AiGenerationsManager, AiImageGenerator,
-│   │                    # ModelRequestsManager, DeviceImageUpload,
-│   │                    # CollectionsManager, CollectionDesignsManager, CoinsManager,
+│   ├── admin/           # AdminSidebar, ProductsTable, ProductFormDialog,
+│   │                    # BulkPriceDialog, AiFiltersManager,
+│   │                    # AiFilterCategoriesManager, AiGenerationsManager,
+│   │                    # AiImageGenerator, ModelRequestsManager,
+│   │                    # DeviceImageUpload, CollectionsManager,
+│   │                    # CollectionDesignsManager, CoinsManager,
 │   │                    # CoinPackagesManager, FaqManager, KbCategoriesManager,
 │   │                    # KbArticlesManager, LegalDocsManager, GalleryImagesManager,
 │   │                    # ImageGalleriesManager, UserGenerationsManager,
-│   │                    # OrdersManager, OrderImagesPreviewer, ConfirmDialog,
-│   │                    # ProductImagesUpload
+│   │                    # UsersManager, UserDetailDialog, OrdersManager,
+│   │                    # OrderDetailDialog, OrderImagesPreviewer,
+│   │                    # Pagination, ConfirmDialog, ProductImagesUpload
 │   ├── checkout/        # AddressForm, OrderSummary
 │   ├── customize/       # AdjustmentsPanel, AiFiltersList, ContinueBar,
 │   │                    # CustomizeHeader, FilterConfirmDialog, ImageControls,
@@ -222,7 +224,7 @@ interface Product {
 ### Enums
 
 - `app_role`: `admin`, `user`
-- `order_status`: `pending`, `paid`, `analyzing`, `customizing`, `producing`, `shipped`, `delivered`, `cancelled`
+- `order_status`: `pending`, `paid`, `analyzing`, `rejected`, `customizing` (legado — não usado no frontend), `producing`, `shipped`, `delivered`, `cancelled`
 - `coin_transaction_type`: `signup_bonus`, `referral_bonus`, `purchase_bonus`, `coin_purchase`, `ai_usage`, `admin_adjustment`
 
 ### Storage Buckets
@@ -266,6 +268,12 @@ Cada pedido armazena **4 tipos de imagem** no bucket `customizations`:
 4. **OrderImagesPreviewer** (admin): exibe as 4 imagens com lightbox e download direto
 
 ## Arquitetura
+
+### Painel Admin
+
+O admin usa layout com `AdminSidebar` (shadcn `Sidebar` com `collapsible="icon"`) + painel principal. Seções são controladas via `useState<AdminSection>` sem rotas — single-page com renderização condicional. A sidebar fecha automaticamente ao selecionar uma seção no mobile. Grupos: Operações (Pedidos, Usuários, Solicitações), Catálogo (Produtos, Coleções, Designs), IA & Galeria, Financeiro, Conteúdo.
+
+Tipos e constantes compartilhados (`statusColorMap`, `AdminOrderRow`, `statusLabels`) ficam centralizados em `src/lib/constants.ts`.
 
 ### AuthContext Centralizado
 
@@ -330,6 +338,8 @@ Moedas virtuais para uso de recursos de IA (filtros, upscale). Bônus concedido 
 | `handle-email-suppression` | Processa bounces/complaints de email |
 | `handle-email-unsubscribe` | Processa unsubscribe de email |
 | `upload-gallery-zip` | Upload em lote de imagens de galeria via ZIP |
+| `admin-list-users` | Lista usuários com paginação (admin) |
+| `migrate-generation-urls` | Migra URLs de gerações para novo formato |
 
 ## Analytics e Rastreamento
 
