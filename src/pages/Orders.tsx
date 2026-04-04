@@ -44,6 +44,16 @@ const OrderProgress = ({ status }: { status: string }) => {
     );
   }
 
+  if (status === "rejected") {
+    const Icon = statusIcons.rejected;
+    return (
+      <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-100 rounded-lg px-3 py-2">
+        <Icon className="w-4 h-4" />
+        {statusLabels.rejected}
+      </div>
+    );
+  }
+
   const stepIdx = getStepIndex(status);
   const total = statusFlow.length;
   const pct = ((stepIdx + 1) / total) * 100;
