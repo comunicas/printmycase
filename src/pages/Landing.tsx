@@ -15,6 +15,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import AiCoinsSection from "@/components/AiCoinsSection";
 import WhyPrintMyCase from "@/components/WhyPrintMyCase";
 import FaqSection from "@/components/FaqSection";
+import StoreLocator from "@/components/StoreLocator";
 import PaymentBadges from "@/components/PaymentBadges";
 
 
