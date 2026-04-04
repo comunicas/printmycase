@@ -39,7 +39,7 @@ const statusColorMap: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
   paid: "bg-yellow-100 text-yellow-800 border-yellow-300",
   analyzing: "bg-blue-100 text-blue-800 border-blue-300",
-  customizing: "bg-blue-100 text-blue-800 border-blue-300",
+  rejected: "bg-orange-100 text-orange-800 border-orange-300",
   producing: "bg-purple-100 text-purple-800 border-purple-300",
   shipped: "bg-indigo-100 text-indigo-800 border-indigo-300",
   delivered: "bg-green-100 text-green-800 border-green-300",
@@ -55,6 +55,7 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
   const shipping = order.shipping_address as Record<string, any> | null;
   const currentStep = getStepIndex(order.status);
   const isCancelled = order.status === "cancelled";
+  const isRejected = order.status === "rejected";
 
   const handleSave = async () => {
     if (!trackingInput.trim()) return;
@@ -94,8 +95,8 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
             <div className="flex items-center gap-1">
               {statusFlow.map((s, i) => {
                 const Icon = statusIcons[s];
-                const isActive = !isCancelled && i <= currentStep;
-                const isCurrent = !isCancelled && i === currentStep;
+                const isActive = !isCancelled && !isRejected && i <= currentStep;
+                const isCurrent = !isCancelled && !isRejected && i === currentStep;
                 return (
                   <div key={s} className="flex items-center gap-1 flex-1">
                     <div className="flex flex-col items-center gap-1 flex-1">
@@ -119,6 +120,9 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
             </div>
             {isCancelled && (
               <p className="text-xs text-red-600 font-medium mt-2">Pedido cancelado</p>
+            )}
+            {isRejected && (
+              <p className="text-xs text-orange-600 font-medium mt-2">Imagem recusada pelo administrador</p>
             )}
           </div>
 

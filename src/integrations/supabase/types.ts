@@ -1045,6 +1045,7 @@ export type Database = {
         | "pending"
         | "paid"
         | "analyzing"
+        | "rejected"
         | "customizing"
         | "producing"
         | "shipped"
@@ -1190,6 +1191,7 @@ export const Constants = {
         "pending",
         "paid",
         "analyzing",
+        "rejected",
         "customizing",
         "producing",
         "shipped",

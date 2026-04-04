@@ -1,12 +1,12 @@
-import { CreditCard, Search, Paintbrush, Factory, Truck, CheckCircle, XCircle } from "lucide-react";
+import { CreditCard, Search, Factory, Truck, CheckCircle, XCircle, Ban } from "lucide-react";
 
 export const statusLabels: Record<string, string> = {
-  pending: "Pendente",
-  paid: "Pago",
-  analyzing: "Em Análise",
-  customizing: "Customizando",
+  pending: "Pagamento Pendente",
+  paid: "Pagamento Confirmado",
+  analyzing: "Analisando Imagem",
+  rejected: "Imagem Recusada",
   producing: "Produzindo",
-  shipped: "Enviado",
+  shipped: "Transporte",
   delivered: "Entregue",
   cancelled: "Cancelado",
 };
@@ -15,19 +15,18 @@ export const statusIcons: Record<string, typeof CreditCard> = {
   pending: CreditCard,
   paid: CreditCard,
   analyzing: Search,
-  customizing: Paintbrush,
+  rejected: Ban,
   producing: Factory,
   shipped: Truck,
   delivered: CheckCircle,
   cancelled: XCircle,
 };
 
-/** Ordered status flow (excludes cancelled) */
+/** Ordered status flow (excludes cancelled and rejected — they are deviations) */
 export const statusFlow = [
   "pending",
   "paid",
   "analyzing",
-  "customizing",
   "producing",
   "shipped",
   "delivered",
