@@ -1,0 +1,168 @@
+import { useState, useRef, useEffect, useMemo } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import { MapPin } from "lucide-react";
+import ScrollReveal from "@/components/ScrollReveal";
+import "leaflet/dist/leaflet.css";
+
+interface Store {
+  id: number;
+  name: string;
+  address: string;
+  state: string;
+  stateLabel: string;
+  position: [number, number];
+}
+
+const stores: Store[] = [
+  { id: 1, name: "Shopping Center 3", address: "Av. Paulista, 2064 – Cerqueira César, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5558, -46.6621] },
+  { id: 2, name: "Mooca Plaza Shopping", address: "Rua Capitão Pacheco e Chaves, 313 – Vila Prudente, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5732, -46.5928] },
+  { id: 3, name: "Shopping Taboão", address: "Rodovia Régis Bittencourt, km 272 / Av. Gov. André Franco Montoro – Taboão da Serra – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.6265, -46.7588] },
+  { id: 4, name: "Internacional Shopping Guarulhos", address: "Rodovia Presidente Dutra, km 225 – Vila Itapegica, Guarulhos – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.4656, -46.5322] },
+  { id: 5, name: "Shopping Boulevard Tatuapé", address: "Rua Gonçalves Crespo, 78 – Tatuapé, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5362, -46.5764] },
+  { id: 6, name: "Shopping Metrô Tatuapé", address: "Rua Domingos Agostim, 91 – Tatuapé, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5405, -46.5753] },
+  { id: 7, name: "Shopping Metrô Tucuruvi", address: "Av. Dr. Antonio Maria Laet, 566 – Tucuruvi, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.4793, -46.6027] },
+  { id: 8, name: "Shopping Bourbon", address: "Rua Palestra Itália, 500 – Perdizes, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.5276, -46.6802] },
+  { id: 9, name: "Tietê Plaza Shopping", address: "Av. Raimundo Pereira de Magalhães, 1465 – Pirituba, São Paulo – SP", state: "SP", stateLabel: "São Paulo (SP)", position: [-23.4859, -46.7267] },
+  { id: 10, name: "Pátio Central Shopping", address: "Rua Olegário Maciel, 742 – Centro, Patos de Minas – MG", state: "MG", stateLabel: "Minas Gerais (MG)", position: [-18.5881, -46.5181] },
+  { id: 11, name: "Via Café Shopping Center", address: "Av. Princesa do Sul, 1500 – Jardim Andere, Varginha – MG", state: "MG", stateLabel: "Minas Gerais (MG)", position: [-21.5610, -45.4357] },
+];
+
+const defaultIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const activeIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
+  iconRetinaUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+function FlyToStore({ position }: { position: [number, number] | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (position) {
+      map.flyTo(position, 15, { duration: 1 });
+    }
+  }, [position, map]);
+  return null;
+}
+
+const StoreLocator = () => {
+  const [selected, setSelected] = useState<number | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const grouped = useMemo(() => {
+    const groups: { label: string; stores: Store[] }[] = [];
+    const seen = new Set<string>();
+    for (const s of stores) {
+      if (!seen.has(s.state)) {
+        seen.add(s.state);
+        groups.push({ label: s.stateLabel, stores: stores.filter(x => x.state === s.state) });
+      }
+    }
+    return groups;
+  }, []);
+
+  const selectedPosition = selected ? stores.find(s => s.id === selected)?.position ?? null : null;
+
+  const handleSelect = (id: number) => {
+    setSelected(id);
+    const el = document.getElementById(`store-card-${id}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  return (
+    <section className="py-16 px-5 bg-muted/30">
+      <div className="max-w-5xl mx-auto">
+        <ScrollReveal>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-2">
+            Encontre uma Loja PrintMyCase
+          </h2>
+          <p className="text-center text-muted-foreground mb-10">
+            Visite uma de nossas lojas físicas
+          </p>
+        </ScrollReveal>
+
+        <ScrollReveal delay={150}>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Map */}
+            <div className="rounded-xl overflow-hidden shadow-md h-[400px] md:h-[500px]">
+              <MapContainer
+                center={[-23.55, -46.63]}
+                zoom={10}
+                scrollWheelZoom={false}
+                className="h-full w-full"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <FlyToStore position={selectedPosition} />
+                {stores.map(store => (
+                  <Marker
+                    key={store.id}
+                    position={store.position}
+                    icon={selected === store.id ? activeIcon : defaultIcon}
+                    eventHandlers={{ click: () => handleSelect(store.id) }}
+                  >
+                    <Popup>
+                      <strong>{store.name}</strong>
+                      <br />
+                      <span className="text-xs">{store.address}</span>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+
+            {/* Store List */}
+            <div ref={listRef} className="max-h-[400px] md:max-h-[500px] overflow-y-auto space-y-4 pr-1">
+              {grouped.map(group => (
+                <div key={group.label}>
+                  <p className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                    📍 {group.label}
+                  </p>
+                  <div className="space-y-2">
+                    {group.stores.map(store => (
+                      <button
+                        key={store.id}
+                        id={`store-card-${store.id}`}
+                        onClick={() => handleSelect(store.id)}
+                        className={`w-full text-left rounded-lg border p-3 transition-all duration-200 ${
+                          selected === store.id
+                            ? "ring-2 ring-primary bg-primary/5 border-primary/30"
+                            : "border-border hover:border-primary/20 hover:bg-accent/50"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <MapPin className={`w-4 h-4 mt-0.5 shrink-0 ${selected === store.id ? "text-primary" : "text-muted-foreground"}`} />
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{store.name}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{store.address}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
+      </div>
+    </section>
+  );
+};
+
+export default StoreLocator;
