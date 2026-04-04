@@ -405,9 +405,20 @@ const UserGenerationsManager = () => {
                 <span className="bg-muted px-2 py-0.5 rounded text-foreground font-medium">
                   {typeLabel(lightboxImage.generation_type)}
                 </span>
-                {lightboxImage.filter_name && <span>{lightboxImage.filter_name}</span>}
+                {lightboxImage.filter_name && (
+                  <span className="bg-accent px-2 py-0.5 rounded text-accent-foreground font-medium">
+                    {lightboxImage.filter_name}
+                  </span>
+                )}
+                {getCoinCost(lightboxImage.generation_type) > 0 && (
+                  <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium">
+                    <Coins className="h-3 w-3" /> {getCoinCost(lightboxImage.generation_type)} moeda(s)
+                  </span>
+                )}
                 <span>Passo {lightboxImage.step_number}</span>
-                <span>Usuário: {lightboxImage.user_id.slice(0, 8)}…</span>
+                <span className="inline-flex items-center gap-1">
+                  <User className="h-3 w-3" /> {profilesMap[lightboxImage.user_id] || `${lightboxImage.user_id.slice(0, 8)}…`}
+                </span>
                 <span>{new Date(lightboxImage.created_at).toLocaleDateString("pt-BR")}</span>
               </div>
               <div className="flex gap-2">
