@@ -1,54 +1,38 @@
 
 
-## Ajustar Fluxo de Status dos Pedidos
+## Justificativa Obrigatória ao Recusar Imagem + Notificação ao Usuário
 
-### Mudanças no fluxo
+### Mudanças
 
-Remover `customizing` (não faz mais parte do fluxo) e adicionar `rejected` (imagem recusada pelo admin).
+**1. Adicionar coluna `rejection_reason` na tabela `orders`**
+- Migration: `ALTER TABLE orders ADD COLUMN rejection_reason text;`
+- Armazena o motivo da recusa preenchido pelo admin
 
-**Fluxo novo:**
-```text
-pending → paid → analyzing → producing → shipped → delivered
-                      ↓
-                  rejected
-```
+**2. Editar `OrderDetailDialog.tsx`**
+- Interceptar mudança de status no `<select>`: quando o valor selecionado for `rejected`, em vez de chamar `onStatusChange` diretamente, exibir um campo de texto (textarea) obrigatório para justificativa
+- Adicionar states: `pendingStatus`, `rejectionReason`, `showRejectForm`
+- Botão "Confirmar Recusa" que chama `onStatusChange(orderId, "rejected", rejectionReason)`
+- Atualizar a interface `Props.onStatusChange` para aceitar um terceiro parâmetro opcional `reason?: string`
 
-**Labels novos:**
-| Valor | Label |
-|-------|-------|
-| pending | Pagamento Pendente |
-| paid | Pagamento Confirmado |
-| analyzing | Analisando Imagem |
-| rejected | Imagem Recusada |
-| producing | Produzindo |
-| shipped | Transporte |
-| delivered | Entregue |
-| cancelled | Cancelado |
+**3. Editar `OrdersManager.tsx`**
+- Atualizar `handleStatusChange` para receber `reason?: string` e salvar `rejection_reason` junto com o status
+- Passar `rejection_reason` no body do `notify-order-status`
+
+**4. Editar `notify-order-status/index.ts`**
+- Aceitar `rejection_reason` no body
+- Passar para `templateData` como `rejectionReason`
+
+**5. Editar `order-status-update.tsx` (template de email)**
+- Adicionar labels para `rejected` nos maps de status/cores
+- Quando `newStatus === 'rejected'` e `rejectionReason` existir, exibir seção com o motivo da recusa no email
+
+**6. Exibir motivo na `OrderDetailDialog`**
+- Quando o pedido já estiver com status `rejected`, mostrar o `rejection_reason` salvo abaixo da indicação "Imagem recusada"
 
 ### Arquivos
-
-**1. Migration SQL** — Adicionar valor `rejected` ao enum `order_status`
-```sql
-ALTER TYPE order_status ADD VALUE 'rejected' AFTER 'analyzing';
-```
-
-**2. `src/lib/constants.ts`**
-- Atualizar `statusLabels`: remover `customizing`, adicionar `rejected`, renomear labels conforme tabela acima
-- Atualizar `statusIcons`: remover `customizing`, adicionar `rejected` (ícone `XCircle` ou `Ban`)
-- Atualizar `statusFlow`: remover `customizing`, ficando `["pending", "paid", "analyzing", "producing", "shipped", "delivered"]`
-- `rejected` e `cancelled` ficam fora do `statusFlow` (são desvios, não parte do fluxo linear)
-
-**3. `src/components/admin/OrderDetailDialog.tsx`**
-- Adicionar cor para `rejected` no `statusColorMap` (vermelho/laranja)
-- A timeline já ignora statuses fora do `statusFlow`, então `rejected` aparecerá apenas no badge
-- Adicionar indicação visual quando status é `rejected` (similar ao "Pedido cancelado")
-
-**4. `src/components/admin/OrdersManager.tsx`**
-- Adicionar cor para `rejected` no `statusColorMap` do card compacto
-
-### Resultado
-- Fluxo simplificado de 6 etapas (sem "Customizando")
-- Novo status "Imagem Recusada" disponível para admin
-- Labels em português mais descritivos
-- 1 migration + 3 arquivos editados
+- 1 migration (adicionar coluna)
+- `OrderDetailDialog.tsx` — form de justificativa + exibição do motivo
+- `OrdersManager.tsx` — salvar reason no update
+- `notify-order-status/index.ts` — passar reason no email
+- `order-status-update.tsx` — renderizar motivo no email
 
