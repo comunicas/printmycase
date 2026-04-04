@@ -1,37 +1,53 @@
 
 
-## Corrigir Sidebar Aparecendo Abaixo do Header
+## Melhorar Navegação Mobile — Barra de Trigger Fixa
 
-### Problema
-O `SidebarProvider` envolve apenas o conteúdo abaixo do `AppHeader`. Como o componente `Sidebar` usa posicionamento fixo/sticky relativo ao seu provider, ele começa abaixo do header em vez de ocupar a altura total da viewport.
+### Situação Atual
+- A sidebar no mobile já funciona como overlay (painel deslizante com backdrop escuro)
+- Já fecha automaticamente ao selecionar uma seção (`if (isMobile) toggleSidebar()`)
+- O problema: a barra com o `SidebarTrigger` + "Painel Admin" rola junto com o conteúdo, dificultando a navegação
 
 ### Solução
 
 **1 arquivo editado: `src/pages/Admin.tsx`**
 
-Mover o `SidebarProvider` para envolver tudo (incluindo o header), e ajustar o layout para que o header fique em cima (full-width) e o flex com sidebar + conteúdo fique abaixo:
+Tornar a barra do trigger fixa (sticky) para que fique sempre visível no topo, mesmo ao rolar o conteúdo:
 
-```tsx
-return (
-  <SidebarProvider>
-    <div className="min-h-screen bg-background flex w-full">
-      <AdminSidebar ... />
-      <div className="flex-1 flex flex-col min-h-screen">
-        <AppHeader breadcrumbs={[{ label: "Admin" }]} />
-        <div className="flex items-center gap-2 border-b px-4 h-10">
-          <SidebarTrigger />
-          <h1 className="text-lg font-semibold">Painel Admin</h1>
-        </div>
-        <main className="flex-1 overflow-auto">
-          <div className="max-w-5xl mx-auto px-5 py-6">
-            <ActiveManager />
-          </div>
-        </main>
-      </div>
-    </div>
-  </SidebarProvider>
-);
+- Adicionar `sticky top-0 z-40 bg-background` na div que contém o `SidebarTrigger` + título
+- Isso garante que o botão de abrir a sidebar esteja sempre acessível no mobile
+- No desktop, o sticky também funciona bem (a sidebar já é fixa por padrão)
+
+```text
+Antes:
+┌─ Header (sticky) ─────────────┐
+│  Logo  │  Coleções │  Menu    │
+├─ Trigger bar (scrolls away) ──┤
+│  ☰ Painel Admin               │
+├────────────────────────────────┤
+│  ... conteúdo rola ...         │
+
+Depois:
+┌─ Header (sticky top-0) ───────┐
+│  Logo  │  Coleções │  Menu    │
+├─ Trigger bar (sticky below) ──┤
+│  ☰ Painel Admin               │
+├────────────────────────────────┤
+│  ... conteúdo rola ...         │
+│  (trigger bar sempre visível)  │
 ```
 
-A mudança principal: `SidebarProvider` envolve tudo, a `Sidebar` fica como irmã direta do conteúdo principal dentro do flex container, e o `AppHeader` fica dentro da coluna de conteúdo (não acima do provider). Isso faz a sidebar ocupar a altura total da tela, alinhada ao topo.
+### Mudança específica
+
+Na div da linha 80:
+```tsx
+// De:
+<div className="flex items-center gap-2 border-b px-4 h-10">
+
+// Para:
+<div className="sticky top-0 z-40 flex items-center gap-2 border-b px-4 h-10 bg-background">
+```
+
+Obs: o `AppHeader` também é sticky (`sticky top-0 z-50`), então o trigger bar precisa de um `top` que considere a altura do header. Vou calcular isso com `top-[var(--header-height)]` ou um valor fixo baseado na altura do header (~56-64px).
+
+Alternativa mais robusta: remover o `AppHeader` da página admin no mobile (já que a sidebar fornece navegação completa) e manter apenas o trigger bar sticky. Mas isso seria uma mudança maior — a abordagem com sticky na barra do trigger é suficiente e segura.
 
