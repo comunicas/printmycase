@@ -160,7 +160,7 @@ const StoreLocator = () => {
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center flex-1">
-            Lojas PrintMyCase — Capinhas Personalizadas em {stores.length} Shopping Centers
+            Encontre a PrintMyCase em {stores.length} Shopping Centers
           </h2>
         </div>
         <p className="text-center text-muted-foreground mb-10">
