@@ -39,6 +39,33 @@ const StoresManager = () => {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
+  const [geocoding, setGeocoding] = useState(false);
+
+  const handleGeocode = async () => {
+    if (!address.trim()) {
+      toast({ title: "Preencha o endereço primeiro", variant: "destructive" });
+      return;
+    }
+    setGeocoding(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=br`,
+        { headers: { "User-Agent": "PrintMyCase-Admin/1.0" } }
+      );
+      const data = await res.json();
+      if (data.length > 0) {
+        setLat(data[0].lat);
+        setLng(data[0].lon);
+        toast({ title: "Coordenadas encontradas" });
+      } else {
+        toast({ title: "Endereço não encontrado", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Erro ao buscar coordenadas", variant: "destructive" });
+    } finally {
+      setGeocoding(false);
+    }
+  };
 
   const fetchStores = useCallback(async () => {
     setLoading(true);
