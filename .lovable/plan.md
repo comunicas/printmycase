@@ -1,24 +1,37 @@
 
 
-## Corrigir Warning de forwardRef no SortIcon
+## Corrigir Sidebar Aparecendo Abaixo do Header
 
 ### Problema
-O console mostra warning "Function components cannot be given refs" para o componente `SortIcon` dentro de `UsersManager.tsx` (linha 177). Isso acontece porque `SortIcon` é um componente funcional usado como filho direto de `TableHead` (que é um componente Radix/forwardRef e tenta passar ref).
+O `SidebarProvider` envolve apenas o conteúdo abaixo do `AppHeader`. Como o componente `Sidebar` usa posicionamento fixo/sticky relativo ao seu provider, ele começa abaixo do header em vez de ocupar a altura total da viewport.
 
-### Correção
+### Solução
 
-**1 arquivo editado: `src/components/admin/UsersManager.tsx`**
+**1 arquivo editado: `src/pages/Admin.tsx`**
 
-- Converter `SortIcon` de componente funcional inline para uma função helper simples que retorna JSX (não um componente React):
-  ```tsx
-  const renderSortIcon = (col: SortKey) => {
-    if (sortKey !== col) return <ArrowUpDown className="w-3.5 h-3.5 ml-1 inline opacity-40" />;
-    return sortDir === "asc"
-      ? <ArrowUp className="w-3.5 h-3.5 ml-1 inline text-primary" />
-      : <ArrowDown className="w-3.5 h-3.5 ml-1 inline text-primary" />;
-  };
-  ```
-- Atualizar todos os usos de `<SortIcon col="..." />` para `{renderSortIcon("...")}` no JSX
+Mover o `SidebarProvider` para envolver tudo (incluindo o header), e ajustar o layout para que o header fique em cima (full-width) e o flex com sidebar + conteúdo fique abaixo:
 
-Isso elimina o warning porque uma chamada de função não recebe refs, diferente de um componente React.
+```tsx
+return (
+  <SidebarProvider>
+    <div className="min-h-screen bg-background flex w-full">
+      <AdminSidebar ... />
+      <div className="flex-1 flex flex-col min-h-screen">
+        <AppHeader breadcrumbs={[{ label: "Admin" }]} />
+        <div className="flex items-center gap-2 border-b px-4 h-10">
+          <SidebarTrigger />
+          <h1 className="text-lg font-semibold">Painel Admin</h1>
+        </div>
+        <main className="flex-1 overflow-auto">
+          <div className="max-w-5xl mx-auto px-5 py-6">
+            <ActiveManager />
+          </div>
+        </main>
+      </div>
+    </div>
+  </SidebarProvider>
+);
+```
+
+A mudança principal: `SidebarProvider` envolve tudo, a `Sidebar` fica como irmã direta do conteúdo principal dentro do flex container, e o `AppHeader` fica dentro da coluna de conteúdo (não acima do provider). Isso faz a sidebar ocupar a altura total da tela, alinhada ao topo.
 
