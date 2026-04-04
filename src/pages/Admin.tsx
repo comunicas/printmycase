@@ -31,6 +31,7 @@ const sectionMap: Record<AdminSection, React.ComponentType> = {
   products: ProductsManager,
   collections: CollectionsManager,
   designs: CollectionDesignsManager,
+  stores: StoresManager,
   "ai-filters": AiFiltersManager,
   "ai-categories": AiFilterCategoriesManager,
   illustrations: GalleryImagesManager,
