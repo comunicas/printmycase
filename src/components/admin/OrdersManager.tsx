@@ -4,19 +4,19 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import OrderDetailDialog from "@/components/admin/OrderDetailDialog";
-import { statusLabels, statusColorMap, type AdminOrderRow } from "@/lib/constants";
+import { statusLabels, statusColorMap, type AdminAdminOrderRow } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
-import type { Database } from "@/integrations/supabase/types";
+
 
 const PAGE_SIZE = 10;
 
 const OrdersManager = () => {
-  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [orders, setOrders] = useState<AdminOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(0);
-  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrderRow | null>(null);
   const { toast } = useToast();
 
   const fetchOrders = useCallback(async () => {
@@ -48,7 +48,7 @@ const OrdersManager = () => {
       profiles?.forEach((p) => profileMap.set(p.id, p.full_name));
     }
 
-    const enriched: OrderRow[] = rows.map((o) => {
+    const enriched: AdminOrderRow[] = rows.map((o) => {
       const shipping = o.shipping_address as Record<string, any> | null;
       return {
         ...o,

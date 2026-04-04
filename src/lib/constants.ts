@@ -1,5 +1,5 @@
 import { CreditCard, Search, Factory, Truck, CheckCircle, XCircle, Ban } from "lucide-react";
-import type { Tables, Database } from "@/integrations/supabase/types";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const statusLabels: Record<string, string> = {
   pending: "Pagamento Pendente",
