@@ -1,38 +1,23 @@
 
 
-## Fix: Instagram Embeds conflicting with React DOM
+## Lazy Loading para Embeds do Instagram
 
-### Problem
-Instagram's `embed.js` script replaces the `blockquote` elements with iframes. Since React manages those DOM nodes, when React tries to update or unmount, it fails with `removeChild` errors because the original nodes no longer exist.
+### O que muda
 
-### Solution
-Use a ref-based approach where each embed container is managed outside React's virtual DOM. Instead of rendering `blockquote` elements as JSX, inject them via `innerHTML` on a ref'd div. This way Instagram can freely replace the content without conflicting with React.
+**1 arquivo editado: `src/components/InstagramShowcase.tsx`**
 
-### Changes
+Usar `IntersectionObserver` na seção inteira para adiar o carregamento dos embeds até que o usuário role até ela.
 
-**1 file edited: `src/components/InstagramShowcase.tsx`**
+### Implementação
 
-- Create a sub-component `InstaEmbed` that:
-  - Uses a `ref` on a wrapper `div`
-  - On mount, sets `ref.current.innerHTML` with the blockquote HTML
-  - Calls `window.instgrm.Embeds.process()` after injection
-  - Returns an empty div (React never touches the inner content)
-- Remove the direct `blockquote` JSX rendering
-- Keep the data fetching, layout grid, and `@printmycasebr` link unchanged
+- Adicionar um estado `inView` (booleano, inicia `false`) no `InstagramShowcase`
+- Observar a `section` com `IntersectionObserver` (rootMargin `200px` para iniciar antes de aparecer)
+- Renderizar os `InstaEmbed` apenas quando `inView === true`; antes disso, mostrar placeholders com altura fixa (~480px) e fundo `bg-muted/30` animado
+- Observer desconecta após primeira interseção (one-shot)
+- Reutilizar o hook `useScrollAnimation` existente no projeto ou implementar inline para manter o componente auto-contido
 
-### Key code pattern
-
-```tsx
-const InstaEmbed = ({ url }: { url: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!ref.current) return;
-    ref.current.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${url}" data-instgrm-version="14" style="..."></blockquote>`;
-    loadEmbedScript();
-  }, [url]);
-  return <div ref={ref} />;
-};
-```
-
-This isolates Instagram's DOM mutations from React's reconciliation, eliminating the `removeChild` error.
+### Resultado
+- Os iframes do Instagram (pesados, ~1MB cada) só carregam quando o usuário se aproxima da seção
+- Melhora LCP e tempo de carregamento inicial da landing page
+- Sem mudança visual — o conteúdo aparece igual ao entrar no viewport
 
