@@ -244,7 +244,7 @@ const ImageGalleriesManager = () => {
         <p className="text-muted-foreground text-center py-10">Nenhuma galeria criada.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {galleries.map(g => (
+          {paginatedGalleries.map(g => (
             <div
               key={g.id}
               className={`rounded-lg border bg-card p-4 cursor-pointer hover:border-primary transition-colors ${!g.active ? "opacity-50" : ""}`}
@@ -275,6 +275,8 @@ const ImageGalleriesManager = () => {
           ))}
         </div>
       )}
+
+      <Pagination page={galleryPage} totalPages={galleryTotalPages} onPageChange={setGalleryPage} totalItems={galleryTotalItems} />
 
       <ConfirmDialog
         open={!!deleteTarget}
