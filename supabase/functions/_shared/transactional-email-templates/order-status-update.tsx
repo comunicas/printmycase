@@ -48,6 +48,7 @@ interface OrderStatusUpdateProps {
   newStatus?: string
   totalCents?: number
   trackingCode?: string | null
+  rejectionReason?: string | null
 }
 
 const OrderStatusUpdateEmail = ({
