@@ -95,8 +95,8 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
             <div className="flex items-center gap-1">
               {statusFlow.map((s, i) => {
                 const Icon = statusIcons[s];
-                const isActive = !isCancelled && i <= currentStep;
-                const isCurrent = !isCancelled && i === currentStep;
+                const isActive = !isCancelled && !isRejected && i <= currentStep;
+                const isCurrent = !isCancelled && !isRejected && i === currentStep;
                 return (
                   <div key={s} className="flex items-center gap-1 flex-1">
                     <div className="flex flex-col items-center gap-1 flex-1">
