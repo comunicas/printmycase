@@ -266,6 +266,13 @@ const Orders = () => {
                         {/* Status progress */}
                         <OrderProgress status={order.status} />
 
+                        {order.status === "rejected" && order.rejection_reason && (
+                          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm space-y-1">
+                            <p className="font-semibold text-orange-800">Motivo da recusa:</p>
+                            <p className="text-orange-700">{order.rejection_reason}</p>
+                          </div>
+                        )}
+
                         {/* Footer */}
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="w-3.5 h-3.5" />
