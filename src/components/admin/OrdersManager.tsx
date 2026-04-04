@@ -7,7 +7,7 @@ import OrderDetailDialog from "@/components/admin/OrderDetailDialog";
 import { statusLabels, statusColorMap, type AdminOrderRow } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
-
+import type { Database } from "@/integrations/supabase/types";
 
 const PAGE_SIZE = 10;
 
