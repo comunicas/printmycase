@@ -16,6 +16,7 @@ import AiCoinsSection from "@/components/AiCoinsSection";
 
 import FaqSection from "@/components/FaqSection";
 import StoreLocator from "@/components/StoreLocator";
+import InstagramShowcase from "@/components/InstagramShowcase";
 import PaymentBadges from "@/components/PaymentBadges";
 
 
