@@ -22,6 +22,7 @@ import CoinPackagesManager from "@/components/admin/CoinPackagesManager";
 import CollectionsManager from "@/components/admin/CollectionsManager";
 import CollectionDesignsManager from "@/components/admin/CollectionDesignsManager";
 import AiFilterCategoriesManager from "@/components/admin/AiFilterCategoriesManager";
+import UsersManager from "@/components/admin/UsersManager";
 
 const Admin = () => {
   const [optimizing, setOptimizing] = useState(false);
