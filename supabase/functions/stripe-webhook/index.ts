@@ -10,12 +10,12 @@ const SENDER_DOMAIN = "notify.printmycase.com.br";
 const FROM = "PrintMyCase <noreply@notify.printmycase.com.br>";
 
 const statusLabels: Record<string, string> = {
-  pending: "Pendente",
-  paid: "Pago",
-  analyzing: "Em Análise",
-  customizing: "Customizando",
+  pending: "Pagamento Pendente",
+  paid: "Pagamento Confirmado",
+  analyzing: "Analisando Imagem",
+  rejected: "Imagem Recusada",
   producing: "Produzindo",
-  shipped: "Enviado",
+  shipped: "Transporte",
   delivered: "Entregue",
   cancelled: "Cancelado",
 };
@@ -24,7 +24,7 @@ const statusColors: Record<string, string> = {
   pending: "#9ca3af",
   paid: "#22c55e",
   analyzing: "#f59e0b",
-  customizing: "#8b5cf6",
+  rejected: "#f97316",
   producing: "#3b82f6",
   shipped: "#06b6d4",
   delivered: "#10b981",

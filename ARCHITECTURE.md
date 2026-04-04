@@ -224,7 +224,7 @@ interface Product {
 ### Enums
 
 - `app_role`: `admin`, `user`
-- `order_status`: `pending`, `paid`, `analyzing`, `customizing`, `producing`, `shipped`, `delivered`, `cancelled`
+- `order_status`: `pending`, `paid`, `analyzing`, `rejected`, `customizing` (legado — não usado no frontend), `producing`, `shipped`, `delivered`, `cancelled`
 - `coin_transaction_type`: `signup_bonus`, `referral_bonus`, `purchase_bonus`, `coin_purchase`, `ai_usage`, `admin_adjustment`
 
 ### Storage Buckets
