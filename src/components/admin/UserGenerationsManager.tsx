@@ -4,8 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Trash2, Maximize2, Eye, EyeOff, Filter } from "lucide-react";
+import { Trash2, Maximize2, Eye, EyeOff, Filter, Coins, User } from "lucide-react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { useCoinSettings } from "@/hooks/useCoinSettings";
 
 const PAGE_SIZE = 12;
 
@@ -20,8 +21,8 @@ type Generation = {
   session_id: string | null;
   created_at: string;
   public: boolean;
+  userName?: string;
 };
-
 type FilterType = "all" | "filter" | "upscale" | "original";
 type PublicFilter = "all" | "public" | "private";
 
