@@ -262,18 +262,18 @@ const UsersManager = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="cursor-pointer select-none" onClick={() => handleSort("full_name")}>
-                  Nome <SortIcon col="full_name" />
+                  Nome {renderSortIcon("full_name")}
                 </TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Telefone</TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => handleSort("created_at")}>
-                  Cadastro <SortIcon col="created_at" />
+                  Cadastro {renderSortIcon("created_at")}
                 </TableHead>
                 <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("coin_balance")}>
-                  Coins <SortIcon col="coin_balance" />
+                  Coins {renderSortIcon("coin_balance")}
                 </TableHead>
                 <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("order_count")}>
-                  Pedidos <SortIcon col="order_count" />
+                  Pedidos {renderSortIcon("order_count")}
                 </TableHead>
               </TableRow>
             </TableHeader>
