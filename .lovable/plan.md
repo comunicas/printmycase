@@ -1,59 +1,32 @@
 
 
-## Implementar Paginação em Todas as Listas do Admin
+## Corrigir Imagens Quebradas no Admin — Gerações de Usuários
 
-### Análise do Estado Atual
+### Diagnóstico
 
-**Já têm paginação:**
-- `OrdersManager` — paginação client-side (PAGE_SIZE=10)
-- `UserGenerationsManager` — infinite scroll
-- `AiGenerationsManager` — infinite scroll
+O banco de dados mostra que a maioria dos registros em `user_ai_generations` ainda tem **URLs assinadas expiradas** no campo `image_url` (contêm `/sign/` e `token=`). Isso acontece por dois motivos:
 
-**Precisam de paginação (renderizam tudo de uma vez):**
-1. `ProductsTable` — lista de produtos (pode crescer muito)
-2. `ModelRequestsManager` — solicitações de modelo
-3. `CoinsManager` — transações (limit 200, sem paginação visual)
-4. `AiFiltersManager` — filtros IA
-5. `FaqManager` — perguntas FAQ
-6. `KbArticlesManager` — artigos KB
-7. `KbCategoriesManager` — categorias KB
-8. `CollectionsManager` — coleções
-9. `CollectionDesignsManager` — designs de coleção
-10. `CoinPackagesManager` — pacotes de moedas
-11. `GalleryImagesManager` — imagens ilustrativas
-12. `ImageGalleriesManager` — galerias custom (lista + imagens dentro)
-13. `AiFilterCategoriesManager` — categorias de filtros
-14. `LegalDocsManager` — documentos legais
+1. **Edge functions não foram re-deployadas** — o código foi atualizado para salvar URLs públicas, mas as funções deployadas ainda salvam signed URLs
+2. **Admin UI não tem fallback** — `UserGenerationsManager` usa `img.image_url` diretamente, sem gerar nova signed URL quando a existente expira (ao contrário de `MyGenerations.tsx` que já tem esse fallback)
+3. **Registros existentes** nunca foram migrados — a função `migrate-generation-urls` existe mas só processou 98 de 127+ registros
 
-### Abordagem
+### Correções
 
-Criar um **componente reutilizável `Pagination`** e um **hook `usePagination`** para evitar duplicar lógica em cada manager.
+**1. `src/components/admin/UserGenerationsManager.tsx`**
+- Adicionar lógica de resolução de URLs: ao carregar imagens, detectar URLs expiradas (`/sign/` ou `token=`) e gerar nova signed URL via `storage_path`
+- Aplicar tanto na grid quanto no lightbox
+- Mesma lógica que já existe em `MyGenerations.tsx`
 
-### Implementação
+**2. Re-deploy das edge functions**
+- Deploy `apply-ai-filter` e `upscale-image` para que novas gerações salvem URLs públicas permanentes
+- Deploy `migrate-generation-urls` para migrar registros antigos
 
-**1. Novo componente: `src/components/admin/Pagination.tsx`**
-- Botões "Anterior" / "Próximo" + indicador "Página X de Y"
-- Props: `page`, `totalPages`, `onPageChange`
-- Aparece apenas quando `totalPages > 1`
-
-**2. Novo hook: `src/hooks/usePagination.ts`**
-- Recebe array de items e `pageSize` (default 10)
-- Retorna `{ paginated, page, setPage, totalPages }`
-- Reset automático para página 0 quando items mudam
-
-**3. Integrar em cada manager (14 arquivos)**
-- Importar `usePagination` + `Pagination`
-- Passar a lista filtrada (se houver filtro) pelo hook
-- Renderizar `paginated` ao invés do array completo
-- Adicionar `<Pagination />` após a lista
-
-**PAGE_SIZE por manager:**
-- Listas com cards detalhados (Products, Orders, Requests, Transactions, Filters, FAQs, Articles): **10 por página**
-- Grids visuais (Designs, Gallery Images, Custom Gallery Images): **12 por página**
-- Listas curtas (Categories, Legal, Coin Packages): **10 por página**
+**3. Executar migração completa**
+- Chamar `migrate-generation-urls` repetidamente até processar todos os registros restantes com signed URLs
+- Isso corrige os dados existentes de forma permanente
 
 ### Resultado
-- 2 novos arquivos (Pagination + usePagination)
-- 14 managers editados
-- UX consistente com navegação por páginas em todas as tabs
+- Imagens aparecem imediatamente no admin (fallback com signed URL fresh)
+- Novas gerações já salvam URL pública permanente
+- Registros antigos migrados para URLs permanentes
 
