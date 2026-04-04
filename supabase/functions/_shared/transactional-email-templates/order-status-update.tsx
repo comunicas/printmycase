@@ -203,6 +203,13 @@ const trackingLink = {
   backgroundColor: 'transparent',
   padding: '0',
 }
+const rejectionCard = {
+  backgroundColor: '#fff7ed',
+  borderRadius: '12px',
+  padding: '16px 20px',
+  marginTop: '16px',
+  border: '1px solid #fed7aa',
+}
 const button = {
   display: 'inline-block' as const,
   backgroundColor: 'hsl(265, 83%, 57%)',
