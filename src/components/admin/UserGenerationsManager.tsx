@@ -28,7 +28,7 @@ type PublicFilter = "all" | "public" | "private";
 
 const UserGenerationsManager = () => {
   const { toast } = useToast();
-  const { getSetting, loading: coinSettingsLoading } = useCoinSettings();
+  const { getSetting } = useCoinSettings();
   const [images, setImages] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
