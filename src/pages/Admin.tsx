@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette, Settings, Layers, Zap } from "lucide-react";
+import { Package, Truck, Smartphone, Wand2, Coins, FileText, BookOpen, FolderOpen, FileQuestion, Star, Image as ImageIcon, Sparkles, Palette, Settings, Layers, Zap, Users } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
