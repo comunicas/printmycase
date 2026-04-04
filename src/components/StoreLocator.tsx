@@ -169,8 +169,7 @@ const StoreLocator = () => {
           </p>
         </ScrollReveal>
 
-        <ScrollReveal delay={150}>
-          <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6">
             {/* Map */}
             <div className="relative rounded-2xl overflow-hidden shadow-sm h-[400px] md:h-[500px]">
               {allBounds && (
@@ -275,7 +274,6 @@ const StoreLocator = () => {
               ))}
             </div>
           </div>
-        </ScrollReveal>
       </div>
     </section>
   );
