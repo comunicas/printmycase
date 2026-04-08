@@ -44,6 +44,7 @@ const Checkout = () => {
   // Meta Pixel: InitiateCheckout (with event_id for CAPI dedup)
   const pixelFired = useRef(false);
   const initiateCheckoutEventId = useRef(generateEventId());
+  const hasLoadedCustomizationRef = useRef(false);
   useEffect(() => {
     if (product && !pixelFired.current) {
       pixelFired.current = true;
@@ -51,13 +52,20 @@ const Checkout = () => {
     }
   }, [product]);
 
+  useEffect(() => {
+    hasLoadedCustomizationRef.current = false;
+  }, [id]);
+
   // Load customization from sessionStorage, fallback to DB
   useEffect(() => {
+    if (hasLoadedCustomizationRef.current) return;
+
     const raw = sessionStorage.getItem("customization");
     if (raw) {
       try {
         const parsed = parseCheckoutCustomizationData(JSON.parse(raw));
         if (parsed) {
+          hasLoadedCustomizationRef.current = true;
           setCustomization(parsed);
           return;
         }
@@ -68,6 +76,8 @@ const Checkout = () => {
     }
 
     if (!product?.id || !user) return;
+
+    hasLoadedCustomizationRef.current = true;
     setRecovering(true);
     (async () => {
       try {
