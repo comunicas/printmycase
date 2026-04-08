@@ -9,25 +9,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { checkoutService } from "@/services/customize/checkoutService";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { type ShippingResult } from "@/lib/shipping";
-import { usePendingCheckout } from "@/hooks/usePendingCheckout";
+import { useRecoverPendingCheckout } from "@/hooks/useRecoverPendingCheckout";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { clarityEvent } from "@/lib/clarity";
 import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
-import { parsePendingCustomizationData } from "@/types/customization";
-
-interface CustomizationData {
-  rawImage: string | null;
-  image: string | null;
-  editedImage: string | null;
-  previewImage: string | null;
-  imageFileName: string | null;
-  scale: number;
-  rotation: number;
-  activeFilter: string | null;
-  position: { x: number; y: number };
-}
+import { buildCreateCheckoutPayload } from "@/lib/checkout";
+import { uploadCustomizationAsset } from "@/lib/customization-upload";
+import { parseCheckoutCustomizationData, type CheckoutCustomizationData } from "@/types/customization";
 
 const Checkout = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,9 +25,9 @@ const Checkout = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { fetchByProduct, remove: removePending, getSignedUrl } = usePendingCheckout();
+  const { recoverPendingCheckout } = useRecoverPendingCheckout();
 
-  const [customization, setCustomization] = useState<CustomizationData | null>(null);
+  const [customization, setCustomization] = useState<CheckoutCustomizationData | null>(null);
   const [shipping, setShipping] = useState<ShippingResult | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -65,41 +55,30 @@ const Checkout = () => {
   useEffect(() => {
     const raw = sessionStorage.getItem("customization");
     if (raw) {
-      setCustomization(JSON.parse(raw));
-      return;
+      try {
+        const parsed = parseCheckoutCustomizationData(JSON.parse(raw));
+        if (parsed) {
+          setCustomization(parsed);
+          return;
+        }
+      } catch {
+        // noop, fallback to pending recovery
+      }
+      sessionStorage.removeItem("customization");
     }
-    // Fallback: recover from DB
+
     if (!product?.id || !user) return;
     setRecovering(true);
     (async () => {
       try {
-        const pending = await fetchByProduct(product.id);
-        if (!pending) {
+        const recovered = await recoverPendingCheckout(product.id);
+        if (!recovered) {
           toast({ title: "Customização não encontrada", description: "Volte e personalize sua capinha.", variant: "destructive" });
           navigate(`/customize/${id}`, { replace: true });
           return;
         }
-        const cd = parsePendingCustomizationData(pending.customization_data);
-        let imgUrl: string | null = null;
-        let editedUrl: string | null = null;
-        if (pending.edited_image_path) editedUrl = await getSignedUrl(pending.edited_image_path);
-        if (pending.original_image_path) imgUrl = await getSignedUrl(pending.original_image_path);
-        // Restore preview image from storage if available
-        let previewUrl: string | null = null;
-        if (cd.previewImagePath) {
-          previewUrl = await getSignedUrl(cd.previewImagePath);
-        }
-        setCustomization({
-          rawImage: imgUrl,
-          image: imgUrl,
-          editedImage: editedUrl,
-          previewImage: previewUrl,
-          imageFileName: null,
-          scale: cd.scale ?? 100,
-          rotation: cd.rotation ?? 0,
-          activeFilter: cd.activeFilter ?? null,
-          position: cd.position ?? { x: 50, y: 50 },
-        });
+
+        setCustomization(recovered);
         toast({ title: "Pedido pendente recuperado" });
       } catch {
         toast({ title: "Customização não encontrada", description: "Volte e personalize sua capinha.", variant: "destructive" });
@@ -108,7 +87,7 @@ const Checkout = () => {
         setRecovering(false);
       }
     })();
-  }, [product?.id, user, id, navigate, toast]);
+  }, [product?.id, user, id, navigate, recoverPendingCheckout, toast]);
 
   // Redirect if product not found
   useEffect(() => {
@@ -120,7 +99,6 @@ const Checkout = () => {
 
   const handleEditCustomization = () => {
     if (!product?.slug || !customization) return;
-    // Save current data as draft so Customize.tsx auto-restores it
     const key = `draft-customize-${product.slug}`;
     try {
       sessionStorage.setItem(key, JSON.stringify({
@@ -129,7 +107,9 @@ const Checkout = () => {
         position: customization.position,
         rotation: customization.rotation,
       }));
-    } catch { /* ignore */ }
+    } catch {
+      // ignore
+    }
     navigate(`/customize/${product.slug}`);
   };
 
@@ -139,24 +119,19 @@ const Checkout = () => {
     if (!isAddressValid) return;
     clarityEvent("checkout_payment_started");
     setCheckoutLoading(true);
+
     try {
-      let rawImageUrl: string | null = null;
-      let originalImageUrl: string | null = null;
-      let editedImageUrl: string | null = null;
       const ts = Date.now();
+      const rawExt = customization.imageFileName?.split(".").pop() || "png";
 
-      const fetchWithTimeout = async (url: string, timeoutMs = 15000): Promise<Blob> => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-          const res = await fetch(url, { signal: controller.signal });
-          if (!res.ok) throw new Error(`Fetch falhou: ${res.status}`);
-          return await res.blob();
-        } finally {
-          clearTimeout(timer);
-        }
-      };
+      const rawImageUrl = await uploadCustomizationAsset({
+        sourceUrl: customization.rawImage || customization.image,
+        userId: user.id,
+        fileName: `original_${ts}.${rawExt}`,
+        errorMessage: "Erro ao enviar imagem original. Verifique sua conexão e tente novamente.",
+      });
 
+ codex/refactor-services-structure-and-error-handling
       // Upload raw image (original user upload, untouched)
       try {
         const rawSrc = customization.rawImage || customization.image;
@@ -184,9 +159,25 @@ const Checkout = () => {
       } catch {
         throw new Error("Erro ao enviar imagem otimizada. Verifique sua conexão e tente novamente.");
       }
+=======
+      const originalImageUrl = await uploadCustomizationAsset({
+        sourceUrl: customization.image,
+        userId: user.id,
+        fileName: `optimized_${ts}.jpg`,
+        errorMessage: "Erro ao enviar imagem otimizada. Verifique sua conexão e tente novamente.",
+      });
 
-      // Upload final image (snapshot with frame positioning)
+      const editedImageUrl = await uploadCustomizationAsset({
+        sourceUrl: customization.editedImage,
+        userId: user.id,
+        fileName: `final_${ts}.jpg`,
+        errorMessage: "Erro ao enviar imagem final. Verifique sua conexão e tente novamente.",
+      });
+ main
+
+      let previewImageUrl: string | null = null;
       try {
+ codex/refactor-services-structure-and-error-handling
         if (customization.editedImage) {
           const blob = await fetchWithTimeout(customization.editedImage);
           const path = `${user.id}/final_${ts}.jpg`;
@@ -194,10 +185,19 @@ const Checkout = () => {
           if (error) throw new Error(error.message);
           editedImageUrl = data;
         }
+=======
+        previewImageUrl = await uploadCustomizationAsset({
+          sourceUrl: customization.previewImage,
+          userId: user.id,
+          fileName: `preview_${ts}.png`,
+          errorMessage: "Erro ao enviar imagem de preview.",
+        });
+ main
       } catch {
-        throw new Error("Erro ao enviar imagem final. Verifique sua conexão e tente novamente.");
+        // non-critical
       }
 
+ codex/refactor-services-structure-and-error-handling
       // Upload preview image (mockup with device frame)
       let previewImageUrl: string | null = null;
       try {
@@ -238,6 +238,27 @@ const Checkout = () => {
           label: addressData.addressLabel,
         },
         save_address: !addressData.selectedAddressId && addressData.saveAddress,
+=======
+      const checkoutPayload = buildCreateCheckoutPayload({
+        productId: product.id,
+        shippingCents: shipping.priceCents,
+        eventId: initiateCheckoutEventId.current,
+        addressData,
+        customizationData: {
+          scale: customization.scale,
+          rotation: customization.rotation,
+          activeFilter: customization.activeFilter,
+          position: customization.position,
+          preview_image_url: previewImageUrl,
+        },
+        rawImageUrl,
+        originalImageUrl,
+        editedImageUrl,
+      });
+
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: checkoutPayload,
+ main
       });
 
       if (error || !data) throw new Error(error?.message ?? "URL de checkout não retornada");
@@ -254,7 +275,6 @@ const Checkout = () => {
 
   const productPriceCents = product?.price_cents ?? 0;
   const shippingCents = shipping?.priceCents ?? 0;
-  const totalCents = productPriceCents + shippingCents;
 
   const breadcrumbs = [
     { label: "Catálogo", to: "/catalog" },
@@ -271,8 +291,6 @@ const Checkout = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader breadcrumbs={breadcrumbs} />
       <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10 space-y-6">
-
-        {/* Mini preview */}
         {(customization.editedImage || customization.image) && (
           <div className="flex items-center gap-4 border rounded-xl p-4 bg-card">
             <img
