@@ -4,21 +4,13 @@ import { ShoppingBag, ArrowLeft, Clock, ChevronLeft, ChevronRight } from "lucide
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AppHeader from "@/components/AppHeader";
-import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
-import { resolveProductInfo } from "@/lib/products";
 import { statusLabels, statusIcons, statusFlow, getStepIndex } from "@/lib/constants";
-import type { Tables } from "@/integrations/supabase/types";
+import { ordersService, type OrderWithProduct } from "@/services/orders/ordersService";
 import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import PendingCheckoutCards from "@/components/PendingCheckoutCards";
 
-type OrderWithProduct = Tables<"orders"> & {
-  product_name?: string;
-  product_image?: string;
-  design_name?: string;
-  design_image?: string;
-};
 
 const PAGE_SIZE = 8;
 
@@ -91,76 +83,38 @@ const Orders = () => {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const { data: ordersData } = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (!ordersData || ordersData.length === 0) {
+      const { data, error } = await ordersService.fetchUserOrders();
+      if (error) {
         setOrders([]);
         setLoading(false);
         return;
       }
 
-      const productIds = ordersData.map((o) => o.product_id);
-      const nameMap = await resolveProductInfo(productIds);
-
-      // Resolve design info for collection orders
-      const designIds = [...new Set(ordersData.map((o) => o.design_id).filter(Boolean))] as string[];
-      const designMap = new Map<string, { name: string; image: string }>();
-      if (designIds.length > 0) {
-        const { data: designs } = await supabase
-          .from("collection_designs")
-          .select("id, name, image_url")
-          .in("id", designIds);
-        designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
-      }
-
-      setOrders(
-        ordersData.map((o) => ({
-          ...o,
-          product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
-          product_image: nameMap.get(o.product_id)?.image,
-          design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
-          design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
-        }))
-      );
+      setOrders(data ?? []);
       setLoading(false);
     };
     fetchOrders();
 
     if (!user?.id) return;
 
-    const channel = supabase
-      .channel("user-orders")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "orders",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          setOrders((prev) =>
-            prev.map((o) => {
-              if (o.id !== payload.new.id) return o;
-              const { product_name, product_image, ...rest } = o;
-              return {
-                ...rest,
-                ...(payload.new as Tables<"orders">),
-                product_name,
-                product_image,
-              };
-            })
-          );
-        }
-      )
-      .subscribe();
+    const unsubscribe = ordersService.subscribeUserOrders(user.id, (updatedOrder) => {
+      setOrders((prev) =>
+        prev.map((o) => {
+          if (o.id !== updatedOrder.id) return o;
+          const { product_name, product_image, design_name, design_image, ...rest } = o;
+          return {
+            ...rest,
+            ...updatedOrder,
+            product_name,
+            product_image,
+            design_name,
+            design_image,
+          };
+        })
+      );
+    });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return unsubscribe;
   }, [user?.id]);
 
   const filtered = useMemo(() => filterByTab(orders, activeTab), [orders, activeTab]);

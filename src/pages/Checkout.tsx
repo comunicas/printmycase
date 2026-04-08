@@ -6,7 +6,7 @@ import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { checkoutService } from "@/services/customize/checkoutService";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { type ShippingResult } from "@/lib/shipping";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";
@@ -164,9 +164,9 @@ const Checkout = () => {
           const blob = await fetchWithTimeout(rawSrc);
           const ext = customization.imageFileName?.split(".").pop() || "png";
           const path = `${user.id}/original_${ts}.${ext}`;
-          const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
-          if (uploadError) throw uploadError;
-          rawImageUrl = path;
+          const { data, error } = await checkoutService.uploadCustomizationAsset(path, blob);
+          if (error) throw new Error(error.message);
+          rawImageUrl = data;
         }
       } catch {
         throw new Error("Erro ao enviar imagem original. Verifique sua conexão e tente novamente.");
@@ -177,9 +177,9 @@ const Checkout = () => {
         if (customization.image) {
           const blob = await fetchWithTimeout(customization.image);
           const path = `${user.id}/optimized_${ts}.jpg`;
-          const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
-          if (uploadError) throw uploadError;
-          originalImageUrl = path;
+          const { data, error } = await checkoutService.uploadCustomizationAsset(path, blob);
+          if (error) throw new Error(error.message);
+          originalImageUrl = data;
         }
       } catch {
         throw new Error("Erro ao enviar imagem otimizada. Verifique sua conexão e tente novamente.");
@@ -190,9 +190,9 @@ const Checkout = () => {
         if (customization.editedImage) {
           const blob = await fetchWithTimeout(customization.editedImage);
           const path = `${user.id}/final_${ts}.jpg`;
-          const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
-          if (uploadError) throw uploadError;
-          editedImageUrl = path;
+          const { data, error } = await checkoutService.uploadCustomizationAsset(path, blob);
+          if (error) throw new Error(error.message);
+          editedImageUrl = data;
         }
       } catch {
         throw new Error("Erro ao enviar imagem final. Verifique sua conexão e tente novamente.");
@@ -204,8 +204,8 @@ const Checkout = () => {
         if (customization.previewImage) {
           const blob = await fetchWithTimeout(customization.previewImage);
           const path = `${user.id}/preview_${ts}.png`;
-          const { error: uploadError } = await supabase.storage.from("customizations").upload(path, blob);
-          if (!uploadError) previewImageUrl = path;
+          const { data, error } = await checkoutService.uploadCustomizationAsset(path, blob);
+          if (!error) previewImageUrl = data;
         }
       } catch { /* non-critical */ }
 
@@ -218,37 +218,31 @@ const Checkout = () => {
         preview_image_url: previewImageUrl,
       };
 
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          product_id: product.id,
-          customization_data: customizationPayload,
-          raw_image_url: rawImageUrl,
-          original_image_url: originalImageUrl,
-          edited_image_url: editedImageUrl,
-          shipping_cents: shipping.priceCents,
-          initiate_checkout_event_id: initiateCheckoutEventId.current,
-          address_id: addressData.selectedAddressId,
-          address_inline: addressData.selectedAddressId ? undefined : {
-            street: addressData.street,
-            number: addressData.number,
-            complement: addressData.complement || null,
-            neighborhood: addressData.neighborhood,
-            city: addressData.city,
-            state: addressData.state,
-            zip_code: cleanZip,
-            label: addressData.addressLabel,
-          },
-          save_address: !addressData.selectedAddressId && addressData.saveAddress,
+      const { data, error } = await checkoutService.createCheckout({
+        product_id: product.id,
+        customization_data: customizationPayload,
+        raw_image_url: rawImageUrl,
+        original_image_url: originalImageUrl,
+        edited_image_url: editedImageUrl,
+        shipping_cents: shipping.priceCents,
+        initiate_checkout_event_id: initiateCheckoutEventId.current,
+        address_id: addressData.selectedAddressId,
+        address_inline: addressData.selectedAddressId ? undefined : {
+          street: addressData.street,
+          number: addressData.number,
+          complement: addressData.complement || null,
+          neighborhood: addressData.neighborhood,
+          city: addressData.city,
+          state: addressData.state,
+          zip_code: cleanZip,
+          label: addressData.addressLabel,
         },
+        save_address: !addressData.selectedAddressId && addressData.saveAddress,
       });
 
-      if (error) throw error;
-      if (data?.url) {
-        sessionStorage.removeItem("customization");
-        window.location.href = data.url;
-      } else {
-        throw new Error("URL de checkout não retornada");
-      }
+      if (error || !data) throw new Error(error?.message ?? "URL de checkout não retornada");
+      sessionStorage.removeItem("customization");
+      window.location.href = data.url;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Tente novamente.";
       console.error("Checkout error:", msg);
