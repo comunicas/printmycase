@@ -1,27 +1,61 @@
 
 
-## Truncar nomes de filtro longos nos badges de IA
+## Resultados do Teste + Correção do Lightbox
 
-### O que muda
+### Teste Mobile (390px) — Badges Truncados
 
-Criar uma função helper `truncateFilter` que limita o texto a 20 caracteres + "…" e aplicá-la em todos os pontos onde `filter_name` é exibido.
+**Status: OK** ✓
 
-### Arquivos alterados
+Os badges de filtro estão visíveis sem hover e truncados corretamente:
+- "Create a square prem…" (truncado em 20 chars)
+- "pixel_art", "hyperrealistic" (curtos, sem truncamento)
+- "Crie uma imagem com …" (truncado)
+- "Transform the image …" (truncado)
 
-**1. `src/components/AiCoinsSection.tsx`** (3 ocorrências)
-- Linha 116: hover badge desktop → `truncateFilter(img.filter_name)`
-- Linha 124: mobile badge → `truncateFilter(img.filter_name)`
+### Bug do Lightbox — Confirmado
 
-**2. `src/components/AiGalleryModal.tsx`** (3 ocorrências)
-- Linha 105: hover badge desktop → `truncateFilter(img.filter_name)`
-- Linha 113: mobile badge → `truncateFilter(img.filter_name)`
+Clicar no fundo escuro ao redor da imagem **não fecha** o lightbox. O motivo: no mobile, a imagem ocupa quase toda a tela (`max-w-[90vw]` = 351px de 390px) e tem `onClick stopPropagation`. A área clicável do backdrop restante é mínima (~20px de cada lado), e o click programático no div também falha porque o evento é capturado pela imagem.
 
-### Helper (inline em cada arquivo ou num utils)
+### Correção
 
-```typescript
-const truncateFilter = (name: string, max = 20) =>
-  name.length > max ? name.slice(0, max) + "…" : name;
+**Arquivo: `src/components/AiGalleryModal.tsx`** (lightbox, linhas 50-65)
+
+Reestruturar o lightbox para separar claramente backdrop e conteúdo:
+
+```tsx
+// Lightbox view
+if (lightboxUrl) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col">
+      {/* Top bar with buttons */}
+      <div className="flex items-center justify-between px-4 py-3 z-10">
+        <button className="text-white/70 hover:text-white" onClick={() => setLightboxUrl(null)}>
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <button className="text-white/70 hover:text-white" onClick={onClose}>
+          <X className="h-6 w-6" />
+        </button>
+      </div>
+      {/* Image area — tap anywhere outside image closes */}
+      <div
+        className="flex-1 flex items-center justify-center p-4"
+        onClick={() => setLightboxUrl(null)}
+      >
+        <img
+          src={lightboxUrl}
+          alt="Geração IA"
+          className="max-w-full max-h-[80vh] object-contain rounded-lg"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    </div>
+  );
+}
 ```
 
-Adicionado como função local no topo de cada componente. Simples e sem dependências.
+**Mudanças-chave:**
+1. Separar a barra de botões do fundo clicável — agora os botões ficam num div fixo no topo, não absolutos sobre a imagem
+2. O backdrop clicável é o `flex-1` container ao redor da imagem, com padding generoso (`p-4`) criando área clicável real
+3. Imagem usa `max-w-full` em vez de `max-w-[90vw]` para ter mais margem nas laterais
+4. Botão de voltar (`ChevronLeft`) volta à galeria grid; botão X fecha tudo
 
