@@ -33,6 +33,7 @@ const HISTORY_PAGE_SIZE = 10;
 const Coins = () => {
   const [packages, setPackages] = useState<CoinPackage[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(true);
+  const [purchaseFeedback, setPurchaseFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     supabase.from("coin_packages").select("*").eq("active", true).order("sort_order").then(({ data }) => {
@@ -52,28 +53,74 @@ const Coins = () => {
   const [historyPage, setHistoryPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
 
-  // Feedback de compra bem-sucedida + fallback de crédito
+  // Feedback de compra + fallback de crédito
   useEffect(() => {
+    const getVerifyErrorMessage = (statusOrCode?: string) => {
+      switch ((statusOrCode || "").toLowerCase()) {
+        case "not_paid":
+          return "O pagamento ainda não foi confirmado. Aguarde alguns minutos e tente atualizar a página.";
+        case "not_coin_purchase":
+          return "Não identificamos uma compra de moedas nessa sessão. Verifique o pagamento e tente novamente.";
+        case "user mismatch":
+        case "user_mismatch":
+        case "403":
+          return "Essa sessão de pagamento pertence a outro usuário. Faça login com a conta correta e tente novamente.";
+        case "500":
+          return "Não foi possível confirmar o crédito agora. Aguarde alguns minutos e tente atualizar a página.";
+        default:
+          return "Não foi possível confirmar seu crédito neste momento. Aguarde alguns minutos e tente atualizar a página.";
+      }
+    };
+
+    const verifyPurchase = async (sessionId: string, purchasedAmount: string) => {
+      const { data, error } = await supabase.functions.invoke("verify-coin-purchase", {
+        body: { sessionId },
+      });
+
+      if (error) {
+        const lowerMessage = error.message?.toLowerCase() || "";
+        const inferredStatus =
+          lowerMessage.includes("not_paid") ? "not_paid" :
+          lowerMessage.includes("not_coin_purchase") ? "not_coin_purchase" :
+          lowerMessage.includes("user mismatch") ? "user mismatch" :
+          lowerMessage.includes("403") ? "403" :
+          lowerMessage.includes("500") ? "500" :
+          undefined;
+        const errorMessage = getVerifyErrorMessage(inferredStatus);
+
+        console.error("[verify-coin] Error:", error.message);
+        toast({ title: "Não foi possível confirmar a compra", description: errorMessage, variant: "destructive" });
+        setPurchaseFeedback({ type: "error", message: errorMessage });
+        return;
+      }
+
+      const verifyStatus = data?.status as string | undefined;
+      const isCreditConfirmed = verifyStatus === "credited" || verifyStatus === "already_credited";
+
+      if (isCreditConfirmed) {
+        const successMessage = `${purchasedAmount} moedas adicionadas ao seu saldo.`;
+        toast({ title: "Compra realizada! 🎉", description: successMessage });
+        setPurchaseFeedback({ type: "success", message: successMessage });
+        refresh();
+        return;
+      }
+
+      const errorMessage = getVerifyErrorMessage(verifyStatus);
+      console.error("[verify-coin] Unexpected status:", verifyStatus, data);
+      toast({ title: "Não foi possível confirmar a compra", description: errorMessage, variant: "destructive" });
+      setPurchaseFeedback({ type: "error", message: errorMessage });
+    };
+
     const purchased = searchParams.get("purchased");
     const sessionId = searchParams.get("session_id");
     if (purchased && sessionId) {
-      // Call verify-coin-purchase to ensure coins are credited (idempotent)
-      supabase.functions.invoke("verify-coin-purchase", {
-        body: { sessionId },
-      }).then(({ data, error }) => {
-        if (error) {
-          console.error("[verify-coin] Error:", error.message);
-        } else {
-          console.log("[verify-coin] Result:", data);
-        }
-        toast({ title: "Compra realizada! 🎉", description: `${purchased} moedas adicionadas ao seu saldo.` });
-        refresh();
-      });
+      verifyPurchase(sessionId, purchased);
       searchParams.delete("purchased");
       searchParams.delete("session_id");
       setSearchParams(searchParams, { replace: true });
     } else if (purchased) {
       toast({ title: "Compra realizada! 🎉", description: `${purchased} moedas adicionadas ao seu saldo.` });
+      setPurchaseFeedback({ type: "success", message: `${purchased} moedas adicionadas ao seu saldo.` });
       searchParams.delete("purchased");
       setSearchParams(searchParams, { replace: true });
       refresh();
@@ -127,6 +174,11 @@ const Coins = () => {
             </Link>
           </p>
         </div>
+        {purchaseFeedback?.type === "error" && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {purchaseFeedback.message}
+          </div>
+        )}
 
         {/* ── Pacotes ── */}
         <div className="space-y-3">
