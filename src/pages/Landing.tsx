@@ -305,6 +305,7 @@ const Landing = () => {
                 <Link to="/termos" className="hover:text-foreground transition-colors w-fit">Termos de Uso</Link>
                 <Link to="/privacidade" className="hover:text-foreground transition-colors w-fit">Política de Privacidade</Link>
                 <Link to="/compras" className="hover:text-foreground transition-colors w-fit">Política de Compra e Devolução</Link>
+                <a href="https://empresas.printmycase.com.br/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors w-fit">Empresas</a>
               </nav>
             </div>
             <div className="space-y-3">
