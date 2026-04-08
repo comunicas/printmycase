@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppHeader from "@/components/AppHeader";
 import FormCard from "@/components/forms/FormCard";
@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import SubmitButton from "@/components/forms/SubmitButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import SeoHead from "@/components/SeoHead";
 
 const Contact = () => {
   const [name, setName] = useState("");
@@ -17,6 +16,10 @@ const Contact = () => {
   const [sent, setSent] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Contato — PrintMyCase";
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +44,6 @@ const Contact = () => {
   if (sent) {
     return (
       <>
-        <SeoHead title="Contato — PrintMyCase" description="Entre em contato com a PrintMyCase." />
         <AppHeader />
         <main className="min-h-[60vh] flex items-center justify-center px-4">
           <div className="text-center space-y-4 max-w-md">
@@ -58,7 +60,6 @@ const Contact = () => {
 
   return (
     <>
-      <SeoHead title="Contato — PrintMyCase" description="Envie uma mensagem para a PrintMyCase." />
       <AppHeader />
       <main className="min-h-[60vh] flex items-center justify-center px-4 py-12">
         <FormCard title="Fale Conosco" description="Preencha o formulário abaixo e retornaremos em breve." className="w-full max-w-md">
