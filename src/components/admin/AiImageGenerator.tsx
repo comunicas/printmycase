@@ -94,6 +94,13 @@ const AiImageGenerator = ({ onGenerated, initialSetup, onSetupConsumed }: AiImag
   const [lastSeed, setLastSeed] = useState<number | null>(null);
   const file1Ref = useRef<HTMLInputElement>(null);
   const file2Ref = useRef<HTMLInputElement>(null);
+  const onSetupConsumedRef = useRef(onSetupConsumed);
+  const toastRef = useRef(toast);
+
+  useEffect(() => {
+    onSetupConsumedRef.current = onSetupConsumed;
+    toastRef.current = toast;
+  }, [onSetupConsumed, toast]);
 
   // Apply initialSetup when it changes
   useEffect(() => {
@@ -106,9 +113,9 @@ const AiImageGenerator = ({ onGenerated, initialSetup, onSetupConsumed }: AiImag
     setImage1(initialSetup.imageUrls[0] ?? null);
     setImage2(initialSetup.imageUrls[1] ?? null);
     containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    onSetupConsumed?.();
-    toast({ title: "Setup carregado! Ajuste e gere novamente." });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when initialSetup changes
+    // intentionally scoped to initialSetup changes; callback/toast refs keep latest functions without re-applying setup
+    onSetupConsumedRef.current?.();
+    toastRef.current({ title: "Setup carregado! Ajuste e gere novamente." });
   }, [initialSetup]);
 
   const readFile = (file: File): Promise<string> =>
