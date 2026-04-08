@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ArrowRight, ChevronLeft } from "lucide-react";
+import { X, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { getOptimizedUrl } from "@/lib/image-utils";
@@ -15,7 +15,6 @@ interface PublicGeneration {
 interface AiGalleryModalProps {
   open: boolean;
   onClose: () => void;
-  /** If set, opens lightbox directly on this image */
   initialImageUrl?: string | null;
 }
 
@@ -26,50 +25,115 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
   const navigate = useNavigate();
   const [images, setImages] = useState<PublicGeneration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(initialImageUrl ?? null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const getUrl = (img: PublicGeneration) => img.public_image_url || img.image_url;
 
   useEffect(() => {
     if (!open) return;
-    setLightboxUrl(initialImageUrl ?? null);
+    setLightboxIndex(null);
     supabase
       .from("user_ai_generations")
       .select("id, image_url, public_image_url, filter_name")
       .eq("public", true)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setImages(data ?? []);
+        const items = data ?? [];
+        setImages(items);
         setLoading(false);
+
+        if (initialImageUrl && items.length > 0) {
+          const idx = items.findIndex(
+            (img) => getUrl(img) === initialImageUrl || getOptimizedUrl(getUrl(img), 800) === initialImageUrl
+          );
+          if (idx !== -1) setLightboxIndex(idx);
+        }
       });
   }, [open, initialImageUrl]);
 
+  const prevImage = useCallback(() => {
+    if (images.length <= 1) return;
+    setLightboxIndex((i) => (i === null ? null : i === 0 ? images.length - 1 : i - 1));
+  }, [images.length]);
+
+  const nextImage = useCallback(() => {
+    if (images.length <= 1) return;
+    setLightboxIndex((i) => (i === null ? null : i === images.length - 1 ? 0 : i + 1));
+  }, [images.length]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    const delta = touchStartX.current - touchEndX.current;
+    if (delta > 50) nextImage();
+    else if (delta < -50) prevImage();
+  };
+
   if (!open) return null;
 
-  const getUrl = (img: PublicGeneration) => img.public_image_url || img.image_url;
-
   // Lightbox view
-  if (lightboxUrl) {
+  if (lightboxIndex !== null && images[lightboxIndex]) {
+    const currentImg = images[lightboxIndex];
+    const lightboxUrl = getOptimizedUrl(getUrl(currentImg), 800);
+
     return (
-      <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col">
-        {/* Top bar with buttons */}
-        <div className="flex items-center justify-between px-4 py-3 z-10">
-          <button className="text-white/70 hover:text-white" onClick={() => setLightboxUrl(null)}>
+      <div
+        className="fixed inset-0 z-[60] bg-black/95 flex flex-col"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 py-3 z-20 bg-black/50">
+          <button className="text-white/70 hover:text-white p-1" onClick={() => setLightboxIndex(null)}>
             <ChevronLeft className="h-6 w-6" />
           </button>
-          <button className="text-white/70 hover:text-white" onClick={onClose}>
+          {images.length > 1 && (
+            <span className="text-white/60 text-sm font-medium">
+              {lightboxIndex + 1} / {images.length}
+            </span>
+          )}
+          <button className="text-white/70 hover:text-white p-1" onClick={onClose}>
             <X className="h-6 w-6" />
           </button>
         </div>
-        {/* Image area — tap anywhere outside image closes */}
+
+        {/* Image area */}
         <div
-          className="flex-1 flex items-center justify-center p-4"
-          onClick={() => setLightboxUrl(null)}
+          className="flex-1 flex items-center justify-center p-4 relative"
+          onClick={() => setLightboxIndex(null)}
         >
+          {/* Left arrow */}
+          {images.length > 1 && (
+            <button
+              className="absolute left-2 z-10 text-white/50 hover:text-white bg-black/40 rounded-full p-1.5"
+              onClick={(e) => { e.stopPropagation(); prevImage(); }}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          )}
+
           <img
             src={lightboxUrl}
-            alt="Geração IA"
-            className="max-w-full max-h-[80vh] object-contain rounded-lg"
+            alt={currentImg.filter_name || "Geração IA"}
+            className="max-w-[85vw] max-h-[70vh] object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />
+
+          {/* Right arrow */}
+          {images.length > 1 && (
+            <button
+              className="absolute right-2 z-10 text-white/50 hover:text-white bg-black/40 rounded-full p-1.5"
+              onClick={(e) => { e.stopPropagation(); nextImage(); }}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          )}
         </div>
       </div>
     );
@@ -98,11 +162,11 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
           <p className="text-center text-muted-foreground py-20">Nenhuma geração pública disponível.</p>
         ) : (
           <div className="columns-2 sm:columns-3 md:columns-4 gap-3 space-y-3">
-            {images.map((img) => (
+            {images.map((img, idx) => (
               <div
                 key={img.id}
                 className="group relative rounded-xl overflow-hidden ring-1 ring-border shadow-sm break-inside-avoid cursor-pointer"
-                onClick={() => setLightboxUrl(getOptimizedUrl(getUrl(img), 800))}
+                onClick={() => setLightboxIndex(idx)}
               >
                 <img
                   src={getOptimizedUrl(getUrl(img), 400)}
@@ -118,7 +182,6 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
                     </span>
                   </div>
                 )}
-                {/* Mobile: always show filter badge */}
                 {img.filter_name && (
                   <div className="absolute top-1.5 left-1.5 md:hidden">
                     <span className="text-[10px] font-medium text-white bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5">
