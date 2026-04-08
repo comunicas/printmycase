@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import OrderImagesPreviewer from "@/components/admin/OrderImagesPreviewer";
 import { statusLabels, statusFlow, statusIcons, getStepIndex, statusColorMap, type AdminOrderRow } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
-import { parseOrderCustomizationData, withCustomizationPlacementDefaults } from "@/types/customization";
+import { parseOrderCustomizationData } from "@/types/customization";
 
 type ShippingAddress = {
   street?: string;
@@ -56,14 +56,7 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
   if (!order) return null;
 
   const shipping = parseShippingAddress(order.shipping_address);
-  const parsedCustomizationData = parseOrderCustomizationData(order.customization_data);
-  const placement = withCustomizationPlacementDefaults(parsedCustomizationData);
-  const customizationData = {
-    ...parsedCustomizationData,
-    scale: placement.scale,
-    rotation: placement.rotation,
-    position: placement.position,
-  };
+  const customizationData = parseOrderCustomizationData(order.customization_data);
   const currentStep = getStepIndex(order.status);
   const isCancelled = order.status === "cancelled";
   const isRejected = order.status === "rejected";
