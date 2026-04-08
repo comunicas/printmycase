@@ -12,6 +12,40 @@ const ALLOWED_ORIGINS = [
 ];
 const DEFAULT_ORIGIN = "https://studio.printmycase.com.br";
 
+const SUCCESS_TOKEN_TTL_SECONDS = 15 * 60;
+const CHECKOUT_SESSION_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
+
+function b64urlEncode(input: Uint8Array): string {
+  return btoa(String.fromCharCode(...input)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function signSuccessPayload(payload: string, secret: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  return b64urlEncode(new Uint8Array(signature));
+}
+
+async function createSuccessToken(secret: string, nonce: string): Promise<string> {
+  const payload = {
+    sid: CHECKOUT_SESSION_PLACEHOLDER,
+    nonce,
+    exp: Math.floor(Date.now() / 1000) + SUCCESS_TOKEN_TTL_SECONDS,
+  };
+
+  const payloadJson = JSON.stringify(payload);
+  const payloadEncoded = b64urlEncode(new TextEncoder().encode(payloadJson));
+  const signature = await signSuccessPayload(payloadJson, secret);
+
+  return `${payloadEncoded}.${signature}`;
+}
+
 function getSafeOrigin(req: Request): string {
   const raw = req.headers.get("origin") || req.headers.get("referer") || "";
   try {
@@ -214,8 +248,14 @@ Deno.serve(async (req) => {
     }
 
     const eventId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+    const successTokenSecret = Deno.env.get("CHECKOUT_SUCCESS_TOKEN_SECRET");
+    if (!successTokenSecret) {
+      throw new Error("CHECKOUT_SUCCESS_TOKEN_SECRET not configured");
+    }
+    const publicSuccessNonce = crypto.randomUUID();
+    const successToken = await createSuccessToken(successTokenSecret, publicSuccessNonce);
 
-    params.append("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&eid=${eventId}`);
+    params.append("success_url", `${origin}/checkout/success?session_id=${CHECKOUT_SESSION_PLACEHOLDER}&eid=${eventId}&st=${successToken}`);
     const cancelUrl = isCollectionPurchase
       ? `${origin}/colecao/${(design as any).collections.slug}/${design!.slug}`
       : `${origin}/customize/${product.slug}`;
@@ -259,6 +299,7 @@ Deno.serve(async (req) => {
         edited_image_url: edited_image_url || null,
       },
       status: "pending",
+      public_success_nonce: publicSuccessNonce,
     }).select("id").single();
 
     if (orderError) {
