@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { parsePendingCustomizationData, type CheckoutCustomizationData, withCustomizationPlacementDefaults } from "@/types/customization";
+import { parsePendingCustomizationData, type CheckoutCustomizationData } from "@/types/customization";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 
 export function useRecoverPendingCheckout() {
@@ -10,7 +10,6 @@ export function useRecoverPendingCheckout() {
     if (!pending) return null;
 
     const customization = parsePendingCustomizationData(pending.customization_data);
-    const placement = withCustomizationPlacementDefaults(customization);
 
     const [image, editedImage, previewImage] = await Promise.all([
       pending.original_image_path ? getSignedUrl(pending.original_image_path) : Promise.resolve(null),
@@ -24,10 +23,10 @@ export function useRecoverPendingCheckout() {
       editedImage,
       previewImage,
       imageFileName: null,
-      scale: placement.scale,
-      rotation: placement.rotation,
+      scale: customization.scale ?? 100,
+      rotation: customization.rotation ?? 0,
       activeFilter: customization.activeFilter ?? null,
-      position: placement.position,
+      position: customization.position ?? { x: 50, y: 50 },
     };
   }, [fetchByProduct, getSignedUrl]);
 

@@ -131,6 +131,35 @@ const Checkout = () => {
         errorMessage: "Erro ao enviar imagem original. Verifique sua conexão e tente novamente.",
       });
 
+ codex/refactor-services-structure-and-error-handling
+      // Upload raw image (original user upload, untouched)
+      try {
+        const rawSrc = customization.rawImage || customization.image;
+        if (rawSrc) {
+          const blob = await fetchWithTimeout(rawSrc);
+          const ext = customization.imageFileName?.split(".").pop() || "png";
+          const path = `${user.id}/original_${ts}.${ext}`;
+          const { data, error } = await checkoutService.uploadCustomizationAsset(path, blob);
+          if (error) throw new Error(error.message);
+          rawImageUrl = data;
+        }
+      } catch {
+        throw new Error("Erro ao enviar imagem original. Verifique sua conexão e tente novamente.");
+      }
+
+      // Upload optimized image (after filters/upscale, max quality)
+      try {
+        if (customization.image) {
+          const blob = await fetchWithTimeout(customization.image);
+          const path = `${user.id}/optimized_${ts}.jpg`;
+          const { data, error } = await checkoutService.uploadCustomizationAsset(path, blob);
+          if (error) throw new Error(error.message);
+          originalImageUrl = data;
+        }
+      } catch {
+        throw new Error("Erro ao enviar imagem otimizada. Verifique sua conexão e tente novamente.");
+      }
+=======
       const originalImageUrl = await uploadCustomizationAsset({
         sourceUrl: customization.image,
         userId: user.id,
@@ -144,19 +173,72 @@ const Checkout = () => {
         fileName: `final_${ts}.jpg`,
         errorMessage: "Erro ao enviar imagem final. Verifique sua conexão e tente novamente.",
       });
+ main
 
       let previewImageUrl: string | null = null;
       try {
+ codex/refactor-services-structure-and-error-handling
+        if (customization.editedImage) {
+          const blob = await fetchWithTimeout(customization.editedImage);
+          const path = `${user.id}/final_${ts}.jpg`;
+          const { data, error } = await checkoutService.uploadCustomizationAsset(path, blob);
+          if (error) throw new Error(error.message);
+          editedImageUrl = data;
+        }
+=======
         previewImageUrl = await uploadCustomizationAsset({
           sourceUrl: customization.previewImage,
           userId: user.id,
           fileName: `preview_${ts}.png`,
           errorMessage: "Erro ao enviar imagem de preview.",
         });
+ main
       } catch {
         // non-critical
       }
 
+ codex/refactor-services-structure-and-error-handling
+      // Upload preview image (mockup with device frame)
+      let previewImageUrl: string | null = null;
+      try {
+        if (customization.previewImage) {
+          const blob = await fetchWithTimeout(customization.previewImage);
+          const path = `${user.id}/preview_${ts}.png`;
+          const { data, error } = await checkoutService.uploadCustomizationAsset(path, blob);
+          if (!error) previewImageUrl = data;
+        }
+      } catch { /* non-critical */ }
+
+      const cleanZip = addressData.zipInput.replace(/\D/g, "");
+      const customizationPayload = {
+        scale: customization.scale,
+        rotation: customization.rotation,
+        activeFilter: customization.activeFilter,
+        position: customization.position,
+        preview_image_url: previewImageUrl,
+      };
+
+      const { data, error } = await checkoutService.createCheckout({
+        product_id: product.id,
+        customization_data: customizationPayload,
+        raw_image_url: rawImageUrl,
+        original_image_url: originalImageUrl,
+        edited_image_url: editedImageUrl,
+        shipping_cents: shipping.priceCents,
+        initiate_checkout_event_id: initiateCheckoutEventId.current,
+        address_id: addressData.selectedAddressId,
+        address_inline: addressData.selectedAddressId ? undefined : {
+          street: addressData.street,
+          number: addressData.number,
+          complement: addressData.complement || null,
+          neighborhood: addressData.neighborhood,
+          city: addressData.city,
+          state: addressData.state,
+          zip_code: cleanZip,
+          label: addressData.addressLabel,
+        },
+        save_address: !addressData.selectedAddressId && addressData.saveAddress,
+=======
       const checkoutPayload = buildCreateCheckoutPayload({
         productId: product.id,
         shippingCents: shipping.priceCents,
@@ -174,7 +256,10 @@ const Checkout = () => {
         editedImageUrl,
       });
 
-      const { data, error } = await checkoutService.createCheckout(checkoutPayload);
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: checkoutPayload,
+ main
+      });
 
       if (error || !data) throw new Error(error?.message ?? "URL de checkout não retornada");
       sessionStorage.removeItem("customization");
