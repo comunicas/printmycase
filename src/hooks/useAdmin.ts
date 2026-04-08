@@ -37,37 +37,32 @@ export function useAdmin(options: UseAdminOptions = {}) {
     }
 
     let cancelled = false;
- codex/refactor-auth-and-admin-guards-7jg5ga
+
     setStatus("loading");
     setError(null);
 
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle()
-      .then(({ data, error: queryError }) => {
+    adminService
+      .checkIsAdmin(user.id)
+      .then(({ data, error: checkError }) => {
         if (cancelled) return;
 
-        if (queryError) {
+        if (checkError) {
           setIsAdmin(false);
           setStatus("error");
-          setError(queryError.message);
+          setError(checkError.message);
           return;
         }
 
-        setIsAdmin(!!data);
-        setStatus("ready");
-      });
-=======
-    adminService.checkIsAdmin(user.id).then(({ data }) => {
-      if (!cancelled) {
         setIsAdmin(Boolean(data));
-        setLoading(false);
-      }
-    });
- main
+        setStatus("ready");
+      })
+      .catch((unexpectedError) => {
+        if (cancelled) return;
+
+        setIsAdmin(false);
+        setStatus("error");
+        setError(unexpectedError instanceof Error ? unexpectedError.message : "Erro inesperado ao validar permissões.");
+      });
 
     return () => {
       cancelled = true;
