@@ -5,6 +5,32 @@ import { Input } from "@/components/ui/input";
 import OrderImagesPreviewer from "@/components/admin/OrderImagesPreviewer";
 import { statusLabels, statusFlow, statusIcons, getStepIndex, statusColorMap, type AdminOrderRow } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
+import { parseOrderCustomizationData } from "@/types/customization";
+
+type ShippingAddress = {
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+};
+
+const parseShippingAddress = (value: unknown): ShippingAddress | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+
+  return {
+    street: typeof record.street === "string" ? record.street : undefined,
+    number: typeof record.number === "string" ? record.number : undefined,
+    complement: typeof record.complement === "string" ? record.complement : undefined,
+    neighborhood: typeof record.neighborhood === "string" ? record.neighborhood : undefined,
+    city: typeof record.city === "string" ? record.city : undefined,
+    state: typeof record.state === "string" ? record.state : undefined,
+    zip_code: typeof record.zip_code === "string" ? record.zip_code : undefined,
+  };
+};
 
 interface Props {
   order: AdminOrderRow | null;
@@ -29,7 +55,8 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
 
   if (!order) return null;
 
-  const shipping = order.shipping_address as Record<string, any> | null;
+  const shipping = parseShippingAddress(order.shipping_address);
+  const customizationData = parseOrderCustomizationData(order.customization_data);
   const currentStep = getStepIndex(order.status);
   const isCancelled = order.status === "cancelled";
   const isRejected = order.status === "rejected";
@@ -240,7 +267,7 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
           </div>
 
           {/* Imagens */}
-          <OrderImagesPreviewer customizationData={(order.customization_data as Record<string, any>) ?? null} />
+          <OrderImagesPreviewer customizationData={customizationData} />
         </div>
       </DialogContent>
     </Dialog>

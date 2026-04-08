@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 
 export interface DesignWithCollection {
   id: string;
@@ -9,6 +10,27 @@ export interface DesignWithCollection {
   price_cents: number;
   collection_slug: string;
 }
+
+type CollectionDesignRow = Tables<"collection_designs">;
+type CollectionSummary = Pick<Tables<"collections">, "slug">;
+type CollectionRow = Pick<Tables<"collections">, "id" | "name" | "slug" | "sort_order">;
+type CollectionDesignWithCollectionSummary = CollectionDesignRow & {
+  collections: CollectionSummary;
+};
+type CollectionDesignWithCollection = CollectionDesignRow & {
+  collections: CollectionRow;
+};
+
+const mapDesign = (
+  row: CollectionDesignWithCollectionSummary | CollectionDesignWithCollection,
+): DesignWithCollection => ({
+  id: row.id,
+  name: row.name,
+  slug: row.slug,
+  image_url: row.image_url,
+  price_cents: row.price_cents,
+  collection_slug: row.collections.slug,
+});
 
 export function useAllDesigns(limit?: number) {
   const [designs, setDesigns] = useState<DesignWithCollection[]>([]);
@@ -24,15 +46,9 @@ export function useAllDesigns(limit?: number) {
     if (limit) query = query.limit(limit);
 
     query.then(({ data }) => {
+      const rows = (data ?? []) as CollectionDesignWithCollectionSummary[];
       setDesigns(
-        (data ?? []).map((d: any) => ({
-          id: d.id,
-          name: d.name,
-          slug: d.slug,
-          image_url: d.image_url,
-          price_cents: d.price_cents,
-          collection_slug: d.collections.slug,
-        }))
+        rows.map(mapDesign)
       );
       setLoading(false);
     });
@@ -60,15 +76,8 @@ export function useDesignsGroupedByCollection() {
       .eq("active", true)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        const rows = (data ?? []) as any[];
-        const flat: DesignWithCollection[] = rows.map((d) => ({
-          id: d.id,
-          name: d.name,
-          slug: d.slug,
-          image_url: d.image_url,
-          price_cents: d.price_cents,
-          collection_slug: d.collections.slug,
-        }));
+        const rows = (data ?? []) as CollectionDesignWithCollection[];
+        const flat: DesignWithCollection[] = rows.map(mapDesign);
         setAllDesigns(flat);
 
         const map = new Map<string, CollectionWithDesigns>();
@@ -88,8 +97,8 @@ export function useDesignsGroupedByCollection() {
         }
 
         const sorted = Array.from(map.values()).sort((a, b) => {
-          const aOrder = rows.find((r: any) => r.collections.id === a.id)?.collections.sort_order ?? 0;
-          const bOrder = rows.find((r: any) => r.collections.id === b.id)?.collections.sort_order ?? 0;
+          const aOrder = rows.find((r) => r.collections.id === a.id)?.collections.sort_order ?? 0;
+          const bOrder = rows.find((r) => r.collections.id === b.id)?.collections.sort_order ?? 0;
           return aOrder - bOrder;
         });
 

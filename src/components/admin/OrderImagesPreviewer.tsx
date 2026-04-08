@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink, Download } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import type { OrderCustomizationData } from "@/types/customization";
 
 interface Props {
-  customizationData: Record<string, any> | null;
+  customizationData: OrderCustomizationData | null;
 }
 
 interface ImageState {
@@ -20,10 +21,10 @@ const OrderImagesPreviewer = ({ customizationData }: Props) => {
   const [preview, setPreview] = useState<ImageState>({ url: null, loading: true });
   const [lightbox, setLightbox] = useState<{ url: string; label: string } | null>(null);
 
-  const rawPath = customizationData?.raw_image_url as string | undefined;
-  const optimizedPath = customizationData?.original_image_url as string | undefined;
-  const finalPath = customizationData?.edited_image_url as string | undefined;
-  const previewPath = customizationData?.preview_image_url as string | undefined;
+  const rawPath = customizationData?.rawImageUrl ?? undefined;
+  const optimizedPath = customizationData?.originalImageUrl ?? undefined;
+  const finalPath = customizationData?.editedImageUrl ?? undefined;
+  const previewPath = customizationData?.previewImageUrl ?? undefined;
 
   useEffect(() => {
     if (!rawPath && !optimizedPath && !finalPath && !previewPath) {

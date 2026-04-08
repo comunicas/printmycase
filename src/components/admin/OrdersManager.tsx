@@ -7,9 +7,25 @@ import OrderDetailDialog from "@/components/admin/OrderDetailDialog";
 import { statusLabels, statusColorMap, type AdminOrderRow } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 const PAGE_SIZE = 10;
+type OrderRow = Tables<"orders">;
+type DesignRow = Pick<Tables<"collection_designs">, "id" | "name" | "image_url">;
+type ProfileRow = Pick<Tables<"profiles">, "id" | "full_name">;
+type ShippingAddressData = {
+  city?: string;
+  state?: string;
+};
+
+const parseShippingAddress = (value: unknown): ShippingAddressData | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  return {
+    city: typeof record.city === "string" ? record.city : undefined,
+    state: typeof record.state === "string" ? record.state : undefined,
+  };
+};
 
 const OrdersManager = () => {
   const [orders, setOrders] = useState<AdminOrderRow[]>([]);
@@ -30,7 +46,7 @@ const OrdersManager = () => {
       setLoading(false);
       return;
     }
-    const rows = data ?? [];
+    const rows: OrderRow[] = data ?? [];
     const productIds = rows.map((o) => o.product_id);
     const nameMap = await resolveProductInfo(productIds);
 
@@ -38,18 +54,18 @@ const OrdersManager = () => {
     const designMap = new Map<string, { name: string; image: string }>();
     if (designIds.length > 0) {
       const { data: designs } = await supabase.from("collection_designs").select("id, name, image_url").in("id", designIds);
-      designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
+      (designs as DesignRow[] | null)?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
     }
 
     const userIds = [...new Set(rows.map((o) => o.user_id))];
     const profileMap = new Map<string, string>();
     if (userIds.length > 0) {
       const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", userIds);
-      profiles?.forEach((p) => profileMap.set(p.id, p.full_name));
+      (profiles as ProfileRow[] | null)?.forEach((p) => profileMap.set(p.id, p.full_name));
     }
 
     const enriched: AdminOrderRow[] = rows.map((o) => {
-      const shipping = o.shipping_address as Record<string, any> | null;
+      const shipping = parseShippingAddress(o.shipping_address);
       return {
         ...o,
         product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
@@ -68,7 +84,8 @@ const OrdersManager = () => {
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const handleStatusChange = async (orderId: string, newStatus: string, rejectionReason?: string) => {
-    const updateData: Record<string, any> = { status: newStatus as Database["public"]["Enums"]["order_status"] };
+    const status = newStatus as Database["public"]["Enums"]["order_status"];
+    const updateData: TablesUpdate<"orders"> = { status };
     if (newStatus === "rejected" && rejectionReason) {
       updateData.rejection_reason = rejectionReason;
     } else if (newStatus !== "rejected") {
@@ -82,8 +99,8 @@ const OrdersManager = () => {
       toast({ title: "Erro ao atualizar status", description: error.message, variant: "destructive" });
     } else {
       toast({ title: `Status atualizado para "${statusLabels[newStatus]}"` });
-      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: newStatus as Database["public"]["Enums"]["order_status"], rejection_reason: updateData.rejection_reason } : o));
-      setSelectedOrder((prev) => prev?.id === orderId ? { ...prev, status: newStatus as Database["public"]["Enums"]["order_status"], rejection_reason: updateData.rejection_reason } : prev);
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status, rejection_reason: updateData.rejection_reason } : o));
+      setSelectedOrder((prev) => prev?.id === orderId ? { ...prev, status, rejection_reason: updateData.rejection_reason } : prev);
       supabase.functions.invoke("notify-order-status", { body: { order_id: orderId, new_status: newStatus, rejection_reason: rejectionReason || null } }).catch(() => {});
     }
   };
