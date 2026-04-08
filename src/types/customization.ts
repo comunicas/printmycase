@@ -46,6 +46,12 @@ const parseStringArray = (value: unknown): string[] | undefined => {
   return entries.length === value.length ? entries : undefined;
 };
 
+const optStr = (v: unknown): string | null | undefined => {
+  if (typeof v === "string") return v;
+  if (v === null) return null;
+  return undefined;
+};
+
 export const parsePendingCustomizationData = (
   value: Json | null | undefined,
 ): PendingCustomizationData => {
@@ -55,18 +61,9 @@ export const parsePendingCustomizationData = (
     scale: typeof value.scale === "number" ? value.scale : undefined,
     position: isPosition(value.position) ? value.position : undefined,
     rotation: typeof value.rotation === "number" ? value.rotation : undefined,
-    activeFilter:
-      typeof value.activeFilter === "string" || value.activeFilter === null
-        ? value.activeFilter
-        : undefined,
-    filteredImagePath:
-      typeof value.filteredImagePath === "string" || value.filteredImagePath === null
-        ? value.filteredImagePath
-        : undefined,
-    previewImagePath:
-      typeof value.previewImagePath === "string" || value.previewImagePath === null
-        ? value.previewImagePath
-        : undefined,
+    activeFilter: optStr(value.activeFilter),
+    filteredImagePath: optStr(value.filteredImagePath),
+    previewImagePath: optStr(value.previewImagePath),
     filterHistory: parseStringArray(value.filterHistory),
   };
 };
@@ -77,39 +74,26 @@ export const parseOrderCustomizationData = (
   if (!isObject(value)) return {};
 
   const parseImageUrlField = (
-    camelKey: "rawImageUrl" | "originalImageUrl" | "editedImageUrl" | "previewImageUrl",
-    snakeKey: "raw_image_url" | "original_image_url" | "edited_image_url" | "preview_image_url",
+    camelKey: string,
+    snakeKey: string,
   ): string | null | undefined => {
-    const camelValue = value[camelKey];
-    if (typeof camelValue === "string" || camelValue === null) return camelValue;
-    const snakeValue = value[snakeKey];
-    if (typeof snakeValue === "string" || snakeValue === null) return snakeValue;
-    return undefined;
+    const r = optStr(value[camelKey]);
+    if (r !== undefined) return r;
+    return optStr(value[snakeKey]);
   };
 
   return {
-    rawImage: typeof value.rawImage === "string" || value.rawImage === null ? value.rawImage : undefined,
-    image: typeof value.image === "string" || value.image === null ? value.image : undefined,
-    editedImage: typeof value.editedImage === "string" || value.editedImage === null ? value.editedImage : undefined,
-    previewImage:
-      typeof value.previewImage === "string" || value.previewImage === null ? value.previewImage : undefined,
-    imageFileName:
-      typeof value.imageFileName === "string" || value.imageFileName === null ? value.imageFileName : undefined,
+    rawImage: optStr(value.rawImage),
+    image: optStr(value.image),
+    editedImage: optStr(value.editedImage),
+    previewImage: optStr(value.previewImage),
+    imageFileName: optStr(value.imageFileName),
     scale: typeof value.scale === "number" ? value.scale : undefined,
     position: isPosition(value.position) ? value.position : undefined,
     rotation: typeof value.rotation === "number" ? value.rotation : undefined,
-    activeFilter:
-      typeof value.activeFilter === "string" || value.activeFilter === null
-        ? value.activeFilter
-        : undefined,
-    filteredImagePath:
-      typeof value.filteredImagePath === "string" || value.filteredImagePath === null
-        ? value.filteredImagePath
-        : undefined,
-    previewImagePath:
-      typeof value.previewImagePath === "string" || value.previewImagePath === null
-        ? value.previewImagePath
-        : undefined,
+    activeFilter: optStr(value.activeFilter),
+    filteredImagePath: optStr(value.filteredImagePath),
+    previewImagePath: optStr(value.previewImagePath),
     filterHistory: parseStringArray(value.filterHistory),
     rawImageUrl: parseImageUrlField("rawImageUrl", "raw_image_url"),
     originalImageUrl: parseImageUrlField("originalImageUrl", "original_image_url"),
