@@ -24,7 +24,7 @@ type SafeOrderRow = {
   total_cents: number;
   shipping_cents: number | null;
   created_at: string;
-  customization_data: unknown;
+  customization_data: import("@/integrations/supabase/types").Json | null;
 };
 
 const CheckoutSuccess = () => {
