@@ -311,13 +311,11 @@ const Landing = () => {
             <div className="space-y-3">
               <span className="font-semibold text-foreground">Contato</span>
               <p className="text-muted-foreground leading-relaxed">
-                Dúvidas ou sugestões? Entre em contato:
+                Dúvidas ou sugestões?
               </p>
-              <a
-                href="mailto:sac@printmycase.com.br"
-                className="inline-block text-primary hover:text-primary/80 font-medium transition-colors">
-                sac@printmycase.com.br
-              </a>
+              <Link to="/contato" className="inline-block text-primary hover:text-primary/80 font-medium transition-colors">
+                Fale Conosco
+              </Link>
             </div>
           </div>
 
