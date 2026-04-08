@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { adminService } from "@/services/admin/adminService";
 import { useAuth } from "@/hooks/useAuth";
 
 export type AdminStatus = "idle" | "loading" | "ready" | "error";
@@ -37,6 +37,7 @@ export function useAdmin(options: UseAdminOptions = {}) {
     }
 
     let cancelled = false;
+ codex/refactor-auth-and-admin-guards-7jg5ga
     setStatus("loading");
     setError(null);
 
@@ -59,6 +60,14 @@ export function useAdmin(options: UseAdminOptions = {}) {
         setIsAdmin(!!data);
         setStatus("ready");
       });
+=======
+    adminService.checkIsAdmin(user.id).then(({ data }) => {
+      if (!cancelled) {
+        setIsAdmin(Boolean(data));
+        setLoading(false);
+      }
+    });
+ main
 
     return () => {
       cancelled = true;
