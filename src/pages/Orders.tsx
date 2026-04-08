@@ -83,22 +83,37 @@ const OrderProgress = ({ status }: { status: string }) => {
 
 const Orders = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<OrderWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("active");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user?.id) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    let isCancelled = false;
+
     const fetchOrders = async () => {
+      // Front-end user filter mirrors DB RLS expectations; RLS remains the source of truth for access control.
       const { data: ordersData } = await supabase
         .from("orders")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (!ordersData || ordersData.length === 0) {
-        setOrders([]);
-        setLoading(false);
+        if (!isCancelled) {
+          setOrders([]);
+          setLoading(false);
+        }
         return;
       }
 
@@ -116,20 +131,20 @@ const Orders = () => {
         designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
       }
 
-      setOrders(
-        ordersData.map((o) => ({
-          ...o,
-          product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
-          product_image: nameMap.get(o.product_id)?.image,
-          design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
-          design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
-        }))
-      );
-      setLoading(false);
+      if (!isCancelled) {
+        setOrders(
+          ordersData.map((o) => ({
+            ...o,
+            product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
+            product_image: nameMap.get(o.product_id)?.image,
+            design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
+            design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
+          }))
+        );
+        setLoading(false);
+      }
     };
     fetchOrders();
-
-    if (!user?.id) return;
 
     const channel = supabase
       .channel("user-orders")
@@ -142,6 +157,8 @@ const Orders = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
+          if (payload.new.user_id !== user.id) return;
+
           setOrders((prev) =>
             prev.map((o) => {
               if (o.id !== payload.new.id) return o;
@@ -159,9 +176,10 @@ const Orders = () => {
       .subscribe();
 
     return () => {
+      isCancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [authLoading, user?.id]);
 
   const filtered = useMemo(() => filterByTab(orders, activeTab), [orders, activeTab]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
