@@ -1,25 +1,16 @@
 
 
-## Limitar posts exibidos na vitrine Instagram
+## Adicionar link "Empresas" no rodapé
 
 ### O que muda
 
-**1 arquivo editado: `src/components/InstagramShowcase.tsx`**
+**1 arquivo editado: `src/pages/Landing.tsx`**
 
-Na query que busca os posts, adicionar `.limit(6)` para trazer no máximo 6 posts do banco. Isso garante que mesmo com muitos posts cadastrados no admin, a vitrine exibe apenas os 6 primeiros (ordenados por `sort_order`).
+Na seção "Links Úteis" do footer (linha 307), adicionar após "Política de Compra e Devolução":
 
-### Detalhe técnico
-
-Linha da query atual:
-```ts
-.order("sort_order")
+```tsx
+<a href="https://empresas.printmycase.com.br/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors w-fit">Empresas</a>
 ```
 
-Passa a ser:
-```ts
-.order("sort_order")
-.limit(6)
-```
-
-Sem outras alterações. O admin continua cadastrando quantos posts quiser — apenas a vitrine pública limita a exibição.
+Usa `<a>` em vez de `<Link>` por ser um domínio externo.
 
