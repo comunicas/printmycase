@@ -115,10 +115,34 @@ async function enqueueOrderEmail(
     trackingCode?: string | null;
     extraMessage?: string;
     templateName: string;
-  }
+  },
 ) {
   const appUrl = Deno.env.get("APP_URL") || "https://studio.printmycase.com.br";
   const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/email-assets/logo-printmycase.png`;
+  const messageId = `${params.templateName}-${params.orderId}`;
+
+  const { error: logError } = await supabaseAdmin
+    .from("email_send_log")
+    .insert({
+      message_id: messageId,
+      recipient_email: params.userEmail,
+      template_name: params.templateName,
+      status: "pending",
+      metadata: {
+        order_id: params.orderId,
+        status: params.newStatus,
+      },
+    });
+
+  if (logError) {
+    if (logError.code === "23505") {
+      console.log(`[email] Duplicate enqueue ignored (${params.templateName}):`, JSON.stringify({ orderId: params.orderId }));
+      return;
+    }
+
+    console.error(`[email] Idempotency reservation failed (${params.templateName}):`, logError.message);
+    return;
+  }
 
   const html = buildEmailHtml({
     userName: params.userName,
@@ -135,7 +159,6 @@ async function enqueueOrderEmail(
   const shortId = params.orderId.slice(0, 8);
   const statusLabel = statusLabels[params.newStatus] ?? params.newStatus;
 
-  const messageId = crypto.randomUUID();
   const payload = {
     to: params.userEmail,
     from: FROM,
@@ -156,23 +179,44 @@ async function enqueueOrderEmail(
 
   if (error) {
     console.error(`[email] Enqueue failed (${params.templateName}):`, error.message);
+    await supabaseAdmin.from("email_send_log").update({ status: "failed" }).eq("message_id", messageId);
   } else {
     console.log(`[email] Enqueued ${params.templateName}:`, JSON.stringify({ msgId, to: params.userEmail }));
-    await supabaseAdmin.from("email_send_log").insert({
-      message_id: messageId,
-      recipient_email: params.userEmail,
-      template_name: params.templateName,
-      status: "pending",
-      metadata: { order_id: params.orderId, status: params.newStatus, msg_id: msgId },
-    });
+    await supabaseAdmin
+      .from("email_send_log")
+      .update({ metadata: { order_id: params.orderId, status: params.newStatus, msg_id: msgId } })
+      .eq("message_id", messageId);
   }
 }
 
-async function verifyStripeSignature(
-  body: string,
-  signature: string,
-  secret: string
+async function registerWebhookEvent(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  event: { id?: string; type?: string; data?: { object?: { id?: string } } },
 ): Promise<boolean> {
+  const eventId = event.id;
+  if (!eventId) {
+    console.error("[webhook] Missing event.id");
+    return false;
+  }
+
+  const { error } = await supabaseAdmin
+    .from("stripe_webhook_events")
+    .insert({
+      event_id: eventId,
+      event_type: event.type ?? "unknown",
+      stripe_session_id: event.data?.object?.id ?? null,
+      payload: event as unknown as Record<string, unknown>,
+    });
+
+  if (!error) return true;
+  if (error.code === "23505") {
+    console.log("[webhook] Duplicate event ignored:", JSON.stringify({ eventId, type: event.type }));
+    return false;
+  }
+  throw error;
+}
+
+async function verifyStripeSignature(body: string, signature: string, secret: string): Promise<boolean> {
   const parts = signature.split(",");
   let timestamp = "";
   let sig = "";
@@ -196,14 +240,10 @@ async function verifyStripeSignature(
     encoder.encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["sign"],
   );
 
-  const signatureBytes = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(payload)
-  );
+  const signatureBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
 
   const computed = Array.from(new Uint8Array(signatureBytes))
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -252,32 +292,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
     const event = JSON.parse(body);
+    const shouldProcess = await registerWebhookEvent(supabaseAdmin, event);
+    if (!shouldProcess) {
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     console.log("[webhook] Event received:", JSON.stringify({
       type: event.type,
+      eventId: event.id,
       sessionId: event.data?.object?.id,
     }));
-
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const metadata = session.metadata || {};
 
-      console.log("[webhook] Metadata:", JSON.stringify({
-        type: metadata.type,
-        userId: metadata.user_id,
-        productId: metadata.product_id,
-        coinAmount: metadata.coin_amount,
-        eventId: metadata.event_id,
-      }));
-
       if (metadata.type === "coin_purchase" && metadata.user_id && metadata.coin_amount) {
-        // Credit purchased coins (365 days expiry)
         const { error: coinError } = await supabaseAdmin
           .from("coin_transactions")
           .insert({
@@ -289,66 +327,25 @@ Deno.serve(async (req) => {
             stripe_session_id: session.id,
           });
 
-        if (coinError) {
+        if (coinError && coinError.code !== "23505") {
           console.error("[webhook] CRITICAL: coin_transactions insert failed:", coinError.message);
-        } else {
-          console.log("[db] Coins credited:", metadata.coin_amount, "to user:", metadata.user_id);
         }
       } else {
-        // Regular case purchase — update order + credit dynamic bonus coins
-        const { error: orderUpdateError } = await supabaseAdmin
-          .from("orders")
-          .update({ status: "analyzing" })
-          .eq("stripe_session_id", session.id);
+        const { data: bonusAmountRow } = await supabaseAdmin.from("coin_settings").select("value").eq("key", "purchase_bonus_amount").single();
+        const { data: bonusDaysRow } = await supabaseAdmin.from("coin_settings").select("value").eq("key", "purchase_bonus_days").single();
 
-        if (orderUpdateError) {
-          console.error("[webhook] Order update failed:", orderUpdateError.message, "session:", session.id);
-        } else {
-          console.log("[db] Order updated to analyzing, session:", session.id);
+        const { data: processedRows, error: processError } = await supabaseAdmin.rpc("process_checkout_session_completed", {
+          _stripe_session_id: session.id,
+          _bonus_amount: bonusAmountRow?.value ?? 100,
+          _bonus_days: bonusDaysRow?.value ?? 30,
+        });
+
+        if (processError) {
+          console.error("[webhook] Atomic checkout processing failed:", processError.message, "session:", session.id);
         }
 
-        // Fetch bonus settings
-        const { data: bonusAmountRow } = await supabaseAdmin
-          .from("coin_settings")
-          .select("value")
-          .eq("key", "purchase_bonus_amount")
-          .single();
-        const { data: bonusDaysRow } = await supabaseAdmin
-          .from("coin_settings")
-          .select("value")
-          .eq("key", "purchase_bonus_days")
-          .single();
-        const bonusAmount = bonusAmountRow?.value ?? 100;
-        const bonusDays = bonusDaysRow?.value ?? 30;
-
-        const { data: order, error: orderFetchError } = await supabaseAdmin
-          .from("orders")
-          .select("id, user_id, total_cents, product_id")
-          .eq("stripe_session_id", session.id)
-          .single();
-
-        if (orderFetchError) {
-          console.error("[webhook] Order fetch failed:", orderFetchError.message, "session:", session.id);
-        }
-
-        if (order?.user_id) {
-          const { error: bonusError } = await supabaseAdmin
-            .from("coin_transactions")
-            .insert({
-              user_id: order.user_id,
-              amount: bonusAmount,
-              type: "purchase_bonus",
-              expires_at: new Date(Date.now() + bonusDays * 24 * 60 * 60 * 1000).toISOString(),
-              description: "Bônus por compra de case",
-            });
-
-          if (bonusError) {
-            console.error("[webhook] Bonus insert failed:", bonusError.message, "user:", order.user_id);
-          } else {
-            console.log("[db] Bonus credited:", bonusAmount, "coins to user:", order.user_id);
-          }
-
-          // --- Send confirmation email (non-blocking) ---
+        const order = processedRows?.[0];
+        if (order?.order_id && order?.user_id) {
           try {
             const [userRes, profileRes, productRes] = await Promise.all([
               supabaseAdmin.auth.admin.getUserById(order.user_id),
@@ -358,14 +355,11 @@ Deno.serve(async (req) => {
 
             const userEmail = userRes.data?.user?.email;
             if (userEmail) {
-              const userName = profileRes.data?.full_name || userEmail.split("@")[0];
-              const productName = productRes.data?.name ?? order.product_id;
-
               await enqueueOrderEmail(supabaseAdmin, {
                 userEmail,
-                userName,
-                orderId: order.id,
-                productName,
+                userName: profileRes.data?.full_name || userEmail.split("@")[0],
+                orderId: order.order_id,
+                productName: productRes.data?.name ?? order.product_id,
                 newStatus: "analyzing",
                 totalCents: order.total_cents,
                 extraMessage: "Recebemos seu pagamento e seu pedido está sendo analisado. Em breve começaremos a produção!",
@@ -376,7 +370,6 @@ Deno.serve(async (req) => {
             console.error("[email] Confirmation email error (non-blocking):", (emailErr as Error).message);
           }
 
-          // Send server-side Purchase event to Meta CAPI
           try {
             const { data: userData } = await supabaseAdmin.auth.admin.getUserById(order.user_id);
             const userEmail = userData?.user?.email;
@@ -394,17 +387,14 @@ Deno.serve(async (req) => {
               },
             };
 
-            const capiRes = await fetch(
-              `${Deno.env.get("SUPABASE_URL")}/functions/v1/meta-capi`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "x-cron-secret": Deno.env.get("CRON_SECRET") || "",
-                },
-                body: JSON.stringify(capiPayload),
-              }
-            );
+            const capiRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/meta-capi`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-cron-secret": Deno.env.get("CRON_SECRET") || "",
+              },
+              body: JSON.stringify(capiPayload),
+            });
             await capiRes.text();
             console.log("[capi] Purchase response:", capiRes.status);
           } catch (capiErr) {
@@ -414,20 +404,11 @@ Deno.serve(async (req) => {
       }
     } else if (event.type === "checkout.session.expired") {
       const session = event.data.object;
-      console.log("[webhook] Session expired:", session.id);
-
-      const { error: expireError } = await supabaseAdmin
-        .from("orders")
-        .update({ status: "cancelled" })
-        .eq("stripe_session_id", session.id);
-
+      const { error: expireError } = await supabaseAdmin.from("orders").update({ status: "cancelled" }).eq("stripe_session_id", session.id);
       if (expireError) {
         console.error("[webhook] Expire update failed:", expireError.message, "session:", session.id);
-      } else {
-        console.log("[db] Order cancelled for expired session:", session.id);
       }
 
-      // --- Send cancellation email (non-blocking) ---
       try {
         const { data: order } = await supabaseAdmin
           .from("orders")
@@ -444,14 +425,11 @@ Deno.serve(async (req) => {
 
           const userEmail = userRes.data?.user?.email;
           if (userEmail) {
-            const userName = profileRes.data?.full_name || userEmail.split("@")[0];
-            const productName = productRes.data?.name ?? order.product_id;
-
             await enqueueOrderEmail(supabaseAdmin, {
               userEmail,
-              userName,
+              userName: profileRes.data?.full_name || userEmail.split("@")[0],
               orderId: order.id,
-              productName,
+              productName: productRes.data?.name ?? order.product_id,
               newStatus: "cancelled",
               totalCents: order.total_cents,
               extraMessage: "O prazo de pagamento expirou e seu pedido foi cancelado automaticamente. Você pode fazer um novo pedido a qualquer momento.",
@@ -471,12 +449,9 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("[webhook] Unhandled error:", (err as Error).message, (err as Error).stack);
-    return new Response(
-      JSON.stringify({ error: "An error occurred processing the webhook" }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "An error occurred processing the webhook" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
