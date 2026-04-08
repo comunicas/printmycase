@@ -6,6 +6,7 @@ import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadCustomizationAsset } from "@/lib/customization-upload";
 import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory, type FilterHistoryEntry } from "@/lib/customize-types";
 import {
   compressImage,
@@ -540,46 +541,50 @@ export function useCustomize(productId: string | undefined) {
 
           // 1. Raw image (original upload, never changes)
           const rawSrc = rawImage || originalImage || image;
-          if (rawSrc) {
-            const blob = await fetch(rawSrc).then(r => r.blob());
-            const ext = imageFileName?.split(".").pop() || "png";
-            const path = `${user.id}/pending_raw_${ts}.${ext}`;
-            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
-            rawPath = path;
-          }
+          rawPath = await uploadCustomizationAsset({
+            sourceUrl: rawSrc,
+            userId: user.id,
+            fileName: `pending_raw_${ts}.${imageFileName?.split(".").pop() || "png"}`,
+            errorMessage: "Falha ao enviar imagem original pendente.",
+            upsert: true,
+          });
 
           // 2. Optimized image (after filters/upscale, max quality)
           const optimSrc = originalImage || image;
-          if (optimSrc) {
-            const blob = await fetch(optimSrc).then(r => r.blob());
-            const path = `${user.id}/pending_optim_${ts}.jpg`;
-            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
-            optimizedPath = path;
-          }
+          optimizedPath = await uploadCustomizationAsset({
+            sourceUrl: optimSrc,
+            userId: user.id,
+            fileName: `pending_optim_${ts}.jpg`,
+            errorMessage: "Falha ao enviar imagem otimizada pendente.",
+            upsert: true,
+          });
 
           // 3. Final image (snapshot with frame positioning)
-          if (finalImage) {
-            const blob = await fetch(finalImage).then(r => r.blob());
-            const path = `${user.id}/pending_final_${ts}.jpg`;
-            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
-            finalPath = path;
-          }
+          finalPath = await uploadCustomizationAsset({
+            sourceUrl: finalImage,
+            userId: user.id,
+            fileName: `pending_final_${ts}.jpg`,
+            errorMessage: "Falha ao enviar imagem final pendente.",
+            upsert: true,
+          });
 
           // 4. Filtered image (AI-generated result)
-          if (filteredImage) {
-            const blob = await fetch(filteredImage).then(r => r.blob());
-            const path = `${user.id}/pending_filtered_${ts}.jpg`;
-            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
-            filteredPath = path;
-          }
+          filteredPath = await uploadCustomizationAsset({
+            sourceUrl: filteredImage,
+            userId: user.id,
+            fileName: `pending_filtered_${ts}.jpg`,
+            errorMessage: "Falha ao enviar imagem filtrada pendente.",
+            upsert: true,
+          });
 
           // 5. Preview image (mockup with device frame)
-          if (previewImage) {
-            const blob = await fetch(previewImage).then(r => r.blob());
-            const path = `${user.id}/pending_preview_${ts}.png`;
-            await supabase.storage.from("customizations").upload(path, blob, { upsert: true });
-            previewPath = path;
-          }
+          previewPath = await uploadCustomizationAsset({
+            sourceUrl: previewImage,
+            userId: user.id,
+            fileName: `pending_preview_${ts}.png`,
+            errorMessage: "Falha ao enviar imagem de preview pendente.",
+            upsert: true,
+          });
 
           const pendingData: PendingCustomizationData = {
             scale,
