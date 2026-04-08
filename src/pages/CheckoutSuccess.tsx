@@ -12,6 +12,7 @@ import { pixelTrackPurchase } from "@/lib/meta-pixel";
 
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
+import { parseOrderCustomizationData } from "@/types/customization";
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
@@ -51,7 +52,7 @@ const CheckoutSuccess = () => {
     const hydrateOrderInfo = async (order: SafeOrderRow) => {
       const nameMap = await resolveProductInfo([order.product_id]);
       const info = nameMap.get(order.product_id);
-      const cd = order.customization_data as any;
+      const cd = parseOrderCustomizationData(order.customization_data);
       const shippingCents = order.shipping_cents ?? 0;
 
       setOrderInfo({

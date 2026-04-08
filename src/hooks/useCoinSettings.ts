@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 
-export interface CoinSetting {
-  key: string;
-  value: number;
-  description: string | null;
-}
+type CoinSetting = Tables<"coin_settings">;
 
 export function useCoinSettings() {
   const [settings, setSettings] = useState<CoinSetting[]>([]);
@@ -13,7 +10,7 @@ export function useCoinSettings() {
 
   const fetch = useCallback(async () => {
     setLoading(true);
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("coin_settings")
       .select("*")
       .order("key");

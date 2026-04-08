@@ -28,6 +28,10 @@ export type OrderCustomizationData = {
   filteredImagePath?: string | null;
   previewImagePath?: string | null;
   filterHistory?: string[];
+  rawImageUrl?: string | null;
+  originalImageUrl?: string | null;
+  editedImageUrl?: string | null;
+  previewImageUrl?: string | null;
 };
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -72,6 +76,17 @@ export const parseOrderCustomizationData = (
 ): OrderCustomizationData => {
   if (!isObject(value)) return {};
 
+  const parseImageUrlField = (
+    camelKey: "rawImageUrl" | "originalImageUrl" | "editedImageUrl" | "previewImageUrl",
+    snakeKey: "raw_image_url" | "original_image_url" | "edited_image_url" | "preview_image_url",
+  ): string | null | undefined => {
+    const camelValue = value[camelKey];
+    if (typeof camelValue === "string" || camelValue === null) return camelValue;
+    const snakeValue = value[snakeKey];
+    if (typeof snakeValue === "string" || snakeValue === null) return snakeValue;
+    return undefined;
+  };
+
   return {
     rawImage: typeof value.rawImage === "string" || value.rawImage === null ? value.rawImage : undefined,
     image: typeof value.image === "string" || value.image === null ? value.image : undefined,
@@ -96,5 +111,9 @@ export const parseOrderCustomizationData = (
         ? value.previewImagePath
         : undefined,
     filterHistory: parseStringArray(value.filterHistory),
+    rawImageUrl: parseImageUrlField("rawImageUrl", "raw_image_url"),
+    originalImageUrl: parseImageUrlField("originalImageUrl", "original_image_url"),
+    editedImageUrl: parseImageUrlField("editedImageUrl", "edited_image_url"),
+    previewImageUrl: parseImageUrlField("previewImageUrl", "preview_image_url"),
   };
 };

@@ -15,6 +15,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { clarityEvent } from "@/lib/clarity";
 import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
+import { parsePendingCustomizationData } from "@/types/customization";
 
 interface CustomizationData {
   rawImage: string | null;
@@ -78,7 +79,7 @@ const Checkout = () => {
           navigate(`/customize/${id}`, { replace: true });
           return;
         }
-        const cd = pending.customization_data as any;
+        const cd = parsePendingCustomizationData(pending.customization_data);
         let imgUrl: string | null = null;
         let editedUrl: string | null = null;
         if (pending.edited_image_path) editedUrl = await getSignedUrl(pending.edited_image_path);
@@ -167,7 +168,7 @@ const Checkout = () => {
           if (uploadError) throw uploadError;
           rawImageUrl = path;
         }
-      } catch (e: any) {
+      } catch {
         throw new Error("Erro ao enviar imagem original. Verifique sua conexão e tente novamente.");
       }
 
@@ -180,7 +181,7 @@ const Checkout = () => {
           if (uploadError) throw uploadError;
           originalImageUrl = path;
         }
-      } catch (e: any) {
+      } catch {
         throw new Error("Erro ao enviar imagem otimizada. Verifique sua conexão e tente novamente.");
       }
 
@@ -193,7 +194,7 @@ const Checkout = () => {
           if (uploadError) throw uploadError;
           editedImageUrl = path;
         }
-      } catch (e: any) {
+      } catch {
         throw new Error("Erro ao enviar imagem final. Verifique sua conexão e tente novamente.");
       }
 
@@ -248,8 +249,8 @@ const Checkout = () => {
       } else {
         throw new Error("URL de checkout não retornada");
       }
-    } catch (err: any) {
-      const msg = err?.message || "Tente novamente.";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Tente novamente.";
       console.error("Checkout error:", msg);
       toast({ title: "Erro no checkout", description: msg, variant: "destructive" });
     } finally {
