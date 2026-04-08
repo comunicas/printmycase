@@ -1,61 +1,49 @@
 
 
-## Resultados do Teste + Correção do Lightbox
+## Corrigir Lightbox Mobile + Adicionar Navegação entre Imagens
 
-### Teste Mobile (390px) — Badges Truncados
+### Problemas encontrados no teste
 
-**Status: OK** ✓
+1. **Imagem cobre toda a tela no mobile** — com `max-w-full max-h-[80vh]`, imagens altas ocupam toda a viewport, escondendo os botoes de voltar/fechar e eliminando area clicavel do backdrop
+2. **Backdrop nao fecha o lightbox** — sem area visivel para clicar fora da imagem no mobile
+3. **Sem navegacao entre imagens** — nao ha como ir para a proxima/anterior sem voltar ao grid
 
-Os badges de filtro estão visíveis sem hover e truncados corretamente:
-- "Create a square prem…" (truncado em 20 chars)
-- "pixel_art", "hyperrealistic" (curtos, sem truncamento)
-- "Crie uma imagem com …" (truncado)
-- "Transform the image …" (truncado)
+### Correcoes e melhorias
 
-### Bug do Lightbox — Confirmado
+**Arquivo: `src/components/AiGalleryModal.tsx`**
 
-Clicar no fundo escuro ao redor da imagem **não fecha** o lightbox. O motivo: no mobile, a imagem ocupa quase toda a tela (`max-w-[90vw]` = 351px de 390px) e tem `onClick stopPropagation`. A área clicável do backdrop restante é mínima (~20px de cada lado), e o click programático no div também falha porque o evento é capturado pela imagem.
+**1. Lightbox mobile — garantir botoes visiveis e area clicavel**
+- Top bar com botoes ChevronLeft e X usa `absolute top-0` com `z-20` para ficar sobre a imagem
+- Fundo semi-transparente nos botoes para contraste
+- Imagem limitada a `max-h-[70vh]` no mobile para garantir espaco superior/inferior clicavel
 
-### Correção
+**2. Navegacao entre imagens (setas + swipe)**
+- Guardar o indice atual em vez de URL (`lightboxIndex: number | null`)
+- Botoes ChevronLeft/ChevronRight nas laterais (semi-transparentes, `absolute left-2 / right-2`)
+- Suporte a swipe horizontal via `onTouchStart` / `onTouchEnd` com deteccao de direcao (threshold 50px)
+- Contador "3 / 12" discreto no topo central
 
-**Arquivo: `src/components/AiGalleryModal.tsx`** (lightbox, linhas 50-65)
+**3. Estrutura do lightbox refatorado**
 
-Reestruturar o lightbox para separar claramente backdrop e conteúdo:
-
-```tsx
-// Lightbox view
-if (lightboxUrl) {
-  return (
-    <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col">
-      {/* Top bar with buttons */}
-      <div className="flex items-center justify-between px-4 py-3 z-10">
-        <button className="text-white/70 hover:text-white" onClick={() => setLightboxUrl(null)}>
-          <ChevronLeft className="h-6 w-6" />
-        </button>
-        <button className="text-white/70 hover:text-white" onClick={onClose}>
-          <X className="h-6 w-6" />
-        </button>
-      </div>
-      {/* Image area — tap anywhere outside image closes */}
-      <div
-        className="flex-1 flex items-center justify-center p-4"
-        onClick={() => setLightboxUrl(null)}
-      >
-        <img
-          src={lightboxUrl}
-          alt="Geração IA"
-          className="max-w-full max-h-[80vh] object-contain rounded-lg"
-          onClick={(e) => e.stopPropagation()}
-        />
-      </div>
-    </div>
-  );
-}
+```text
+┌──────────────────────────────┐
+│  ← voltar       3/12      X │  ← top bar (z-20, bg-black/50)
+│                              │
+│  ‹  ┌──────────────┐  ›     │  ← setas laterais
+│     │              │         │
+│     │    IMAGEM    │         │
+│     │              │         │
+│     └──────────────┘         │
+│                              │
+│     tap area = fecha         │
+└──────────────────────────────┘
 ```
 
-**Mudanças-chave:**
-1. Separar a barra de botões do fundo clicável — agora os botões ficam num div fixo no topo, não absolutos sobre a imagem
-2. O backdrop clicável é o `flex-1` container ao redor da imagem, com padding generoso (`p-4`) criando área clicável real
-3. Imagem usa `max-w-full` em vez de `max-w-[90vw]` para ter mais margem nas laterais
-4. Botão de voltar (`ChevronLeft`) volta à galeria grid; botão X fecha tudo
+### Detalhes tecnicos
+
+- Estado muda de `lightboxUrl: string | null` para `lightboxIndex: number | null`
+- A URL e derivada de `images[lightboxIndex]` usando `getOptimizedUrl`
+- Swipe usa refs `touchStartX` e `touchEndX`, calcula delta no `onTouchEnd`
+- Navegacao circular (ultimo → primeiro e vice-versa)
+- Botoes de seta ficam ocultos se ha apenas 1 imagem
 
