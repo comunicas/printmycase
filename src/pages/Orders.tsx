@@ -75,14 +75,105 @@ const OrderProgress = ({ status }: { status: string }) => {
 
 const Orders = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<OrderWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("active");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user?.id) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    let isCancelled = false;
+
     const fetchOrders = async () => {
+ codex/adjust-orders-query-for-user-filter
+      // Front-end user filter mirrors DB RLS expectations; RLS remains the source of truth for access control.
+      const { data: ordersData } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!ordersData || ordersData.length === 0) {
+        if (!isCancelled) {
+          setOrders([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const productIds = ordersData.map((o) => o.product_id);
+      const nameMap = await resolveProductInfo(productIds);
+
+      // Resolve design info for collection orders
+      const designIds = [...new Set(ordersData.map((o) => o.design_id).filter(Boolean))] as string[];
+      const designMap = new Map<string, { name: string; image: string }>();
+      if (designIds.length > 0) {
+        const { data: designs } = await supabase
+          .from("collection_designs")
+          .select("id, name, image_url")
+          .in("id", designIds);
+        designs?.forEach((d) => designMap.set(d.id, { name: d.name, image: d.image_url }));
+      }
+
+      if (!isCancelled) {
+        setOrders(
+          ordersData.map((o) => ({
+            ...o,
+            product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
+            product_image: nameMap.get(o.product_id)?.image,
+            design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
+            design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
+          }))
+        );
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+
+    const channel = supabase
+      .channel("user-orders")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.new.user_id !== user.id) return;
+
+          setOrders((prev) =>
+            prev.map((o) => {
+              if (o.id !== payload.new.id) return o;
+              const { product_name, product_image, ...rest } = o;
+              return {
+                ...rest,
+                ...(payload.new as Tables<"orders">),
+                product_name,
+                product_image,
+              };
+            })
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isCancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [authLoading, user?.id]);
+=======
       const { data, error } = await ordersService.fetchUserOrders();
       if (error) {
         setOrders([]);
@@ -116,6 +207,7 @@ const Orders = () => {
 
     return unsubscribe;
   }, [user?.id]);
+ main
 
   const filtered = useMemo(() => filterByTab(orders, activeTab), [orders, activeTab]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
