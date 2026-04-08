@@ -18,6 +18,7 @@ import { useCoins } from "@/hooks/useCoins";
 import { useCoinSettings } from "@/hooks/useCoinSettings";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";
 import { ToastAction } from "@/components/ui/toast";
+import { parsePendingCustomizationData, type PendingCustomizationData } from "@/types/customization";
 
 export function useCustomize(productId: string | undefined) {
   const { product, loading: productLoading } = useProduct(productId);
@@ -88,16 +89,24 @@ export function useCustomize(productId: string | undefined) {
       .select("id, name, style_image_url, category_id")
       .eq("active", true)
       .order("sort_order", { ascending: true })
-      .then(({ data }) => {
-        if (data) setFilters(data as AiFilter[]);
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Erro ao carregar filtros de IA", error);
+          return;
+        }
+        setFilters((data ?? []) as AiFilter[]);
       });
     supabase
       .from("ai_filter_categories")
       .select("id, name, sort_order")
       .eq("active", true)
       .order("sort_order", { ascending: true })
-      .then(({ data }) => {
-        if (data) setFilterCategories(data as AiFilterCategory[]);
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Erro ao carregar categorias de filtro", error);
+          return;
+        }
+        setFilterCategories((data ?? []) as AiFilterCategory[]);
       });
   }, []);
 
@@ -143,33 +152,42 @@ export function useCustomize(productId: string | undefined) {
     if (!product?.slug || !product?.id || !user || pendingRestored.current || sessionRestored.current) return;
     pendingRestored.current = true;
     (async () => {
-      const pending = await fetchPending(product.id);
-      if (!pending) return;
-      const cd = pending.customization_data as any;
-      if (cd.scale != null) setScale(cd.scale);
-      if (cd.position) setPosition(cd.position);
-      if (cd.rotation != null) setRotation(cd.rotation);
-      // Restore original image
-      const imgPath = pending.edited_image_path || pending.original_image_path;
-      if (imgPath) {
-        const url = await getSignedUrl(imgPath);
-        if (url) {
-          setOriginalImage(url);
-          setImageWithResolution(url);
+      try {
+        const pending = await fetchPending(product.id);
+        if (!pending) return;
+
+        const cd: PendingCustomizationData = parsePendingCustomizationData(pending.customization_data);
+
+        if (cd.scale != null) setScale(cd.scale);
+        if (cd.position) setPosition(cd.position);
+        if (cd.rotation != null) setRotation(cd.rotation);
+
+        // Restore original image
+        const imgPath = pending.edited_image_path || pending.original_image_path;
+        if (imgPath) {
+          const url = await getSignedUrl(imgPath);
+          if (url) {
+            setOriginalImage(url);
+            setImageWithResolution(url);
+          }
         }
-      }
-      // Restore filtered image if available
-      if (cd.filteredImagePath && cd.activeFilter) {
-        const filteredUrl = await getSignedUrl(cd.filteredImagePath);
-        if (filteredUrl) {
-          setFilteredImage(filteredUrl);
-          setActiveFilterId(cd.activeFilter);
-          setImageWithResolution(filteredUrl);
+
+        // Restore filtered image if available
+        if (cd.filteredImagePath && cd.activeFilter) {
+          const filteredUrl = await getSignedUrl(cd.filteredImagePath);
+          if (filteredUrl) {
+            setFilteredImage(filteredUrl);
+            setActiveFilterId(cd.activeFilter);
+            setImageWithResolution(filteredUrl);
+          }
         }
+
+        toast({ title: "Rascunho recuperado" });
+      } catch (error) {
+        console.error("Erro ao restaurar checkout pendente", error);
       }
-      toast({ title: "Rascunho recuperado" });
     })();
-  }, [product?.slug, product?.id, user, toast, setImageWithResolution]);
+  }, [product?.slug, product?.id, user, toast, setImageWithResolution, fetchPending, getSignedUrl]);
 
   // --- auto-save draft ---
   useEffect(() => {
@@ -563,9 +581,19 @@ export function useCustomize(productId: string | undefined) {
             previewPath = path;
           }
 
+          const pendingData: PendingCustomizationData = {
+            scale,
+            position,
+            rotation,
+            activeFilter: activeFilterId,
+            filteredImagePath: filteredPath,
+            previewImagePath: previewPath,
+            filterHistory: filterHistory.map((h) => h.filterId),
+          };
+
           await upsertPending(
             product.id,
-            { scale, position, rotation, activeFilter: activeFilterId, filteredImagePath: filteredPath, previewImagePath: previewPath, filterHistory: filterHistory.map(h => h.filterId) },
+            pendingData,
             optimizedPath,
             finalPath,
             rawPath,

@@ -8,22 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Trash2, Maximize2, Eye, EyeOff, Filter, Coins, User, TrendingUp } from "lucide-react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { useCoinSettings } from "@/hooks/useCoinSettings";
+import type { Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 const PAGE_SIZE = 12;
 
-type Generation = {
-  id: string;
-  user_id: string;
-  image_url: string;
-  storage_path: string;
-  generation_type: string;
-  filter_name: string | null;
-  step_number: number;
-  session_id: string | null;
-  created_at: string;
-  public: boolean;
-  userName?: string;
-};
+type Generation = Tables<"user_ai_generations"> & { userName?: string };
 type FilterType = "all" | "filter" | "upscale" | "original";
 type PublicFilter = "all" | "public" | "private";
 
@@ -67,12 +56,14 @@ const UserGenerationsManager = () => {
       rows.map(async (row) => {
         if (!isExpiredSignedUrl(row.image_url)) return row;
         if (!row.storage_path) return row;
-        const { data } = await supabase.storage
+        const { data, error } = await supabase.storage
           .from("customizations")
           .createSignedUrl(row.storage_path, 3600);
-        return data?.signedUrl
-          ? { ...row, image_url: data.signedUrl }
-          : row;
+        if (error) {
+          console.error("Erro ao renovar URL assinada", error);
+          return row;
+        }
+        return data?.signedUrl ? { ...row, image_url: data.signedUrl } : row;
       })
     );
   };
@@ -82,15 +73,21 @@ const UserGenerationsManager = () => {
     const missing = userIds.filter((id) => !profilesMap[id]);
     if (missing.length === 0) return;
     const unique = [...new Set(missing)];
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name")
       .in("id", unique);
-    if (data) {
-      const map: Record<string, string> = {};
-      data.forEach((p) => { map[p.id] = p.full_name || "Sem nome"; });
-      setProfilesMap((prev) => ({ ...prev, ...map }));
+
+    if (error) {
+      console.error("Erro ao carregar perfis", error);
+      return;
     }
+
+    const map: Record<string, string> = {};
+    (data ?? []).forEach((p) => {
+      map[p.id] = p.full_name || "Sem nome";
+    });
+    setProfilesMap((prev) => ({ ...prev, ...map }));
   };
 
   /** Fetch summary stats */
@@ -98,10 +95,14 @@ const UserGenerationsManager = () => {
     setSummaryLoading(true);
     try {
       // Fetch all user_id + generation_type (up to 10k)
-      const { data: rows } = await (supabase as any)
+      const { data: rows, error } = await supabase
         .from("user_ai_generations")
         .select("user_id, generation_type")
         .limit(10000);
+
+      if (error) {
+        throw error;
+      }
 
       if (!rows || rows.length === 0) {
         setSummary({ total: 0, totalCoins: 0, topUsers: [] });
@@ -134,25 +135,32 @@ const UserGenerationsManager = () => {
       // Fetch names for top 5
       const topIds = top5.map((u) => u.userId);
       if (topIds.length > 0) {
-        const { data: profiles } = await supabase
+        const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, full_name")
           .in("id", topIds);
-        if (profiles) {
-          const nameMap: Record<string, string> = {};
-          profiles.forEach((p) => { nameMap[p.id] = p.full_name || "Sem nome"; });
-          top5.forEach((u) => { u.name = nameMap[u.userId] || `${u.userId.slice(0, 8)}…`; });
-          // Also update profilesMap
-          setProfilesMap((prev) => ({ ...prev, ...nameMap }));
+        if (profilesError) {
+          throw profilesError;
         }
+
+        const nameMap: Record<string, string> = {};
+        (profiles ?? []).forEach((p) => {
+          nameMap[p.id] = p.full_name || "Sem nome";
+        });
+        top5.forEach((u) => {
+          u.name = nameMap[u.userId] || `${u.userId.slice(0, 8)}…`;
+        });
+        // Also update profilesMap
+        setProfilesMap((prev) => ({ ...prev, ...nameMap }));
       }
 
       setSummary({ total: rows.length, totalCoins, topUsers: top5 });
-    } catch {
-      // silently fail
+    } catch (error) {
+      console.error("Erro ao carregar resumo de gerações", error);
+      toast({ title: "Erro ao carregar resumo", variant: "destructive" });
     }
     setSummaryLoading(false);
-  }, [filterCost, upscaleCost]);
+  }, [filterCost, upscaleCost, toast]);
 
   /** Fetch page of images */
   const fetchImages = useCallback(async () => {
@@ -160,7 +168,7 @@ const UserGenerationsManager = () => {
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
-    let query = (supabase as any)
+    let query = supabase
       .from("user_ai_generations")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
@@ -170,7 +178,17 @@ const UserGenerationsManager = () => {
     if (publicFilter === "public") query = query.eq("public", true);
     if (publicFilter === "private") query = query.eq("public", false);
 
-    const { data, count } = await query;
+    const { data, count, error } = await query;
+
+    if (error) {
+      console.error("Erro ao carregar gerações", error);
+      toast({ title: "Erro ao carregar gerações", variant: "destructive" });
+      setImages([]);
+      setTotalCount(0);
+      setLoading(false);
+      return;
+    }
+
     const rows = await resolveUrls((data ?? []) as Generation[]);
 
     // Fetch profile names for these rows
@@ -180,7 +198,7 @@ const UserGenerationsManager = () => {
     setImages(rows);
     setTotalCount(count ?? 0);
     setLoading(false);
-  }, [page, typeFilter, publicFilter]);
+  }, [page, typeFilter, publicFilter, toast]);
 
   // Reset page when filters change
   useEffect(() => { setPage(0); }, [typeFilter, publicFilter]);
@@ -229,14 +247,15 @@ const UserGenerationsManager = () => {
     if (newVal) {
       try {
         publicImageUrl = await copyToPublicBucket(img.id, img.storage_path);
-      } catch (err: any) {
-        toast({ title: "Erro ao copiar imagem para bucket público", description: err.message, variant: "destructive" });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Erro desconhecido";
+        toast({ title: "Erro ao copiar imagem para bucket público", description: message, variant: "destructive" });
         return;
       }
     }
     const { error } = await supabase
       .from("user_ai_generations")
-      .update({ public: newVal, public_image_url: publicImageUrl } as any)
+      .update({ public: newVal, public_image_url: publicImageUrl } satisfies TablesUpdate<"user_ai_generations">)
       .eq("id", img.id);
     if (error) {
       toast({ title: "Erro ao atualizar", variant: "destructive" });
@@ -251,11 +270,16 @@ const UserGenerationsManager = () => {
   const backfillPublicImages = async () => {
     setBackfilling(true);
     try {
-      const { data: rows } = await supabase
+      const { data: rows, error } = await supabase
         .from("user_ai_generations")
         .select("id, storage_path")
         .eq("public", true)
         .is("public_image_url", null);
+
+      if (error) {
+        throw error;
+      }
+
       if (!rows?.length) {
         toast({ title: "Nenhuma imagem pública para reprocessar" });
         setBackfilling(false);
@@ -267,14 +291,15 @@ const UserGenerationsManager = () => {
           const url = await copyToPublicBucket(row.id, row.storage_path);
           await supabase
             .from("user_ai_generations")
-            .update({ public_image_url: url } as any)
+            .update({ public_image_url: url } satisfies TablesUpdate<"user_ai_generations">)
             .eq("id", row.id);
           ok++;
         } catch { /* skip */ }
       }
       toast({ title: `${ok}/${rows.length} imagens reprocessadas com sucesso` });
-    } catch (err: any) {
-      toast({ title: "Erro no backfill", description: err.message, variant: "destructive" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ title: "Erro no backfill", description: message, variant: "destructive" });
     }
     setBackfilling(false);
   };
@@ -282,7 +307,12 @@ const UserGenerationsManager = () => {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     if (deleteTarget.storage_path) {
-      await supabase.storage.from("customizations").remove([deleteTarget.storage_path]);
+      const { error: removeError } = await supabase.storage.from("customizations").remove([deleteTarget.storage_path]);
+      if (removeError) {
+        toast({ title: "Erro ao remover imagem do storage", description: removeError.message, variant: "destructive" });
+        setDeleteTarget(null);
+        return;
+      }
     }
     const { error } = await supabase.from("user_ai_generations").delete().eq("id", deleteTarget.id);
     if (error) {
