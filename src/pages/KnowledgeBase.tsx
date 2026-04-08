@@ -105,12 +105,26 @@ const KnowledgeBase = () => {
   // Inject FAQ JSON-LD for AI agents
   useEffect(() => {
     if (faqItems.length === 0) return;
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.textContent = JSON.stringify(faqPageJsonLd(faqItems));
-    document.head.appendChild(script);
-    return () => { script.remove(); };
+    return injectJsonLd("faq-kb", faqPageJsonLd(faqItems));
   }, [faqItems]);
+
+  // WebSite + SearchAction JSON-LD
+  useEffect(() => {
+    return injectJsonLd("kb-website-search", {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      url: `${SITE_URL}/ajuda`,
+      name: "Central de Ajuda — Studio PrintMyCase",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${SITE_URL}/ajuda?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    });
+  }, []);
 
   const doSearch = useCallback(async (term: string) => {
     if (!term.trim()) { setResults([]); setSearching(false); return; }
