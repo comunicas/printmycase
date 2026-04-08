@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AppHeader from "@/components/AppHeader";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { adminService } from "@/services/admin/adminService";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar, { type AdminSection } from "@/components/admin/AdminSidebar";
 import ProductsManager from "@/components/admin/ProductsManager";
@@ -57,14 +57,18 @@ const Admin = () => {
   const handleOptimize = async () => {
     setOptimizing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("optimize-existing-images");
-      if (error) throw error;
+      const { data, error } = await adminService.optimizeExistingImages();
+      if (error) {
+        toast({ title: "Erro ao otimizar", description: error.message, variant: "destructive" });
+        return;
+      }
+
       toast({
         title: "Otimização concluída",
         description: `${data.optimized} imagens otimizadas, ${data.errors} erros.`,
       });
-    } catch (err: any) {
-      toast({ title: "Erro ao otimizar", description: err.message, variant: "destructive" });
+    } catch {
+      toast({ title: "Erro ao otimizar", description: "Falha inesperada", variant: "destructive" });
     } finally {
       setOptimizing(false);
     }
