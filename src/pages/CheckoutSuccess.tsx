@@ -13,10 +13,17 @@ import { pixelTrackPurchase } from "@/lib/meta-pixel";
 import { formatPrice } from "@/lib/types";
 import { resolveProductInfo } from "@/lib/products";
 
-
 const formatDate = (iso: string) => {
   const d = new Date(iso);
   return d.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
+};
+
+type SafeOrderRow = {
+  product_id: string;
+  total_cents: number;
+  shipping_cents: number | null;
+  created_at: string;
+  customization_data: unknown;
 };
 
 const CheckoutSuccess = () => {
@@ -24,6 +31,7 @@ const CheckoutSuccess = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const eventId = searchParams.get("eid");
+  const successToken = searchParams.get("st");
   const { user, loading } = useAuth();
 
   const [orderInfo, setOrderInfo] = useState<{
@@ -35,19 +43,12 @@ const CheckoutSuccess = () => {
     createdAt: string;
     aiFilterApplied: boolean;
   } | null>(null);
+  const [detailsUnavailable, setDetailsUnavailable] = useState(false);
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || loading) return;
 
-    const fetchOrder = async () => {
-      const { data: order } = await supabase
-        .from("orders")
-        .select("product_id, total_cents, shipping_cents, created_at, customization_data")
-        .eq("stripe_session_id", sessionId)
-        .maybeSingle();
-
-      if (!order) return;
-
+    const hydrateOrderInfo = async (order: SafeOrderRow) => {
       const nameMap = await resolveProductInfo([order.product_id]);
       const info = nameMap.get(order.product_id);
       const cd = order.customization_data as any;
@@ -66,8 +67,46 @@ const CheckoutSuccess = () => {
       pixelTrackPurchase(order.total_cents / 100, order.product_id, eventId || undefined);
     };
 
+    const fetchOrder = async () => {
+      if (user) {
+        const { data: order } = await supabase
+          .from("orders")
+          .select("product_id, total_cents, shipping_cents, created_at, customization_data")
+          .eq("stripe_session_id", sessionId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!order) {
+          setDetailsUnavailable(true);
+          return;
+        }
+
+        await hydrateOrderInfo(order);
+        return;
+      }
+
+      if (!successToken) {
+        setDetailsUnavailable(true);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("get-success-order", {
+        body: {
+          session_id: sessionId,
+          token: successToken,
+        },
+      });
+
+      if (error || !data?.order) {
+        setDetailsUnavailable(true);
+        return;
+      }
+
+      await hydrateOrderInfo(data.order as SafeOrderRow);
+    };
+
     fetchOrder();
-  }, [sessionId]);
+  }, [eventId, loading, sessionId, successToken, user]);
 
   const breadcrumbs = [{ label: "Pedido Confirmado" }];
 
@@ -93,6 +132,13 @@ const CheckoutSuccess = () => {
                 com os detalhes do pedido.
               </p>
             </div>
+
+            {detailsUnavailable && !orderInfo && (
+              <div className="text-sm text-muted-foreground bg-muted/70 rounded-lg px-4 py-3">
+                Não foi possível validar os detalhes deste pedido nesta sessão. Seu pagamento foi confirmado,
+                e os detalhes completos ficam disponíveis em <strong>Meus Pedidos</strong> após login.
+              </div>
+            )}
 
             {orderInfo && (
               <>
