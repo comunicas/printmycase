@@ -49,19 +49,28 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
   // Lightbox view
   if (lightboxUrl) {
     return (
-      <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center" onClick={() => setLightboxUrl(null)}>
-        <button className="absolute top-4 right-4 text-white/70 hover:text-white z-10" onClick={onClose}>
-          <X className="h-6 w-6" />
-        </button>
-        <button className="absolute top-4 left-4 text-white/70 hover:text-white z-10" onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}>
-          <ChevronLeft className="h-6 w-6" />
-        </button>
-        <img
-          src={lightboxUrl}
-          alt="Geração IA"
-          className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
-          onClick={(e) => e.stopPropagation()}
-        />
+      <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col">
+        {/* Top bar with buttons */}
+        <div className="flex items-center justify-between px-4 py-3 z-10">
+          <button className="text-white/70 hover:text-white" onClick={() => setLightboxUrl(null)}>
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button className="text-white/70 hover:text-white" onClick={onClose}>
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+        {/* Image area — tap anywhere outside image closes */}
+        <div
+          className="flex-1 flex items-center justify-center p-4"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <img
+            src={lightboxUrl}
+            alt="Geração IA"
+            className="max-w-full max-h-[80vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
       </div>
     );
   }
