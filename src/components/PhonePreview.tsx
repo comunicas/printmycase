@@ -46,7 +46,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
     // Clean up prev image after transition
     const t = setTimeout(() => setPrevImage(null), CROSSFADE_MS + 50);
     return () => clearTimeout(t);
-  }, [image]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [image, displayImage]);
 
   // Pinch refs
   const isPinching = useRef(false);

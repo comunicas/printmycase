@@ -34,6 +34,18 @@ export type OrderCustomizationData = {
   previewImageUrl?: string | null;
 };
 
+export type CheckoutCustomizationData = {
+  rawImage: string | null;
+  image: string | null;
+  editedImage: string | null;
+  previewImage: string | null;
+  imageFileName: string | null;
+  scale: number;
+  position: CustomizationPosition;
+  rotation: number;
+  activeFilter: string | null;
+};
+
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -115,5 +127,28 @@ export const parseOrderCustomizationData = (
     originalImageUrl: parseImageUrlField("originalImageUrl", "original_image_url"),
     editedImageUrl: parseImageUrlField("editedImageUrl", "edited_image_url"),
     previewImageUrl: parseImageUrlField("previewImageUrl", "preview_image_url"),
+  };
+};
+
+export const parseCheckoutCustomizationData = (
+  value: unknown,
+): CheckoutCustomizationData | null => {
+  if (!isObject(value)) return null;
+
+  const parsed = parseOrderCustomizationData(value as Json);
+  const scale = typeof parsed.scale === "number" ? parsed.scale : 100;
+  const rotation = typeof parsed.rotation === "number" ? parsed.rotation : 0;
+  const position = isPosition(parsed.position) ? parsed.position : { x: 50, y: 50 };
+
+  return {
+    rawImage: typeof parsed.rawImage === "string" ? parsed.rawImage : null,
+    image: typeof parsed.image === "string" ? parsed.image : null,
+    editedImage: typeof parsed.editedImage === "string" ? parsed.editedImage : null,
+    previewImage: typeof parsed.previewImage === "string" ? parsed.previewImage : null,
+    imageFileName: typeof parsed.imageFileName === "string" ? parsed.imageFileName : null,
+    scale,
+    rotation,
+    position,
+    activeFilter: typeof parsed.activeFilter === "string" ? parsed.activeFilter : null,
   };
 };

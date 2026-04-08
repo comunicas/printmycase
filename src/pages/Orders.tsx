@@ -4,21 +4,13 @@ import { ShoppingBag, ArrowLeft, Clock, ChevronLeft, ChevronRight } from "lucide
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AppHeader from "@/components/AppHeader";
-import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
-import { resolveProductInfo } from "@/lib/products";
 import { statusLabels, statusIcons, statusFlow, getStepIndex } from "@/lib/constants";
-import type { Tables } from "@/integrations/supabase/types";
+import { ordersService, type OrderWithProduct } from "@/services/orders/ordersService";
 import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import PendingCheckoutCards from "@/components/PendingCheckoutCards";
 
-type OrderWithProduct = Tables<"orders"> & {
-  product_name?: string;
-  product_image?: string;
-  design_name?: string;
-  design_image?: string;
-};
 
 const PAGE_SIZE = 8;
 
@@ -102,6 +94,7 @@ const Orders = () => {
     let isCancelled = false;
 
     const fetchOrders = async () => {
+ codex/adjust-orders-query-for-user-filter
       // Front-end user filter mirrors DB RLS expectations; RLS remains the source of truth for access control.
       const { data: ordersData } = await supabase
         .from("orders")
@@ -180,6 +173,41 @@ const Orders = () => {
       supabase.removeChannel(channel);
     };
   }, [authLoading, user?.id]);
+=======
+      const { data, error } = await ordersService.fetchUserOrders();
+      if (error) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      setOrders(data ?? []);
+      setLoading(false);
+    };
+    fetchOrders();
+
+    if (!user?.id) return;
+
+    const unsubscribe = ordersService.subscribeUserOrders(user.id, (updatedOrder) => {
+      setOrders((prev) =>
+        prev.map((o) => {
+          if (o.id !== updatedOrder.id) return o;
+          const { product_name, product_image, design_name, design_image, ...rest } = o;
+          return {
+            ...rest,
+            ...updatedOrder,
+            product_name,
+            product_image,
+            design_name,
+            design_image,
+          };
+        })
+      );
+    });
+
+    return unsubscribe;
+  }, [user?.id]);
+ main
 
   const filtered = useMemo(() => filterByTab(orders, activeTab), [orders, activeTab]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
