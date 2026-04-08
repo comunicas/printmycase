@@ -24,6 +24,7 @@ import AiFilterCategoriesManager from "@/components/admin/AiFilterCategoriesMana
 import UsersManager from "@/components/admin/UsersManager";
 import StoresManager from "@/components/admin/StoresManager";
 import InstagramPostsManager from "@/components/admin/InstagramPostsManager";
+import ContactMessagesManager from "@/components/admin/ContactMessagesManager";
 
 const sectionMap: Record<AdminSection, React.ComponentType> = {
   orders: OrdersManager,
@@ -46,6 +47,7 @@ const sectionMap: Record<AdminSection, React.ComponentType> = {
   "instagram-posts": InstagramPostsManager,
   faq: FaqManager,
   legal: LegalDocsManager,
+  "contact-messages": ContactMessagesManager,
 };
 
 const Admin = () => {

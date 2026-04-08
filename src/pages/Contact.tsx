@@ -12,6 +12,7 @@ const Contact = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const { toast } = useToast();
@@ -24,6 +25,12 @@ const Contact = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) return;
+
+    // Honeypot: if filled, fake success (bots fill all fields)
+    if (website) {
+      setSent(true);
+      return;
+    }
 
     setLoading(true);
     const { error } = await supabase.from("contact_messages").insert({
@@ -81,6 +88,11 @@ const Contact = () => {
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
               />
             </FormField>
+            {/* Honeypot field — invisible to humans */}
+            <div className="absolute opacity-0 pointer-events-none h-0 overflow-hidden" aria-hidden="true">
+              <label htmlFor="website">Website</label>
+              <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+            </div>
             <SubmitButton loading={loading} className="w-full">Enviar</SubmitButton>
           </form>
         </FormCard>
