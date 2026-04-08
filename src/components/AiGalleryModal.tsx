@@ -19,6 +19,9 @@ interface AiGalleryModalProps {
   initialImageUrl?: string | null;
 }
 
+const truncateFilter = (name: string, max = 20) =>
+  name.length > max ? name.slice(0, max) + "…" : name;
+
 const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps) => {
   const navigate = useNavigate();
   const [images, setImages] = useState<PublicGeneration[]>([]);
@@ -102,7 +105,7 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
                 {img.filter_name && (
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 md:transition-opacity">
                     <span className="text-xs font-medium text-white bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-0.5">
-                      {img.filter_name}
+                      {truncateFilter(img.filter_name)}
                     </span>
                   </div>
                 )}
@@ -110,7 +113,7 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
                 {img.filter_name && (
                   <div className="absolute top-1.5 left-1.5 md:hidden">
                     <span className="text-[10px] font-medium text-white bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5">
-                      {img.filter_name}
+                      {truncateFilter(img.filter_name)}
                     </span>
                   </div>
                 )}

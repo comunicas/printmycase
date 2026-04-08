@@ -22,6 +22,9 @@ interface PublicGeneration {
   filter_name: string | null;
 }
 
+const truncateFilter = (name: string, max = 20) =>
+  name.length > max ? name.slice(0, max) + "…" : name;
+
 const AiCoinsSection = () => {
   const navigate = useNavigate();
   const [images, setImages] = useState<PublicGeneration[]>([]);
@@ -113,7 +116,7 @@ const AiCoinsSection = () => {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
                         {img.filter_name && (
                           <span className="text-xs font-medium text-white bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                            {img.filter_name}
+                            {truncateFilter(img.filter_name)}
                           </span>
                         )}
                       </div>
@@ -121,7 +124,7 @@ const AiCoinsSection = () => {
                       {img.filter_name && (
                         <div className="absolute top-1.5 left-1.5 md:hidden">
                           <span className="text-[10px] font-medium text-white bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5">
-                            {img.filter_name}
+                            {truncateFilter(img.filter_name)}
                           </span>
                         </div>
                       )}
