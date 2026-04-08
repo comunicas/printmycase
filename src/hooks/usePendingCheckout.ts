@@ -2,23 +2,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import type { PendingCustomizationData } from "@/types/customization";
+import { useCallback } from "react";
 
 export type PendingCheckoutRow = Tables<"pending_checkouts">;
 
 export function usePendingCheckout() {
   const { user } = useAuth();
+  const userId = user?.id ?? null;
 
-  const upsert = async (
+  const upsert = useCallback(async (
     productId: string,
     customizationData: PendingCustomizationData,
     originalImagePath: string | null,
     editedImagePath: string | null,
     rawImagePath?: string | null,
   ) => {
-    if (!user) return;
+    if (!userId) return;
 
     const payload: TablesInsert<"pending_checkouts"> = {
-      user_id: user.id,
+      user_id: userId,
       product_id: productId,
       customization_data: customizationData,
       original_image_path: originalImagePath,
@@ -33,15 +35,15 @@ export function usePendingCheckout() {
     if (error) {
       throw new Error(`Falha ao salvar checkout pendente: ${error.message}`);
     }
-  };
+  }, [userId]);
 
-  const fetchByProduct = async (productId: string): Promise<PendingCheckoutRow | null> => {
-    if (!user) return null;
+  const fetchByProduct = useCallback(async (productId: string): Promise<PendingCheckoutRow | null> => {
+    if (!userId) return null;
 
     const { data, error } = await supabase
       .from("pending_checkouts")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("product_id", productId)
       .maybeSingle();
 
@@ -50,15 +52,15 @@ export function usePendingCheckout() {
     }
 
     return data ?? null;
-  };
+  }, [userId]);
 
-  const fetchAll = async (): Promise<PendingCheckoutRow[]> => {
-    if (!user) return [];
+  const fetchAll = useCallback(async (): Promise<PendingCheckoutRow[]> => {
+    if (!userId) return [];
 
     const { data, error } = await supabase
       .from("pending_checkouts")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("updated_at", { ascending: false });
 
     if (error) {
@@ -66,23 +68,23 @@ export function usePendingCheckout() {
     }
 
     return data ?? [];
-  };
+  }, [userId]);
 
-  const remove = async (productId: string) => {
-    if (!user) return;
+  const remove = useCallback(async (productId: string) => {
+    if (!userId) return;
 
     const { error } = await supabase
       .from("pending_checkouts")
       .delete()
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("product_id", productId);
 
     if (error) {
       throw new Error(`Falha ao remover checkout pendente: ${error.message}`);
     }
-  };
+  }, [userId]);
 
-  const getSignedUrl = async (path: string): Promise<string | null> => {
+  const getSignedUrl = useCallback(async (path: string): Promise<string | null> => {
     if (!path) return null;
     const { data, error } = await supabase.storage
       .from("customizations")
@@ -93,7 +95,7 @@ export function usePendingCheckout() {
     }
 
     return data?.signedUrl ?? null;
-  };
+  }, []);
 
   return { upsert, fetchByProduct, fetchAll, remove, getSignedUrl };
 }
