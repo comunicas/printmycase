@@ -7,6 +7,18 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   { ignores: ["dist"] },
   {
+    files: [
+      "src/hooks/usePendingCheckout.ts",
+      "src/hooks/useCoins.ts",
+      "src/hooks/useCustomize.tsx",
+      "src/components/admin/UserGenerationsManager.tsx",
+      "src/types/customization.ts",
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+    },
+  },
+  {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
