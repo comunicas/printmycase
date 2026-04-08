@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Trash2, Download, ImageIcon } from "lucide-react";
+import { ArrowLeft, Trash2, Download, ImageIcon, X, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
@@ -24,7 +24,6 @@ const typeLabels: Record<string, string> = {
   original: "Original",
 };
 
-/** Check if a URL is an expired signed URL */
 const isExpiredSignedUrl = (url: string) =>
   url.includes("/sign/") || url.includes("token=");
 
@@ -35,11 +34,10 @@ const MyGenerations = () => {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [selectedGen, setSelectedGen] = useState<Generation | null>(null);
 
-  /** Resolve image URL — refresh signed URL if the stored one is expired */
   const resolveImageUrl = useCallback(async (gen: Generation): Promise<string> => {
     if (!isExpiredSignedUrl(gen.image_url)) return gen.image_url;
-    // Fallback: generate a fresh signed URL from storage_path
     if (!gen.storage_path) return gen.image_url;
     const { data } = await supabase.storage
       .from("customizations")
@@ -60,7 +58,6 @@ const MyGenerations = () => {
         return;
       }
       const gens = data as unknown as Generation[];
-      // Resolve any expired signed URLs
       const resolved = await Promise.all(
         gens.map(async (g) => {
           if (isExpiredSignedUrl(g.image_url)) {
@@ -83,6 +80,7 @@ const MyGenerations = () => {
       }
       await supabase.from("user_ai_generations").delete().eq("id", gen.id);
       setGenerations((prev) => prev.filter((g) => g.id !== gen.id));
+      if (selectedGen?.id === gen.id) setSelectedGen(null);
       toast({ title: "Imagem removida" });
     } catch {
       toast({ title: "Erro ao remover", variant: "destructive" });
@@ -148,7 +146,11 @@ const MyGenerations = () => {
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {gens.map((gen) => (
-                    <div key={gen.id} className="group relative rounded-xl overflow-hidden border border-border bg-card shadow-sm">
+                    <div
+                      key={gen.id}
+                      className="group relative rounded-xl overflow-hidden border border-border bg-card shadow-sm cursor-pointer"
+                      onClick={() => setSelectedGen(gen)}
+                    >
                       <div className="aspect-[9/16] bg-muted">
                         <img
                           src={gen.image_url}
@@ -157,25 +159,36 @@ const MyGenerations = () => {
                           height={320}
                           className="w-full h-full object-cover"
                           loading="lazy"
-                          onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none'; }}
+                          onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = "none"; }}
                         />
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 gap-1">
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="secondary" className="flex-1 h-7 text-xs" onClick={() => handleDownload(gen)}>
-                            <Download className="h-3 w-3 mr-1" />
-                            Baixar
-                          </Button>
-                          <Button size="sm" variant="destructive" className="h-7 w-7 p-0" onClick={() => handleDelete(gen)} disabled={deleting === gen.id}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
+                      {/* Type badge — always visible */}
                       <div className="absolute top-1.5 left-1.5">
                         <span className="inline-flex items-center rounded-md bg-background/80 backdrop-blur px-1.5 py-0.5 text-[10px] font-medium text-foreground">
                           {typeLabels[gen.generation_type] || gen.generation_type}
                           {gen.step_number > 1 && ` #${gen.step_number}`}
                         </span>
+                      </div>
+                      {/* Mobile: always-visible action buttons */}
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="flex-1 h-7 text-xs"
+                          onClick={(e) => { e.stopPropagation(); handleDownload(gen); }}
+                        >
+                          <Download className="h-3 w-3 mr-1" />
+                          Baixar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-7 w-7 p-0"
+                          onClick={(e) => { e.stopPropagation(); handleDelete(gen); }}
+                          disabled={deleting === gen.id}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -185,6 +198,57 @@ const MyGenerations = () => {
           </div>
         )}
       </main>
+
+      {/* Lightbox modal */}
+      {selectedGen && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center" onClick={() => setSelectedGen(null)}>
+          <div className="absolute top-4 right-4 z-10">
+            <button className="text-white/70 hover:text-white" onClick={() => setSelectedGen(null)}>
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          <div className="absolute top-4 left-4 z-10">
+            <button className="text-white/70 hover:text-white" onClick={(e) => { e.stopPropagation(); setSelectedGen(null); }}>
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          </div>
+
+          <img
+            src={selectedGen.image_url}
+            alt={typeLabels[selectedGen.generation_type] || selectedGen.generation_type}
+            className="max-w-[90vw] max-h-[70vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          <div className="mt-4 flex flex-col items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 text-white/80 text-sm">
+              <span className="bg-white/10 rounded-full px-3 py-1">
+                {typeLabels[selectedGen.generation_type] || selectedGen.generation_type}
+              </span>
+              {selectedGen.filter_name && (
+                <span className="bg-white/10 rounded-full px-3 py-1">{selectedGen.filter_name}</span>
+              )}
+              <span className="text-white/50">{formatDate(selectedGen.created_at)}</span>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Button size="sm" variant="secondary" className="gap-1" onClick={() => handleDownload(selectedGen)}>
+                <Download className="h-3.5 w-3.5" />
+                Baixar
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="gap-1"
+                onClick={() => handleDelete(selectedGen)}
+                disabled={deleting === selectedGen.id}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Excluir
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
