@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 
@@ -19,18 +19,46 @@ interface GuardDecision {
   errorMessage: string | null;
 }
 
+const AUTH_LOADING_TIMEOUT_MS = 5000;
+
 export function useGuardDecision({ guard, redirectPath }: UseGuardDecisionParams): GuardDecision {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, status: adminStatus, error: adminError } = useAdmin({ enabled: guard === "admin" });
+  const [authLoadingTimedOut, setAuthLoadingTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading) {
+      setAuthLoadingTimedOut(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setAuthLoadingTimedOut(true);
+    }, AUTH_LOADING_TIMEOUT_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [authLoading]);
 
   return useMemo(() => {
-    if (authLoading) {
+    if (authLoading && !authLoadingTimedOut) {
       return {
         status: "loading",
         allow: false,
         redirectTo: null,
         loadingMessage: "Recuperando sua sessão...",
         errorMessage: null,
+      };
+    }
+
+    if (authLoading && authLoadingTimedOut) {
+      return {
+        status: "error",
+        allow: false,
+        redirectTo: guard === "auth" ? `/login?redirect=${encodeURIComponent(redirectPath)}` : "/",
+        loadingMessage: null,
+        errorMessage: "Não foi possível recuperar sua sessão. Tente entrar novamente.",
       };
     }
 
@@ -81,5 +109,5 @@ export function useGuardDecision({ guard, redirectPath }: UseGuardDecisionParams
       loadingMessage: null,
       errorMessage: null,
     };
-  }, [adminError, adminStatus, authLoading, guard, isAdmin, redirectPath, user]);
+  }, [adminError, adminStatus, authLoading, authLoadingTimedOut, guard, isAdmin, redirectPath, user]);
 }
