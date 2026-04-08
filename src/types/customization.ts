@@ -34,6 +34,23 @@ export type OrderCustomizationData = {
   previewImageUrl?: string | null;
 };
 
+
+export type CustomizationPlacementDefaults = {
+  scale: number;
+  rotation: number;
+  position: CustomizationPosition;
+};
+
+export const withCustomizationPlacementDefaults = (value: {
+  scale?: number;
+  rotation?: number;
+  position?: CustomizationPosition;
+}): CustomizationPlacementDefaults => ({
+  scale: typeof value.scale === "number" ? value.scale : 100,
+  rotation: typeof value.rotation === "number" ? value.rotation : 0,
+  position: isPosition(value.position) ? value.position : { x: 50, y: 50 },
+});
+
 export type CheckoutCustomizationData = {
   rawImage: string | null;
   image: string | null;
@@ -136,9 +153,7 @@ export const parseCheckoutCustomizationData = (
   if (!isObject(value)) return null;
 
   const parsed = parseOrderCustomizationData(value as Json);
-  const scale = typeof parsed.scale === "number" ? parsed.scale : 100;
-  const rotation = typeof parsed.rotation === "number" ? parsed.rotation : 0;
-  const position = isPosition(parsed.position) ? parsed.position : { x: 50, y: 50 };
+  const { scale, rotation, position } = withCustomizationPlacementDefaults(parsed);
 
   return {
     rawImage: typeof parsed.rawImage === "string" ? parsed.rawImage : null,

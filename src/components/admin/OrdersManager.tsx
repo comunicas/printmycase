@@ -6,6 +6,7 @@ import OrderDetailDialog from "@/components/admin/OrderDetailDialog";
 import { statusLabels, statusColorMap, type AdminOrderRow } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
 import { ordersService } from "@/services/orders/ordersService";
+import { parseOrderCustomizationData, withCustomizationPlacementDefaults } from "@/types/customization";
 
 const PAGE_SIZE = 10;
 const OrdersManager = () => {
@@ -59,6 +60,21 @@ const OrdersManager = () => {
     ordersService.notifyOrderStatus(orderId, "shipped").catch(() => {});
   };
 
+  const normalizeCustomizationData = (order: AdminOrderRow): AdminOrderRow => {
+    const parsed = parseOrderCustomizationData(order.customization_data);
+    const placement = withCustomizationPlacementDefaults(parsed);
+
+    return {
+      ...order,
+      customization_data: {
+        ...parsed,
+        scale: placement.scale,
+        rotation: placement.rotation,
+        position: placement.position,
+      },
+    };
+  };
+
   const filtered = orders.filter((o) => statusFilter === "all" || o.status === statusFilter);
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -101,7 +117,7 @@ const OrdersManager = () => {
             {paginated.map((order) => (
               <div
                 key={order.id}
-                onClick={() => setSelectedOrder(order)}
+                onClick={() => setSelectedOrder(normalizeCustomizationData(order))}
                 className="border rounded-xl p-3 bg-card cursor-pointer hover:border-primary/50 transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
