@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
+import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import ScrollReveal from "@/components/ScrollReveal";
 import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo";
@@ -18,6 +19,7 @@ const KbCategory = () => {
   const [categoryName, setCategoryName] = useState("");
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     document.title = "Central de Ajuda | Studio PrintMyCase";
@@ -27,6 +29,7 @@ const KbCategory = () => {
     if (!categorySlug) return;
     let seoCleanup: (() => void) | null = null;
     let breadcrumbCleanup: (() => void) | null = null;
+    let itemListCleanup: (() => void) | null = null;
 
     const fetch = async () => {
       const { data: cat } = await supabase
@@ -36,7 +39,12 @@ const KbCategory = () => {
         .eq("active", true)
         .maybeSingle();
 
-      if (!cat) { setLoading(false); return; }
+      if (!cat) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
       setCategoryName(cat.name);
 
       const { data: arts } = await supabase
@@ -66,6 +74,22 @@ const KbCategory = () => {
         ]),
       });
 
+      // ItemList JSON-LD for category articles
+      if (arts && arts.length > 0) {
+        itemListCleanup = injectJsonLd("kb-cat-itemlist", {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: cat.name,
+          numberOfItems: arts.length,
+          itemListElement: arts.map((a, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: a.title,
+            url: `${SITE_URL}/ajuda/${categorySlug}/${a.slug}`,
+          })),
+        });
+      }
+
       setLoading(false);
     };
     fetch();
@@ -73,10 +97,26 @@ const KbCategory = () => {
     return () => {
       seoCleanup?.();
       breadcrumbCleanup?.();
+      itemListCleanup?.();
     };
   }, [categorySlug]);
 
   if (loading) return <LoadingSpinner variant="fullPage" />;
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <AppHeader breadcrumbs={[{ label: "Central de Ajuda", to: "/ajuda" }]} />
+        <main className="flex-1 flex flex-col items-center justify-center px-5 py-16 text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-3">Categoria não encontrada</h1>
+          <p className="text-muted-foreground mb-6">A categoria que você procura não existe ou foi removida.</p>
+          <Button variant="outline" asChild>
+            <Link to="/ajuda">Voltar para Central de Ajuda</Link>
+          </Button>
+        </main>
+      </div>
+    );
+  }
 
   return (
       <div className="min-h-screen bg-background flex flex-col">

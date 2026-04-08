@@ -49,6 +49,7 @@ const KbArticle = () => {
   const [content, setContent] = useState("");
   const [updatedAt, setUpdatedAt] = useState("");
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [relatedArticles, setRelatedArticles] = useState<RelatedArticle[]>([]);
 
   useEffect(() => {
@@ -62,6 +63,7 @@ const KbArticle = () => {
     let seoCleanup: (() => void) | null = null;
 
     const fetchData = async () => {
+      // First fetch the category to get its id
       const { data: cat } = await supabase
         .from("kb_categories")
         .select("id, name")
@@ -69,63 +71,83 @@ const KbArticle = () => {
         .eq("active", true)
         .maybeSingle();
 
-      if (cat) setCategoryName(cat.name);
+      if (!cat) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
 
+      setCategoryName(cat.name);
+
+      // Fetch article filtering by category_id to ensure URL consistency
       const { data: art } = await supabase
         .from("kb_articles")
-        .select("id, title, content, updated_at, category_id")
+        .select("id, title, content, created_at, updated_at, category_id")
         .eq("slug", articleSlug)
+        .eq("category_id", cat.id)
         .eq("active", true)
         .maybeSingle();
 
-      if (art) {
-        setTitle(art.title);
-        setContent(art.content);
-        const dateStr = new Date(art.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
-        setUpdatedAt(dateStr);
-
-        // Fetch related articles from same category
-        const { data: related } = await supabase
-          .from("kb_articles")
-          .select("id, title, slug")
-          .eq("category_id", art.category_id)
-          .eq("active", true)
-          .neq("id", art.id)
-          .order("sort_order", { ascending: true })
-          .limit(3);
-        setRelatedArticles(related ?? []);
-
-        // SEO meta tags
-        const desc = art.content.replace(/[#*\-_]/g, "").slice(0, 155).trim();
-        seoCleanup = setPageSeo({
-          title: `${art.title} | Central de Ajuda — Studio PrintMyCase`,
-          description: desc,
-          url: `${SITE_URL}/ajuda/${categorySlug}/${articleSlug}`,
-          type: "article",
-        });
-
-        // BreadcrumbList
-        breadcrumbCleanup = injectJsonLd("kb-art-breadcrumb", {
-          "@context": "https://schema.org",
-          ...breadcrumbJsonLd([
-            { name: "Home", url: SITE_URL },
-            { name: "Central de Ajuda", url: `${SITE_URL}/ajuda` },
-            { name: cat?.name ?? "", url: `${SITE_URL}/ajuda/${categorySlug}` },
-            { name: art.title },
-          ]),
-        });
-
-        // Article JSON-LD
-        jsonLdCleanup = injectJsonLd("kb-article", {
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline: art.title,
-          dateModified: art.updated_at,
-          author: { "@type": "Organization", name: "Studio PrintMyCase" },
-          publisher: { "@type": "Organization", name: "Studio PrintMyCase" },
-          description: desc,
-        });
+      if (!art) {
+        setNotFound(true);
+        setLoading(false);
+        return;
       }
+
+      setTitle(art.title);
+      setContent(art.content);
+      const dateStr = new Date(art.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+      setUpdatedAt(dateStr);
+
+      // Fetch related articles from same category
+      const { data: related } = await supabase
+        .from("kb_articles")
+        .select("id, title, slug")
+        .eq("category_id", art.category_id)
+        .eq("active", true)
+        .neq("id", art.id)
+        .order("sort_order", { ascending: true })
+        .limit(3);
+      setRelatedArticles(related ?? []);
+
+      // SEO meta tags
+      const desc = art.content.replace(/[#*\-_]/g, "").slice(0, 155).trim();
+      const articleUrl = `${SITE_URL}/ajuda/${categorySlug}/${articleSlug}`;
+
+      seoCleanup = setPageSeo({
+        title: `${art.title} | Central de Ajuda — Studio PrintMyCase`,
+        description: desc,
+        url: articleUrl,
+        type: "article",
+      });
+
+      // BreadcrumbList
+      breadcrumbCleanup = injectJsonLd("kb-art-breadcrumb", {
+        "@context": "https://schema.org",
+        ...breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Central de Ajuda", url: `${SITE_URL}/ajuda` },
+          { name: cat.name, url: `${SITE_URL}/ajuda/${categorySlug}` },
+          { name: art.title },
+        ]),
+      });
+
+      // Article JSON-LD with datePublished and mainEntityOfPage
+      jsonLdCleanup = injectJsonLd("kb-article", {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: art.title,
+        datePublished: art.created_at,
+        dateModified: art.updated_at,
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": articleUrl,
+        },
+        author: { "@type": "Organization", name: "Studio PrintMyCase" },
+        publisher: { "@type": "Organization", name: "Studio PrintMyCase" },
+        description: desc,
+      });
+
       setLoading(false);
     };
     fetchData();
@@ -138,6 +160,21 @@ const KbArticle = () => {
   }, [categorySlug, articleSlug]);
 
   if (loading) return <LoadingSpinner variant="fullPage" />;
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <AppHeader breadcrumbs={[{ label: "Central de Ajuda", to: "/ajuda" }]} />
+        <main className="flex-1 flex flex-col items-center justify-center px-5 py-16 text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-3">Artigo não encontrado</h1>
+          <p className="text-muted-foreground mb-6">O artigo que você procura não existe ou foi removido.</p>
+          <Button variant="outline" asChild>
+            <Link to="/ajuda">Voltar para Central de Ajuda</Link>
+          </Button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
