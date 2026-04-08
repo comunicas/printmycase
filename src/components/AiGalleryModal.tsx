@@ -84,7 +84,7 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
 
     return (
       <div
-        className="fixed inset-0 z-[60] bg-black/95 flex flex-col"
+        className="fixed inset-0 z-[60] bg-black flex flex-col"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -121,7 +121,7 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
           <img
             src={lightboxUrl}
             alt={currentImg.filter_name || "Geração IA"}
-            className="max-w-[85vw] max-h-[70vh] object-contain rounded-lg"
+            className="max-w-[80vw] max-h-[65vh] object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />
 
