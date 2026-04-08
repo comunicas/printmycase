@@ -1,83 +1,36 @@
 import { useEffect, useState } from "react";
-import { adminService } from "@/services/admin/adminService";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-export type AdminStatus = "idle" | "loading" | "ready" | "error";
-
-interface UseAdminOptions {
-  enabled?: boolean;
-}
-
-export function useAdmin(options: UseAdminOptions = {}) {
-  const { enabled = true } = options;
+export function useAdmin() {
   const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [status, setStatus] = useState<AdminStatus>(enabled ? "idle" : "ready");
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!enabled) {
-      setIsAdmin(false);
-      setStatus("ready");
-      setError(null);
-      return;
-    }
-
-    if (authLoading) {
-      setStatus("loading");
-      setError(null);
-      return;
-    }
-
+    if (authLoading) return;
     if (!user) {
       setIsAdmin(false);
-      setStatus("ready");
-      setError(null);
+      setLoading(false);
       return;
     }
 
     let cancelled = false;
- codex/refactor-auth-and-admin-guards-7jg5ga
-    setStatus("loading");
-    setError(null);
-
     supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .eq("role", "admin")
       .maybeSingle()
-      .then(({ data, error: queryError }) => {
-        if (cancelled) return;
-
-        if (queryError) {
-          setIsAdmin(false);
-          setStatus("error");
-          setError(queryError.message);
-          return;
+      .then(({ data }) => {
+        if (!cancelled) {
+          setIsAdmin(!!data);
+          setLoading(false);
         }
-
-        setIsAdmin(!!data);
-        setStatus("ready");
       });
-=======
-    adminService.checkIsAdmin(user.id).then(({ data }) => {
-      if (!cancelled) {
-        setIsAdmin(Boolean(data));
-        setLoading(false);
-      }
-    });
- main
 
-    return () => {
-      cancelled = true;
-    };
-  }, [enabled, user?.id, authLoading]);
+    return () => { cancelled = true; };
+  }, [user?.id, authLoading]);
 
-  return {
-    isAdmin,
-    loading: enabled && (status === "idle" || status === "loading"),
-    status,
-    error,
-  };
+  return { isAdmin, loading: loading || authLoading };
 }

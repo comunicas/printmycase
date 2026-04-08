@@ -2,22 +2,6 @@ const SITE_URL =
   typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 const SITE_NAME = "Studio PrintMyCase";
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
-
-export interface SeoContent {
-  title: string;
-  description: string;
-  image?: string;
-  type?: string;
-}
-
-export const HOME_SEO: SeoContent = {
-  title: "Studio PrintMyCase | Capas Personalizadas para Celular",
-  description:
-    "Crie capas de celular personalizadas com suas fotos. Proteção premium, acabamento soft-touch e frete grátis para diversos modelos de smartphone.",
-  image: DEFAULT_OG_IMAGE,
-  type: "website",
-};
 
 /** Helper to inject a JSON-LD script and return a cleanup function */
 export function injectJsonLd(id: string, data: object): () => void {
@@ -58,16 +42,9 @@ function setMeta(attr: string, key: string, content: string) {
 export interface PageSeoOptions {
   title: string;
   description: string;
-  url?: string;
-  path?: string;
+  url: string;
   image?: string;
   type?: string; // default "website"
-}
-
-function resolveSeoUrl(url?: string, path?: string) {
-  if (url) return url;
-  if (path) return path.startsWith("http") ? path : `${SITE_URL}${path}`;
-  return SITE_URL;
 }
 
 /**
@@ -77,8 +54,7 @@ function resolveSeoUrl(url?: string, path?: string) {
  * Does NOT handle JSON-LD — each page injects its own structured data.
  */
 export function setPageSeo(opts: PageSeoOptions): () => void {
-  const { title, description, image, type = "website" } = opts;
-  const url = resolveSeoUrl(opts.url, opts.path);
+  const { title, description, url, image, type = "website" } = opts;
 
   document.title = title;
 
@@ -103,12 +79,8 @@ export function setPageSeo(opts: PageSeoOptions): () => void {
   canonical.setAttribute("href", url);
 
   return () => {
-    // Mantemos as tags entre transições de rota para evitar "janelas sem metadata".
+    canonical?.remove();
   };
 }
 
-export function setGlobalSeo(content: SeoContent, url = SITE_URL): () => void {
-  return setPageSeo({ ...content, url, type: content.type ?? "website" });
-}
-
-export { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE, setMeta };
+export { SITE_URL, SITE_NAME, setMeta };

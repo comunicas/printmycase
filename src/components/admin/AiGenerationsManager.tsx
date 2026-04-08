@@ -59,7 +59,8 @@ const AiGenerationsManager = () => {
   // Initial load
   useEffect(() => {
     fetchImages(true);
-  }, [fetchImages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // IntersectionObserver for infinite scroll
   useEffect(() => {

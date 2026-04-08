@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Smartphone, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,7 @@ import FormField from "@/components/ui/form-field";
 import SubmitButton from "@/components/forms/SubmitButton";
 import { Input } from "@/components/ui/input";
 import { maskPhone } from "@/lib/masks";
-import { setPageSeo, SITE_URL } from "@/lib/seo";
+import SeoHead from "@/components/SeoHead";
 
 const RequestModel = () => {
   const { toast } = useToast();
@@ -21,16 +21,6 @@ const RequestModel = () => {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<{ phone?: string; modelName?: string }>({});
-
-  useEffect(() => {
-    return setPageSeo({
-      title: "Solicitar Modelo | Studio PrintMyCase",
-      description:
-        "Não encontrou seu aparelho? Solicite o modelo desejado e avisaremos quando ele estiver disponível na PrintMyCase.",
-      url: `${SITE_URL}/solicitar-modelo`,
-      type: "website",
-    });
-  }, []);
 
   const validate = () => {
     const e: typeof errors = {};
@@ -60,6 +50,7 @@ const RequestModel = () => {
 
   return (
     <>
+      <SeoHead />
       <div className="min-h-screen bg-background flex flex-col">
         <AppHeader breadcrumbs={[{ label: "Solicitar Modelo" }]} />
         <main className="flex-1 flex items-center justify-center px-5 py-12">

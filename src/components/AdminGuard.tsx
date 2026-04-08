@@ -1,20 +1,24 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { useAdmin } from "@/hooks/useAdmin";
 import LoadingSpinner from "@/components/ui/loading-spinner";
-import { useGuardDecision } from "@/hooks/useGuardDecision";
 
 const AdminGuard = ({ children }: { children: ReactNode }) => {
-  const decision = useGuardDecision({
-    guard: "admin",
-    redirectPath: "/",
-  });
+  const { isAdmin, loading } = useAdmin();
+  const [timedOut, setTimedOut] = useState(false);
 
-  if (decision.status === "idle" || decision.status === "loading") {
-    return <LoadingSpinner variant="fullPage" message={decision.loadingMessage ?? undefined} />;
+  useEffect(() => {
+    if (!loading) return;
+    const timer = setTimeout(() => setTimedOut(true), 5000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  if (loading && !timedOut) {
+    return <LoadingSpinner variant="fullPage" />;
   }
 
-  if (!decision.allow && decision.redirectTo) {
-    return <Navigate to={decision.redirectTo} replace />;
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

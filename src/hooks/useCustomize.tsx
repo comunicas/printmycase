@@ -3,21 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
- codex/refactor-upload-customization-asset-handling
-import { supabase } from "@/integrations/supabase/client";
-import { uploadCustomizationAsset } from "@/lib/customization-upload";
-import { DEFAULTS, PHONE_W, PHONE_H, type AiFilter, type AiFilterCategory, type FilterHistoryEntry } from "@/lib/customize-types";
-import {
-  compressImage,
-  renderSnapshot,
-  renderPhoneMockup,
-  getImageResolution,
-  uploadForAI,
-} from "@/lib/image-utils";
-=======
 import { DEFAULTS, PHONE_W, PHONE_H, type FilterHistoryEntry } from "@/lib/customize-types";
 import { compressImage, getImageResolution } from "@/lib/image-utils";
- main
 import { useCoins } from "@/hooks/useCoins";
 import { useCoinSettings } from "@/hooks/useCoinSettings";
 import { usePendingCheckout } from "@/hooks/usePendingCheckout";
@@ -272,104 +259,9 @@ export function useCustomize(productId: string | undefined) {
     });
   }, [renderFlow, product, user?.id, image, rawImage, originalImage, filteredImage, imageFileName, scale, position, rotation, activeFilterId, filterHistory]);
 
- codex/refactor-upload-customization-asset-handling
-      const customData = { rawImage, image, editedImage: finalImage, previewImage, imageFileName, scale, position, rotation };
-      try {
-        sessionStorage.setItem("customization", JSON.stringify(customData));
-      } catch {
-        try {
-          sessionStorage.setItem("customization", JSON.stringify({ ...customData, rawImage: null, image: null, previewImage: null }));
-        } catch {
-          toast({ title: "Erro ao salvar customização", variant: "destructive" });
-          return;
-        }
-      }
-      if (user) {
-        try {
-          const ts = Date.now();
-          let rawPath: string | null = null;
-          let optimizedPath: string | null = null;
-          let finalPath: string | null = null;
-          let filteredPath: string | null = null;
-          let previewPath: string | null = null;
-
-          // 1. Raw image (original upload, never changes)
-          const rawSrc = rawImage || originalImage || image;
-          rawPath = await uploadCustomizationAsset({
-            sourceUrl: rawSrc,
-            userId: user.id,
-            fileName: `pending_raw_${ts}.${imageFileName?.split(".").pop() || "png"}`,
-            errorMessage: "Falha ao enviar imagem original pendente.",
-            upsert: true,
-          });
-
-          // 2. Optimized image (after filters/upscale, max quality)
-          const optimSrc = originalImage || image;
-          optimizedPath = await uploadCustomizationAsset({
-            sourceUrl: optimSrc,
-            userId: user.id,
-            fileName: `pending_optim_${ts}.jpg`,
-            errorMessage: "Falha ao enviar imagem otimizada pendente.",
-            upsert: true,
-          });
-
-          // 3. Final image (snapshot with frame positioning)
-          finalPath = await uploadCustomizationAsset({
-            sourceUrl: finalImage,
-            userId: user.id,
-            fileName: `pending_final_${ts}.jpg`,
-            errorMessage: "Falha ao enviar imagem final pendente.",
-            upsert: true,
-          });
-
-          // 4. Filtered image (AI-generated result)
-          filteredPath = await uploadCustomizationAsset({
-            sourceUrl: filteredImage,
-            userId: user.id,
-            fileName: `pending_filtered_${ts}.jpg`,
-            errorMessage: "Falha ao enviar imagem filtrada pendente.",
-            upsert: true,
-          });
-
-          // 5. Preview image (mockup with device frame)
-          previewPath = await uploadCustomizationAsset({
-            sourceUrl: previewImage,
-            userId: user.id,
-            fileName: `pending_preview_${ts}.png`,
-            errorMessage: "Falha ao enviar imagem de preview pendente.",
-            upsert: true,
-          });
-
-          const pendingData: PendingCustomizationData = {
-            scale,
-            position,
-            rotation,
-            activeFilter: activeFilterId,
-            filteredImagePath: filteredPath,
-            previewImagePath: previewPath,
-            filterHistory: filterHistory.map((h) => h.filterId),
-          };
-
-          await upsertPending(
-            product.id,
-            pendingData,
-            optimizedPath,
-            finalPath,
-            rawPath,
-          );
-        } catch { /* silently ignore */ }
-      }
-      if (product.slug) sessionStorage.removeItem(`draft-customize-${product.slug}`);
-      navigate(`/checkout/${product.slug}`);
-    } finally {
-      setIsRendering(false);
-    }
-  }, [requireAuth, product, image, rawImage, originalImage, filteredImage, imageFileName, scale, position, rotation, activeFilterId, user, navigate, toast, upsertPending]);
-=======
   const handleDownload = useCallback(async () => {
     await renderFlow.handleDownload(filteredImage || image, productName);
   }, [renderFlow, filteredImage, image, productName]);
- main
 
   return {
     product,

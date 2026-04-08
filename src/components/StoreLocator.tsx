@@ -4,7 +4,7 @@ import L from "leaflet";
 import { MapPin, Navigation, Instagram, MessageCircle } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { SITE_URL, injectJsonLd } from "@/lib/seo";
+import { injectJsonLd } from "@/lib/seo";
 import "leaflet/dist/leaflet.css";
 
 interface Store {
@@ -41,6 +41,8 @@ function MapController({ position, resetKey, bounds }: { position: [number, numb
   }, [resetKey, map, bounds]);
   return null;
 }
+
+const SITE_URL = typeof window !== "undefined" ? window.location.origin : "https://studio.printmycase.com.br";
 
 function parseAddressParts(address: string) {
   const parts = address.split("–").map(p => p.trim());
