@@ -34,6 +34,7 @@ const DesignPage = lazy(() => import("./pages/DesignPage"));
 const SelectModel = lazy(() => import("./pages/SelectModel"));
 const MyGenerations = lazy(() => import("./pages/MyGenerations"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 const App = () => (
   <AuthProvider>
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/contato" element={<Contact />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
