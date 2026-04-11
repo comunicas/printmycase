@@ -1,21 +1,29 @@
 
 
-## Feedback haptico + animacao de highlight
+## Transicao suave na FilterHistoryBar + desabilitar controles durante processamento IA
 
 ### Alteracoes
 
-**1. `src/components/customize/MobileTabOverlay.tsx`** - Haptico no swipe-down
-- No `handleTouchEnd`, quando `dragDeltaY > 80` (vai fechar), chamar `navigator.vibrate?.(15)` antes de `handleClose()`
-- Vibração curta de 15ms para feedback sutil
+**1. `src/components/customize/FilterHistoryBar.tsx`** - Transicao de altura
+- Remover o `if (filterHistory.length === 0) return null` — manter sempre montado
+- Usar um wrapper `div` com `overflow-hidden` e `transition-all duration-300`
+- Quando `filterHistory.length === 0`: `max-height: 0, py-0, border-0`
+- Quando `filterHistory.length > 0`: `max-height: 200px, py-2, border-t`
+- Resultado: entrada e saida suaves sem salto visual
 
-**2. `src/components/customize/FilterHistoryBar.tsx`** - Animacao de entrada
-- Adicionar `useRef` para rastrear o `prevLength` do `filterHistory`
-- Quando `filterHistory.length` aumenta (novo filtro adicionado), aplicar classe `animate-fade-in` temporariamente no container
-- Usar `useEffect` + estado `isNew` com timeout de 600ms para remover a classe apos a animacao
-- Adicionar um leve `ring-2 ring-primary/30` durante a animacao para efeito de highlight visual
+**2. `src/components/customize/MobileTabBar.tsx`** - Desabilitar tabs durante processamento
+- Adicionar prop `disabled?: boolean`
+- Quando `disabled=true`: aplicar `opacity-50 pointer-events-none` nas tabs
 
-### Detalhes tecnicos
-- `navigator.vibrate()` e suportado na maioria dos Android; no iOS Safari nao funciona mas o optional chaining (`?.`) evita erros
-- A animacao `animate-fade-in` ja existe no projeto (keyframe definido no tailwind config)
-- O highlight usa ring do Tailwind com transicao suave
+**3. `src/components/customize/FilterHistoryBar.tsx`** - Desabilitar botoes durante processamento
+- Adicionar prop `disabled?: boolean`
+- Passar `disabled` para todos os `Button` e desabilitar os handlers de compare
+
+**4. `src/components/customize/ContinueBar.tsx`** - Ja recebe `disabled` (ok)
+
+**5. `src/pages/Customize.tsx`** - Passar `isProcessing` para os componentes
+- `<MobileTabBar disabled={c.isProcessing} />`
+- `<FilterHistoryBar disabled={c.isProcessing} />`
+
+O `isProcessing` ja agrega todos os estados relevantes: compressao, renderizacao, filtro IA em andamento e upscale.
 
