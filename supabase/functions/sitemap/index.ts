@@ -1,5 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+/** Brand mapping matching src/lib/utils.ts extractBrand + src/lib/brand-seo.ts */
+const BRAND_PATTERNS: [RegExp, string][] = [
+  [/\biphone\b/i, "iphone"],
+  [/\bgalaxy\b/i, "samsung"],
+  [/\b(motorola|moto)\b/i, "motorola"],
+  [/\b(redmi|poco|xiaomi)\b/i, "xiaomi"],
+];
+
+function brandSlugFromName(name: string): string {
+  for (const [re, slug] of BRAND_PATTERNS) {
+    if (re.test(name)) return slug;
+  }
+  return "outros";
+}
 const SITE_URL = "https://studio.printmycase.com.br";
 
 const corsHeaders = {
@@ -90,13 +104,41 @@ Deno.serve(async (req) => {
       urls.push(urlEntry(`${SITE_URL}${r.path}`, r.priority, r.freq, today));
     }
 
-    // Products
+    // --- SEO Silo: /capa-celular/ ---
+    urls.push(urlEntry(`${SITE_URL}/capa-celular`, "0.9", "daily", today));
+
+    // Build brand → products mapping for silo
+    const brandProducts = new Map<string, typeof productsRes.data>();
+    for (const p of productsRes.data ?? []) {
+      const bSlug = brandSlugFromName(p.name ?? "");
+      if (!brandProducts.has(bSlug)) brandProducts.set(bSlug, []);
+      brandProducts.get(bSlug)!.push(p);
+    }
+
+    // Brand hub pages
+    for (const [bSlug] of brandProducts) {
+      urls.push(urlEntry(`${SITE_URL}/capa-celular/${bSlug}`, "0.8", "weekly", today));
+    }
+
+    // Brand model pages
+    for (const [bSlug, prods] of brandProducts) {
+      for (const p of prods) {
+        const lastmod = p.updated_at
+          ? new Date(p.updated_at).toISOString().split("T")[0]
+          : today;
+        urls.push(
+          urlEntry(`${SITE_URL}/capa-celular/${bSlug}/${p.slug}`, "0.8", "weekly", lastmod)
+        );
+      }
+    }
+
+    // Legacy product URLs (lower priority, kept for backward compat)
     for (const p of productsRes.data ?? []) {
       const lastmod = p.updated_at
         ? new Date(p.updated_at).toISOString().split("T")[0]
         : today;
       urls.push(
-        urlEntry(`${SITE_URL}/product/${p.slug}`, "0.8", "weekly", lastmod)
+        urlEntry(`${SITE_URL}/product/${p.slug}`, "0.5", "weekly", lastmod)
       );
     }
 
