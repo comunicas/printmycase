@@ -11,7 +11,6 @@ interface MobileTabOverlayProps {
   activeTab: MobileTab;
   onClose: () => void;
   hasImage: boolean;
-  // Adjustments
   scale: number;
   rotation: number;
   onScaleChange: (v: number) => void;
@@ -21,7 +20,6 @@ interface MobileTabOverlayProps {
   isHD: boolean;
   upscaleCost: number;
   isUpscaling: boolean;
-  // Filters
   filters: AiFilter[];
   filterCategories: AiFilterCategory[];
   activeFilterId: string | null;
@@ -35,7 +33,6 @@ interface MobileTabOverlayProps {
   onUndoLastFilter: () => void;
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
-  // Gallery
   onGallerySelect: (imageUrl: string) => void;
 }
 
@@ -54,7 +51,6 @@ const MobileTabOverlay = ({
   onPreviewStart, onPreviewEnd,
   onGallerySelect,
 }: MobileTabOverlayProps) => {
-  // Lock body scroll when overlay is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -66,22 +62,32 @@ const MobileTabOverlay = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden animate-fade-in" onClick={onClose}>
-      <div className="absolute inset-0 bg-background/90 backdrop-blur-md" />
+    <>
+      {/* Backdrop */}
       <div
-        className="relative flex flex-col h-full"
+        className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+        onClick={onClose}
+      />
+
+      {/* Bottom sheet */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg transform transition-transform duration-300 ease-out translate-y-0"
+        style={{ marginBottom: "calc(3rem + 3.5rem)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-          <h3 className="text-sm font-semibold text-foreground">{tabTitles[activeTab]}</h3>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </Button>
+        {/* Handle + Header */}
+        <div className="flex flex-col items-center pt-2 pb-1 border-b border-border/50">
+          <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mb-2" />
+          <div className="flex items-center justify-between w-full px-4 pb-1">
+            <h3 className="text-sm font-semibold text-foreground">{tabTitles[activeTab]}</h3>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="overflow-y-auto px-4 py-4" style={{ height: "calc(100% - 3.5rem)" }}>
           {activeTab === "ajustes" && (
             <div className={!hasImage ? "opacity-50 pointer-events-none" : ""}>
               <AdjustmentsPanel
@@ -125,7 +131,7 @@ const MobileTabOverlay = ({
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

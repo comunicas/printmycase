@@ -76,13 +76,6 @@ const Customize = () => {
           />
         </div>
 
-        {/* Mobile tab bar */}
-        <MobileTabBar
-          activeTab={mobileTab}
-          onTabClick={(tab) => setMobileTab((prev) => prev === tab ? null : tab)}
-          hasFilters={c.filters.length > 0}
-        />
-
         {/* Desktop sidebar — right side */}
         <aside className="hidden lg:flex flex-col gap-4 lg:w-[420px] lg:flex-shrink-0 h-full px-8 py-6 overflow-y-auto bg-muted/40 border-l border-border">
           {/* Product summary */}
@@ -144,18 +137,7 @@ const Customize = () => {
         </aside>
       </main>
 
-      {/* Mobile ContinueBar */}
-      <ContinueBar
-        isModified={c.isModified}
-        onReset={c.handleReset}
-        onContinue={c.handleContinue}
-        disabled={!c.image || c.isProcessing}
-        isRendering={c.isRendering}
-        showDownload={!!c.activeFilterId}
-        onDownload={c.handleDownload}
-      />
-
-      {/* Mobile fullscreen overlay */}
+      {/* Mobile bottom sheet overlay */}
       {mobileTab && (
         <MobileTabOverlay
           activeTab={mobileTab}
@@ -186,6 +168,24 @@ const Customize = () => {
           onGallerySelect={c.handleGalleryImageSelect}
         />
       )}
+
+      {/* Mobile fixed footer: TabBar + ContinueBar */}
+      <div className="lg:hidden flex-shrink-0 relative z-[60]">
+        <MobileTabBar
+          activeTab={mobileTab}
+          onTabClick={(tab) => setMobileTab((prev) => prev === tab ? null : tab)}
+          hasFilters={c.filters.length > 0}
+        />
+        <ContinueBar
+          isModified={c.isModified}
+          onReset={c.handleReset}
+          onContinue={c.handleContinue}
+          disabled={!c.image || c.isProcessing}
+          isRendering={c.isRendering}
+          showDownload={!!c.activeFilterId}
+          onDownload={c.handleDownload}
+        />
+      </div>
 
       <FilterConfirmDialog
         filter={c.filters.find((f) => f.id === c.pendingFilterId) ?? null}

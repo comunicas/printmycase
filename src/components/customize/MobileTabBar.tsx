@@ -18,15 +18,15 @@ const MobileTabBar = ({ activeTab, onTabClick, hasFilters }: MobileTabBarProps) 
   const visibleTabs = tabs.filter((t) => !t.hidden);
 
   return (
-    <div className="flex-shrink-0 lg:hidden border-t border-border bg-background/80 backdrop-blur-xl">
-      <div className={`grid grid-cols-${visibleTabs.length} h-12`}>
+    <div className="lg:hidden border-t border-border bg-background/80 backdrop-blur-xl">
+      <div className={`grid h-12`} style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)` }}>
         {visibleTabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
           return (
             <button
               key={id}
               onClick={() => onTabClick(id)}
-              className={`flex flex-col items-center justify-center gap-0.5 transition-colors ${
+              className={`relative flex flex-col items-center justify-center gap-0.5 transition-colors ${
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
@@ -34,6 +34,9 @@ const MobileTabBar = ({ activeTab, onTabClick, hasFilters }: MobileTabBarProps) 
             >
               <Icon className="w-5 h-5" />
               <span className="text-[10px] font-medium leading-none">{label}</span>
+              {isActive && (
+                <span className="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-primary rounded-full" />
+              )}
             </button>
           );
         })}
