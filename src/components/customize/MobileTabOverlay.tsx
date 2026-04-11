@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdjustmentsPanel from "./AdjustmentsPanel";
@@ -6,7 +6,6 @@ import AiFiltersList from "./AiFiltersList";
 import GalleryTab from "./GalleryTab";
 import type { MobileTab } from "./MobileTabBar";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
-
 interface MobileTabOverlayProps {
   activeTab: MobileTab;
   onClose: () => void;
