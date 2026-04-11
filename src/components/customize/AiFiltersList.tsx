@@ -1,5 +1,5 @@
 import { useRef, useCallback, forwardRef } from "react";
-import { Loader2, Eye, X, Wand2, Undo2 } from "lucide-react";
+import { Loader2, Eye, X, Wand2, Undo2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
 
@@ -18,6 +18,11 @@ interface AiFiltersListProps {
   onUndoLastFilter: () => void;
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
+  hideHistory?: boolean;
+  onUpscale?: () => void;
+  isHD?: boolean;
+  upscaleCost?: number;
+  isUpscaling?: boolean;
 }
 
 const LONG_PRESS_MS = 300;
@@ -26,6 +31,7 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
   filters, categories, activeFilterId, applyingFilterId, disabled, filterCost, filterHistory,
   onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
+  hideHistory, onUpscale, isHD, upscaleCost, isUpscaling,
 }, ref) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPreviewing = useRef(false);
@@ -118,8 +124,27 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
 
   return (
     <div ref={ref} className="space-y-2">
+      {/* Refinar (upscale) button */}
+      {onUpscale && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-1.5 mb-1"
+          onClick={onUpscale}
+          disabled={disabled || isHD || isUpscaling}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span className="text-xs">
+            {isUpscaling ? "Processando..." : isHD ? "Já em HD" : "Refinar"}
+          </span>
+          {!isHD && !isUpscaling && upscaleCost != null && (
+            <span className="text-[10px] text-muted-foreground">🪙{upscaleCost}</span>
+          )}
+        </Button>
+      )}
+
       {/* Filter history chips */}
-      {filterHistory.length > 0 && (
+      {!hideHistory && filterHistory.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 overflow-x-auto flex-nowrap scrollbar-hide pb-0.5">
             <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">

@@ -70,11 +70,7 @@ const ImageControls = ({
             onScaleChange={onScaleChange}
             onRotate={onRotate}
             onExpand={onExpand}
-            onUpscale={onUpscale}
             disabled={!hasImage}
-            isHD={isHD}
-            upscaleCost={upscaleCost}
-            isUpscaling={isUpscaling}
           />
         </TabsContent>
 
@@ -95,6 +91,10 @@ const ImageControls = ({
               onUndoLastFilter={onUndoLastFilter}
               onPreviewStart={onPreviewStart}
               onPreviewEnd={onPreviewEnd}
+              onUpscale={onUpscale}
+              isHD={isHD}
+              upscaleCost={upscaleCost}
+              isUpscaling={isUpscaling}
             />
           </TabsContent>
         )}
