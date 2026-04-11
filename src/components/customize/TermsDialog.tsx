@@ -17,7 +17,7 @@ interface TermsDialogProps {
 
 const TermsDialog = ({ open, onOpenChange, onAccept }: TermsDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
+    <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <ShieldAlert className="w-5 h-5 text-primary" />
