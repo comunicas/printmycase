@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import FormField from "@/components/ui/form-field";
-import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, RefreshCw, Download } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -39,6 +39,8 @@ const InstagramPostsManager = () => {
   const [editing, setEditing] = useState<InstaPost | null>(null);
   const [form, setForm] = useState(empty);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [fetching, setFetching] = useState(false);
+  const [fetchingId, setFetchingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -93,11 +95,57 @@ const InstagramPostsManager = () => {
     load();
   };
 
+  const fetchAllThumbnails = async () => {
+    setFetching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-instagram-thumbnail", {
+        body: {},
+      });
+      if (error) throw error;
+      const updated = data?.updated ?? 0;
+      const errors = data?.errors ?? [];
+      if (updated > 0) toast({ title: `${updated} thumbnail(s) atualizada(s)` });
+      if (errors.length > 0) toast({ title: `${errors.length} erro(s)`, description: errors.map((e: any) => e.error).join("; ").slice(0, 200), variant: "destructive" });
+      if (updated === 0 && errors.length === 0) toast({ title: "Nenhum post sem thumbnail" });
+      load();
+    } catch (e: any) {
+      toast({ title: "Erro ao buscar thumbnails", description: e.message, variant: "destructive" });
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  const fetchSingleThumbnail = async (postId: string) => {
+    setFetchingId(postId);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-instagram-thumbnail", {
+        body: { post_id: postId },
+      });
+      if (error) throw error;
+      if (data?.updated > 0) {
+        toast({ title: "Thumbnail atualizada" });
+      } else if (data?.errors?.length > 0) {
+        toast({ title: "Erro", description: data.errors[0].error, variant: "destructive" });
+      }
+      load();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setFetchingId(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-lg font-semibold">Posts do Instagram</h2>
-        <Button size="sm" onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Adicionar</Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={fetchAllThumbnails} disabled={fetching}>
+            <Download className={`w-4 h-4 mr-1 ${fetching ? "animate-spin" : ""}`} />
+            Buscar Thumbnails
+          </Button>
+          <Button size="sm" onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Adicionar</Button>
+        </div>
       </div>
 
       {loading ? (
@@ -109,6 +157,7 @@ const InstagramPostsManager = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Ordem</TableHead>
+              <TableHead>Thumb</TableHead>
               <TableHead>URL</TableHead>
               <TableHead>Legenda</TableHead>
               <TableHead>Ativo</TableHead>
@@ -119,6 +168,13 @@ const InstagramPostsManager = () => {
             {posts.map((p) => (
               <TableRow key={p.id}>
                 <TableCell>{p.sort_order}</TableCell>
+                <TableCell>
+                  {p.thumbnail_url ? (
+                    <img src={p.thumbnail_url} alt="" className="w-10 h-10 object-cover rounded" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </TableCell>
                 <TableCell className="max-w-[200px] truncate">
                   <a href={p.post_url} target="_blank" rel="noopener noreferrer" className="text-primary underline inline-flex items-center gap-1">
                     {p.post_url.replace("https://www.instagram.com/", "").slice(0, 30)}
@@ -128,6 +184,9 @@ const InstagramPostsManager = () => {
                 <TableCell className="max-w-[150px] truncate">{p.caption || "—"}</TableCell>
                 <TableCell>{p.active ? "✅" : "❌"}</TableCell>
                 <TableCell className="text-right space-x-1">
+                  <Button size="icon" variant="ghost" onClick={() => fetchSingleThumbnail(p.id)} disabled={fetchingId === p.id}>
+                    <RefreshCw className={`w-4 h-4 ${fetchingId === p.id ? "animate-spin" : ""}`} />
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
                   <Button size="icon" variant="ghost" onClick={() => setConfirmId(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </TableCell>
