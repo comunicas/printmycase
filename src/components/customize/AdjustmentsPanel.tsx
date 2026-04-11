@@ -9,11 +9,7 @@ interface AdjustmentsPanelProps {
   onScaleChange: (v: number) => void;
   onRotate: () => void;
   onExpand: () => void;
-  onUpscale: () => void;
   disabled: boolean;
-  isHD: boolean;
-  upscaleCost: number;
-  isUpscaling: boolean;
 }
 
 const AdjustmentsPanel = forwardRef<HTMLDivElement, AdjustmentsPanelProps>(({

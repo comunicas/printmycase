@@ -1,5 +1,5 @@
 import { useRef, useCallback, forwardRef } from "react";
-import { Loader2, Eye, X, Wand2, Undo2 } from "lucide-react";
+import { Loader2, Eye, X, Wand2, Undo2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
 
@@ -18,6 +18,11 @@ interface AiFiltersListProps {
   onUndoLastFilter: () => void;
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
+  hideHistory?: boolean;
+  onUpscale?: () => void;
+  isHD?: boolean;
+  upscaleCost?: number;
+  isUpscaling?: boolean;
 }
 
 const LONG_PRESS_MS = 300;
