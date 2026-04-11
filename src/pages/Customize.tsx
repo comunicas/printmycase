@@ -185,7 +185,7 @@ const Customize = () => {
           onPreviewEnd={() => setPreviewImageUrl(null)}
           onGallerySelect={c.handleGalleryImageSelect}
         />
-      )
+      )}
 
       <FilterConfirmDialog
         filter={c.filters.find((f) => f.id === c.pendingFilterId) ?? null}
