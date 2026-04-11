@@ -1,23 +1,43 @@
 
 
-## Swipe-down para fechar + auto-fechar ao aplicar filtro
+## Controles de filtro no footer + Upscale vira "Refinar" na tab Filtros IA
 
-### Alteracoes em `src/components/customize/MobileTabOverlay.tsx`
+### Alteracoes
 
-**1. Gesto swipe-down no handle/header**
-- Rastrear `touchStart.clientY` e `touchMove.clientY` na area do header (drag handle)
-- Calcular `deltaY = touchMove.clientY - touchStart.clientY`
-- Durante o arraste, aplicar `transform: translateY(${deltaY}px)` no sheet em tempo real (apenas valores positivos, ou seja, para baixo)
-- No `touchEnd`: se `deltaY > 80px`, chamar `handleClose()`; senao, animar de volta para `translateY(0)`
+**1. Novo `FilterHistoryBar.tsx`**
+- Barra compacta com chips dos filtros aplicados + botoes Comparar/Desfazer/Remover
+- Renderizada no footer mobile do `Customize.tsx`, acima do `MobileTabBar`, sempre visivel quando `filterHistory.length > 0`
 
-**2. Auto-fechar ao clicar num filtro IA**
-- Wrapper `onFilterClick` para chamar `handleClose()` apos disparar o filtro original
-- Manter o mesmo comportamento ja existente para galeria (`handleGallerySelect` ja fecha)
+**2. `AiFiltersList.tsx`**
+- Adicionar botao "Refinar" (Sparkles icon) no topo, antes dos filtros — recebe props `onUpscale`, `isHD`, `upscaleCost`, `isUpscaling`
+- Esconder a secao de historico quando renderizado dentro do overlay mobile (nova prop `hideHistory`)
 
-### Detalhes tecnicos
-- Usar `useRef` para armazenar `startY` e `currentDeltaY`
-- Usar `useState` para `dragDeltaY` que controla o offset visual durante o arraste
-- Aplicar `style={{ transform: translateY(${dragDeltaY}px) }}` inline durante o drag, voltando para classes CSS quando solto
-- Desabilitar `transition-transform` durante o drag ativo para resposta imediata, reabilitar ao soltar
-- Threshold de 80px para fechar, com velocidade do swipe como criterio secundario
+**3. `AdjustmentsPanel.tsx`**
+- Remover o botao de Upscale
+
+**4. `ImageControls.tsx` + `MobileTabOverlay.tsx`**
+- Passar props de upscale para `AiFiltersList`
+- Passar `hideHistory` no mobile overlay
+
+**5. `Customize.tsx`**
+- Importar `FilterHistoryBar` e renderizar no bloco `lg:hidden` do footer, entre o conteudo e o `MobileTabBar`
+
+### Layout mobile resultante
+```text
+┌─────────────────────────┐
+│ Header                  │
+├─────────────────────────┤
+│   Phone Preview         │
+├─────────────────────────┤
+│ 2 filtros: [1.X][2.Y]  │ ← FilterHistoryBar (condicional)
+│ [👁][↩][✕]              │
+├─────────────────────────┤
+│ [Ajustes][Filtros][Gal] │ ← MobileTabBar fixo
+├─────────────────────────┤
+│ [↺ Reset] [Finalizar →]│ ← ContinueBar fixo
+└─────────────────────────┘
+```
+
+### Desktop — sem alteracao visual
+Os controles de historico continuam inline dentro do `AiFiltersList` na sidebar. O botao "Refinar" aparece no topo da lista de filtros, igual.
 
