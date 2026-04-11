@@ -76,13 +76,6 @@ const Customize = () => {
           />
         </div>
 
-        {/* Mobile tab bar */}
-        <MobileTabBar
-          activeTab={mobileTab}
-          onTabClick={(tab) => setMobileTab((prev) => prev === tab ? null : tab)}
-          hasFilters={c.filters.length > 0}
-        />
-
         {/* Desktop sidebar — right side */}
         <aside className="hidden lg:flex flex-col gap-4 lg:w-[420px] lg:flex-shrink-0 h-full px-8 py-6 overflow-y-auto bg-muted/40 border-l border-border">
           {/* Product summary */}
