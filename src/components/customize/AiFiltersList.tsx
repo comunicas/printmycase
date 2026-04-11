@@ -11,6 +11,7 @@ interface AiFiltersListProps {
   disabled: boolean;
   filterCost: number;
   filterHistory: FilterHistoryEntry[];
+  hideMobileControls?: boolean;
   onFilterClick: (filterId: string) => void;
   onCompareStart: () => void;
   onCompareEnd: () => void;
@@ -24,6 +25,7 @@ const LONG_PRESS_MS = 300;
 
 const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
   filters, categories, activeFilterId, applyingFilterId, disabled, filterCost, filterHistory,
+  hideMobileControls,
   onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
 }, ref) => {
@@ -118,8 +120,8 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
 
   return (
     <div ref={ref} className="space-y-2">
-      {/* Filter history chips */}
-      {filterHistory.length > 0 && (
+      {/* Filter history chips — hidden on mobile when FilterHistoryBar is shown */}
+      {filterHistory.length > 0 && !hideMobileControls && (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 overflow-x-auto flex-nowrap scrollbar-hide pb-0.5">
             <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">

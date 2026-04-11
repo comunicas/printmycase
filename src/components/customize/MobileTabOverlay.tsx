@@ -160,6 +160,7 @@ const MobileTabOverlay = ({
                 disabled={!hasImage}
                 filterCost={filterCost}
                 filterHistory={filterHistory}
+                hideMobileControls
                 onFilterClick={handleFilterClick}
                 onCompareStart={onCompareStart}
                 onCompareEnd={onCompareEnd}

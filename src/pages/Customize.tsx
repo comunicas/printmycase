@@ -16,6 +16,7 @@ import IntroDialog from "@/components/customize/IntroDialog";
 import UploadSpotlight from "@/components/customize/UploadSpotlight";
 import MobileTabBar, { type MobileTab } from "@/components/customize/MobileTabBar";
 import MobileTabOverlay from "@/components/customize/MobileTabOverlay";
+import FilterHistoryBar from "@/components/customize/FilterHistoryBar";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -171,6 +172,13 @@ const Customize = () => {
 
       {/* Mobile fixed footer: TabBar + ContinueBar */}
       <div className="lg:hidden flex-shrink-0 relative z-[60]">
+        <FilterHistoryBar
+          filterHistory={c.filterHistory}
+          onCompareStart={c.handleCompareStart}
+          onCompareEnd={c.handleCompareEnd}
+          onUndoLastFilter={c.handleUndoLastFilter}
+          onRemoveFilter={c.handleRemoveFilter}
+        />
         <MobileTabBar
           activeTab={mobileTab}
           onTabClick={(tab) => setMobileTab((prev) => prev === tab ? null : tab)}
