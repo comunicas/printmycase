@@ -18,6 +18,7 @@ interface InstaPost {
   id: string;
   post_url: string;
   caption: string;
+  thumbnail_url: string;
   sort_order: number;
   active: boolean;
   created_at: string;
