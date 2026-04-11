@@ -1,57 +1,54 @@
 
 
-## Fullscreen Overlay para Tabs no Mobile
+## Melhorias na Tab Bar e Overlay Mobile
 
-### Conceito
+### Problema atual
+Pela screenshot, a MobileTabBar aparece flutuando entre o preview e o rodapé, e o overlay abre com `animate-fade-in` (opacidade) sem animação de slide-up. O overlay ocupa tela inteira dificultando o fechamento rápido.
 
-Em vez de empilhar tabs abaixo do preview (competindo por espaço), cada tab abre como um **overlay fullscreen semi-transparente** sobre o preview. O smartphone fica sempre fixo e centralizado como referência visual, visível por trás do overlay.
+### Alterações
+
+**1. `src/pages/Customize.tsx`**
+- Mover o `<MobileTabBar>` para ficar imediatamente acima do `<ContinueBar>` mobile, dentro de um wrapper fixo no bottom
+- Agrupar `MobileTabBar` + `ContinueBar` mobile num bloco fixo no rodapé para que fiquem sempre grudados
+
+**2. `src/components/customize/MobileTabOverlay.tsx`**
+- Trocar `animate-fade-in` por animação de **slide-up from bottom**
+- O overlay não ocupa mais `inset-0` — posicionar como bottom sheet que sobe até ~60% da tela (deixando o preview visível no topo)
+- Backdrop escurecido no topo — clicar nele fecha o overlay
+- Adicionar animação CSS `translate-y` com transition para entrada suave
+- Conteúdo com `rounded-t-2xl` para visual de sheet
+
+**3. `src/components/customize/MobileTabBar.tsx`**
+- Adicionar indicador visual de tab ativa (underline ou dot) para feedback mais claro
+- Manter `border-t` para separar visualmente do ContinueBar
+
+### Layout resultante (mobile)
 
 ```text
 ┌─────────────────────────┐
-│ Header (40px)           │
+│ Header                  │
 ├─────────────────────────┤
 │                         │
-│   [Phone Preview fixo]  │  ← sempre visível, centralizado
+│   Phone Preview         │
+│   (sempre visível)      │
 │                         │
-│  ┌───────────────────┐  │
-│  │ Overlay (bg/80)   │  │  ← abre ao tocar na tab
-│  │ [x fechar]        │  │
-│  │ Conteúdo scroll   │  │
-│  │ (filtros/galeria) │  │
-│  └───────────────────┘  │
+│                         │
+├─── rounded-t-2xl ───────┤  ← overlay sobe daqui (slide-up)
+│ [x] Filtros IA          │
+│                         │
+│ conteúdo scrollável     │
+│ (~60% da tela)          │
 │                         │
 ├─────────────────────────┤
-│ [Ajustes] [Filtros] [G] │  ← tab bar fixa no bottom
+│ [Ajustes][Filtros][Gal] │  ← fixo acima do ContinueBar
 ├─────────────────────────┤
-│ [Finalizar →]           │
+│ [↺]  [Finalizar →]     │  ← fixo no bottom
 └─────────────────────────┘
 ```
 
-### Comportamento
-
-- **Tab bar compacta** fixa acima do ContinueBar (apenas ícones + label curto)
-- Tocar numa tab abre o conteúdo como overlay animado (slide-up) com fundo `bg-background/90 backdrop-blur`
-- O phone preview continua visível por trás, semi-transparente
-- Botão **X** ou toque fora fecha o overlay
-- **Tab Ajustes** abre overlay compacto com slider de zoom + botões (Girar, Expandir, Upscale)
-- **Tab Filtros IA** abre overlay scrollável com o grid de filtros (3 colunas no mobile para thumbnails maiores)
-- **Tab Galeria** abre overlay com as galerias/imagens
-- No **desktop (lg+)** nada muda — mantém sidebar lateral atual
-
-### Alterações por arquivo
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/Customize.tsx` | Remover wrapper de tabs mobile atual; adicionar estado `activeTab` e renderizar overlay condicionalmente |
-| `src/components/customize/ImageControls.tsx` | Extrair para dois componentes: `MobileTabBar` (barra de ícones) + `MobileTabOverlay` (overlay fullscreen); manter versão desktop intacta |
-| `src/components/customize/AiFiltersList.tsx` | Ajustar grid para 3 colunas no mobile (`grid-cols-3 sm:grid-cols-4`) |
-| `src/components/PhonePreview.tsx` | Nenhuma mudança estrutural — apenas herda o espaço extra disponível |
-
 ### Detalhes técnicos
-
-- Overlay usa `fixed inset-0` com `z-50`, animação `animate-in slide-in-from-bottom` do Tailwind
-- Fundo `bg-background/90 backdrop-blur-md` para manter preview visível
-- Conteúdo do overlay com `overflow-y-auto` e `max-h` calculado para respeitar header + tab bar + continue bar
-- Fechar overlay ao selecionar imagem da galeria ou aplicar filtro (feedback imediato)
-- Tab bar usa `grid-cols-3` com ícones de 20px + label de 10px
+- Overlay usa `fixed bottom-0 left-0 right-0 h-[60vh]` com `transform translate-y-0` (aberto) / `translate-y-full` (fechado) e `transition-transform duration-300`
+- Backdrop separado com `fixed inset-0 bg-black/30` que fecha ao clicar
+- Tab bar e ContinueBar ficam com `z-60` para ficar acima do overlay
+- Conteúdo do overlay com `overflow-y-auto` e `rounded-t-2xl`
 
