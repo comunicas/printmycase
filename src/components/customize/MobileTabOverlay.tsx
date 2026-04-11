@@ -15,10 +15,6 @@ interface MobileTabOverlayProps {
   onScaleChange: (v: number) => void;
   onRotate: () => void;
   onExpand: () => void;
-  onUpscale: () => void;
-  isHD: boolean;
-  upscaleCost: number;
-  isUpscaling: boolean;
   filters: AiFilter[];
   filterCategories: AiFilterCategory[];
   activeFilterId: string | null;
@@ -43,8 +39,7 @@ const tabTitles: Record<MobileTab, string> = {
 
 const MobileTabOverlay = ({
   activeTab, onClose, hasImage,
-  scale, rotation, onScaleChange, onRotate, onExpand, onUpscale,
-  isHD, upscaleCost, isUpscaling,
+  scale, rotation, onScaleChange, onRotate, onExpand,
   filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory,
   onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
@@ -142,11 +137,7 @@ const MobileTabOverlay = ({
                 onScaleChange={onScaleChange}
                 onRotate={onRotate}
                 onExpand={onExpand}
-                onUpscale={onUpscale}
                 disabled={!hasImage}
-                isHD={isHD}
-                upscaleCost={upscaleCost}
-                isUpscaling={isUpscaling}
               />
             </div>
           )}

@@ -43,6 +43,7 @@ const MODEL_OPTIONS = [
   { value: "fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration", label: "Lighting Restoration" },
   { value: "fal-ai/nano-banana-2/edit", label: "Nano Banana 2 Edit" },
   { value: "fal-ai/nano-banana-pro/edit", label: "Nano Banana Pro Edit" },
+  { value: "fal-ai/aura-sr", label: "Aura SR (Upscale 4x)" },
 ];
 
 const STYLE_OPTIONS = [
