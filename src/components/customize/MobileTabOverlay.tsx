@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdjustmentsPanel from "./AdjustmentsPanel";
@@ -6,7 +6,6 @@ import AiFiltersList from "./AiFiltersList";
 import GalleryTab from "./GalleryTab";
 import type { MobileTab } from "./MobileTabBar";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
-
 interface MobileTabOverlayProps {
   activeTab: MobileTab;
   onClose: () => void;
@@ -52,10 +51,14 @@ const MobileTabOverlay = ({
   onGallerySelect,
 }: MobileTabOverlayProps) => {
   const [isClosing, setIsClosing] = useState(false);
+  const [dragDeltaY, setDragDeltaY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startYRef = useRef(0);
 
   const handleClose = useCallback(() => {
     if (isClosing) return;
     setIsClosing(true);
+    setDragDeltaY(0);
     setTimeout(onClose, 300);
   }, [isClosing, onClose]);
 
@@ -64,8 +67,34 @@ const MobileTabOverlay = ({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    startYRef.current = e.touches[0].clientY;
+    setIsDragging(true);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const delta = e.touches[0].clientY - startYRef.current;
+    setDragDeltaY(Math.max(0, delta));
+  }, [isDragging]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (dragDeltaY > 80) {
+      handleClose();
+    } else {
+      setDragDeltaY(0);
+    }
+  }, [isDragging, dragDeltaY, handleClose]);
+
   const handleGallerySelect = (url: string) => {
     onGallerySelect(url);
+    handleClose();
+  };
+
+  const handleFilterClick = (filterId: string) => {
+    onFilterClick(filterId);
     handleClose();
   };
 
@@ -79,12 +108,20 @@ const MobileTabOverlay = ({
 
       {/* Bottom sheet */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg transform transition-transform duration-300 ease-out ${isClosing ? "translate-y-full" : "translate-y-0"}`}
-        style={{ marginBottom: "calc(3rem + 3.5rem)" }}
+        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg ${!isDragging ? "transition-transform duration-300 ease-out" : ""} ${isClosing ? "translate-y-full" : dragDeltaY === 0 ? "translate-y-0" : ""}`}
+        style={{
+          marginBottom: "calc(3rem + 3.5rem)",
+          ...(dragDeltaY > 0 && !isClosing ? { transform: `translateY(${dragDeltaY}px)` } : {}),
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle + Header */}
-        <div className="flex flex-col items-center pt-2 pb-1 border-b border-border/50">
+        <div
+          className="flex flex-col items-center pt-2 pb-1 border-b border-border/50 cursor-grab active:cursor-grabbing"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mb-2" />
           <div className="flex items-center justify-between w-full px-4 pb-1">
             <h3 className="text-sm font-semibold text-foreground">{tabTitles[activeTab]}</h3>
@@ -123,7 +160,7 @@ const MobileTabOverlay = ({
                 disabled={!hasImage}
                 filterCost={filterCost}
                 filterHistory={filterHistory}
-                onFilterClick={onFilterClick}
+                onFilterClick={handleFilterClick}
                 onCompareStart={onCompareStart}
                 onCompareEnd={onCompareEnd}
                 onRemoveFilter={onRemoveFilter}
