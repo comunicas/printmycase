@@ -62,6 +62,7 @@ export function useCustomizeFilters(params: UseCustomizeFiltersParams) {
   const [applyingFilterId, setApplyingFilterId] = useState<string | null>(null);
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
+  const [showLowResDialog, setShowLowResDialog] = useState(false);
   const [processingMsg, setProcessingMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -118,10 +119,7 @@ export function useCustomizeFilters(params: UseCustomizeFiltersParams) {
     const isUpscaleFilter = selectedFilter?.model_url?.includes("aura-sr");
 
     if (!isUpscaleFilter && imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
-      toast({
-        title: "Resolução muito baixa para este filtro",
-        description: "Sua imagem tem menos de 256×256px. Aplique o filtro Upscale IA primeiro para aumentar a resolução e depois tente novamente.",
-      });
+      setShowLowResDialog(true);
       return;
     }
 
@@ -216,6 +214,14 @@ export function useCustomizeFilters(params: UseCustomizeFiltersParams) {
     }
   }, [image, userId, originalImage, filterHistory.length, sessionId, toast, navigate, setOriginalImage, setImageWithResolution, setActiveFilterId, refreshCoins]);
 
+  const handleLowResUpscale = useCallback(() => {
+    const upscaleFilter = filters.find((f) => f.model_url?.includes("aura-sr"));
+    if (upscaleFilter) {
+      setShowLowResDialog(false);
+      setPendingFilterId(upscaleFilter.id);
+    }
+  }, [filters]);
+
   return {
     filters,
     filterCategories,
@@ -225,6 +231,8 @@ export function useCustomizeFilters(params: UseCustomizeFiltersParams) {
     isUpscaling,
     showUpscaleDialog,
     setShowUpscaleDialog,
+    showLowResDialog,
+    setShowLowResDialog,
     processingMsg,
     handleFilterClick,
     handleFilterConfirm,
@@ -234,5 +242,6 @@ export function useCustomizeFilters(params: UseCustomizeFiltersParams) {
     handleUndoLastFilter,
     handleUpscaleClick,
     handleUpscaleConfirm,
+    handleLowResUpscale,
   };
 }

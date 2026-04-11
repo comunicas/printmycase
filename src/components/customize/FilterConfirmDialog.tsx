@@ -32,7 +32,7 @@ const FilterConfirmDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xs rounded-xl">
+      <DialogContent className="sm:max-w-xs">
         <DialogHeader className="items-center text-center">
           {filter?.style_image_url && (
             <img

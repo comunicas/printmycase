@@ -7,6 +7,7 @@ import CustomizeHeader from "@/components/customize/CustomizeHeader";
 import ImageControls from "@/components/customize/ImageControls";
 import ContinueBar from "@/components/customize/ContinueBar";
 import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
+import LowResolutionDialog from "@/components/customize/LowResolutionDialog";
 
 import LoginDialog from "@/components/customize/LoginDialog";
 import TermsDialog from "@/components/customize/TermsDialog";
@@ -219,6 +220,14 @@ const Customize = () => {
       />
 
       <IntroDialog open={showIntro} onOpenChange={setShowIntro} />
+
+      <LowResolutionDialog
+        open={c.showLowResDialog}
+        onOpenChange={c.setShowLowResDialog}
+        resolution={c.imageResolution}
+        onUpscale={c.handleLowResUpscale}
+        hasUpscaleFilter={c.filters.some((f) => f.model_url?.includes("aura-sr"))}
+      />
 
       <UploadSpotlight
         open={!c.image}
