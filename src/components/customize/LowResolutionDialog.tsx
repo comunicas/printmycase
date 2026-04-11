@@ -26,7 +26,7 @@ const LowResolutionDialog = ({
   hasUpscaleFilter,
 }: LowResolutionDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="sm:max-w-xs">
+    <DialogContent className="sm:max-w-xs place-content-center gap-3">
       <DialogHeader className="items-center text-center">
         <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
           <ZoomIn className="w-7 h-7 text-primary" />
@@ -36,13 +36,12 @@ const LowResolutionDialog = ({
           Filtros de estilo precisam de no mínimo 256×256px para gerar bons
           resultados. Use o Upscale IA para aumentar a resolução da sua imagem.
         </DialogDescription>
+        {resolution && (
+          <p className="text-xs text-muted-foreground pt-1">
+            Sua imagem: <span className="font-medium text-foreground">{resolution.w}×{resolution.h}px</span>
+          </p>
+        )}
       </DialogHeader>
-
-      {resolution && (
-        <p className="text-xs text-muted-foreground text-center">
-          Sua imagem: <span className="font-medium text-foreground">{resolution.w}×{resolution.h}px</span>
-        </p>
-      )}
 
       <DialogFooter className="flex-row gap-2 sm:flex-row">
         <DialogClose asChild>
