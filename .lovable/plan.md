@@ -1,22 +1,23 @@
 
 
-## Upscale como categoria "Refinar" na lista de filtros
+## Swipe-down para fechar + auto-fechar ao aplicar filtro
 
-### Problema
-Atualmente o Refinar aparece como um botao separado no topo da lista. O usuario quer que ele apareca como uma **categoria visual** igual as outras (ex: "Character Pop"), com o titulo "REFINAR" e os itens dentro do grid.
+### Alteracoes em `src/components/customize/MobileTabOverlay.tsx`
 
-### Alteracao unica em `AiFiltersList.tsx`
+**1. Gesto swipe-down no handle/header**
+- Rastrear `touchStart.clientY` e `touchMove.clientY` na area do header (drag handle)
+- Calcular `deltaY = touchMove.clientY - touchStart.clientY`
+- Durante o arraste, aplicar `transform: translateY(${deltaY}px)` no sheet em tempo real (apenas valores positivos, ou seja, para baixo)
+- No `touchEnd`: se `deltaY > 80px`, chamar `handleClose()`; senao, animar de volta para `translateY(0)`
 
-Remover o `<Button>` de Refinar e renderizar uma seção de categoria fake chamada "REFINAR" no **final** da lista (após as categorias reais e uncategorized), contendo um unico item no grid de 3 colunas:
+**2. Auto-fechar ao clicar num filtro IA**
+- Wrapper `onFilterClick` para chamar `handleClose()` apos disparar o filtro original
+- Manter o mesmo comportamento ja existente para galeria (`handleGallerySelect` ja fecha)
 
-- Titulo: `<p>` com mesmo estilo das categorias (`text-[11px] font-semibold uppercase`)
-- Item: mesmo layout visual de um filtro (thumbnail quadrado + label + badge de custo), mas ao clicar chama `onUpscale` ao inves de `onFilterClick`
-- Thumbnail: gradiente com icone `Sparkles` (similar aos filtros sem imagem)
-- Label: "Refinar" / "Já em HD" / "Processando..."
-- Badge: `🪙{upscaleCost}`
-- Estado disabled quando `isHD || isUpscaling || disabled`
-- Spinner overlay quando `isUpscaling`
-
-### Resultado visual
-Fica identico a screenshot: categoria "REFINAR" com card visual no grid, igual aos filtros normais.
+### Detalhes tecnicos
+- Usar `useRef` para armazenar `startY` e `currentDeltaY`
+- Usar `useState` para `dragDeltaY` que controla o offset visual durante o arraste
+- Aplicar `style={{ transform: translateY(${dragDeltaY}px) }}` inline durante o drag, voltando para classes CSS quando solto
+- Desabilitar `transition-transform` durante o drag ativo para resposta imediata, reabilitar ao soltar
+- Threshold de 80px para fechar, com velocidade do swipe como criterio secundario
 

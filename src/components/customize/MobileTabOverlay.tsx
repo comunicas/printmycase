@@ -141,7 +141,11 @@ const MobileTabOverlay = ({
                 onScaleChange={onScaleChange}
                 onRotate={onRotate}
                 onExpand={onExpand}
+                onUpscale={onUpscale}
                 disabled={!hasImage}
+                isHD={isHD}
+                upscaleCost={upscaleCost}
+                isUpscaling={isUpscaling}
               />
             </div>
           )}
@@ -163,11 +167,6 @@ const MobileTabOverlay = ({
                 onUndoLastFilter={onUndoLastFilter}
                 onPreviewStart={onPreviewStart}
                 onPreviewEnd={onPreviewEnd}
-                hideHistory
-                onUpscale={onUpscale}
-                isHD={isHD}
-                upscaleCost={upscaleCost}
-                isUpscaling={isUpscaling}
               />
             </div>
           )}
