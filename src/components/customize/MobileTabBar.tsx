@@ -6,9 +6,10 @@ interface MobileTabBarProps {
   activeTab: MobileTab | null;
   onTabClick: (tab: MobileTab) => void;
   hasFilters: boolean;
+  disabled?: boolean;
 }
 
-const MobileTabBar = ({ activeTab, onTabClick, hasFilters }: MobileTabBarProps) => {
+const MobileTabBar = ({ activeTab, onTabClick, hasFilters, disabled }: MobileTabBarProps) => {
   const tabs: { id: MobileTab; label: string; icon: typeof SlidersHorizontal; hidden?: boolean }[] = [
     { id: "ajustes", label: "Ajustes", icon: SlidersHorizontal },
     { id: "filtros", label: "Filtros IA", icon: Wand2, hidden: !hasFilters },
@@ -18,7 +19,7 @@ const MobileTabBar = ({ activeTab, onTabClick, hasFilters }: MobileTabBarProps) 
   const visibleTabs = tabs.filter((t) => !t.hidden);
 
   return (
-    <div className="lg:hidden border-t border-border bg-background/80 backdrop-blur-xl">
+    <div className={`lg:hidden border-t border-border bg-background/80 backdrop-blur-xl ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
       <div className={`grid h-12`} style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)` }}>
         {visibleTabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
