@@ -4,7 +4,7 @@ import type { AiFilter, AiFilterCategory } from "@/lib/customize-types";
 export async function fetchActiveAiFilters(): Promise<AiFilter[]> {
   const { data, error } = await supabase
     .from("ai_filters")
-    .select("id, name, style_image_url, category_id")
+    .select("id, name, style_image_url, category_id, model_url")
     .eq("active", true)
     .order("sort_order", { ascending: true });
 
