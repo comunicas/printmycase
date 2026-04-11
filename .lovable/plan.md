@@ -1,20 +1,32 @@
 
 
-## Upload de Thumbnail no Admin
+## Fix: Limpar filtros ao subir nova imagem
 
-Permitir upload direto de imagem para thumbnail dos posts do Instagram, usando o bucket `product-assets` já existente.
+### Problema
+Ao fazer upload de uma nova imagem, o código reseta apenas `activeFilterId`, mas **não limpa** `filteredImage` nem `filterHistory`. Isso mantém os chips de filtros antigos e o estado de imagem filtrada da sessão anterior.
 
-### Alterações
+Compare com `handleGalleryImageSelect` que faz corretamente:
+```ts
+setActiveFilterId(null);
+setFilteredImage(null);
+setFilterHistory([]);
+```
 
-**`src/components/admin/InstagramPostsManager.tsx`**
-- Adicionar um `<input type="file" accept="image/*">` ao lado do campo "URL da Thumbnail" no formulário de edição
-- Ao selecionar arquivo: fazer upload para `product-assets/instagram/{postId}-thumb.webp` via Supabase Storage
-- Após upload, preencher automaticamente o campo `thumbnail_url` com a URL pública gerada
-- Manter o campo de texto para colar URL manualmente como fallback
-- Mostrar preview da imagem (já existe no form atual)
+### Correção
 
-### Detalhes técnicos
-- Bucket `product-assets` já é público — URLs funcionam direto
-- Otimizar imagem antes do upload usando `OffscreenCanvas` (WebP 80%) seguindo o padrão do projeto
-- Para posts novos (sem ID ainda), gerar um UUID temporário para o path do storage
+**`src/hooks/useCustomize.tsx` — função `processImageFile` (~linha 178-181)**
+
+Adicionar `setFilteredImage(null)` e `setFilterHistory([])` junto ao `setActiveFilterId(null)` existente:
+
+```ts
+const processImageFile = useCallback((file: File) => {
+  setImageFileName(file.name);
+  setIsCompressing(true);
+  setActiveFilterId(null);
+  setFilteredImage(null);    // ← adicionar
+  setFilterHistory([]);      // ← adicionar
+  // ... resto permanece igual
+```
+
+Alteração de 2 linhas em 1 arquivo.
 
