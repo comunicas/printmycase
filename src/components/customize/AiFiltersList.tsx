@@ -1,6 +1,7 @@
 import { useRef, useCallback, forwardRef } from "react";
 import { Loader2, Eye, X, Wand2, Undo2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
 
 interface AiFiltersListProps {
