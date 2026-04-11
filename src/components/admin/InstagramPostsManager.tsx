@@ -152,6 +152,17 @@ const InstagramPostsManager = () => {
                 onChange={(e) => setForm({ ...form, post_url: e.target.value })}
               />
             </FormField>
+            <FormField label="URL da Thumbnail" id="thumbnail_url">
+              <Input
+                id="thumbnail_url"
+                placeholder="https://... (URL direta da imagem/vídeo)"
+                value={form.thumbnail_url}
+                onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })}
+              />
+              {form.thumbnail_url && (
+                <img src={form.thumbnail_url} alt="Preview" className="mt-2 w-24 h-24 object-cover rounded-lg border" />
+              )}
+            </FormField>
             <FormField label="Legenda (opcional)" id="caption">
               <Input
                 id="caption"
