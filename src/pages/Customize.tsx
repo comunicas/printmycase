@@ -7,7 +7,7 @@ import CustomizeHeader from "@/components/customize/CustomizeHeader";
 import ImageControls from "@/components/customize/ImageControls";
 import ContinueBar from "@/components/customize/ContinueBar";
 import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
-import UpscaleConfirmDialog from "@/components/customize/UpscaleConfirmDialog";
+
 import LoginDialog from "@/components/customize/LoginDialog";
 import TermsDialog from "@/components/customize/TermsDialog";
 import GalleryPicker from "@/components/customize/GalleryPicker";
@@ -71,7 +71,7 @@ const Customize = () => {
             imageResolution={c.imageResolution}
             isProcessing={c.isProcessing}
             processingMessage={c.processingMsg || undefined}
-            onUpscaleClick={!c.isHD && c.image ? c.handleUpscaleClick : undefined}
+            onUpscaleClick={undefined}
             previewImageUrl={previewImageUrl}
             onGalleryClick={() => setShowGalleryPicker(true)}
           />
@@ -103,10 +103,6 @@ const Customize = () => {
             onScaleChange={c.setScale}
             onRotate={c.handleRotate}
             onExpand={c.handleExpand}
-            onUpscale={c.handleUpscaleClick}
-            isHD={c.isHD}
-            upscaleCost={c.aiUpscaleCost}
-            isUpscaling={c.isUpscaling}
             filters={c.filters}
             filterCategories={c.filterCategories}
             activeFilterId={c.activeFilterId}
@@ -149,10 +145,6 @@ const Customize = () => {
           onScaleChange={c.setScale}
           onRotate={c.handleRotate}
           onExpand={c.handleExpand}
-          onUpscale={c.handleUpscaleClick}
-          isHD={c.isHD}
-          upscaleCost={c.aiUpscaleCost}
-          isUpscaling={c.isUpscaling}
           filters={c.filters}
           filterCategories={c.filterCategories}
           activeFilterId={c.activeFilterId}
@@ -213,13 +205,6 @@ const Customize = () => {
         reason={c.loginReason}
       />
 
-      <UpscaleConfirmDialog
-        balance={c.coinBalance}
-        cost={c.aiUpscaleCost}
-        open={c.showUpscaleDialog}
-        onOpenChange={c.setShowUpscaleDialog}
-        onConfirm={c.handleUpscaleConfirm}
-      />
 
       <TermsDialog
         open={c.showTermsDialog}
