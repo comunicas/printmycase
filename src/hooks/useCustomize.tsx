@@ -179,6 +179,8 @@ export function useCustomize(productId: string | undefined) {
     setImageFileName(file.name);
     setIsCompressing(true);
     setActiveFilterId(null);
+    setFilteredImage(null);
+    setFilterHistory([]);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
