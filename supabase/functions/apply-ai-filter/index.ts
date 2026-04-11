@@ -110,10 +110,13 @@ Deno.serve(async (req) => {
     const isKontext = modelUrl.includes("kontext");
     const isSD35 = modelUrl.includes("stable-diffusion-v35-large");
     const isNanoBanana = modelUrl.includes("nano-banana");
+    const isUpscale = modelUrl.includes("aura-sr");
 
     let falBody: Record<string, unknown>;
 
-    if (isLightingRestoration) {
+    if (isUpscale) {
+      falBody = { image_url: inputImage, upscale_factor: 4, overlapping_tiles: true };
+    } else if (isLightingRestoration) {
       falBody = { image_urls: [inputImage], image_size: { width: 720, height: 1280 } };
     } else if (isPhotographyEffects) {
       falBody = { image_url: inputImage, effect_type: filter.prompt, aspect_ratio: { ratio: "9:16" } };
