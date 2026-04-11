@@ -14,6 +14,8 @@ import GalleryPicker from "@/components/customize/GalleryPicker";
 import { useCustomize } from "@/hooks/useCustomize.tsx";
 import IntroDialog from "@/components/customize/IntroDialog";
 import UploadSpotlight from "@/components/customize/UploadSpotlight";
+import MobileTabBar, { type MobileTab } from "@/components/customize/MobileTabBar";
+import MobileTabOverlay from "@/components/customize/MobileTabOverlay";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +23,7 @@ const Customize = () => {
   const c = useCustomize(id);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileTab | null>(null);
   const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
   const spotlightInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,35 +76,12 @@ const Customize = () => {
           />
         </div>
 
-        {/* Mobile controls */}
-        <div className="lg:hidden w-full flex justify-center max-h-[35vh] overflow-y-auto">
-          <ImageControls
-            hasImage={!!c.image}
-            scale={c.scale}
-            rotation={c.rotation}
-            onScaleChange={c.setScale}
-            onRotate={c.handleRotate}
-            onExpand={c.handleExpand}
-            onUpscale={c.handleUpscaleClick}
-            isHD={c.isHD}
-            upscaleCost={c.aiUpscaleCost}
-            isUpscaling={c.isUpscaling}
-            filters={c.filters}
-            filterCategories={c.filterCategories}
-            activeFilterId={c.activeFilterId}
-            applyingFilterId={c.applyingFilterId}
-            filterCost={c.aiFilterCost}
-            filterHistory={c.filterHistory}
-            onFilterClick={c.handleFilterClick}
-            onCompareStart={c.handleCompareStart}
-            onCompareEnd={c.handleCompareEnd}
-            onRemoveFilter={c.handleRemoveFilter}
-            onUndoLastFilter={c.handleUndoLastFilter}
-            onPreviewStart={setPreviewImageUrl}
-            onPreviewEnd={() => setPreviewImageUrl(null)}
-            onGallerySelect={c.handleGalleryImageSelect}
-          />
-        </div>
+        {/* Mobile tab bar */}
+        <MobileTabBar
+          activeTab={mobileTab}
+          onTabClick={(tab) => setMobileTab((prev) => prev === tab ? null : tab)}
+          hasFilters={c.filters.length > 0}
+        />
 
         {/* Desktop sidebar — right side */}
         <aside className="hidden lg:flex flex-col gap-4 lg:w-[420px] lg:flex-shrink-0 h-full px-8 py-6 overflow-y-auto bg-muted/40 border-l border-border">
@@ -174,6 +154,38 @@ const Customize = () => {
         showDownload={!!c.activeFilterId}
         onDownload={c.handleDownload}
       />
+
+      {/* Mobile fullscreen overlay */}
+      {mobileTab && (
+        <MobileTabOverlay
+          activeTab={mobileTab}
+          onClose={() => setMobileTab(null)}
+          hasImage={!!c.image}
+          scale={c.scale}
+          rotation={c.rotation}
+          onScaleChange={c.setScale}
+          onRotate={c.handleRotate}
+          onExpand={c.handleExpand}
+          onUpscale={c.handleUpscaleClick}
+          isHD={c.isHD}
+          upscaleCost={c.aiUpscaleCost}
+          isUpscaling={c.isUpscaling}
+          filters={c.filters}
+          filterCategories={c.filterCategories}
+          activeFilterId={c.activeFilterId}
+          applyingFilterId={c.applyingFilterId}
+          filterCost={c.aiFilterCost}
+          filterHistory={c.filterHistory}
+          onFilterClick={c.handleFilterClick}
+          onCompareStart={c.handleCompareStart}
+          onCompareEnd={c.handleCompareEnd}
+          onRemoveFilter={c.handleRemoveFilter}
+          onUndoLastFilter={c.handleUndoLastFilter}
+          onPreviewStart={setPreviewImageUrl}
+          onPreviewEnd={() => setPreviewImageUrl(null)}
+          onGallerySelect={c.handleGalleryImageSelect}
+        />
+      )
 
       <FilterConfirmDialog
         filter={c.filters.find((f) => f.id === c.pendingFilterId) ?? null}
