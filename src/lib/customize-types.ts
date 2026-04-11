@@ -12,6 +12,7 @@ export interface AiFilter {
   name: string;
   style_image_url: string | null;
   category_id: string | null;
+  model_url?: string | null;
 }
 
 export interface AiFilterCategory {

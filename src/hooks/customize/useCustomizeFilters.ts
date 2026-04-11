@@ -114,11 +114,13 @@ export function useCustomizeFilters(params: UseCustomizeFiltersParams) {
       return;
     }
 
-    if (imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
+    const selectedFilter = filters.find((f) => f.id === filterId);
+    const isUpscaleFilter = selectedFilter?.model_url?.includes("aura-sr");
+
+    if (!isUpscaleFilter && imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
       toast({
-        title: "Imagem pequena demais para filtros",
-        description: "Mín. 256×256px. Use o Upscale IA primeiro para aumentar a resolução.",
-        variant: "destructive",
+        title: "Resolução muito baixa para este filtro",
+        description: "Sua imagem tem menos de 256×256px. Aplique o filtro Upscale IA primeiro para aumentar a resolução e depois tente novamente.",
       });
       return;
     }
