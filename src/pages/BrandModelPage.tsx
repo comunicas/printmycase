@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import AppHeader from "@/components/AppHeader";
 import ProductGallery from "@/components/ProductGallery";
 import ProductInfo from "@/components/ProductInfo";
 import ProductDetails from "@/components/ProductDetails";
-import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
-import { brandSlugFromProductName } from "@/lib/brand-seo";
+import { brandFromSlug, brandSlug, getBrandSeo, isValidBrandSlug } from "@/lib/brand-seo";
+import { setPageSeo, setMeta, SITE_URL, injectJsonLd } from "@/lib/seo";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
-import { setPageSeo, setMeta, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import { clarityEvent, clarityTag } from "@/lib/clarity";
 import { pixelEvent } from "@/lib/meta-pixel";
 import LoadingSpinner from "@/components/ui/loading-spinner";
@@ -16,12 +16,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 const SITE_NAME = "Studio PrintMyCase";
 
-const Product = () => {
-  const { id } = useParams<{ id: string }>();
-  const { product, loading } = useProduct(id);
-
-  const brand = product ? extractBrand(product.name) : "";
+const BrandModelPage = () => {
+  const { brand, model } = useParams<{ brand: string; model: string }>();
+  const { product, loading } = useProduct(model);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+
+  const isValidBrand = brand ? isValidBrandSlug(brand) : false;
+  const brandDisplayName = brand ? brandFromSlug(brand) : undefined;
 
   useEffect(() => {
     supabase
@@ -34,25 +35,25 @@ const Product = () => {
       });
   }, []);
 
-  // --- SEO injection ---
-  useEffect(() => {
-    if (!product) return;
+  // Validate brand matches product
+  const productBrand = product ? extractBrand(product.name) : null;
+  const brandMatches = productBrand === brandDisplayName;
 
-    const title = `Capa ${product.name} | ${SITE_NAME}`;
+  useEffect(() => {
+    if (!product || !brand || !brandMatches) return;
+
+    const title = `Capa ${product.name} Personalizada | ${SITE_NAME}`;
     const desc =
       product.description ??
       `Capa personalizada para ${product.name}. Proteção premium com acabamento soft-touch.`;
     const image = product.device_image ?? product.images[0] ?? "";
-    const bSlug = brandSlugFromProductName(product.name);
-    const canonicalUrl = `${SITE_URL}/capa-celular/${bSlug}/${product.slug}`;
-    const url = canonicalUrl;
-    const brandName = extractBrand(product.name);
+    const url = `${SITE_URL}/capa-celular/${brand}/${product.slug}`;
 
-    const cleanup = setPageSeo({ title, description: desc, url, image, type: "product" });
+    const cleanupSeo = setPageSeo({ title, description: desc, url, image, type: "product" });
     setMeta("property", "product:price:amount", String(product.price_cents / 100));
     setMeta("property", "product:price:currency", "BRL");
 
-    const jsonLd = {
+    const cleanupJsonLd = injectJsonLd("brand-model", {
       "@context": "https://schema.org",
       "@graph": [
         {
@@ -73,22 +74,13 @@ const Product = () => {
           "@type": "BreadcrumbList",
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-            { "@type": "ListItem", position: 2, name: "Catálogo", item: `${SITE_URL}/catalog` },
-            { "@type": "ListItem", position: 3, name: brandName, item: `${SITE_URL}/catalog?brand=${encodeURIComponent(brandName)}` },
+            { "@type": "ListItem", position: 2, name: "Capas de Celular", item: `${SITE_URL}/capa-celular` },
+            { "@type": "ListItem", position: 3, name: getBrandSeo(brand).h1, item: `${SITE_URL}/capa-celular/${brand}` },
             { "@type": "ListItem", position: 4, name: `Capa ${product.name}` },
           ],
         },
       ],
-    };
-
-    let script = document.querySelector('script[data-seo="product-jsonld"]') as HTMLScriptElement | null;
-    if (!script) {
-      script = document.createElement("script");
-      script.type = "application/ld+json";
-      script.setAttribute("data-seo", "product-jsonld");
-      document.head.appendChild(script);
-    }
-    script.textContent = JSON.stringify(jsonLd);
+    });
 
     clarityEvent("product_viewed");
     clarityTag("product_viewed", product.slug);
@@ -100,34 +92,32 @@ const Product = () => {
       currency: "BRL",
     });
 
-    return () => {
-      script?.remove();
-      cleanup();
-    };
-  }, [product]);
+    return () => { cleanupSeo(); cleanupJsonLd(); };
+  }, [product, brand, brandMatches]);
 
-  if (loading) {
-    return <LoadingSpinner variant="fullPage" />;
-  }
+  if (loading) return <LoadingSpinner variant="fullPage" />;
 
-  if (!product) {
+  if (!isValidBrand || !product || !brandMatches) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Produto não encontrado.</p>
+      <div className="min-h-screen bg-background flex flex-col">
+        <AppHeader />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Produto não encontrado.</p>
+        </div>
       </div>
     );
   }
 
+  const brandSeo = getBrandSeo(brand!);
   const breadcrumbs = [
-    { label: "Catálogo", to: "/catalog" },
-    { label: brand, to: `/catalog?brand=${encodeURIComponent(brand)}` },
+    { label: "Capas de Celular", to: "/capa-celular" },
+    { label: brandSeo.h1, to: `/capa-celular/${brand}` },
     { label: product.name },
   ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader breadcrumbs={breadcrumbs} />
-
       <main className="flex-1 w-full max-w-5xl mx-auto p-5 lg:p-10">
         <section className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           <div className="w-full lg:w-1/2">
@@ -145,4 +135,4 @@ const Product = () => {
   );
 };
 
-export default Product;
+export default BrandModelPage;

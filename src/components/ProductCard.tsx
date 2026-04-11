@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { type Product, formatPrice } from "@/lib/types";
+import { brandSlugFromProductName } from "@/lib/brand-seo";
 
 interface ProductCardProps {
   product: Product;
@@ -15,7 +16,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
       <Card
         ref={ref}
         className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden"
-        onClick={() => navigate(`/customize/${product.slug}`)}
+        onClick={() => navigate(`/capa-celular/${brandSlugFromProductName(product.name)}/${product.slug}`)}
       >
         <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
           {(product.device_image || product.images[0]) ? (
