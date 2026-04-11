@@ -1,6 +1,7 @@
 import { useRef, useCallback, forwardRef } from "react";
 import { Loader2, Eye, X, Wand2, Undo2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
 
 interface AiFiltersListProps {
@@ -124,24 +125,7 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
 
   return (
     <div ref={ref} className="space-y-2">
-      {/* Refinar (upscale) button */}
-      {onUpscale && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full gap-1.5 mb-1"
-          onClick={onUpscale}
-          disabled={disabled || isHD || isUpscaling}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span className="text-xs">
-            {isUpscaling ? "Processando..." : isHD ? "Já em HD" : "Refinar"}
-          </span>
-          {!isHD && !isUpscaling && upscaleCost != null && (
-            <span className="text-[10px] text-muted-foreground">🪙{upscaleCost}</span>
-          )}
-        </Button>
-      )}
+      {/* Filter history chips */}
 
       {/* Filter history chips */}
       {!hideHistory && filterHistory.length > 0 && (
@@ -209,6 +193,43 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
           )}
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
             {uncategorized.map(renderFilterButton)}
+          </div>
+        </div>
+      )}
+
+      {/* Refinar category */}
+      {onUpscale && (
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Refinar
+          </p>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+            <button
+              className={`relative flex flex-col items-center gap-1 rounded-lg transition-all focus:outline-none disabled:opacity-50 select-none ${
+                isHD ? "ring-2 ring-primary ring-offset-1" : ""
+              }`}
+              onClick={onUpscale}
+              disabled={disabled || isHD || isUpscaling}
+            >
+              <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-muted">
+                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/30 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-muted-foreground" />
+                </div>
+                {!isHD && !isUpscaling && upscaleCost != null && (
+                  <span className="absolute top-1 right-1 bg-background/80 backdrop-blur-sm text-[9px] font-medium px-1.5 py-0.5 rounded-full">
+                    🪙{upscaleCost}
+                  </span>
+                )}
+                {isUpscaling && (
+                  <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  </div>
+                )}
+              </div>
+              <span className="text-[10px] text-center leading-tight text-muted-foreground truncate w-full px-0.5">
+                {isUpscaling ? "Processando..." : isHD ? "Já em HD" : "Refinar"}
+              </span>
+            </button>
           </div>
         </div>
       )}
