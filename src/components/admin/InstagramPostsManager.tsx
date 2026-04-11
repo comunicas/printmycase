@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import FormField from "@/components/ui/form-field";
-import { Plus, Pencil, Trash2, ExternalLink, RefreshCw, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, RefreshCw, Download, Upload } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { optimizeForUpload } from "@/lib/image-utils";
 
 interface InstaPost {
   id: string;
@@ -41,6 +42,8 @@ const InstagramPostsManager = () => {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [fetching, setFetching] = useState(false);
   const [fetchingId, setFetchingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const thumbFileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     setLoading(true);
@@ -211,13 +214,54 @@ const InstagramPostsManager = () => {
                 onChange={(e) => setForm({ ...form, post_url: e.target.value })}
               />
             </FormField>
-            <FormField label="URL da Thumbnail" id="thumbnail_url">
-              <Input
-                id="thumbnail_url"
-                placeholder="https://... (URL direta da imagem/vídeo)"
-                value={form.thumbnail_url}
-                onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })}
-              />
+            <FormField label="Thumbnail" id="thumbnail_url">
+              <div className="flex gap-2">
+                <Input
+                  id="thumbnail_url"
+                  placeholder="https://... ou faça upload"
+                  value={form.thumbnail_url}
+                  onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={uploading}
+                  onClick={() => thumbFileRef.current?.click()}
+                >
+                  <Upload className={`w-4 h-4 mr-1 ${uploading ? "animate-spin" : ""}`} />
+                  {uploading ? "…" : "Upload"}
+                </Button>
+                <input
+                  ref={thumbFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    e.target.value = "";
+                    setUploading(true);
+                    try {
+                      const id = editing?.id || crypto.randomUUID();
+                      const path = `instagram/${id}-thumb.webp`;
+                      const blob = await optimizeForUpload(file);
+                      const { error } = await supabase.storage
+                        .from("product-assets")
+                        .upload(path, blob, { upsert: true, contentType: "image/webp" });
+                      if (error) throw error;
+                      const { data } = supabase.storage.from("product-assets").getPublicUrl(path);
+                      setForm((f) => ({ ...f, thumbnail_url: data.publicUrl }));
+                      toast({ title: "Thumbnail enviada!" });
+                    } catch (err: any) {
+                      toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+                    } finally {
+                      setUploading(false);
+                    }
+                  }}
+                />
+              </div>
               {form.thumbnail_url && (
                 <img src={form.thumbnail_url} alt="Preview" className="mt-2 w-24 h-24 object-cover rounded-lg border" />
               )}
