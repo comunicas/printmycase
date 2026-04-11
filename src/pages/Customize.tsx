@@ -71,7 +71,7 @@ const Customize = () => {
             imageResolution={c.imageResolution}
             isProcessing={c.isProcessing}
             processingMessage={c.processingMsg || undefined}
-            onUpscaleClick={undefined}
+            
             previewImageUrl={previewImageUrl}
             onGalleryClick={() => setShowGalleryPicker(true)}
           />
