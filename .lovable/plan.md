@@ -1,24 +1,23 @@
 
 
-## Animacao slide-down ao fechar o overlay
+## Swipe-down para fechar + auto-fechar ao aplicar filtro
 
-### Problema
-O overlay e removido do DOM instantaneamente (`{mobileTab && <MobileTabOverlay />}`), sem tempo para a animacao de saida.
+### Alteracoes em `src/components/customize/MobileTabOverlay.tsx`
 
-### Solucao
-Manter o overlay sempre montado quando ha uma tab pendente de fechar, e usar um estado `isClosing` para animar o slide-down antes de desmontar.
+**1. Gesto swipe-down no handle/header**
+- Rastrear `touchStart.clientY` e `touchMove.clientY` na area do header (drag handle)
+- Calcular `deltaY = touchMove.clientY - touchStart.clientY`
+- Durante o arraste, aplicar `transform: translateY(${deltaY}px)` no sheet em tempo real (apenas valores positivos, ou seja, para baixo)
+- No `touchEnd`: se `deltaY > 80px`, chamar `handleClose()`; senao, animar de volta para `translateY(0)`
 
-**`src/components/customize/MobileTabOverlay.tsx`**
-- Adicionar estado `isClosing` e funcao `handleClose` que:
-  1. Seta `isClosing = true`
-  2. Apos 300ms (duracao da transicao), chama `onClose()`
-- Backdrop: adicionar transicao de opacidade (fade-out junto com slide-down)
-- Bottom sheet: trocar classe `translate-y-0` para `translate-y-full` quando `isClosing`
-- Aplicar mesma logica no `handleGallerySelect` e click no backdrop
+**2. Auto-fechar ao clicar num filtro IA**
+- Wrapper `onFilterClick` para chamar `handleClose()` apos disparar o filtro original
+- Manter o mesmo comportamento ja existente para galeria (`handleGallerySelect` ja fecha)
 
-**`src/pages/Customize.tsx`**
-- Nenhuma alteracao necessaria — o componente gerencia o fechamento internamente antes de chamar `onClose`
-
-### Resultado
-O bottom sheet desce suavemente em 300ms antes de ser removido do DOM, com o backdrop fazendo fade-out simultaneamente.
+### Detalhes tecnicos
+- Usar `useRef` para armazenar `startY` e `currentDeltaY`
+- Usar `useState` para `dragDeltaY` que controla o offset visual durante o arraste
+- Aplicar `style={{ transform: translateY(${dragDeltaY}px) }}` inline durante o drag, voltando para classes CSS quando solto
+- Desabilitar `transition-transform` durante o drag ativo para resposta imediata, reabilitar ao soltar
+- Threshold de 80px para fechar, com velocidade do swipe como criterio secundario
 
