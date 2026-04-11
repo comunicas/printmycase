@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { Maximize, RotateCw, Expand, Sparkles } from "lucide-react";
+import { Maximize, RotateCw, Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
@@ -13,8 +13,8 @@ interface AdjustmentsPanelProps {
 }
 
 const AdjustmentsPanel = forwardRef<HTMLDivElement, AdjustmentsPanelProps>(({
-  scale, rotation, onScaleChange, onRotate, onExpand, onUpscale,
-  disabled, isHD, upscaleCost, isUpscaling,
+  scale, rotation, onScaleChange, onRotate, onExpand,
+  disabled,
 }, ref) => (
   <div ref={ref} className="space-y-3">
     <div className="space-y-1">
@@ -42,22 +42,6 @@ const AdjustmentsPanel = forwardRef<HTMLDivElement, AdjustmentsPanelProps>(({
       <Button variant="outline" size="sm" className="gap-1.5" onClick={onExpand} disabled={disabled}>
         <Expand className="w-3.5 h-3.5" />
         <span className="text-xs">Expandir</span>
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-1.5"
-        onClick={onUpscale}
-        disabled={disabled || isHD || isUpscaling}
-      >
-        <Sparkles className="w-3.5 h-3.5" />
-        <span className="text-xs">
-          {isUpscaling ? "Processando..." : isHD ? "Já HD" : `Upscale IA`}
-        </span>
-        {!isHD && !isUpscaling && (
-          <span className="text-[10px] text-muted-foreground">🪙{upscaleCost}</span>
-        )}
       </Button>
     </div>
   </div>
