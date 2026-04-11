@@ -33,6 +33,9 @@ const CollectionPage = lazy(() => import("./pages/CollectionPage"));
 const DesignPage = lazy(() => import("./pages/DesignPage"));
 const SelectModel = lazy(() => import("./pages/SelectModel"));
 const MyGenerations = lazy(() => import("./pages/MyGenerations"));
+const BrandCategoryPage = lazy(() => import("./pages/BrandCategoryPage"));
+const BrandPage = lazy(() => import("./pages/BrandPage"));
+const BrandModelPage = lazy(() => import("./pages/BrandModelPage"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const Contact = lazy(() => import("./pages/Contact"));
 
@@ -46,6 +49,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/catalog" element={<Catalog />} />
+            <Route path="/capa-celular" element={<BrandCategoryPage />} />
+            <Route path="/capa-celular/:brand" element={<BrandPage />} />
+            <Route path="/capa-celular/:brand/:model" element={<BrandModelPage />} />
             <Route path="/product/:id" element={<Product />} />
             <Route path="/customize" element={<SelectModel />} />
             <Route path="/customize/:id" element={<Customize />} />

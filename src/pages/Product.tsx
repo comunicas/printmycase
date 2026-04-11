@@ -6,6 +6,7 @@ import ProductDetails from "@/components/ProductDetails";
 import AppHeader from "@/components/AppHeader";
 import { useProduct } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
+import { brandSlugFromProductName } from "@/lib/brand-seo";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import { setPageSeo, setMeta, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import { clarityEvent, clarityTag } from "@/lib/clarity";
@@ -42,7 +43,9 @@ const Product = () => {
       product.description ??
       `Capa personalizada para ${product.name}. Proteção premium com acabamento soft-touch.`;
     const image = product.device_image ?? product.images[0] ?? "";
-    const url = `${SITE_URL}/product/${product.slug}`;
+    const bSlug = brandSlugFromProductName(product.name);
+    const canonicalUrl = `${SITE_URL}/capa-celular/${bSlug}/${product.slug}`;
+    const url = canonicalUrl;
     const brandName = extractBrand(product.name);
 
     const cleanup = setPageSeo({ title, description: desc, url, image, type: "product" });
