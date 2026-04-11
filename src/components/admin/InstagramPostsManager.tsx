@@ -26,6 +26,7 @@ interface InstaPost {
 const empty: Omit<InstaPost, "id" | "created_at"> = {
   post_url: "",
   caption: "",
+  thumbnail_url: "",
   sort_order: 0,
   active: true,
 };
