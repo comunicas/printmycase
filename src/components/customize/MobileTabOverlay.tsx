@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdjustmentsPanel from "./AdjustmentsPanel";
@@ -51,6 +51,14 @@ const MobileTabOverlay = ({
   onPreviewStart, onPreviewEnd,
   onGallerySelect,
 }: MobileTabOverlayProps) => {
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(onClose, 300);
+  }, [isClosing, onClose]);
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -58,20 +66,20 @@ const MobileTabOverlay = ({
 
   const handleGallerySelect = (url: string) => {
     onGallerySelect(url);
-    onClose();
+    handleClose();
   };
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/30 lg:hidden"
-        onClick={onClose}
+        className={`fixed inset-0 z-40 bg-black/30 lg:hidden transition-opacity duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`}
+        onClick={handleClose}
       />
 
       {/* Bottom sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg transform transition-transform duration-300 ease-out translate-y-0"
+        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg transform transition-transform duration-300 ease-out ${isClosing ? "translate-y-full" : "translate-y-0"}`}
         style={{ marginBottom: "calc(3rem + 3.5rem)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -80,7 +88,7 @@ const MobileTabOverlay = ({
           <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mb-2" />
           <div className="flex items-center justify-between w-full px-4 pb-1">
             <h3 className="text-sm font-semibold text-foreground">{tabTitles[activeTab]}</h3>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
               <X className="w-4 h-4" />
             </Button>
           </div>
