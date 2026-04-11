@@ -1,54 +1,36 @@
 
 
-## Mover Upscale para Filtros IA como Modelo Configurável
+## Isentar Upscale da validação de imagem pequena + melhorar feedback
 
-### Resumo
-Remover o botão de Upscale do painel de Ajustes e transformá-lo em um filtro IA configurável pelo admin, usando o mesmo fluxo dos outros filtros fal.ai.
+### Problema
+A validação bloqueia todos os filtros (incluindo Upscale) quando a imagem é menor que 256×256px, e exibe um toast vermelho agressivo de erro. O Upscale deveria funcionar em qualquer tamanho, e o feedback para outros filtros deve ser informativo, não alarmante.
 
 ### Alterações
 
-**1. `src/components/customize/AdjustmentsPanel.tsx`** — Remover upscale
-- Remover props: `onUpscale`, `isHD`, `upscaleCost`, `isUpscaling`
-- Remover o botão de Upscale IA
-- Remover import do `Sparkles`
+**1. `src/lib/customize-types.ts`** — Adicionar `model_url` à interface `AiFilter`
+- Novo campo: `model_url?: string | null`
 
-**2. `src/components/customize/MobileTabOverlay.tsx`** — Remover props de upscale do AdjustmentsPanel
+**2. `src/services/customize/filters.ts`** — Incluir `model_url` no select
+- Alterar query para incluir `model_url`
 
-**3. `src/pages/Customize.tsx`** — Limpar referências
-- Remover props de upscale passadas ao AdjustmentsPanel e MobileTabOverlay
-- Remover `UpscaleConfirmDialog` e seu import
-- Manter `ImageControls.onUpscaleClick` por enquanto se usado no preview (ou remover também)
+**3. `src/hooks/customize/useCustomizeFilters.ts`** — Duas mudanças:
+- **Pular validação para upscale**: buscar o filtro selecionado, verificar se `model_url` contém `"aura-sr"`, e se sim, pular o check de 256×256
+- **Melhorar feedback**: trocar `variant: "destructive"` por toast padrão (sem vermelho), e reescrever a mensagem para algo amigável:
+  - Título: `"Resolução muito baixa para este filtro"`
+  - Descrição: `"Sua imagem tem menos de 256×256px. Aplique o filtro Upscale IA primeiro para aumentar a resolução e depois tente novamente."`
+  - Sem `variant: "destructive"` — usa o estilo padrão do toast (neutro/informativo)
 
-**4. `supabase/functions/apply-ai-filter/index.ts`** — Adicionar branch para `fal-ai/aura-sr`
-- Detectar `isUpscale = modelUrl.includes("aura-sr")`
-- Quando upscale: usar Queue API (submit → poll → fetch result) como já faz o `upscale-image`
-- Body: `{ image_url: inputImage, upscale_factor: 4, overlapping_tiles: true }`
-- Resultado vem em `falResult.image.url` (singular, não array)
-- Manter timeout de polling ~150s
-
-**5. `src/components/admin/AiFiltersManager.tsx`** — Adicionar modelo
-- Adicionar `{ value: "fal-ai/aura-sr", label: "Aura SR (Upscale 4x)" }` ao `MODEL_OPTIONS`
-
-**6. Limpeza opcional**
-- O edge function `upscale-image` e o `UpscaleConfirmDialog` podem ser mantidos ou removidos. Recomendo manter por ora e remover numa iteração futura.
-- Remover `handleUpscaleClick`/`handleUpscaleConfirm` do `useCustomizeFilters` e props relacionadas
-
-### Detalhes técnicos — Branch no apply-ai-filter
-
+### Lógica principal
 ```typescript
-const isUpscale = modelUrl.includes("aura-sr");
+const selectedFilter = filters.find(f => f.id === filterId);
+const isUpscaleFilter = selectedFilter?.model_url?.includes("aura-sr");
 
-if (isUpscale) {
-  // Queue API (como upscale-image)
-  const submitRes = await fetch(`https://queue.fal.run/${modelUrl}`, {
-    method: "POST",
-    headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ image_url: inputImage, upscale_factor: 4, overlapping_tiles: true }),
+if (!isUpscaleFilter && imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
+  toast({
+    title: "Resolução muito baixa para este filtro",
+    description: "Sua imagem tem menos de 256×256px. Aplique o filtro Upscale IA primeiro para aumentar a resolução e depois tente novamente.",
   });
-  // Poll loop (50 attempts × 3s)
-  // Result: falResult.image.url (não images[])
+  return;
 }
 ```
-
-O custo será o `ai_filter_cost` padrão (configurável no admin). O admin cria um filtro com modelo "Aura SR (Upscale 4x)", define nome/imagem/categoria como qualquer outro filtro.
 
