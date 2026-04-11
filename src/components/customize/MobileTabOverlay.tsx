@@ -108,12 +108,20 @@ const MobileTabOverlay = ({
 
       {/* Bottom sheet */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg transform transition-transform duration-300 ease-out ${isClosing ? "translate-y-full" : "translate-y-0"}`}
-        style={{ marginBottom: "calc(3rem + 3.5rem)" }}
+        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg ${!isDragging ? "transition-transform duration-300 ease-out" : ""} ${isClosing ? "translate-y-full" : dragDeltaY === 0 ? "translate-y-0" : ""}`}
+        style={{
+          marginBottom: "calc(3rem + 3.5rem)",
+          ...(dragDeltaY > 0 && !isClosing ? { transform: `translateY(${dragDeltaY}px)` } : {}),
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle + Header */}
-        <div className="flex flex-col items-center pt-2 pb-1 border-b border-border/50">
+        <div
+          className="flex flex-col items-center pt-2 pb-1 border-b border-border/50 cursor-grab active:cursor-grabbing"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mb-2" />
           <div className="flex items-center justify-between w-full px-4 pb-1">
             <h3 className="text-sm font-semibold text-foreground">{tabTitles[activeTab]}</h3>
