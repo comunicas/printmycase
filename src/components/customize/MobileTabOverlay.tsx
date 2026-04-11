@@ -51,10 +51,14 @@ const MobileTabOverlay = ({
   onGallerySelect,
 }: MobileTabOverlayProps) => {
   const [isClosing, setIsClosing] = useState(false);
+  const [dragDeltaY, setDragDeltaY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startYRef = useRef(0);
 
   const handleClose = useCallback(() => {
     if (isClosing) return;
     setIsClosing(true);
+    setDragDeltaY(0);
     setTimeout(onClose, 300);
   }, [isClosing, onClose]);
 
@@ -63,8 +67,34 @@ const MobileTabOverlay = ({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    startYRef.current = e.touches[0].clientY;
+    setIsDragging(true);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const delta = e.touches[0].clientY - startYRef.current;
+    setDragDeltaY(Math.max(0, delta));
+  }, [isDragging]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (dragDeltaY > 80) {
+      handleClose();
+    } else {
+      setDragDeltaY(0);
+    }
+  }, [isDragging, dragDeltaY, handleClose]);
+
   const handleGallerySelect = (url: string) => {
     onGallerySelect(url);
+    handleClose();
+  };
+
+  const handleFilterClick = (filterId: string) => {
+    onFilterClick(filterId);
     handleClose();
   };
 
