@@ -12,10 +12,6 @@ interface ImageControlsProps {
   onScaleChange: (v: number) => void;
   onRotate: () => void;
   onExpand: () => void;
-  onUpscale: () => void;
-  isHD: boolean;
-  upscaleCost: number;
-  isUpscaling: boolean;
   filters: AiFilter[];
   filterCategories: AiFilterCategory[];
   activeFilterId: string | null;
@@ -33,8 +29,7 @@ interface ImageControlsProps {
 }
 
 const ImageControls = ({
-  hasImage, scale, rotation, onScaleChange, onRotate, onExpand, onUpscale,
-  isHD, upscaleCost, isUpscaling,
+  hasImage, scale, rotation, onScaleChange, onRotate, onExpand,
   filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory, onFilterClick,
   onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
@@ -70,11 +65,7 @@ const ImageControls = ({
             onScaleChange={onScaleChange}
             onRotate={onRotate}
             onExpand={onExpand}
-            onUpscale={onUpscale}
             disabled={!hasImage}
-            isHD={isHD}
-            upscaleCost={upscaleCost}
-            isUpscaling={isUpscaling}
           />
         </TabsContent>
 

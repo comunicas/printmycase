@@ -110,10 +110,13 @@ Deno.serve(async (req) => {
     const isKontext = modelUrl.includes("kontext");
     const isSD35 = modelUrl.includes("stable-diffusion-v35-large");
     const isNanoBanana = modelUrl.includes("nano-banana");
+    const isUpscale = modelUrl.includes("aura-sr");
 
     let falBody: Record<string, unknown>;
 
-    if (isLightingRestoration) {
+    if (isUpscale) {
+      falBody = { image_url: inputImage, upscale_factor: 4, overlapping_tiles: true };
+    } else if (isLightingRestoration) {
       falBody = { image_urls: [inputImage], image_size: { width: 720, height: 1280 } };
     } else if (isPhotographyEffects) {
       falBody = { image_url: inputImage, effect_type: filter.prompt, aspect_ratio: { ratio: "9:16" } };
@@ -166,46 +169,105 @@ Deno.serve(async (req) => {
     const bodyKeys = Object.keys(falBody).filter(k => k !== "image_url" && k !== "image_urls");
     console.log("[fal-request]", JSON.stringify({ model: modelUrl, body_keys: bodyKeys, target_style: falBody.target_style, effect_type: falBody.effect_type, prompt: falBody.prompt }));
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120_000);
+    let outputUrl: string;
 
-    const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
-      method: "POST",
-      headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify(falBody),
-      signal: controller.signal,
-    });
+    if (isUpscale) {
+      // Queue API for long-running upscale
+      const submitRes = await fetch(`https://queue.fal.run/${modelUrl}`, {
+        method: "POST",
+        headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(falBody),
+      });
+      if (!submitRes.ok) {
+        const errText = await submitRes.text();
+        console.error("Fal.ai queue submit error:", errText.substring(0, 500));
+        return new Response(JSON.stringify({ error: "Erro no processamento de IA" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { request_id } = await submitRes.json();
+      console.log("[fal-queue] submitted", request_id);
 
-    clearTimeout(timeout);
-
-    if (!falResponse.ok) {
-      const errText = await falResponse.text();
-      const sanitizedErr = errText.length > 500 ? errText.substring(0, 500) + "...[truncated]" : errText;
-      console.error("Fal.ai error:", sanitizedErr);
-      let userError = "Erro no processamento de IA";
-      try {
-        const parsed = JSON.parse(errText);
-        const detail = parsed?.detail?.[0];
-        if (detail?.type === "image_too_small") {
-          userError = `Imagem muito pequena. Dimensões mínimas: ${detail.ctx?.min_width || 256}x${detail.ctx?.min_height || 256}px.`;
+      // Poll for result
+      let falResult: any = null;
+      for (let i = 0; i < 50; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const statusRes = await fetch(`https://queue.fal.run/${modelUrl}/requests/${request_id}/status`, {
+          headers: { Authorization: `Key ${falApiKey}` },
+        });
+        const statusData = await statusRes.json();
+        if (statusData.status === "COMPLETED") {
+          const resultRes = await fetch(`https://queue.fal.run/${modelUrl}/requests/${request_id}`, {
+            headers: { Authorization: `Key ${falApiKey}` },
+          });
+          falResult = await resultRes.json();
+          break;
         }
-      } catch { /* ignore */ }
-      return new Response(JSON.stringify({ error: userError }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+        if (statusData.status === "FAILED") {
+          console.error("[fal-queue] failed", statusData);
+          return new Response(JSON.stringify({ error: "Erro no processamento de IA" }), {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+      if (!falResult) {
+        return new Response(JSON.stringify({ error: "Tempo limite excedido. Tente novamente." }), {
+          status: 504,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      outputUrl = falResult?.image?.url;
+      if (!outputUrl) {
+        console.error("[fal-queue] no image url in result", JSON.stringify(falResult).substring(0, 300));
+        return new Response(JSON.stringify({ error: "No image returned from AI" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      // Direct call for other models
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 120_000);
 
-    const falResult = await falResponse.json();
-    console.log("[fal-response]", JSON.stringify({ status: falResponse.status, images_count: falResult?.images?.length ?? 0 }));
-
-    const outputImage = falResult?.images?.[0];
-    const outputUrl = outputImage?.url;
-    if (!outputUrl) {
-      return new Response(JSON.stringify({ error: "No image returned from AI" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const falResponse = await fetch(`https://fal.run/${modelUrl}`, {
+        method: "POST",
+        headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(falBody),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
+
+      if (!falResponse.ok) {
+        const errText = await falResponse.text();
+        const sanitizedErr = errText.length > 500 ? errText.substring(0, 500) + "...[truncated]" : errText;
+        console.error("Fal.ai error:", sanitizedErr);
+        let userError = "Erro no processamento de IA";
+        try {
+          const parsed = JSON.parse(errText);
+          const detail = parsed?.detail?.[0];
+          if (detail?.type === "image_too_small") {
+            userError = `Imagem muito pequena. Dimensões mínimas: ${detail.ctx?.min_width || 256}x${detail.ctx?.min_height || 256}px.`;
+          }
+        } catch { /* ignore */ }
+        return new Response(JSON.stringify({ error: userError }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const falResult = await falResponse.json();
+      console.log("[fal-response]", JSON.stringify({ status: falResponse.status, images_count: falResult?.images?.length ?? 0 }));
+
+      outputUrl = falResult?.images?.[0]?.url;
+      if (!outputUrl) {
+        return new Response(JSON.stringify({ error: "No image returned from AI" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Download fal.ai result and upload to Supabase Storage

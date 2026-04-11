@@ -43,6 +43,7 @@ const MODEL_OPTIONS = [
   { value: "fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration", label: "Lighting Restoration" },
   { value: "fal-ai/nano-banana-2/edit", label: "Nano Banana 2 Edit" },
   { value: "fal-ai/nano-banana-pro/edit", label: "Nano Banana Pro Edit" },
+  { value: "fal-ai/aura-sr", label: "Aura SR (Upscale 4x)" },
 ];
 
 const STYLE_OPTIONS = [
@@ -176,7 +177,7 @@ const AiFiltersManager = () => {
   const isStyleTransfer = modelUrl === "fal-ai/image-apps-v2/style-transfer";
   const isPhotographyEffects = modelUrl === "fal-ai/image-apps-v2/photography-effects";
   const isLightingRestoration = modelUrl === "fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration";
-  const noPromptNeeded = isLightingRestoration;
+  const noPromptNeeded = isLightingRestoration || modelUrl.includes("aura-sr");
 
   const openNew = () => {
     setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setCategoryId(""); setDialogOpen(true);
