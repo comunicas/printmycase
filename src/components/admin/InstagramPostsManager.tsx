@@ -60,7 +60,7 @@ const InstagramPostsManager = () => {
 
   const openEdit = (p: InstaPost) => {
     setEditing(p);
-    setForm({ post_url: p.post_url, caption: p.caption, sort_order: p.sort_order, active: p.active });
+    setForm({ post_url: p.post_url, caption: p.caption, thumbnail_url: p.thumbnail_url || "", sort_order: p.sort_order, active: p.active });
     setDialogOpen(true);
   };
 
