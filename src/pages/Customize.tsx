@@ -178,11 +178,13 @@ const Customize = () => {
           onCompareEnd={c.handleCompareEnd}
           onUndoLastFilter={c.handleUndoLastFilter}
           onRemoveFilter={c.handleRemoveFilter}
+          disabled={c.isProcessing}
         />
         <MobileTabBar
           activeTab={mobileTab}
           onTabClick={(tab) => setMobileTab((prev) => prev === tab ? null : tab)}
           hasFilters={c.filters.length > 0}
+          disabled={c.isProcessing}
         />
         <ContinueBar
           isModified={c.isModified}
