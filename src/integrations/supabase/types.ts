@@ -570,6 +570,7 @@ export type Database = {
           id: string
           post_url: string
           sort_order: number
+          thumbnail_url: string | null
         }
         Insert: {
           active?: boolean
@@ -578,6 +579,7 @@ export type Database = {
           id?: string
           post_url: string
           sort_order?: number
+          thumbnail_url?: string | null
         }
         Update: {
           active?: boolean
@@ -586,6 +588,7 @@ export type Database = {
           id?: string
           post_url?: string
           sort_order?: number
+          thumbnail_url?: string | null
         }
         Relationships: []
       }

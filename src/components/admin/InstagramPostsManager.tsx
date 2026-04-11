@@ -18,6 +18,7 @@ interface InstaPost {
   id: string;
   post_url: string;
   caption: string;
+  thumbnail_url: string;
   sort_order: number;
   active: boolean;
   created_at: string;
@@ -26,6 +27,7 @@ interface InstaPost {
 const empty: Omit<InstaPost, "id" | "created_at"> = {
   post_url: "",
   caption: "",
+  thumbnail_url: "",
   sort_order: 0,
   active: true,
 };
@@ -58,7 +60,7 @@ const InstagramPostsManager = () => {
 
   const openEdit = (p: InstaPost) => {
     setEditing(p);
-    setForm({ post_url: p.post_url, caption: p.caption, sort_order: p.sort_order, active: p.active });
+    setForm({ post_url: p.post_url, caption: p.caption, thumbnail_url: p.thumbnail_url || "", sort_order: p.sort_order, active: p.active });
     setDialogOpen(true);
   };
 
@@ -149,6 +151,17 @@ const InstagramPostsManager = () => {
                 value={form.post_url}
                 onChange={(e) => setForm({ ...form, post_url: e.target.value })}
               />
+            </FormField>
+            <FormField label="URL da Thumbnail" id="thumbnail_url">
+              <Input
+                id="thumbnail_url"
+                placeholder="https://... (URL direta da imagem/vídeo)"
+                value={form.thumbnail_url}
+                onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })}
+              />
+              {form.thumbnail_url && (
+                <img src={form.thumbnail_url} alt="Preview" className="mt-2 w-24 h-24 object-cover rounded-lg border" />
+              )}
             </FormField>
             <FormField label="Legenda (opcional)" id="caption">
               <Input

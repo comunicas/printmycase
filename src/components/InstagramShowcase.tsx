@@ -5,38 +5,9 @@ import { Instagram } from "lucide-react";
 interface InstaPost {
   id: string;
   post_url: string;
+  thumbnail_url: string | null;
   caption: string;
 }
-
-declare global {
-  interface Window {
-    instgrm?: { Embeds: { process: () => void } };
-  }
-}
-
-const loadEmbedScript = () => {
-  if (document.querySelector('script[src*="instagram.com/embed.js"]')) {
-    window.instgrm?.Embeds.process();
-    return;
-  }
-  const s = document.createElement("script");
-  s.src = "https://www.instagram.com/embed.js";
-  s.async = true;
-  document.body.appendChild(s);
-};
-
-const InstaEmbed = ({ url }: { url: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!ref.current) return;
-    ref.current.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${url}" data-instgrm-version="14" style="background:var(--background);border:1px solid hsl(var(--border));border-radius:var(--radius);margin:0 auto;max-width:540px;width:100%;"></blockquote>`;
-    const t = setTimeout(loadEmbedScript, 100);
-    return () => clearTimeout(t);
-  }, [url]);
-
-  return <div ref={ref} />;
-};
 
 const InstagramShowcase = () => {
   const [posts, setPosts] = useState<InstaPost[]>([]);
@@ -46,7 +17,7 @@ const InstagramShowcase = () => {
   useEffect(() => {
     supabase
       .from("instagram_posts")
-      .select("id, post_url, caption")
+      .select("id, post_url, thumbnail_url, caption")
       .eq("active", true)
       .order("sort_order")
       .limit(6)
@@ -76,21 +47,31 @@ const InstagramShowcase = () => {
   return (
     <section ref={sectionRef} className="py-8 px-5" aria-label="Instagram PrintMyCase">
       <div className="max-w-6xl mx-auto">
-        {inView ? (
-          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
-            {posts.map((p) => (
-              <div key={p.id} className="min-w-[300px] snap-center md:min-w-0">
-                <InstaEmbed url={p.post_url} />
+        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
+          {posts.map((p) => (
+            <a
+              key={p.id}
+              href={p.post_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative min-w-[260px] snap-center md:min-w-0 aspect-square rounded-xl overflow-hidden bg-muted/30 block"
+            >
+              {inView && p.thumbnail_url ? (
+                <img
+                  src={p.thumbnail_url}
+                  alt={p.caption || "Post do Instagram"}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="w-full h-full animate-pulse bg-muted/30" />
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                <Instagram className="w-8 h-8 text-white opacity-0 group-hover:opacity-80 transition-opacity duration-300 drop-shadow-lg" />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex gap-6 md:grid md:grid-cols-3">
-            {posts.map((p) => (
-              <div key={p.id} className="min-w-[300px] md:min-w-0 h-[480px] bg-muted/30 animate-pulse rounded-xl" />
-            ))}
-          </div>
-        )}
+            </a>
+          ))}
+        </div>
 
         <div className="text-center mt-6">
           <a
