@@ -31,7 +31,7 @@ const UpscaleConfirmDialog = forwardRef<HTMLDivElement, UpscaleConfirmDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent className="sm:max-w-xs place-content-center gap-3">
         <DialogHeader className="items-center text-center">
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
             ✨
