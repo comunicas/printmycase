@@ -1,43 +1,20 @@
 
 
-## Auto-preencher Thumbnails do Instagram via oEmbed
+## Upload de Thumbnail no Admin
 
-### Problema
-Os 5 posts existentes no banco estão sem `thumbnail_url`. O Instagram bloqueia scraping direto (403), mas oferece um **endpoint oEmbed público** (`https://api.instagram.com/oembed?url=...`) que retorna `thumbnail_url` sem necessidade de token.
+Permitir upload direto de imagem para thumbnail dos posts do Instagram, usando o bucket `product-assets` já existente.
 
-### Plano
+### Alterações
 
-**1. Criar edge function `fetch-instagram-thumbnail`**
-- Recebe `{ post_id, post_url }` ou pode processar todos os posts sem thumbnail
-- Faz `fetch("https://api.instagram.com/oembed?url=${post_url}")` server-side
-- Extrai `thumbnail_url` da resposta JSON
-- Atualiza o registro na tabela `instagram_posts` via service role
-- Rota admin-only (verifica role)
-
-**2. Adicionar botão no admin `InstagramPostsManager.tsx`**
-- Botão "Buscar Thumbnails" no topo que chama a edge function para todos os posts sem thumbnail
-- Botão individual por post (ícone de refresh) para re-buscar uma thumbnail específica
-- Feedback visual: loading spinner + toast de sucesso/erro
-
-**3. Processar os 5 posts existentes**
-- Após deploy da edge function, o admin clica "Buscar Thumbnails" e todos os posts são preenchidos automaticamente
+**`src/components/admin/InstagramPostsManager.tsx`**
+- Adicionar um `<input type="file" accept="image/*">` ao lado do campo "URL da Thumbnail" no formulário de edição
+- Ao selecionar arquivo: fazer upload para `product-assets/instagram/{postId}-thumb.webp` via Supabase Storage
+- Após upload, preencher automaticamente o campo `thumbnail_url` com a URL pública gerada
+- Manter o campo de texto para colar URL manualmente como fallback
+- Mostrar preview da imagem (já existe no form atual)
 
 ### Detalhes técnicos
-
-**Resposta do oEmbed API:**
-```json
-{
-  "thumbnail_url": "https://scontent-...",
-  "thumbnail_width": 640,
-  "thumbnail_height": 640,
-  "title": "...",
-  "author_name": "printmycasebr"
-}
-```
-
-**Edge function:** `supabase/functions/fetch-instagram-thumbnail/index.ts`
-- Usa `SUPABASE_SERVICE_ROLE_KEY` para update na tabela
-- Processa todos posts onde `thumbnail_url IS NULL` quando chamada sem `post_id`
-
-**Fallback:** Se o oEmbed falhar para algum post (privado, deletado), mostra erro no toast e o admin pode colar a URL manualmente como já funciona hoje.
+- Bucket `product-assets` já é público — URLs funcionam direto
+- Otimizar imagem antes do upload usando `OffscreenCanvas` (WebP 80%) seguindo o padrão do projeto
+- Para posts novos (sem ID ainda), gerar um UUID temporário para o path do storage
 
