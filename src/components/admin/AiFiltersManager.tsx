@@ -177,7 +177,7 @@ const AiFiltersManager = () => {
   const isStyleTransfer = modelUrl === "fal-ai/image-apps-v2/style-transfer";
   const isPhotographyEffects = modelUrl === "fal-ai/image-apps-v2/photography-effects";
   const isLightingRestoration = modelUrl === "fal-ai/qwen-image-edit-plus-lora-gallery/lighting-restoration";
-  const noPromptNeeded = isLightingRestoration;
+  const noPromptNeeded = isLightingRestoration || modelUrl.includes("aura-sr");
 
   const openNew = () => {
     setEditing(null); setName(""); setPrompt(""); setModelUrl(MODEL_OPTIONS[0].value); setStyleImageUrl(""); setSendStyleImage(true); setCategoryId(""); setDialogOpen(true);
