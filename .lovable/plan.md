@@ -1,43 +1,22 @@
 
 
-## Controles de filtro no footer + Upscale vira "Refinar" na tab Filtros IA
+## Upscale como categoria "Refinar" na lista de filtros
 
-### Alteracoes
+### Problema
+Atualmente o Refinar aparece como um botao separado no topo da lista. O usuario quer que ele apareca como uma **categoria visual** igual as outras (ex: "Character Pop"), com o titulo "REFINAR" e os itens dentro do grid.
 
-**1. Novo `FilterHistoryBar.tsx`**
-- Barra compacta com chips dos filtros aplicados + botoes Comparar/Desfazer/Remover
-- Renderizada no footer mobile do `Customize.tsx`, acima do `MobileTabBar`, sempre visivel quando `filterHistory.length > 0`
+### Alteracao unica em `AiFiltersList.tsx`
 
-**2. `AiFiltersList.tsx`**
-- Adicionar botao "Refinar" (Sparkles icon) no topo, antes dos filtros — recebe props `onUpscale`, `isHD`, `upscaleCost`, `isUpscaling`
-- Esconder a secao de historico quando renderizado dentro do overlay mobile (nova prop `hideHistory`)
+Remover o `<Button>` de Refinar e renderizar uma seção de categoria fake chamada "REFINAR" no **final** da lista (após as categorias reais e uncategorized), contendo um unico item no grid de 3 colunas:
 
-**3. `AdjustmentsPanel.tsx`**
-- Remover o botao de Upscale
+- Titulo: `<p>` com mesmo estilo das categorias (`text-[11px] font-semibold uppercase`)
+- Item: mesmo layout visual de um filtro (thumbnail quadrado + label + badge de custo), mas ao clicar chama `onUpscale` ao inves de `onFilterClick`
+- Thumbnail: gradiente com icone `Sparkles` (similar aos filtros sem imagem)
+- Label: "Refinar" / "Já em HD" / "Processando..."
+- Badge: `🪙{upscaleCost}`
+- Estado disabled quando `isHD || isUpscaling || disabled`
+- Spinner overlay quando `isUpscaling`
 
-**4. `ImageControls.tsx` + `MobileTabOverlay.tsx`**
-- Passar props de upscale para `AiFiltersList`
-- Passar `hideHistory` no mobile overlay
-
-**5. `Customize.tsx`**
-- Importar `FilterHistoryBar` e renderizar no bloco `lg:hidden` do footer, entre o conteudo e o `MobileTabBar`
-
-### Layout mobile resultante
-```text
-┌─────────────────────────┐
-│ Header                  │
-├─────────────────────────┤
-│   Phone Preview         │
-├─────────────────────────┤
-│ 2 filtros: [1.X][2.Y]  │ ← FilterHistoryBar (condicional)
-│ [👁][↩][✕]              │
-├─────────────────────────┤
-│ [Ajustes][Filtros][Gal] │ ← MobileTabBar fixo
-├─────────────────────────┤
-│ [↺ Reset] [Finalizar →]│ ← ContinueBar fixo
-└─────────────────────────┘
-```
-
-### Desktop — sem alteracao visual
-Os controles de historico continuam inline dentro do `AiFiltersList` na sidebar. O botao "Refinar" aparece no topo da lista de filtros, igual.
+### Resultado visual
+Fica identico a screenshot: categoria "REFINAR" com card visual no grid, igual aos filtros normais.
 
