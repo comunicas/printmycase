@@ -1,36 +1,46 @@
 
 
-## Isentar Upscale da validação de imagem pequena + melhorar feedback
+## Modal de resolucao baixa + modais fullscreen no mobile
 
-### Problema
-A validação bloqueia todos os filtros (incluindo Upscale) quando a imagem é menor que 256×256px, e exibe um toast vermelho agressivo de erro. O Upscale deveria funcionar em qualquer tamanho, e o feedback para outros filtros deve ser informativo, não alarmante.
+### Resumo
+Substituir o toast de resolucao baixa por uma modal intuitiva com botao direto de Upscale, e ajustar o `DialogContent` base para ser fullscreen no mobile.
 
-### Alterações
+### Alteracoes
 
-**1. `src/lib/customize-types.ts`** — Adicionar `model_url` à interface `AiFilter`
-- Novo campo: `model_url?: string | null`
+**1. `src/components/ui/dialog.tsx`** — DialogContent fullscreen no mobile
+- Adicionar classes ao `DialogContent` base: `h-full rounded-none sm:h-auto sm:rounded-lg`
+- Isso faz todas as modais do projeto ficarem fullscreen no mobile automaticamente, sem alterar cada componente individual
+- Remover `max-w-lg` padrao e usar `max-w-full sm:max-w-lg` para ocupar tela toda no mobile
 
-**2. `src/services/customize/filters.ts`** — Incluir `model_url` no select
-- Alterar query para incluir `model_url`
+**2. Criar `src/components/customize/LowResolutionDialog.tsx`** — Nova modal
+- Props: `open`, `onOpenChange`, `resolution: {w,h} | null`, `onUpscale: () => void`, `hasUpscaleFilter: boolean`
+- Icone informativo (ZoomIn ou similar), titulo "Resolucao baixa"
+- Texto amigavel: "Filtros de estilo precisam de no minimo 256x256px para gerar bons resultados. Use o Upscale IA para aumentar a resolucao da sua imagem."
+- Mostrar resolucao atual (ex: "Sua imagem: 120x90px")
+- Botao primario: "Aplicar Upscale IA" (chama `onUpscale`)
+- Botao outline: "Cancelar"
+- Se `hasUpscaleFilter` for false, mostrar apenas mensagem sem botao de upscale
 
-**3. `src/hooks/customize/useCustomizeFilters.ts`** — Duas mudanças:
-- **Pular validação para upscale**: buscar o filtro selecionado, verificar se `model_url` contém `"aura-sr"`, e se sim, pular o check de 256×256
-- **Melhorar feedback**: trocar `variant: "destructive"` por toast padrão (sem vermelho), e reescrever a mensagem para algo amigável:
-  - Título: `"Resolução muito baixa para este filtro"`
-  - Descrição: `"Sua imagem tem menos de 256×256px. Aplique o filtro Upscale IA primeiro para aumentar a resolução e depois tente novamente."`
-  - Sem `variant: "destructive"` — usa o estilo padrão do toast (neutro/informativo)
+**3. `src/hooks/customize/useCustomizeFilters.ts`** — Trocar toast por estado
+- Adicionar `showLowResDialog: boolean` (default false)
+- No check de 256x256 (linha 120-125), substituir `toast(...)` por `setShowLowResDialog(true)`
+- Adicionar `handleLowResUpscale`: encontrar filtro com `model_url` contendo `"aura-sr"`, chamar `setPendingFilterId(upscaleFilter.id)` e fechar dialog
+- Expor: `showLowResDialog`, `setShowLowResDialog`, `handleLowResUpscale`
 
-### Lógica principal
-```typescript
-const selectedFilter = filters.find(f => f.id === filterId);
-const isUpscaleFilter = selectedFilter?.model_url?.includes("aura-sr");
+**4. `src/pages/Customize.tsx`** — Montar a nova modal
+- Importar e renderizar `LowResolutionDialog`
+- Passar `c.showLowResDialog`, `c.imageResolution`, handler que chama `c.handleLowResUpscale`
+- `hasUpscaleFilter`: `c.filters.some(f => f.model_url?.includes("aura-sr"))`
 
-if (!isUpscaleFilter && imageResolution && (imageResolution.w < 256 || imageResolution.h < 256)) {
-  toast({
-    title: "Resolução muito baixa para este filtro",
-    description: "Sua imagem tem menos de 256×256px. Aplique o filtro Upscale IA primeiro para aumentar a resolução e depois tente novamente.",
-  });
-  return;
-}
-```
+**5. Ajustar `FilterConfirmDialog.tsx`** — Remover `max-w-xs` custom
+- Trocar `max-w-xs rounded-xl` por `sm:max-w-xs` (o base ja cuida do fullscreen mobile)
+
+**6. Ajustar `TermsDialog.tsx`, `UpscaleConfirmDialog.tsx`** — Mesmo padrao
+- Remover `max-w-md` / `max-w-xs` custom, usar `sm:max-w-md` / `sm:max-w-xs`
+
+### Fluxo
+1. Usuario clica num filtro de estilo com imagem pequena
+2. Abre modal explicativa com resolucao atual e botao de Upscale
+3. Ao clicar "Aplicar Upscale IA", fecha a modal e abre o `FilterConfirmDialog` padrao para confirmar o custo do upscale
+4. Apos upscale, usuario pode aplicar o filtro desejado normalmente
 
