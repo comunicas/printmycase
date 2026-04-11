@@ -13,10 +13,22 @@ interface FilterHistoryBarProps {
 const FilterHistoryBar = ({
   filterHistory, onCompareStart, onCompareEnd, onUndoLastFilter, onRemoveFilter,
 }: FilterHistoryBarProps) => {
+  const [isHighlighting, setIsHighlighting] = useState(false);
+  const prevLengthRef = useRef(filterHistory.length);
+
+  useEffect(() => {
+    if (filterHistory.length > prevLengthRef.current) {
+      setIsHighlighting(true);
+      const t = setTimeout(() => setIsHighlighting(false), 600);
+      return () => clearTimeout(t);
+    }
+    prevLengthRef.current = filterHistory.length;
+  }, [filterHistory.length]);
+
   if (filterHistory.length === 0) return null;
 
   return (
-    <div className="lg:hidden bg-background border-t border-border px-3 py-2 space-y-1.5">
+    <div className={`lg:hidden bg-background border-t border-border px-3 py-2 space-y-1.5 transition-all duration-300 ${isHighlighting ? "animate-fade-in ring-2 ring-primary/30 rounded-t-lg" : ""}`}>
       <div className="flex items-center gap-1.5 overflow-x-auto flex-nowrap scrollbar-hide">
         <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
           {filterHistory.length} filtro{filterHistory.length > 1 ? "s" : ""}:
