@@ -1,7 +1,7 @@
+import { useEffect, useRef, useState } from "react";
 import { Eye, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FilterHistoryEntry } from "@/lib/customize-types";
-
 interface FilterHistoryBarProps {
   filterHistory: FilterHistoryEntry[];
   onCompareStart: () => void;

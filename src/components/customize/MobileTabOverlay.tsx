@@ -82,6 +82,7 @@ const MobileTabOverlay = ({
     if (!isDragging) return;
     setIsDragging(false);
     if (dragDeltaY > 80) {
+      navigator.vibrate?.(15);
       handleClose();
     } else {
       setDragDeltaY(0);
