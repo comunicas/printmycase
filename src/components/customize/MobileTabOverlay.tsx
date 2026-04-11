@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdjustmentsPanel from "./AdjustmentsPanel";
@@ -51,6 +51,14 @@ const MobileTabOverlay = ({
   onPreviewStart, onPreviewEnd,
   onGallerySelect,
 }: MobileTabOverlayProps) => {
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(onClose, 300);
+  }, [isClosing, onClose]);
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -58,7 +66,7 @@ const MobileTabOverlay = ({
 
   const handleGallerySelect = (url: string) => {
     onGallerySelect(url);
-    onClose();
+    handleClose();
   };
 
   return (
