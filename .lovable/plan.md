@@ -1,29 +1,59 @@
 
 
-## Corrigir erros de banco de dados no checkout
+## Criar função `process_checkout_session_completed`
 
 ### Problema
-Os logs revelam **dois erros** que impedem o checkout de funcionar completamente:
-
-1. **`create-checkout`**: `Could not find the 'public_success_nonce' column of 'orders'` — A coluna `public_success_nonce` não existe na tabela `orders`, impedindo a inserção do pedido após criar a sessão Stripe.
-
-2. **`stripe-webhook`**: `Could not find the table 'public.stripe_webhook_events'` — A tabela de idempotência do webhook não existe, causando falha em todos os webhooks do Stripe (pagamento confirmado, etc).
+O webhook do Stripe falha com `Could not find the function public.process_checkout_session_completed`, impedindo que pedidos avancem de `pending` para `analyzing` após pagamento confirmado.
 
 ### Solução
-Uma única migração SQL para:
+Migração SQL para criar a função que:
+1. Atualiza o pedido de `pending` → `analyzing` pelo `stripe_session_id`
+2. Insere bônus de coins para o usuário (se configurado)
+3. Retorna dados do pedido para o webhook enviar e-mail de confirmação
 
-1. **Adicionar coluna `public_success_nonce`** na tabela `orders` (tipo `text`, nullable)
-2. **Criar tabela `stripe_webhook_events`** com:
-   - `id` (uuid, PK)
-   - `event_id` (text, unique — para deduplicação)
-   - `event_type` (text)
-   - `stripe_session_id` (text, nullable)
-   - `payload` (jsonb)
-   - `created_at` (timestamptz)
-3. **RLS** na tabela `stripe_webhook_events`: sem acesso público (apenas service role insere via edge function)
+### SQL
 
-### Detalhes técnicos
-- A coluna `public_success_nonce` é usada pelo `get-success-order` para validar tokens de sucesso sem autenticação
-- A tabela `stripe_webhook_events` implementa idempotência — o constraint unique em `event_id` previne processamento duplicado (código já trata erro `23505`)
-- Nenhuma alteração de código necessária — apenas schema do banco
+```sql
+CREATE OR REPLACE FUNCTION public.process_checkout_session_completed(
+  _stripe_session_id text,
+  _bonus_amount integer,
+  _bonus_days integer
+)
+RETURNS TABLE(order_id uuid, user_id uuid, product_id text, total_cents integer)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  _order record;
+BEGIN
+  UPDATE orders
+  SET status = 'analyzing'
+  WHERE stripe_session_id = _stripe_session_id
+    AND status = 'pending'
+  RETURNING id, orders.user_id, orders.product_id, orders.total_cents
+  INTO _order;
+
+  IF _order IS NULL THEN RETURN; END IF;
+
+  IF _bonus_amount > 0 THEN
+    INSERT INTO coin_transactions (user_id, amount, type, expires_at, description)
+    VALUES (
+      _order.user_id,
+      _bonus_amount,
+      'purchase_bonus',
+      now() + (_bonus_days || ' days')::interval,
+      'Bônus por compra'
+    );
+  END IF;
+
+  RETURN QUERY SELECT _order.id, _order.user_id, _order.product_id, _order.total_cents;
+END;
+$$;
+```
+
+### Impacto
+- Pedidos passarão automaticamente para `analyzing` após pagamento
+- Bônus de coins será creditado
+- O pedido pendente atual será reprocessado pelo retry automático do Stripe
 
