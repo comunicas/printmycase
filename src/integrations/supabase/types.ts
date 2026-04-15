@@ -1155,6 +1155,19 @@ export type Database = {
         }
         Returns: number
       }
+      process_checkout_session_completed: {
+        Args: {
+          _bonus_amount: number
+          _bonus_days: number
+          _stripe_session_id: string
+        }
+        Returns: {
+          order_id: string
+          product_id: string
+          total_cents: number
+          user_id: string
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
