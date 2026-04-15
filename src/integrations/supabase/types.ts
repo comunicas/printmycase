@@ -722,6 +722,7 @@ export type Database = {
           design_id: string | null
           id: string
           product_id: string
+          public_success_nonce: string | null
           rejection_reason: string | null
           shipping_address: Json | null
           shipping_cents: number | null
@@ -738,6 +739,7 @@ export type Database = {
           design_id?: string | null
           id?: string
           product_id: string
+          public_success_nonce?: string | null
           rejection_reason?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
@@ -754,6 +756,7 @@ export type Database = {
           design_id?: string | null
           id?: string
           product_id?: string
+          public_success_nonce?: string | null
           rejection_reason?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
@@ -993,6 +996,33 @@ export type Database = {
           sort_order?: number
           state?: string
           state_label?: string
+        }
+        Relationships: []
+      }
+      stripe_webhook_events: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          event_type: string | null
+          id: string
+          payload: Json | null
+          stripe_session_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          stripe_session_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          stripe_session_id?: string | null
         }
         Relationships: []
       }
