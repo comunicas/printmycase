@@ -1,59 +1,31 @@
 
 
-## Criar função `process_checkout_session_completed`
+## Reprocessar o pedido pendente
 
 ### Problema
-O webhook do Stripe falha com `Could not find the function public.process_checkout_session_completed`, impedindo que pedidos avancem de `pending` para `analyzing` após pagamento confirmado.
+O evento `evt_1TMMzQDRRNUjjhDuSZJ4nYIK` do Stripe já está na tabela `stripe_webhook_events` (idempotência). Mesmo que o Stripe reenvie o webhook, o código vai detectar como duplicado e pular o processamento. A função `process_checkout_session_completed` agora existe, mas não será chamada.
 
 ### Solução
-Migração SQL para criar a função que:
-1. Atualiza o pedido de `pending` → `analyzing` pelo `stripe_session_id`
-2. Insere bônus de coins para o usuário (se configurado)
-3. Retorna dados do pedido para o webhook enviar e-mail de confirmação
+Uma migração SQL para:
 
-### SQL
+1. **Deletar o registro de idempotência** do evento que falhou, permitindo reprocessamento
+2. **Executar diretamente** a função `process_checkout_session_completed` para o session ID do pedido pendente, atualizando o status para `analyzing` e creditando o bônus de coins
 
 ```sql
-CREATE OR REPLACE FUNCTION public.process_checkout_session_completed(
-  _stripe_session_id text,
-  _bonus_amount integer,
-  _bonus_days integer
-)
-RETURNS TABLE(order_id uuid, user_id uuid, product_id text, total_cents integer)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  _order record;
-BEGIN
-  UPDATE orders
-  SET status = 'analyzing'
-  WHERE stripe_session_id = _stripe_session_id
-    AND status = 'pending'
-  RETURNING id, orders.user_id, orders.product_id, orders.total_cents
-  INTO _order;
+-- Remover registro de idempotência do evento que falhou
+DELETE FROM stripe_webhook_events 
+WHERE event_id = 'evt_1TMMzQDRRNUjjhDuSZJ4nYIK';
 
-  IF _order IS NULL THEN RETURN; END IF;
-
-  IF _bonus_amount > 0 THEN
-    INSERT INTO coin_transactions (user_id, amount, type, expires_at, description)
-    VALUES (
-      _order.user_id,
-      _bonus_amount,
-      'purchase_bonus',
-      now() + (_bonus_days || ' days')::interval,
-      'Bônus por compra'
-    );
-  END IF;
-
-  RETURN QUERY SELECT _order.id, _order.user_id, _order.product_id, _order.total_cents;
-END;
-$$;
+-- Processar manualmente o pedido pendente
+SELECT * FROM process_checkout_session_completed(
+  'cs_live_b14lThg8HiCFk3bdkVnafeNK09xbn1hikacE0LVYcrGZkBGe97qjEFls2W',
+  100,  -- bonus amount (default from coin_settings)
+  30    -- bonus days (default from coin_settings)
+);
 ```
 
-### Impacto
-- Pedidos passarão automaticamente para `analyzing` após pagamento
-- Bônus de coins será creditado
-- O pedido pendente atual será reprocessado pelo retry automático do Stripe
+### Resultado esperado
+- O pedido `a3563f8e` muda de `pending` para `analyzing`
+- O bônus de coins é creditado ao usuário
+- O próximo retry do Stripe (se houver) poderá ser reprocessado normalmente
 
