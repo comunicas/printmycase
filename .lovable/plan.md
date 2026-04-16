@@ -1,31 +1,26 @@
 
 
-## Reprocessar o pedido pendente
+## Corrigir trigger duplicado de bônus de indicação
 
 ### Problema
-O evento `evt_1TMMzQDRRNUjjhDuSZJ4nYIK` do Stripe já está na tabela `stripe_webhook_events` (idempotência). Mesmo que o Stripe reenvie o webhook, o código vai detectar como duplicado e pular o processamento. A função `process_checkout_session_completed` agora existe, mas não será chamada.
+A tabela `referrals` possui **dois triggers** (`trg_referral_bonus` e `trigger_referral_bonus`) que executam a mesma função `handle_referral_bonus`. Resultado: cada indicação credita o bônus **em dobro**.
 
 ### Solução
-Uma migração SQL para:
+1. **Migração SQL**: Remover o trigger duplicado `trigger_referral_bonus`, mantendo apenas `trg_referral_bonus`
+2. **Corrigir dados**: Deletar uma das duas transações duplicadas de `referral_bonus` para o usuário afetado
 
-1. **Deletar o registro de idempotência** do evento que falhou, permitindo reprocessamento
-2. **Executar diretamente** a função `process_checkout_session_completed` para o session ID do pedido pendente, atualizando o status para `analyzing` e creditando o bônus de coins
+### SQL
 
 ```sql
--- Remover registro de idempotência do evento que falhou
-DELETE FROM stripe_webhook_events 
-WHERE event_id = 'evt_1TMMzQDRRNUjjhDuSZJ4nYIK';
+-- Remove duplicate trigger
+DROP TRIGGER IF EXISTS trigger_referral_bonus ON public.referrals;
 
--- Processar manualmente o pedido pendente
-SELECT * FROM process_checkout_session_completed(
-  'cs_live_b14lThg8HiCFk3bdkVnafeNK09xbn1hikacE0LVYcrGZkBGe97qjEFls2W',
-  100,  -- bonus amount (default from coin_settings)
-  30    -- bonus days (default from coin_settings)
-);
+-- Remove one of the duplicate bonus transactions
+DELETE FROM coin_transactions 
+WHERE id = '9273d4b6-39de-4de5-9a52-df265d786292';
 ```
 
-### Resultado esperado
-- O pedido `a3563f8e` muda de `pending` para `analyzing`
-- O bônus de coins é creditado ao usuário
-- O próximo retry do Stripe (se houver) poderá ser reprocessado normalmente
+### Impacto
+- Indicações futuras creditarão o bônus apenas uma vez
+- O saldo do usuário será corrigido (remove 20 moedas duplicadas)
 
