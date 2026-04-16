@@ -86,7 +86,7 @@ const Landing = () => {
                 <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">personalizada</span>{" "}
                 com IA e receba em casa.
               </h1>
-              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>  Busque o modelo do smartphone, envie sua foto e pronto!  </p>
+              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Mais de 77 opções de smartphones compatíveis para personalizar sua capa.</p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={fadeIn(300)}>
                 <Button size="lg" className="gap-2 text-base bg-orange-500 hover:bg-orange-600 text-white glow-orange" onClick={() => navigate("/customize")}>
