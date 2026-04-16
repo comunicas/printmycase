@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trigger_referral_bonus ON public.referrals;
