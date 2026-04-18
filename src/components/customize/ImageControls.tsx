@@ -34,7 +34,7 @@ const ImageControls = ({
   filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory, onFilterClick,
   onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
-  onGallerySelect,
+  onGallerySelect, isProcessing,
 }: ImageControlsProps) => {
   const hasFilters = filters.length > 0;
   const colsClass = hasFilters ? "grid-cols-3" : "grid-cols-2";
