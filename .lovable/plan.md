@@ -1,47 +1,49 @@
 
-## Otimizar favicon: 56 KB → ~5 KB
+## Auditoria de dependências npm
 
-### Problema
-`public/favicon.ico` tem 56 KB — provavelmente contém múltiplas resoluções em alta qualidade ou uma única imagem grande. Browsers modernos só precisam de 16/32 px (favicon) e 180 px (Apple touch icon).
+### Resultado: bundle já enxuto
 
-### Plano
+Inventariei `package.json` (apenas 17 deps de produção) e validei padrões de uso. **Não encontrei deps removíveis ou substituíveis com ganho real.**
 
-**Fase 1 — Inspecionar favicon atual**
-- Rodar `identify public/favicon.ico` para ver resoluções embutidas
-- Confirmar tamanho atual
+### Análise por dependência
 
-**Fase 2 — Gerar versões otimizadas**
-A partir do `favicon.ico` atual (extraindo o maior frame como source):
-- `public/favicon-16.png` (16×16, PNG otimizado) — ~500 B
-- `public/favicon-32.png` (32×32, PNG otimizado) — ~1 KB
-- `public/apple-touch-icon.png` (180×180, PNG otimizado) — ~3-4 KB
-- Novo `public/favicon.ico` contendo apenas 16+32 multi-resolução — ~2 KB
+| Pacote | Peso aprox | Status | Justificativa |
+|---|---|---|---|
+| `react` + `react-dom` | ~140 KB | Essencial | Core do framework |
+| `@supabase/supabase-js` | ~80 KB | Essencial | Backend (chunk separado via vite manualChunks) |
+| `react-router-dom` | ~22 KB | Essencial | Roteamento |
+| `leaflet` + `react-leaflet` + `@react-leaflet/core` | ~150 KB | **Já isolado** | Lazy-loaded só no `StoreLocator` da Landing + chunk próprio no `vite.config.ts`. Não entra no bundle inicial |
+| 11× `@radix-ui/react-*` | ~5-15 KB cada | Essencial | Cada um usado em UI primitive específico. Tree-shaken por componente |
+| `lucide-react` | tree-shakable | OK | 366 imports nomeados em 80 arquivos — Vite/SWC tree-shake corretamente |
+| `tailwind-merge` + `clsx` + `cva` | ~10 KB total | Essencial | Base do sistema de classes utility |
+| `tailwindcss-animate` | ~2 KB | Essencial | Animações Radix |
+| `@lovable.dev/cloud-auth-js` | ~10 KB | Auto-gerado | Não pode ser removido |
 
-Ferramentas: ImageMagick via nix (`magick convert`) + `pngquant` para compressão lossy de PNG.
+### Otimizações já aplicadas (confirmadas)
 
-**Fase 3 — Atualizar `index.html`**
-Adicionar no `<head>`:
-```html
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<link rel="shortcut icon" href="/favicon.ico" />
-```
-(Manter `favicon.ico` como fallback para browsers antigos que requisitam `/favicon.ico` automaticamente.)
+1. **Code-splitting agressivo**: 26 lazy routes em `App.tsx` + 4 lazy sections em `Landing.tsx`
+2. **Manual chunks** no `vite.config.ts`: `leaflet` e `supabase` em chunks separados
+3. **Dedupe** de `react`/`react-dom`/`react/jsx-runtime`
+4. **Zero deps redundantes**: sem moment.js, sem lodash, sem axios, sem date-fns
 
-**Fase 4 — Validar**
-- Listar tamanhos finais dos 4 arquivos, confirmar total < 8 KB
-- Verificar visualmente o favicon no preview (tab do browser)
+### Conclusão
 
-### Risco
-Baixo. Se a qualidade visual ficar ruim em 16 px, regenerar com `-filter Lanczos` ou ajustar pngquant quality.
+**Nenhuma ação recomendada.** O `package.json` já está no mínimo viável para o conjunto de features (e-commerce + customização IA + mapa de lojas + admin). Toda dep listada tem uso ativo e justificado.
 
-### Arquivos modificados
-- `public/favicon.ico` (overwrite, menor)
-- `public/favicon-16.png` (novo)
-- `public/favicon-32.png` (novo)
-- `public/apple-touch-icon.png` (novo)
-- `index.html` (4 novas tags `<link>` no `<head>`)
+### O que NÃO vale a pena trocar
 
-### Saída esperada
-Total favicon assets: ~5-8 KB (vs 56 KB hoje) — economia de ~50 KB no first paint.
+- `lucide-react` → alternativas (react-icons, heroicons) não trazem ganho com tree-shaking funcionando
+- `leaflet` → MapLibre GL é mais pesado; alternativas leves (Pigeon Maps) não suportam os mesmos features
+- `@radix-ui/*` → base do shadcn/ui; trocar por Headless UI seria refactor enorme sem ganho
+
+### Próximas oportunidades (fora de "remover deps")
+
+Se quiser continuar reduzindo bundle, o caminho é **runtime profiling**, não auditoria de deps:
+
+1. Rodar `vite build` e analisar `dist/` com `rollup-plugin-visualizer` para ver chunks reais
+2. Identificar se algum admin component pesado vaza pro bundle público (improvável dado lazy routing)
+3. Verificar se `lucide-react` tree-shake está perfeito no build de produção (analisar chunk size)
+
+### Nada a executar nesta auditoria
+
+Read-only confirma: bundle já otimizado. Sem mudanças necessárias.
