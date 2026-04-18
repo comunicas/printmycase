@@ -183,10 +183,10 @@ const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="max-w-xs p-0 gap-0 rounded-2xl overflow-hidden z-[110] sm:max-h-[85vh] flex flex-col justify-center pb-[160px] sm:pb-0">
-        <div className="overflow-hidden">
+      <DialogContent className="p-0 gap-0 overflow-hidden z-[110] flex flex-col w-screen h-[100dvh] max-w-none rounded-none border-0 top-0 left-0 translate-x-0 translate-y-0 sm:w-auto sm:max-w-xs sm:h-auto sm:max-h-[85vh] sm:rounded-2xl sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:justify-center">
+        <div className="flex-1 flex items-center justify-center overflow-hidden sm:flex-initial">
           <div
-            className={`flex flex-col items-center text-center px-6 pt-8 pb-6 ${current.isWelcome ? "bg-gradient-to-b from-primary/5 to-transparent" : ""}`}
+            className={`w-full flex flex-col items-center text-center px-6 pt-8 pb-6 ${current.isWelcome ? "bg-gradient-to-b from-primary/5 to-transparent" : ""}`}
             style={{
               transform: exitPhase ? `translateX(${direction * -30}%)` : "translateX(0)",
               opacity: exitPhase ? 0 : 1,
@@ -215,7 +215,7 @@ const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between px-4 pb-4">
+        <div className="flex items-center justify-between px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
           <Button
             variant="ghost"
             size="sm"
