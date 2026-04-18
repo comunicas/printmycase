@@ -19,7 +19,7 @@ const UploadSpotlight = ({ open, modelName, onUploadClick, onGalleryClick }: Upl
 
         <div className="text-center space-y-2">
           <h2 className="text-xl font-bold text-foreground">
-            <span>Comece sua capa personalizada do {modelName}</span>
+            <span>Sua foto vira capa para {modelName}</span>
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             <span>Basta enviar uma imagem e personalizar sua capa com o que quiser: foto, pet, casal, família ou arte favorita.</span>
