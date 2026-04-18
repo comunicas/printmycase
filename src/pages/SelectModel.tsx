@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
 import { extractBrand } from "@/lib/utils";
@@ -10,7 +10,7 @@ import { ArrowLeft, Search, SearchX, X } from "lucide-react";
 const SelectModel = () => {
   const navigate = useNavigate();
   const { products, loading } = useProducts();
-  const [selectedBrand, setSelectedBrand] = useState("Todos");
+  const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [search, setSearch] = useState("");
 
   const brandCounts = useMemo(() => {
@@ -32,12 +32,16 @@ const SelectModel = () => {
       if (bi !== -1) return 1;
       return a.localeCompare(b);
     });
-    return ["Todos", ...sorted];
+    return sorted;
   }, [brandCounts]);
+
+  useEffect(() => {
+    if (!selectedBrand && brands.length > 0) setSelectedBrand(brands[0]);
+  }, [brands, selectedBrand]);
 
   const filtered = useMemo(() => {
     let list = products;
-    if (selectedBrand !== "Todos") {
+    if (selectedBrand) {
       list = list.filter((p) => extractBrand(p.name) === selectedBrand);
     }
     if (search.trim()) {
@@ -66,10 +70,9 @@ const SelectModel = () => {
     });
   }, [products, selectedBrand, search]);
 
-  const hasActiveFilters = selectedBrand !== "Todos" || search.trim() !== "";
+  const hasActiveFilters = search.trim() !== "";
 
   const clearFilters = () => {
-    setSelectedBrand("Todos");
     setSearch("");
   };
 
@@ -112,7 +115,7 @@ const SelectModel = () => {
         <div className="relative mb-3">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {brands.map((brand) => {
-              const count = brand === "Todos" ? products.length : (brandCounts.get(brand) || 0);
+              const count = brandCounts.get(brand) || 0;
               const isActive = selectedBrand === brand;
               return (
                 <Button
@@ -137,8 +140,8 @@ const SelectModel = () => {
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-muted-foreground">
             {hasActiveFilters
-              ? `${filtered.length} de ${products.length} modelos`
-              : `${products.length} modelos disponíveis`}
+              ? `${filtered.length} resultados`
+              : `${filtered.length} modelos`}
           </span>
           {hasActiveFilters && (
             <Button size="sm" variant="ghost" onClick={clearFilters} className="gap-1 text-muted-foreground">
