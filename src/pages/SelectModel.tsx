@@ -10,7 +10,7 @@ import { ArrowLeft, Search, SearchX, X } from "lucide-react";
 const SelectModel = () => {
   const navigate = useNavigate();
   const { products, loading } = useProducts();
-  const [selectedBrand, setSelectedBrand] = useState("Todos");
+  const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [search, setSearch] = useState("");
 
   const brandCounts = useMemo(() => {
@@ -32,12 +32,16 @@ const SelectModel = () => {
       if (bi !== -1) return 1;
       return a.localeCompare(b);
     });
-    return ["Todos", ...sorted];
+    return sorted;
   }, [brandCounts]);
+
+  useEffect(() => {
+    if (!selectedBrand && brands.length > 0) setSelectedBrand(brands[0]);
+  }, [brands, selectedBrand]);
 
   const filtered = useMemo(() => {
     let list = products;
-    if (selectedBrand !== "Todos") {
+    if (selectedBrand) {
       list = list.filter((p) => extractBrand(p.name) === selectedBrand);
     }
     if (search.trim()) {
