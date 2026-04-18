@@ -16,6 +16,7 @@ interface PhonePreviewProps {
   onUpscaleClick?: () => void;
   previewImageUrl?: string | null;
   onGalleryClick?: () => void;
+  disabled?: boolean;
 }
 
 const CROSSFADE_MS = 200;
