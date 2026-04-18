@@ -177,7 +177,7 @@ const Customize = () => {
           activeTab={mobileTab}
           onTabClick={(tab) => setMobileTab((prev) => prev === tab ? null : tab)}
           hasFilters={c.filters.length > 0}
-          disabled={c.isProcessing}
+          disabled={c.isProcessing || !c.image}
         />
         <ContinueBar
           isModified={c.isModified}
