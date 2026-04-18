@@ -50,7 +50,7 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
 
   const renderButtonContent = () =>
     isRendering ? (
-      <><Loader2 className="w-4 h-4 animate-spin" /> Gerando preview...</>
+      <><Loader2 className="w-4 h-4 animate-spin" /> Processando compra...</>
     ) : (
       <>
         Finalizar
