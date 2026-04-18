@@ -91,7 +91,7 @@ const ImageControls = ({
           </TabsContent>
         )}
 
-        <TabsContent value="galeria" className="mt-2 max-h-[30vh] overflow-y-auto lg:max-h-none lg:overflow-visible">
+        <TabsContent value="galeria" className={`mt-2 max-h-[30vh] overflow-y-auto lg:max-h-none lg:overflow-visible ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}>
           <GalleryTab onSelect={onGallerySelect} />
         </TabsContent>
       </Tabs>
