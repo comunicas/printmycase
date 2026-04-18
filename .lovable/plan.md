@@ -1,46 +1,47 @@
 
-## Recompactar imagens ai-showcase para 252x252
+## Auditoria de imagens em /public/lovable-uploads/
 
-### Análise
+### Achados
 
-As imagens `ai-showcase-1-sm.webp` até `ai-showcase-5-sm.webp` são usadas no carrossel marquee do `AiCoinsSection` como fallback (quando não há gerações públicas). No código:
+| Arquivo | Tamanho | Dimensão | Uso real | Status |
+|---|---|---|---|---|
+| `ai-showcase-[1-5].png` | ~2.6 MB cada (~13 MB total) | 1920x1920 | **NENHUM** | 🔴 Órfão |
+| `ai-showcase-[1-5].webp` | ~1.1 MB cada (~5.9 MB total) | 1024x1024 | **NENHUM** (só `-sm` é usado) | 🔴 Órfão |
+| `ai-showcase-[1-5]-sm.webp` | ~6-16 KB | 352x352 | AiCoinsSection ✅ | OK (já otimizados) |
+| `logo-printmycase.png` | 236 KB | 800x800 | **NENHUM** (usa `/logo-printmycase-sm.webp` na raiz) | 🔴 Órfão |
+| `stripe-logo.png` | 63 KB | 1920x799 | **NENHUM** | 🔴 Órfão |
+| `stripe-logo.webp` | 34 KB | 1920x799 | **NENHUM** (só `-sm` é usado em PaymentBadges) | 🔴 Órfão |
+| `stripe-logo-sm.webp` | 3.7 KB | 240x100 | PaymentBadges ✅ | OK |
+| `4824363f-...png` | 134 KB | 757x364 | **NENHUM** | 🔴 Órfão |
+| `79379ce7-...png` | 55 KB | 728x157 | **NENHUM** (já existe `.webp`, e nem o webp é usado) | 🔴 Órfão |
+| `79379ce7-...webp` | 18 KB | 728x157 | **NENHUM** | 🔴 Órfão |
 
-```tsx
-className="flex-shrink-0 w-36 sm:w-40 md:w-44 ..."
-width={176} height={176}
-```
+### Conclusão
 
-Tamanho máximo de exibição: **176px CSS** (w-44 = 11rem = 176px). Em telas 2x densidade = **352px reais** — exatamente o tamanho atual. Em telas 1x = 176px.
+**Nenhuma imagem em `/public/lovable-uploads/` está superdimensionada na produção** — todos os arquivos efetivamente servidos (`-sm.webp`) já estão otimizados. Porém há **~19 MB em arquivos órfãos** no bundle de deploy que aumentam o tamanho do repo e do upload mas **NÃO impactam performance do usuário** (não são baixados, não estão referenciados em código nem HTML).
 
-### Problema com a proposta
+### Plano de ação
 
-Reduzir para **252x252** prejudicaria a nitidez em displays Retina/2x (que renderizariam 252px num espaço que pede 352px = upscale visível e borrado). O ganho de ~30KB não compensa a degradação visual perceptível em mobile (onde quase todos os dispositivos são 2x/3x).
+**Deletar 13 arquivos órfãos** (PNGs originais e WebPs grandes mantidos como "fonte" mas não usados):
 
-### Alternativas mais seguras
+- `ai-showcase-1.png`, `ai-showcase-2.png`, `ai-showcase-3.png`, `ai-showcase-4.png`, `ai-showcase-5.png`
+- `ai-showcase-1.webp`, `ai-showcase-2.webp`, `ai-showcase-3.webp`, `ai-showcase-4.webp`, `ai-showcase-5.webp`
+- `logo-printmycase.png` (versão grande não usada — a `-sm.webp` na raiz `/public/` é a usada)
+- `stripe-logo.png`, `stripe-logo.webp`
+- `4824363f-6c57-4e39-a449-04a7c58c4a1a.png`
+- `79379ce7-c6b3-4051-9947-c8dfc449251d.png`, `79379ce7-c6b3-4051-9947-c8dfc449251d.webp`
 
-1. **Manter 352x352 e apenas recomprimir** com qualidade WebP 70-75 (atual provavelmente está em 85-90). Economia estimada de 20-30KB **sem perda de resolução**.
-2. **Reduzir para 320x320** (cobre ~1.8x density, aceitável para imagens decorativas pequenas). Economia ~15-20KB, perda de nitidez mínima.
-3. **Não fazer nada**: essas imagens só carregam quando NÃO há gerações públicas (fallback), e atualmente o site tem gerações públicas → o marquee nem aparece em produção.
+**Ganho**: ~19 MB no repositório / deploy bundle. **Zero impacto de runtime** (nenhum usuário baixa esses arquivos hoje).
 
-### Verificação necessária
+### Riscos
 
-Antes de qualquer ação, preciso confirmar:
-- Se o fallback é realmente acionado em produção (provavelmente não, pois a tabela `public_ai_generations` tem dados).
-- Qualidade atual de compressão dos arquivos.
+- Mínimo. Arquivos foram verificados via `grep -rn` em `src/`, `index.html` e `public/` — nenhuma referência encontrada.
+- Backup natural: o git histórico preserva os arquivos caso necessário restaurar.
 
-### Plano proposto
+### Importante — não confundir
 
-**Pular esta otimização.** Justificativa:
-1. As imagens são fallback raramente exibido (há gerações públicas ativas).
-2. Reduzir para 252px degradaria visivelmente em telas Retina.
-3. O ganho de 30KB em recursos que não carregam na maioria dos pageviews tem ROI baixíssimo.
+A versão `logo-printmycase.png` referenciada em `src/pages/Unsubscribe.tsx` aponta para o **bucket Supabase** (`storage/v1/object/public/email-assets/logo-printmycase.png`), não para `/public/lovable-uploads/`. Seguro deletar o local.
 
-**Recomendação alternativa**: se quiser ganho garantido, recomprimir os 5 arquivos mantendo 352x352 mas com qualidade WebP 72 (similar ao que fizemos no `hero-bg-optimized.webp`). Isso requer reupload manual dos arquivos otimizados em `/public/lovable-uploads/` — posso fazer isso via script no modo default.
+### Recomendação
 
-### Decisão pendente
-
-Qual caminho prefere?
-- **A)** Pular (recomendado — fallback raramente usado)
-- **B)** Recomprimir mantendo 352x352 com qualidade 72 (~20KB ganho, zero perda visual)
-- **C)** Reduzir para 320x320 com qualidade 75 (~25KB ganho, perda mínima em 2x)
-- **D)** Seguir a proposta original 252x252 (~30KB ganho, perda visível em Retina)
+Aprove para eu executar a limpeza. Caso prefira manter os PNGs originais como "fonte mestre" para regenerações futuras, me avise — posso deletar apenas os WebPs grandes intermediários (ai-showcase-[1-5].webp, stripe-logo.webp, 79379ce7.webp), mantendo os PNGs. Ganho ainda seria ~6 MB.
