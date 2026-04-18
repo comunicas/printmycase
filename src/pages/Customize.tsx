@@ -117,6 +117,7 @@ const Customize = () => {
             onPreviewStart={setPreviewImageUrl}
             onPreviewEnd={() => setPreviewImageUrl(null)}
             onGallerySelect={c.handleGalleryImageSelect}
+            isProcessing={c.isProcessing}
           />
 
           <div className="mt-auto">
