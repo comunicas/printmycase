@@ -7,6 +7,16 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   build: {
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split Leaflet (only used in lazy StoreLocator) into its own chunk
+          leaflet: ["leaflet", "react-leaflet", "@react-leaflet/core"],
+          // Split Supabase SDK so storage/auth subparts can be tree-shaken better
+          supabase: ["@supabase/supabase-js"],
+        },
+      },
+    },
   },
   server: {
     host: "::",
