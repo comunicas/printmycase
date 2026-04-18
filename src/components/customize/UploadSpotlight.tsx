@@ -12,7 +12,7 @@ const UploadSpotlight = ({ open, modelName, onUploadClick, onGalleryClick }: Upl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-300">
-      <div className="flex flex-col items-center gap-5 bg-background rounded-2xl p-8 mx-4 max-w-sm w-full shadow-2xl border border-border animate-in zoom-in-95 duration-300">
+      <div className="flex flex-col items-center justify-center gap-5 bg-background w-screen h-[100dvh] rounded-none mx-0 p-6 pb-[max(2rem,env(safe-area-inset-bottom))] border-0 shadow-2xl animate-in zoom-in-95 duration-300 sm:w-full sm:h-auto sm:max-w-sm sm:rounded-2xl sm:mx-4 sm:p-8 sm:pb-8 sm:border sm:border-border sm:justify-start">
         <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
           <Upload className="w-10 h-10 text-primary" />
         </div>
