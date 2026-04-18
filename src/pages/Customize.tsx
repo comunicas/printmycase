@@ -48,14 +48,16 @@ const Customize = () => {
 
   return (
     <div className="h-dvh w-full bg-background flex flex-col overflow-hidden">
-      <CustomizeHeader
-        productName={c.productName}
-        onBack={() => navigate("/customize")}
-        productImage={c.product?.images?.[0] || c.product?.device_image}
-        draftSaved={c.draftSaved}
-        currentSlug={c.product?.slug}
-        onShowIntro={() => setShowIntro(true)}
-      />
+      <div className="relative z-50">
+        <CustomizeHeader
+          productName={c.productName}
+          onBack={() => navigate("/customize")}
+          productImage={c.product?.images?.[0] || c.product?.device_image}
+          draftSaved={c.draftSaved}
+          currentSlug={c.product?.slug}
+          onShowIntro={() => setShowIntro(true)}
+        />
+      </div>
 
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-0 px-4 lg:px-0 overflow-hidden">
         {/* Preview — left side on desktop */}
