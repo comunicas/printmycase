@@ -73,6 +73,7 @@ const Customize = () => {
             processingMessage={c.processingMsg || undefined}
             previewImageUrl={previewImageUrl}
             onGalleryClick={() => setShowGalleryPicker(true)}
+            disabled={c.isProcessing}
           />
         </div>
 
