@@ -15,6 +15,19 @@ import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import PaymentBadges from "@/components/PaymentBadges";
 
+// Inject preload for the hero LCP image as early as possible (module eval time)
+// This lets the browser fetch the hero image in parallel with the JS bundle,
+// significantly reducing LCP on the landing page.
+if (typeof document !== "undefined" && !document.querySelector(`link[rel="preload"][href="${heroBg}"]`)) {
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "image";
+  link.type = "image/webp";
+  link.href = heroBg;
+  link.fetchPriority = "high";
+  document.head.appendChild(link);
+}
+
 // Lazy-load below-the-fold sections to reduce initial JS bundle (improves FCP/LCP)
 const AiCoinsSection = lazy(() => import("@/components/AiCoinsSection"));
 const FaqSection = lazy(() => import("@/components/FaqSection"));
