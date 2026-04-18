@@ -183,7 +183,7 @@ const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="max-w-xs p-0 gap-0 rounded-2xl overflow-hidden z-[110] sm:h-auto h-auto top-[calc(50%-80px)] sm:top-[50%] max-h-[calc(100dvh-200px)] sm:max-h-[85vh]">
+      <DialogContent className="max-w-xs p-0 gap-0 rounded-2xl overflow-hidden z-[110] sm:max-h-[85vh] flex flex-col justify-center pb-[160px] sm:pb-0">
         <div className="overflow-hidden">
           <div
             className={`flex flex-col items-center text-center px-6 pt-8 pb-6 ${current.isWelcome ? "bg-gradient-to-b from-primary/5 to-transparent" : ""}`}
