@@ -223,12 +223,18 @@ const Landing = () => {
           </section>
 
           {/* AI Coins */}
-          <AiCoinsSection />
+          <Suspense fallback={<div className="min-h-[200px]" />}>
+            <AiCoinsSection />
+          </Suspense>
 
           {/* Store Locator */}
-          <StoreLocator />
+          <Suspense fallback={<div className="min-h-[400px]" />}>
+            <StoreLocator />
+          </Suspense>
 
-          <InstagramShowcase />
+          <Suspense fallback={<div className="min-h-[300px]" />}>
+            <InstagramShowcase />
+          </Suspense>
 
 
           {/* Testimonials */}
