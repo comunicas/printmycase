@@ -140,8 +140,8 @@ const SelectModel = () => {
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-muted-foreground">
             {hasActiveFilters
-              ? `${filtered.length} de ${products.length} modelos`
-              : `${products.length} modelos disponíveis`}
+              ? `${filtered.length} resultados`
+              : `${filtered.length} modelos`}
           </span>
           {hasActiveFilters && (
             <Button size="sm" variant="ghost" onClick={clearFilters} className="gap-1 text-muted-foreground">
