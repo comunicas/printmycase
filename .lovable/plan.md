@@ -1,24 +1,21 @@
 
-The user wants the IntroDialog to be 100% fullscreen on mobile (instead of the current centered card with `pb-[160px]` workaround). This is also consistent with the project memory rule: "Modals: Mobile = fullscreen with straight corners, Desktop = centered cards with rounded corners."
+## Tornar UploadSpotlight fullscreen no mobile
 
-## Plan: Fullscreen IntroDialog on mobile
+Aplicar o mesmo padrão da `IntroDialog`: fullscreen no mobile, card centralizado no desktop.
 
-### Changes to `src/components/customize/IntroDialog.tsx`
+### Mudança em `src/components/customize/UploadSpotlight.tsx`
 
-Update `DialogContent` className to:
-- **Mobile**: fullscreen (`w-screen h-[100dvh] max-w-none rounded-none`), no bottom padding hack
-- **Desktop (sm+)**: keep current centered card (`sm:max-w-xs sm:h-auto sm:rounded-2xl sm:max-h-[85vh]`)
+Card interno (linha 15) — alterar classes para:
+- **Mobile**: ocupar tela inteira (`w-screen h-[100dvh] rounded-none mx-0 p-6 justify-center`)
+- **Desktop**: manter card atual (`sm:w-full sm:h-auto sm:max-w-sm sm:rounded-2xl sm:mx-4 sm:p-8 sm:justify-start`)
 
-Restructure inner layout to flexbox column with:
-- Illustration/text area: `flex-1` and centered (so content sits in the middle of the screen on mobile)
-- Dots + action buttons: pinned to bottom with safe-area padding (`pb-[env(safe-area-inset-bottom)]`) and enough bottom margin to clear the fixed `MobileTabBar` + `ContinueBar` (~140px). Use `mb-[160px] sm:mb-0` on the actions block, OR better: keep actions visible by giving the entire dialog `pb-[160px]` only on mobile fullscreen — but since fullscreen covers the whole viewport including the bottom bars, we need actions above the bars.
+Adicionar `pb-[max(2rem,env(safe-area-inset-bottom))]` no mobile para safe area.
 
-Actually, since this is a Radix Dialog with `z-[110]` it overlays everything including the bottom bars, so on fullscreen the buttons can sit at the actual bottom of the screen (no need to clear bars). Use `pb-[max(1rem,env(safe-area-inset-bottom))]`.
+Manter o ícone, título, descrição e botões inalterados — apenas o container vira fullscreen com conteúdo verticalmente centralizado.
 
-### Verification
-After changes, test by clearing `localStorage.customize_intro_seen` and reloading `/customize/galaxy-a05s` at 390x844. Confirm:
-- Modal covers full screen, no rounded corners on mobile
-- Welcome content visually centered
-- Dots + Anterior/Próximo buttons visible at bottom
-- No toast overlap (already handled previously)
-- Desktop unchanged (centered card)
+### Verificação
+Abrir `/customize/galaxy-a23` (sem rascunho/foto) no mobile (390x844) e confirmar:
+- Modal cobre 100% da tela, sem cantos arredondados
+- Conteúdo centralizado verticalmente
+- Botão "Escolher foto" e "Ou escolha da galeria" visíveis acima da safe area
+- Desktop permanece com card centralizado
