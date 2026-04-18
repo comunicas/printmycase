@@ -1135,22 +1135,6 @@ export type Database = {
           image_url: string | null
           public_image_url: string | null
         }
-        Insert: {
-          created_at?: string | null
-          filter_name?: string | null
-          generation_type?: string | null
-          id?: string | null
-          image_url?: string | null
-          public_image_url?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          filter_name?: string | null
-          generation_type?: string | null
-          id?: string | null
-          image_url?: string | null
-          public_image_url?: string | null
-        }
         Relationships: []
       }
     }

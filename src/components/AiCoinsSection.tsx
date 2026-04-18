@@ -7,14 +7,6 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { getOptimizedUrl } from "@/lib/image-utils";
 import AiGalleryModal from "@/components/AiGalleryModal";
 
-const showcaseImages = [
-  "/lovable-uploads/ai-showcase-1-sm.webp",
-  "/lovable-uploads/ai-showcase-2-sm.webp",
-  "/lovable-uploads/ai-showcase-3-sm.webp",
-  "/lovable-uploads/ai-showcase-4-sm.webp",
-  "/lovable-uploads/ai-showcase-5-sm.webp",
-];
-
 interface PublicGeneration {
   id: string;
   image_url: string;
@@ -22,8 +14,7 @@ interface PublicGeneration {
   filter_name: string | null;
 }
 
-const truncateFilter = (name: string, max = 20) =>
-  name.length > max ? name.slice(0, max) + "…" : name;
+const ASPECTS = ["aspect-[3/4]", "aspect-square", "aspect-[4/5]", "aspect-[2/3]"];
 
 const AiCoinsSection = () => {
   const navigate = useNavigate();
@@ -37,12 +28,16 @@ const AiCoinsSection = () => {
       .select("id, image_url, public_image_url, filter_name")
       .order("created_at", { ascending: false })
       .limit(8)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("public_ai_generations query failed:", error);
+          return;
+        }
         if (data?.length) setImages(data);
       });
   }, []);
 
-  const hasPublicImages = images.length > 0;
+  if (images.length === 0) return null;
 
   const handleCardClick = (img: PublicGeneration) => {
     setLightboxInitial(getOptimizedUrl(img.public_image_url || img.image_url, 800));
@@ -62,7 +57,6 @@ const AiCoinsSection = () => {
         />
 
         <div className="relative z-10 max-w-5xl mx-auto space-y-12">
-          {/* Header */}
           <ScrollReveal>
             <div className="text-center space-y-4">
               <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-sm font-medium text-yellow-300">
@@ -81,80 +75,49 @@ const AiCoinsSection = () => {
             </div>
           </ScrollReveal>
 
-          {/* Gallery — public generations or static fallback */}
           <ScrollReveal delay={100}>
-            {hasPublicImages ? (
-              <div className="columns-2 md:columns-4 gap-3 md:gap-4 space-y-3 md:space-y-4">
-                {images.map((img, i) => {
-                  const aspects = [
-                    "aspect-[3/4]",
-                    "aspect-square",
-                    "aspect-[4/5]",
-                    "aspect-[2/3]",
-                  ];
-                  const aspect = aspects[i % aspects.length];
-                  return (
-                    <div
-                      key={img.id}
-                      className={`group relative ${aspect} rounded-xl overflow-hidden ring-1 ring-white/10 shadow-lg shadow-black/30 break-inside-avoid cursor-pointer`}
-                      onClick={() => handleCardClick(img)}
-                    >
-                      <img
-                        src={getOptimizedUrl(img.public_image_url || img.image_url, 400)}
-                        alt={img.filter_name || "Geração IA"}
-                        loading="lazy"
-                        decoding="async"
-                        fetchPriority="low"
-                        width={400}
-                        height={400}
-                        onError={(e) => {
-                          (e.currentTarget.parentElement as HTMLElement).style.display = "none";
-                        }}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
-                        {img.filter_name && (
-                          <span className="text-xs font-medium text-white bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                            {truncateFilter(img.filter_name)}
-                          </span>
-                        )}
-                      </div>
-                      {/* Mobile: always-visible badge */}
+            <div className="columns-2 md:columns-4 gap-3 md:gap-4 space-y-3 md:space-y-4">
+              {images.map((img, i) => {
+                const aspect = ASPECTS[i % ASPECTS.length];
+                return (
+                  <div
+                    key={img.id}
+                    className={`group relative ${aspect} rounded-xl overflow-hidden ring-1 ring-white/10 shadow-lg shadow-black/30 break-inside-avoid cursor-pointer`}
+                    onClick={() => handleCardClick(img)}
+                  >
+                    <img
+                      src={getOptimizedUrl(img.public_image_url || img.image_url, 400)}
+                      alt={img.filter_name || "Geração IA"}
+                      loading="lazy"
+                      decoding="async"
+                      fetchPriority="low"
+                      width={400}
+                      height={400}
+                      onError={(e) => {
+                        (e.currentTarget.parentElement as HTMLElement).style.display = "none";
+                      }}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
                       {img.filter_name && (
-                        <div className="absolute top-1.5 left-1.5 md:hidden">
-                          <span className="text-[10px] font-medium text-white bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5">
-                            {truncateFilter(img.filter_name)}
-                          </span>
-                        </div>
+                        <span className="text-xs font-medium text-white bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                          {img.filter_name}
+                        </span>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-                <div className="flex gap-4 w-max animate-marquee hover:[animation-play-state:paused]">
-                  {[...showcaseImages, ...showcaseImages].map((src, i) => (
-                    <div
-                      key={i}
-                      className="flex-shrink-0 w-36 sm:w-40 md:w-44 rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-lg shadow-black/30"
-                    >
-                      <img
-                        src={src}
-                        alt={`Exemplo de filtro IA ${(i % showcaseImages.length) + 1}`}
-                        className="aspect-square w-full object-cover"
-                        loading={i < showcaseImages.length ? "eager" : "lazy"}
-                        width={176}
-                        height={176}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                    {img.filter_name && (
+                      <div className="absolute top-1.5 left-1.5 md:hidden">
+                        <span className="text-[10px] font-medium text-white bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5">
+                          {img.filter_name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </ScrollReveal>
 
-          {/* CTAs */}
           <ScrollReveal delay={300}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button
@@ -165,17 +128,15 @@ const AiCoinsSection = () => {
                 Crie a Sua
                 <ArrowRight className="w-4 h-4" />
               </Button>
-              {hasPublicImages && (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="gap-2 text-base border-white/20 text-white hover:bg-white/10"
-                  onClick={() => { setLightboxInitial(null); setGalleryOpen(true); }}
-                >
-                  <Images className="w-4 h-4" />
-                  Ver Todas
-                </Button>
-              )}
+              <Button
+                size="lg"
+                variant="outline"
+                className="gap-2 text-base border-white/20 text-white hover:bg-white/10"
+                onClick={() => { setLightboxInitial(null); setGalleryOpen(true); }}
+              >
+                <Images className="w-4 h-4" />
+                Ver Todas
+              </Button>
             </div>
           </ScrollReveal>
         </div>
