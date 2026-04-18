@@ -287,6 +287,16 @@ Páginas pesadas usam `React.lazy()` com `Suspense` + `LoadingSpinner`:
 - **Lazy**: `Admin`, `Catalog`, `Product`, `Customize`, `Checkout`, `Orders`, `Profile`, `Collections`, `CollectionPage`, `DesignPage`, `Coins`, `KnowledgeBase`, `KbCategory`, `KbArticle`, `MyGenerations`
 - **Estáticas**: `Landing`, `Login`, `Signup`, `ResetPassword`, `CheckoutSuccess`, `NotFound`, `RequestModel`, `LegalDocument`, `Unsubscribe`
 
+### Onboarding da Customização
+
+Quando o usuário entra em `/customize/:slug` sem imagem carregada, o `UploadSpotlight` (overlay fullscreen, `z-40`) cobre o `PhonePreview` exibindo CTAs "Escolher foto" e "Ou escolha da galeria". Enquanto o spotlight está ativo:
+
+- `MobileTabBar` (Ajustes / Filtros IA / Galeria) e `ContinueBar` ficam **desabilitados** (via `disabled={!c.image}`) para evitar cliques acidentais nos botões atrás do overlay.
+- Diálogos Radix (`TermsDialog`, `LoginDialog`, `GalleryPicker`) sobem acima do spotlight pois usam `z-50` no portal padrão.
+- `IntroDialog` permanece no topo absoluto (`z-[110]`).
+
+O `TermsDialog` segue o mesmo padrão fullscreen-mobile do `IntroDialog`/`UploadSpotlight`: `w-screen h-[100dvh] rounded-none` em mobile e card centralizado (`sm:max-w-md sm:rounded-lg`) em desktop, garantindo que cubra completamente a navegação inferior.
+
 ### Filtros IA
 
 O sistema de filtros IA permite aplicar estilos artísticos (style transfer) às imagens do usuário antes da impressão.

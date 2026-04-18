@@ -172,13 +172,8 @@ const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
   const enterPhase = animating && displayStep === step;
 
   let transform = "translateX(0)";
-  let opacity = "1";
   if (exitPhase) {
     transform = `translateX(${direction * -30}%)`;
-    opacity = "0";
-  } else if (enterPhase) {
-    // Content just swapped, animating in from opposite side
-    // We use a brief no-transition reset then animate
   }
 
   return (

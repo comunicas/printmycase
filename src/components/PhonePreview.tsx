@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, Move, Loader2, ImagePlus, Sparkles } from "lucide-react";
+import { Camera, Move, Loader2, Sparkles } from "lucide-react";
 
 interface PhonePreviewProps {
   image: string | null;
@@ -242,36 +242,6 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             {image && !isDragging && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
-              </div>
-            )}
-            {!image && (
-              <div className="flex items-center justify-center h-full w-full">
-                <div className="text-center space-y-3 px-4">
-                  <button
-                    onClick={() => inputRef.current?.click()}
-                    className="w-full border-2 border-dashed border-primary/30 hover:border-primary/60 bg-primary/5 hover:bg-primary/10 transition-all group/upload p-4 rounded-2xl"
-                  >
-                    <div className="w-14 h-14 lg:w-16 lg:h-16 mx-auto rounded-2xl bg-primary/15 flex items-center justify-center group-hover/upload:bg-primary/25 transition-colors animate-pulse">
-                      <ImagePlus className="w-7 h-7 lg:w-8 lg:h-8 text-primary group-hover/upload:text-primary transition-colors" />
-                    </div>
-                    <div className="space-y-1 mt-3">
-                      <p className="text-sm font-semibold text-foreground group-hover/upload:text-primary transition-colors">
-                        Envie sua foto aqui
-                      </p>
-                      <p className="text-[11px] text-muted-foreground leading-snug">
-                        Use uma foto sua, do pet,<br/>da família… a criatividade é sua!
-                      </p>
-                    </div>
-                  </button>
-                  {onGalleryClick && (
-                    <button
-                      onClick={onGalleryClick}
-                      className="w-full text-xs font-medium text-primary/70 hover:text-primary transition-colors py-2 border border-dashed border-primary/20 rounded-lg hover:border-primary/40"
-                    >
-                      📷 Ou escolha da galeria
-                    </button>
-                  )}
-                </div>
               </div>
             )}
           </div>
