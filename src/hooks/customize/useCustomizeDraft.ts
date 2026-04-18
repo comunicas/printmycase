@@ -134,6 +134,8 @@ export function useCustomizeDraft(params: UseCustomizeDraftParams) {
         toast({ title: "Rascunho recuperado" });
       } catch (error) {
         console.error("Erro ao restaurar checkout pendente", error);
+      } finally {
+        setRestoring(false);
       }
     })();
   }, [productSlug, productId, userId, fetchPending, getSignedUrl, setScale, setPosition, setRotation, setOriginalImage, setFilteredImage, setActiveFilterId, setImageWithResolution, toast]);
@@ -156,5 +158,5 @@ export function useCustomizeDraft(params: UseCustomizeDraftParams) {
     return () => clearTimeout(timeout);
   }, [productSlug, image, originalImage, scale, position, rotation]);
 
-  return { draftSaved };
+  return { draftSaved, restoring };
 }
