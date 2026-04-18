@@ -1,21 +1,25 @@
 
-## Tornar UploadSpotlight fullscreen no mobile
+O usuário está vendo o `UploadSpotlight` (modal fullscreen quando não há imagem) e percebeu que os botões da `MobileTabBar` (Ajustes, Filtros IA, Galeria) e do `ContinueBar` (Finalizar) abaixo continuam clicáveis, mesmo o modal estando ativo. Isso pode causar comportamentos estranhos (abrir overlays atrás do modal).
 
-Aplicar o mesmo padrão da `IntroDialog`: fullscreen no mobile, card centralizado no desktop.
+## Análise
 
-### Mudança em `src/components/customize/UploadSpotlight.tsx`
+Em `src/pages/Customize.tsx`:
+- O `UploadSpotlight` aparece quando `!c.image`.
+- A `MobileTabBar` recebe `disabled={c.isProcessing}` — não considera ausência de imagem.
+- O `ContinueBar` mobile já tem `disabled={!c.image || c.isProcessing}`, então o botão Finalizar já está desabilitado corretamente. ✅
+- A `FilterHistoryBar` só aparece quando há histórico, então não é um problema agora.
+- A `MobileTabBar` é o problema: clicar em "Galeria" abre o `MobileTabOverlay` por trás do spotlight.
 
-Card interno (linha 15) — alterar classes para:
-- **Mobile**: ocupar tela inteira (`w-screen h-[100dvh] rounded-none mx-0 p-6 justify-center`)
-- **Desktop**: manter card atual (`sm:w-full sm:h-auto sm:max-w-sm sm:rounded-2xl sm:mx-4 sm:p-8 sm:justify-start`)
+## Plano
 
-Adicionar `pb-[max(2rem,env(safe-area-inset-bottom))]` no mobile para safe area.
+**Arquivo: `src/pages/Customize.tsx`**
 
-Manter o ícone, título, descrição e botões inalterados — apenas o container vira fullscreen com conteúdo verticalmente centralizado.
+Alterar a prop `disabled` da `MobileTabBar` para também considerar quando não há imagem:
 
-### Verificação
-Abrir `/customize/galaxy-a23` (sem rascunho/foto) no mobile (390x844) e confirmar:
-- Modal cobre 100% da tela, sem cantos arredondados
-- Conteúdo centralizado verticalmente
-- Botão "Escolher foto" e "Ou escolha da galeria" visíveis acima da safe area
-- Desktop permanece com card centralizado
+```tsx
+disabled={c.isProcessing || !c.image}
+```
+
+Isso desabilita as três abas (Ajustes, Filtros IA, Galeria) enquanto o `UploadSpotlight` está ativo, prevenindo cliques acidentais. O botão "Ou escolha da galeria" dentro do spotlight continua funcionando normalmente para abrir o `GalleryPicker`.
+
+Mudança mínima, 1 linha.
