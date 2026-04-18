@@ -1,54 +1,19 @@
 
 
-## Ordenar modelos da versão mais nova para mais antiga
+## Verificar ordenação no mobile (390x844)
 
-Atualmente em `src/pages/SelectModel.tsx` o sort é alfabético (`a.name.localeCompare(b.name)`), o que faz "Galaxy A05" aparecer antes do "Galaxy S24", e "iPhone 11" antes do "iPhone 16".
+Abrir o preview em viewport mobile na rota `/customize` e validar:
 
-### Solução
+1. **Filtro Apple**: iPhones devem aparecer do 17 Pro Max → 17 Pro → 17 → 16 Pro Max → ... → 11.
+2. **Filtro Samsung**: Galaxy do S24 Ultra → S24 → S23 → ... → A55 → ... → A05.
 
-Substituir o sort alfabético por um sort que extrai o número de versão do nome e ordena descendente (mais novo primeiro). Modelos com sufixos (Pro, Pro Max, Plus, Ultra, FE, s) ficam agrupados pela versão e ordenados internamente por relevância.
+### Passos
+1. `navigate_to_sandbox` com viewport 390x844 na URL `/customize`.
+2. `screenshot` da view inicial (filtro "Todos").
+3. `act` para clicar no chip "Apple" → `screenshot` para capturar a ordem dos iPhones (rolar se necessário).
+4. `act` para clicar no chip "Samsung" → `screenshot` para capturar a ordem dos Galaxy.
+5. Reportar a ordem observada vs. esperada. Se houver divergência, listar os modelos fora de ordem para ajuste do `SUFFIX_WEIGHT` ou da regex em `parseModel`.
 
-### Lógica de ordenação
-
-Para cada produto:
-1. Extrair o número principal (ex: "iPhone 16 Pro Max" → 16, "Galaxy S24 Ultra" → 24, "Galaxy A05s" → 5).
-2. Extrair peso do sufixo (Ultra/Pro Max > Pro > Plus > FE > base > "s"/"e" lite).
-3. Ordenar por: marca prioritária → número desc → peso do sufixo desc → nome.
-
-```ts
-const SUFFIX_WEIGHT: Record<string, number> = {
-  "ultra": 5, "pro max": 4, "pro": 3, "plus": 2, "max": 2,
-  "fe": 1, "": 0, "s": -1, "e": -1, "mini": -2,
-};
-
-function parseModel(name: string) {
-  const clean = name.replace(/^Capa\s+/i, "");
-  const numMatch = clean.match(/(\d+)/);
-  const version = numMatch ? parseInt(numMatch[1], 10) : 0;
-  const afterNum = numMatch ? clean.slice(numMatch.index! + numMatch[0].length).trim().toLowerCase() : "";
-  const suffix = afterNum.replace(/[^a-z\s]/g, "").trim();
-  const weight = SUFFIX_WEIGHT[suffix] ?? 0;
-  return { version, weight };
-}
-```
-
-Sort final dentro do `useMemo` de `filtered`:
-```ts
-return [...list].sort((a, b) => {
-  const A = parseModel(a.name);
-  const B = parseModel(b.name);
-  if (B.version !== A.version) return B.version - A.version;
-  if (B.weight !== A.weight) return B.weight - A.weight;
-  return a.name.localeCompare(b.name);
-});
-```
-
-### Resultado esperado
-
-- **Apple**: iPhone 17 Pro Max → 17 Pro → 17 → 16 Pro Max → 16 → ... → 11
-- **Samsung**: Galaxy S24 Ultra → S24 → S23 → ... → A55 → A35 → ... → A05s → A05
-
-### Arquivos
-
-- `src/pages/SelectModel.tsx`: 1 arquivo, ~15 linhas (helper + sort).
+### Sem alterações de código nesta etapa
+Apenas validação visual. Caso encontre desvios (ex: "iPhone SE" sem número, "Galaxy A05s" mal pesado), proponho ajuste pontual no `SUFFIX_WEIGHT`/regex em `src/pages/SelectModel.tsx`.
 
