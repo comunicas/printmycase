@@ -1,25 +1,33 @@
 
-## Verificar grid mosaico + nomes de filtro limpos em produção
+## Auditoria de assets — Resultado
 
-### Plano
+Inventariei `src/assets/` e `public/` (incluindo `lovable-uploads/`) e validei cada arquivo via grep no código.
 
-1. `navigate_to_url` → `https://studio.printmycase.com.br/`
-2. Scroll até a seção "Transforme qualquer foto em arte com IA"
-3. `screenshot` para confirmar:
-   - Grid mosaico Pinterest-style visível (não fallback)
-   - Badges com nomes curtos e limpos (ex.: "Colorido", "Wallpaper", "Pop Art")
-   - Sem strings tipo "Reorganize the provided image..." ou "Crie uma imagem com base na orignal..."
-4. `list_network_requests` filtrando `public_ai_generations` para confirmar:
-   - Status 200
-   - Payload com `filter_name` populado pelo JOIN com `ai_filters.name`
+### Resultado: zero assets órfãos
 
-### Critérios de sucesso
+| Arquivo | Onde é usado |
+|---|---|
+| `src/assets/hero-bg-optimized.webp` | `Landing.tsx` (LCP do hero) |
+| `public/favicon.ico` | Servido automaticamente pelo browser em `/favicon.ico` |
+| `public/logo-printmycase-sm.webp` | `AppHeader`, `IntroDialog`, `CheckoutSuccess`, `Landing` (footer) + preload no `index.html` |
+| `public/placeholder.svg` | `Customize.tsx`, `ProductGallery.tsx` (fallback de imagens ausentes) |
+| `public/lovable-uploads/stripe-logo-sm.webp` | `PaymentBadges.tsx` |
+| `public/googledc7e349a7903758f.html` | Verificação Google Search Console (deve permanecer) |
+| `public/llms.txt` | AEO — referenciado em `robots.txt` (memória `mem://seo/aeo-optimization`) |
+| `public/robots.txt` | Padrão SEO, servido em `/robots.txt` |
 
-- Visual: grid mosaico + badges com nomes curados
-- Network: query 200 com `filter_name` limpo
-- Sem prompts brutos vazando na UI
+### Conclusão
 
-### Se nomes ainda aparecem como prompt bruto
+**Nenhum asset para remover.** A limpeza anterior (Fase 1+2) já eliminou os 6 órfãos que existiam (`logo-printmycase.png` + 5 `ai-showcase-*-sm.webp`). O diretório está enxuto.
 
-- Pode ser cache CDN da PostgREST → forçar reload com cache busting
-- Verificar se `filter_id` está populado em `user_ai_generations` (LEFT JOIN retorna NULL se não houver match) → nesse caso, fallback de UI ou backfill de `filter_id` necessário
+### Próximas oportunidades de redução de bundle (fora desta auditoria)
+
+Se quiser continuar reduzindo peso, as oportunidades restantes não são "remover arquivos não usados", mas sim **otimizar arquivos em uso**:
+
+1. **`favicon.ico` (~56 KB)** — já existe plano separado aprovado para gerar versões 16/32/180 px e reduzir para ~5 KB total.
+2. **`hero-bg-optimized.webp`** — verificar se já está em qualidade ideal (WebP q=75-80) e dimensão adequada (1920×1080 max).
+3. **Auditar `src/integrations/lovable/`** e dependências npm pesadas (fora do escopo "assets").
+
+### Nada a executar
+
+Esta auditoria não requer mudanças de código. Apenas confirma que o diretório está limpo após as fases anteriores.
