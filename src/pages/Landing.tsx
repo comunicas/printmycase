@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Smartphone, Upload, Package, Star, ArrowRight, ChevronRight } from
@@ -12,12 +13,13 @@ import { getOptimizedUrl } from "@/lib/image-utils";
 import AppHeader from "@/components/AppHeader";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
-import AiCoinsSection from "@/components/AiCoinsSection";
-
-import FaqSection from "@/components/FaqSection";
-import StoreLocator from "@/components/StoreLocator";
-import InstagramShowcase from "@/components/InstagramShowcase";
 import PaymentBadges from "@/components/PaymentBadges";
+
+// Lazy-load below-the-fold sections to reduce initial JS bundle (improves FCP/LCP)
+const AiCoinsSection = lazy(() => import("@/components/AiCoinsSection"));
+const FaqSection = lazy(() => import("@/components/FaqSection"));
+const StoreLocator = lazy(() => import("@/components/StoreLocator"));
+const InstagramShowcase = lazy(() => import("@/components/InstagramShowcase"));
 
 
 
@@ -221,12 +223,18 @@ const Landing = () => {
           </section>
 
           {/* AI Coins */}
-          <AiCoinsSection />
+          <Suspense fallback={<div className="min-h-[200px]" />}>
+            <AiCoinsSection />
+          </Suspense>
 
           {/* Store Locator */}
-          <StoreLocator />
+          <Suspense fallback={<div className="min-h-[400px]" />}>
+            <StoreLocator />
+          </Suspense>
 
-          <InstagramShowcase />
+          <Suspense fallback={<div className="min-h-[300px]" />}>
+            <InstagramShowcase />
+          </Suspense>
 
 
           {/* Testimonials */}
@@ -259,7 +267,9 @@ const Landing = () => {
 
 
           {/* FAQ */}
-          <FaqSection />
+          <Suspense fallback={<div className="min-h-[300px]" />}>
+            <FaqSection />
+          </Suspense>
 
           {/* Final CTA */}
           <section className="py-20 px-5 bg-primary text-primary-foreground">
