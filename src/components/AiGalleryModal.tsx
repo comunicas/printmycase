@@ -83,7 +83,7 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
 
     return (
       <div
-        className="fixed inset-0 z-[60] bg-black flex flex-col"
+        className="fixed inset-0 z-[2010] bg-black flex flex-col"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -140,7 +140,7 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
 
   // Gallery grid view
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+    <div className="fixed inset-0 z-[2000] bg-background flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h2 className="text-lg font-semibold">Galeria de Gerações IA</h2>
@@ -152,26 +152,26 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
       {/* Grid */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {Array.from({ length: 8 }).map((_, i) => (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+            {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="aspect-square rounded-xl bg-muted/30 animate-pulse" />
             ))}
           </div>
         ) : images.length === 0 ? (
           <p className="text-center text-muted-foreground py-20">Nenhuma geração pública disponível.</p>
         ) : (
-          <div className="columns-2 sm:columns-3 md:columns-4 gap-3 space-y-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
             {images.map((img, idx) => (
               <div
                 key={img.id}
-                className="group relative rounded-xl overflow-hidden ring-1 ring-border shadow-sm break-inside-avoid cursor-pointer"
+                className="group relative aspect-square rounded-xl overflow-hidden ring-1 ring-border shadow-sm cursor-pointer"
                 onClick={() => setLightboxIndex(idx)}
               >
                 <img
                   src={getOptimizedUrl(getUrl(img), 400)}
                   alt={img.filter_name || "Geração IA"}
                   loading="lazy"
-                  className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = "none"; }}
                 />
                 {img.filter_name && (
