@@ -1,40 +1,24 @@
 
+The user wants the IntroDialog to be 100% fullscreen on mobile (instead of the current centered card with `pb-[160px]` workaround). This is also consistent with the project memory rule: "Modals: Mobile = fullscreen with straight corners, Desktop = centered cards with rounded corners."
 
-## Problema na modal de boas-vindas
+## Plan: Fullscreen IntroDialog on mobile
 
-A modal `IntroDialog` está com problema visual no mobile (390px):
+### Changes to `src/components/customize/IntroDialog.tsx`
 
-### Sintomas observados na screenshot
-1. **Modal cortada no topo** — o conteúdo "Bem-vindo ao Studio PrintMyCase" aparece colado no topo da tela, sem padding/margem superior adequada
-2. **Toast "Rascunho restaurado" sobreposto** — aparece por cima da modal, atrapalhando a leitura
-3. **Botões "Anterior" e "Próximo" cortados** — ficam escondidos atrás da barra inferior fixa (TabBar com Ajustes/Filtros IA/Galeria + botão Finalizar)
-4. **Largura/altura inadequadas** — a modal parece ter altura fixa que não respeita o espaço da barra inferior fixa (`MobileTabBar` + `ContinueBar`)
+Update `DialogContent` className to:
+- **Mobile**: fullscreen (`w-screen h-[100dvh] max-w-none rounded-none`), no bottom padding hack
+- **Desktop (sm+)**: keep current centered card (`sm:max-w-xs sm:h-auto sm:rounded-2xl sm:max-h-[85vh]`)
 
-### Causa raiz suspeita
-A página `Customize.tsx` tem uma barra inferior fixa (`lg:hidden flex-shrink-0 relative z-[60]`) com `MobileTabBar` + `ContinueBar` ocupando ~140px na base. A `IntroDialog` provavelmente usa o componente Dialog padrão do Radix que centraliza com `position: fixed inset-0`, mas não considera essa barra inferior, fazendo os controles de navegação do carrossel ("Anterior"/"Próximo") ficarem escondidos.
+Restructure inner layout to flexbox column with:
+- Illustration/text area: `flex-1` and centered (so content sits in the middle of the screen on mobile)
+- Dots + action buttons: pinned to bottom with safe-area padding (`pb-[env(safe-area-inset-bottom)]`) and enough bottom margin to clear the fixed `MobileTabBar` + `ContinueBar` (~140px). Use `mb-[160px] sm:mb-0` on the actions block, OR better: keep actions visible by giving the entire dialog `pb-[160px]` only on mobile fullscreen — but since fullscreen covers the whole viewport including the bottom bars, we need actions above the bars.
 
-Além disso, o toast de "Rascunho restaurado" dispara automaticamente ao montar a página, aparecendo simultaneamente com a IntroDialog.
+Actually, since this is a Radix Dialog with `z-[110]` it overlays everything including the bottom bars, so on fullscreen the buttons can sit at the actual bottom of the screen (no need to clear bars). Use `pb-[max(1rem,env(safe-area-inset-bottom))]`.
 
-### Investigação necessária antes de corrigir
-Preciso ler:
-- `src/components/customize/IntroDialog.tsx` — entender estrutura/altura da modal
-- `src/hooks/useCustomize.tsx` — confirmar de onde vem o toast "Rascunho restaurado" e se podemos suprimir quando IntroDialog está aberta
-
-### Plano de correção (proposto)
-
-1. **Ajustar `IntroDialog` para mobile**:
-   - Adicionar `max-h-[calc(100dvh-180px)]` para reservar espaço para a barra inferior fixa
-   - Ajustar posicionamento vertical (centralizar acima da barra) com `top-[40%]` ou `mb-[160px]`
-   - Garantir padding interno adequado para que botões "Anterior/Próximo" fiquem visíveis
-
-2. **Suprimir toast "Rascunho restaurado" quando IntroDialog está visível**:
-   - Passar flag `showIntro` para `useCustomize` ou atrasar o toast com `setTimeout` até a modal fechar
-   - Alternativa mais simples: não mostrar o toast quando `!localStorage.getItem("customize_intro_seen")` (primeira visita)
-
-3. **Z-index review**: garantir que IntroDialog (Radix Dialog padrão usa z-50) fique acima do toast (`z-[100]` no Toaster) — pode ser necessário aumentar para `z-[110]`
-
-### Resultado esperado
-- Modal centralizada e totalmente visível acima da barra inferior fixa
-- Botões de navegação do carrossel acessíveis
-- Sem sobreposição com toast de rascunho restaurado
-
+### Verification
+After changes, test by clearing `localStorage.customize_intro_seen` and reloading `/customize/galaxy-a05s` at 390x844. Confirm:
+- Modal covers full screen, no rounded corners on mobile
+- Welcome content visually centered
+- Dots + Anterior/Próximo buttons visible at bottom
+- No toast overlap (already handled previously)
+- Desktop unchanged (centered card)
