@@ -36,9 +36,8 @@ const AiGalleryModal = ({ open, onClose, initialImageUrl }: AiGalleryModalProps)
     if (!open) return;
     setLightboxIndex(null);
     supabase
-      .from("user_ai_generations")
+      .from("public_ai_generations" as never)
       .select("id, image_url, public_image_url, filter_name")
-      .eq("public", true)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         const items = data ?? [];
