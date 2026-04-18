@@ -115,7 +115,7 @@ const SelectModel = () => {
         <div className="relative mb-3">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {brands.map((brand) => {
-              const count = brand === "Todos" ? products.length : (brandCounts.get(brand) || 0);
+              const count = brandCounts.get(brand) || 0;
               const isActive = selectedBrand === brand;
               return (
                 <Button
