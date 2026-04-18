@@ -1,33 +1,43 @@
 
-## Auditoria de assets — Resultado
+## Verificar otimização de `hero-bg-optimized.webp`
 
-Inventariei `src/assets/` e `public/` (incluindo `lovable-uploads/`) e validei cada arquivo via grep no código.
+### Inspeção necessária (read-only)
 
-### Resultado: zero assets órfãos
+1. `code--exec` (em modo default) com `identify` ou `webpinfo` / `ffprobe` em `src/assets/hero-bg-optimized.webp` para extrair:
+   - Dimensões reais (largura × altura)
+   - Tamanho do arquivo (KB)
+   - Qualidade/método de compressão WebP
 
-| Arquivo | Onde é usado |
-|---|---|
-| `src/assets/hero-bg-optimized.webp` | `Landing.tsx` (LCP do hero) |
-| `public/favicon.ico` | Servido automaticamente pelo browser em `/favicon.ico` |
-| `public/logo-printmycase-sm.webp` | `AppHeader`, `IntroDialog`, `CheckoutSuccess`, `Landing` (footer) + preload no `index.html` |
-| `public/placeholder.svg` | `Customize.tsx`, `ProductGallery.tsx` (fallback de imagens ausentes) |
-| `public/lovable-uploads/stripe-logo-sm.webp` | `PaymentBadges.tsx` |
-| `public/googledc7e349a7903758f.html` | Verificação Google Search Console (deve permanecer) |
-| `public/llms.txt` | AEO — referenciado em `robots.txt` (memória `mem://seo/aeo-optimization`) |
-| `public/robots.txt` | Padrão SEO, servido em `/robots.txt` |
+### Critérios de avaliação
 
-### Conclusão
+| Métrica | Ideal | Ação se fora |
+|---|---|---|
+| Largura | ≤ 1920px | Redimensionar |
+| Altura | ≤ 1080px | Redimensionar |
+| Qualidade | q=75-80 | Recomprimir |
+| Tamanho | < 200 KB | Recomprimir |
 
-**Nenhum asset para remover.** A limpeza anterior (Fase 1+2) já eliminou os 6 órfãos que existiam (`logo-printmycase.png` + 5 `ai-showcase-*-sm.webp`). O diretório está enxuto.
+### Plano de ação
 
-### Próximas oportunidades de redução de bundle (fora desta auditoria)
+**Fase 1 — Inspecionar** (read-only)
+- Rodar `identify -format "%w %h %b\n" src/assets/hero-bg-optimized.webp` (ImageMagick via nix)
+- Comparar contra critérios acima
 
-Se quiser continuar reduzindo peso, as oportunidades restantes não são "remover arquivos não usados", mas sim **otimizar arquivos em uso**:
+**Fase 2 — Otimizar (somente se necessário)**
+- Se largura > 1920 ou altura > 1080: redimensionar com `cwebp -resize 1920 0` mantendo aspect ratio
+- Se tamanho > 200 KB: recomprimir com `cwebp -q 78 -m 6` (método 6 = melhor compressão)
+- Salvar em `src/assets/hero-bg-optimized.webp` (overwrite)
+- Validar visualmente abrindo o novo arquivo
 
-1. **`favicon.ico` (~56 KB)** — já existe plano separado aprovado para gerar versões 16/32/180 px e reduzir para ~5 KB total.
-2. **`hero-bg-optimized.webp`** — verificar se já está em qualidade ideal (WebP q=75-80) e dimensão adequada (1920×1080 max).
-3. **Auditar `src/integrations/lovable/`** e dependências npm pesadas (fora do escopo "assets").
+**Fase 3 — Validar**
+- Confirmar que `Landing.tsx` continua renderizando o hero corretamente
+- Verificar LCP no preview
 
-### Nada a executar
+### Saída esperada
 
-Esta auditoria não requer mudanças de código. Apenas confirma que o diretório está limpo após as fases anteriores.
+- Se já está otimizado: relatório confirmando "tudo OK, nenhuma ação necessária"
+- Se precisa otimizar: arquivo recomprimido + relatório antes/depois (KB economizados)
+
+### Risco
+
+Baixo. WebP é overwrite atômico; se algo der errado, basta restaurar do git.
