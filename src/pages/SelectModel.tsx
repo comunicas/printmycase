@@ -44,7 +44,26 @@ const SelectModel = () => {
       const q = search.trim().toLowerCase();
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
-    return [...list].sort((a, b) => a.name.localeCompare(b.name));
+    const SUFFIX_WEIGHT: Record<string, number> = {
+      "ultra": 5, "pro max": 4, "pro": 3, "plus": 2, "max": 2,
+      "fe": 1, "": 0, "s": -1, "e": -1, "mini": -2,
+    };
+    const parseModel = (name: string) => {
+      const clean = name.replace(/^Capa\s+/i, "");
+      const numMatch = clean.match(/(\d+)/);
+      const version = numMatch ? parseInt(numMatch[1], 10) : 0;
+      const afterNum = numMatch ? clean.slice(numMatch.index! + numMatch[0].length).trim().toLowerCase() : "";
+      const suffix = afterNum.replace(/[^a-z\s]/g, "").trim();
+      const weight = SUFFIX_WEIGHT[suffix] ?? 0;
+      return { version, weight };
+    };
+    return [...list].sort((a, b) => {
+      const A = parseModel(a.name);
+      const B = parseModel(b.name);
+      if (B.version !== A.version) return B.version - A.version;
+      if (B.weight !== A.weight) return B.weight - A.weight;
+      return a.name.localeCompare(b.name);
+    });
   }, [products, selectedBrand, search]);
 
   const hasActiveFilters = selectedBrand !== "Todos" || search.trim() !== "";
