@@ -267,7 +267,9 @@ const Landing = () => {
 
 
           {/* FAQ */}
-          <FaqSection />
+          <Suspense fallback={<div className="min-h-[300px]" />}>
+            <FaqSection />
+          </Suspense>
 
           {/* Final CTA */}
           <section className="py-20 px-5 bg-primary text-primary-foreground">
