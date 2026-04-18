@@ -1,37 +1,22 @@
 
-## Por que a produção mostra o fallback (carrossel marquee) em vez das gerações dos usuários
+## Verificar grid mosaico em produção
 
-### Diagnóstico
+### Plano
 
-O componente `AiCoinsSection` consulta `public_ai_generations` no Supabase e:
-- **Se houver dados** → mostra o grid mosaico com gerações reais dos usuários (correto)
-- **Se vazio/erro** → mostra o carrossel marquee com `ai-showcase-[1-5]-sm.webp` (fallback — o que você vê na imagem)
+1. `navigate_to_url` para `https://studio.printmycase.com.br/` (produção, domínio custom)
+2. Scroll até a seção "Transforme qualquer foto em arte com IA"
+3. `screenshot` para confirmar visualmente: grid mosaico (colunas variáveis com aspect ratios mistos) em vez do carrossel marquee horizontal
+4. `list_network_requests` filtrando por `public_ai_generations` para confirmar status 200 e payload com 8 itens
+5. Repetir em viewport mobile (390x844) para validar responsividade do grid (2 colunas no mobile, 4 no desktop)
 
-```tsx
-const hasPublicImages = images.length > 0;
-{hasPublicImages ? <Grid mosaico /> : <Carrossel fallback />}
-```
+### Critérios de sucesso
 
-### Causa provável
+- Visual: grid mosaico Pinterest-style visível (não o carrossel deslizante)
+- Network: request a `public_ai_generations` retorna array com ≥1 item
+- Console: zero erros relacionados à query
 
-Vou verificar as 3 hipóteses possíveis:
-1. **A view `public_ai_generations` está vazia em produção** (nenhuma geração foi marcada como pública/aprovada)
-2. **RLS bloqueando leitura anônima** da view em produção
-3. **Erro silencioso na query** (sem `.then` capturando erro)
+### Se ainda mostrar fallback
 
-### Investigação a fazer (read-only)
-
-1. Consultar `public_ai_generations` via `supabase--read_query` para ver quantos registros existem
-2. Verificar RLS policies da view/tabela base
-3. Buscar o critério de "público" (provavelmente `is_public=true` na tabela `ai_generations` + migração para bucket `product-assets` conforme memória `public-gallery-permanent-storage`)
-4. Verificar se há gerações aprovadas mas não migradas (campo `public_image_url` nulo)
-
-### Possíveis correções (a confirmar após diagnóstico)
-
-- **Se a view está vazia**: ensinar admin a aprovar gerações via painel (`GalleryImagesManager` ou similar) — não é bug de código
-- **Se RLS bloqueia anônimo**: ajustar policy para `SELECT` público
-- **Se há gerações marcadas mas sem `public_image_url`**: rodar `migrate-generation-urls` edge function para mover ao bucket público
-
-### Próximo passo
-
-Investigar via SQL e leitura de código (admin de galeria + edge function de migração) e voltar com o diagnóstico exato + correção recomendada antes de qualquer mudança.
+- Checar se a migração foi aplicada em produção (pode haver lag de deploy)
+- Verificar se há cache CDN segurando resposta antiga da PostgREST
+- Confirmar via `supabase--read_query` rodando como `anon` se a permissão GRANT realmente funcionou
