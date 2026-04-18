@@ -1,43 +1,47 @@
 
-## Verificar otimização de `hero-bg-optimized.webp`
+## Otimizar favicon: 56 KB → ~5 KB
 
-### Inspeção necessária (read-only)
+### Problema
+`public/favicon.ico` tem 56 KB — provavelmente contém múltiplas resoluções em alta qualidade ou uma única imagem grande. Browsers modernos só precisam de 16/32 px (favicon) e 180 px (Apple touch icon).
 
-1. `code--exec` (em modo default) com `identify` ou `webpinfo` / `ffprobe` em `src/assets/hero-bg-optimized.webp` para extrair:
-   - Dimensões reais (largura × altura)
-   - Tamanho do arquivo (KB)
-   - Qualidade/método de compressão WebP
+### Plano
 
-### Critérios de avaliação
+**Fase 1 — Inspecionar favicon atual**
+- Rodar `identify public/favicon.ico` para ver resoluções embutidas
+- Confirmar tamanho atual
 
-| Métrica | Ideal | Ação se fora |
-|---|---|---|
-| Largura | ≤ 1920px | Redimensionar |
-| Altura | ≤ 1080px | Redimensionar |
-| Qualidade | q=75-80 | Recomprimir |
-| Tamanho | < 200 KB | Recomprimir |
+**Fase 2 — Gerar versões otimizadas**
+A partir do `favicon.ico` atual (extraindo o maior frame como source):
+- `public/favicon-16.png` (16×16, PNG otimizado) — ~500 B
+- `public/favicon-32.png` (32×32, PNG otimizado) — ~1 KB
+- `public/apple-touch-icon.png` (180×180, PNG otimizado) — ~3-4 KB
+- Novo `public/favicon.ico` contendo apenas 16+32 multi-resolução — ~2 KB
 
-### Plano de ação
+Ferramentas: ImageMagick via nix (`magick convert`) + `pngquant` para compressão lossy de PNG.
 
-**Fase 1 — Inspecionar** (read-only)
-- Rodar `identify -format "%w %h %b\n" src/assets/hero-bg-optimized.webp` (ImageMagick via nix)
-- Comparar contra critérios acima
+**Fase 3 — Atualizar `index.html`**
+Adicionar no `<head>`:
+```html
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="shortcut icon" href="/favicon.ico" />
+```
+(Manter `favicon.ico` como fallback para browsers antigos que requisitam `/favicon.ico` automaticamente.)
 
-**Fase 2 — Otimizar (somente se necessário)**
-- Se largura > 1920 ou altura > 1080: redimensionar com `cwebp -resize 1920 0` mantendo aspect ratio
-- Se tamanho > 200 KB: recomprimir com `cwebp -q 78 -m 6` (método 6 = melhor compressão)
-- Salvar em `src/assets/hero-bg-optimized.webp` (overwrite)
-- Validar visualmente abrindo o novo arquivo
-
-**Fase 3 — Validar**
-- Confirmar que `Landing.tsx` continua renderizando o hero corretamente
-- Verificar LCP no preview
-
-### Saída esperada
-
-- Se já está otimizado: relatório confirmando "tudo OK, nenhuma ação necessária"
-- Se precisa otimizar: arquivo recomprimido + relatório antes/depois (KB economizados)
+**Fase 4 — Validar**
+- Listar tamanhos finais dos 4 arquivos, confirmar total < 8 KB
+- Verificar visualmente o favicon no preview (tab do browser)
 
 ### Risco
+Baixo. Se a qualidade visual ficar ruim em 16 px, regenerar com `-filter Lanczos` ou ajustar pngquant quality.
 
-Baixo. WebP é overwrite atômico; se algo der errado, basta restaurar do git.
+### Arquivos modificados
+- `public/favicon.ico` (overwrite, menor)
+- `public/favicon-16.png` (novo)
+- `public/favicon-32.png` (novo)
+- `public/apple-touch-icon.png` (novo)
+- `index.html` (4 novas tags `<link>` no `<head>`)
+
+### Saída esperada
+Total favicon assets: ~5-8 KB (vs 56 KB hoje) — economia de ~50 KB no first paint.
