@@ -48,6 +48,7 @@ export function useCustomizeDraft(params: UseCustomizeDraftParams) {
   } = params;
 
   const [draftSaved, setDraftSaved] = useState(false);
+  const [restoring, setRestoring] = useState(true);
   const sessionRestored = useRef(false);
   const pendingRestored = useRef(false);
   const prevSlugRef = useRef<string | undefined>(undefined);
@@ -57,6 +58,7 @@ export function useCustomizeDraft(params: UseCustomizeDraftParams) {
       if (prevSlugRef.current !== undefined) {
         sessionRestored.current = false;
         pendingRestored.current = false;
+        setRestoring(true);
       }
       prevSlugRef.current = productSlug;
     }
@@ -88,7 +90,16 @@ export function useCustomizeDraft(params: UseCustomizeDraftParams) {
   }, [productSlug, userId, setImageWithResolution, setOriginalImage, setScale, setPosition, setRotation, toast]);
 
   useEffect(() => {
-    if (!productSlug || !productId || !userId || pendingRestored.current || sessionRestored.current) return;
+    if (!productSlug || !productId) return;
+    if (!userId) {
+      // Not logged in — no pending checkout to restore
+      if (sessionRestored.current) setRestoring(false);
+      return;
+    }
+    if (pendingRestored.current || sessionRestored.current) {
+      setRestoring(false);
+      return;
+    }
     pendingRestored.current = true;
 
     (async () => {
@@ -123,6 +134,8 @@ export function useCustomizeDraft(params: UseCustomizeDraftParams) {
         toast({ title: "Rascunho recuperado" });
       } catch (error) {
         console.error("Erro ao restaurar checkout pendente", error);
+      } finally {
+        setRestoring(false);
       }
     })();
   }, [productSlug, productId, userId, fetchPending, getSignedUrl, setScale, setPosition, setRotation, setOriginalImage, setFilteredImage, setActiveFilterId, setImageWithResolution, toast]);
@@ -145,5 +158,5 @@ export function useCustomizeDraft(params: UseCustomizeDraftParams) {
     return () => clearTimeout(timeout);
   }, [productSlug, image, originalImage, scale, position, rotation]);
 
-  return { draftSaved };
+  return { draftSaved, restoring };
 }

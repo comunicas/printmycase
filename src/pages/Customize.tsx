@@ -229,7 +229,7 @@ const Customize = () => {
       />
 
       <UploadSpotlight
-        open={!c.image}
+        open={!c.image && !c.restoring}
         modelName={c.productName}
         onUploadClick={handleSpotlightUpload}
         onGalleryClick={handleSpotlightGallery}

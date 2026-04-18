@@ -67,7 +67,7 @@ export function useCustomize(productId: string | undefined) {
     }
   }, [product, productLoading, navigate, toast]);
 
-  const { draftSaved } = useCustomizeDraft({
+  const { draftSaved, restoring } = useCustomizeDraft({
     productSlug: product?.slug,
     productId: product?.id,
     userId: user?.id,
@@ -270,6 +270,7 @@ export function useCustomize(productId: string | undefined) {
     productLoading,
     productName,
     draftSaved,
+    restoring,
     image,
     imageResolution,
     isHD,
