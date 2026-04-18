@@ -1,35 +1,30 @@
 
-## Defer Meta Pixel
+## Cache Headers para Assets Estáticos
 
-Atualmente o `fbevents.js` carrega imediatamente no `<head>` do `index.html`, bloqueando recursos críticos e adicionando 36KB de JS não usado no carregamento inicial.
+### Análise
 
-### Mudança
+O audit aponta 572KB economizáveis aplicando `Cache-Control: max-age=31536000, immutable` nos assets `/assets/*` (JS/CSS/imagens com hash do Vite).
 
-Modificar o snippet do Meta Pixel em `index.html` para adiar o carregamento do `fbevents.js` até:
-1. Evento `load` da janela (após FCP/LCP), OU
-2. Primeira interação do usuário (`scroll`, `mousemove`, `touchstart`, `keydown`) — o que vier primeiro.
+**Limitação importante**: Lovable hospeda o app em sua própria infraestrutura. **Não há acesso direto à configuração do servidor HTTP** (sem `vercel.json`, `netlify.toml`, `_headers`, nginx config, etc. — esses arquivos são ignorados pela hospedagem Lovable).
 
-A fila `fbq()` continua disponível imediatamente (stub padrão), então qualquer chamada `fbq('track', ...)` feita antes do script carregar será enfileirada e processada normalmente após o load. Zero perda de eventos.
+### Verificação
 
-O `fbq('init', ...)` e `fbq('track', 'PageView')` permanecem na fila — disparam assim que o script real carrega.
+Vou confirmar checando se existe algum arquivo de configuração de hosting já presente no projeto e como os assets são servidos atualmente.
 
-### Implementação (index.html)
+### Conclusão esperada
 
-Substituir o bloco atual por uma versão que:
-- Define `window.fbq` stub imediatamente (preserva enfileiramento)
-- Injeta o `<script src="...fbevents.js">` apenas após `load` ou primeira interação
-- Usa `{ once: true, passive: true }` nos listeners
+Como a hospedagem Lovable controla os headers HTTP e não expõe configuração customizável ao usuário, **esta otimização não pode ser implementada via código do projeto**. Os assets `/assets/*` do Vite já têm hash no nome (cache-busting seguro), então o ideal seria que a plataforma já enviasse `immutable` — mas isso depende do provedor.
 
-### Considerações
-- **CAPI server-side**: continua funcionando normalmente (independente do pixel client).
-- **PageView**: enfileirado, dispara ~1-3s após load. Não compromete tracking pois o usuário ainda está na página.
-- **Deduplicação**: o `event_id` compartilhado pixel↔CAPI continua funcionando (queue preserva a chamada).
-- **`<noscript>` fallback**: mantido inalterado.
+### Recomendação
 
-### Arquivo
-- `index.html` — apenas o bloco `<script>` do Meta Pixel (~10 linhas).
+1. **No domínio customizado** (`studio.printmycase.com.br`): se estiver atrás de Cloudflare ou similar, criar uma Page Rule / Cache Rule para `/assets/*` com `Edge Cache TTL: 1 year` e `Browser Cache TTL: 1 year`. Isso é feito **no painel do Cloudflare**, não no código.
 
-### Impacto esperado
-- ~36KB economizados no carregamento inicial
-- Melhoria em FCP/LCP/TBT
-- Zero impacto funcional no tracking
+2. **Alternativa via Service Worker**: implementar um SW com estratégia `CacheFirst` para `/assets/*`. Funciona em qualquer hosting mas adiciona complexidade (registro, atualização, invalidação) e pode interferir em deploys. **Não recomendo** para este caso.
+
+3. **Aceitar como limitação** documentada (similar às outras em `mem://constraints/seo-performance-limitations`).
+
+### Próximo passo
+
+Vou apresentar isto como análise — sem mudanças de código —, pois qualquer tentativa de adicionar `_headers`, `vercel.json` ou `netlify.toml` no repo seria código morto na hospedagem Lovable, e um Service Worker seria desproporcional ao ganho (e arriscado para o fluxo de checkout/auth).
+
+**Recomendo**: configurar a regra de cache no Cloudflare do domínio `studio.printmycase.com.br` (se aplicável) e adicionar esta limitação à memória de constraints de SEO.
