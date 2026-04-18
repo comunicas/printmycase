@@ -1,0 +1,1 @@
+GRANT SELECT ON public.public_ai_generations TO anon, authenticated;
