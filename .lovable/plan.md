@@ -1,30 +1,46 @@
 
-## Cache Headers para Assets Estáticos
+## Recompactar imagens ai-showcase para 252x252
 
 ### Análise
 
-O audit aponta 572KB economizáveis aplicando `Cache-Control: max-age=31536000, immutable` nos assets `/assets/*` (JS/CSS/imagens com hash do Vite).
+As imagens `ai-showcase-1-sm.webp` até `ai-showcase-5-sm.webp` são usadas no carrossel marquee do `AiCoinsSection` como fallback (quando não há gerações públicas). No código:
 
-**Limitação importante**: Lovable hospeda o app em sua própria infraestrutura. **Não há acesso direto à configuração do servidor HTTP** (sem `vercel.json`, `netlify.toml`, `_headers`, nginx config, etc. — esses arquivos são ignorados pela hospedagem Lovable).
+```tsx
+className="flex-shrink-0 w-36 sm:w-40 md:w-44 ..."
+width={176} height={176}
+```
 
-### Verificação
+Tamanho máximo de exibição: **176px CSS** (w-44 = 11rem = 176px). Em telas 2x densidade = **352px reais** — exatamente o tamanho atual. Em telas 1x = 176px.
 
-Vou confirmar checando se existe algum arquivo de configuração de hosting já presente no projeto e como os assets são servidos atualmente.
+### Problema com a proposta
 
-### Conclusão esperada
+Reduzir para **252x252** prejudicaria a nitidez em displays Retina/2x (que renderizariam 252px num espaço que pede 352px = upscale visível e borrado). O ganho de ~30KB não compensa a degradação visual perceptível em mobile (onde quase todos os dispositivos são 2x/3x).
 
-Como a hospedagem Lovable controla os headers HTTP e não expõe configuração customizável ao usuário, **esta otimização não pode ser implementada via código do projeto**. Os assets `/assets/*` do Vite já têm hash no nome (cache-busting seguro), então o ideal seria que a plataforma já enviasse `immutable` — mas isso depende do provedor.
+### Alternativas mais seguras
 
-### Recomendação
+1. **Manter 352x352 e apenas recomprimir** com qualidade WebP 70-75 (atual provavelmente está em 85-90). Economia estimada de 20-30KB **sem perda de resolução**.
+2. **Reduzir para 320x320** (cobre ~1.8x density, aceitável para imagens decorativas pequenas). Economia ~15-20KB, perda de nitidez mínima.
+3. **Não fazer nada**: essas imagens só carregam quando NÃO há gerações públicas (fallback), e atualmente o site tem gerações públicas → o marquee nem aparece em produção.
 
-1. **No domínio customizado** (`studio.printmycase.com.br`): se estiver atrás de Cloudflare ou similar, criar uma Page Rule / Cache Rule para `/assets/*` com `Edge Cache TTL: 1 year` e `Browser Cache TTL: 1 year`. Isso é feito **no painel do Cloudflare**, não no código.
+### Verificação necessária
 
-2. **Alternativa via Service Worker**: implementar um SW com estratégia `CacheFirst` para `/assets/*`. Funciona em qualquer hosting mas adiciona complexidade (registro, atualização, invalidação) e pode interferir em deploys. **Não recomendo** para este caso.
+Antes de qualquer ação, preciso confirmar:
+- Se o fallback é realmente acionado em produção (provavelmente não, pois a tabela `public_ai_generations` tem dados).
+- Qualidade atual de compressão dos arquivos.
 
-3. **Aceitar como limitação** documentada (similar às outras em `mem://constraints/seo-performance-limitations`).
+### Plano proposto
 
-### Próximo passo
+**Pular esta otimização.** Justificativa:
+1. As imagens são fallback raramente exibido (há gerações públicas ativas).
+2. Reduzir para 252px degradaria visivelmente em telas Retina.
+3. O ganho de 30KB em recursos que não carregam na maioria dos pageviews tem ROI baixíssimo.
 
-Vou apresentar isto como análise — sem mudanças de código —, pois qualquer tentativa de adicionar `_headers`, `vercel.json` ou `netlify.toml` no repo seria código morto na hospedagem Lovable, e um Service Worker seria desproporcional ao ganho (e arriscado para o fluxo de checkout/auth).
+**Recomendação alternativa**: se quiser ganho garantido, recomprimir os 5 arquivos mantendo 352x352 mas com qualidade WebP 72 (similar ao que fizemos no `hero-bg-optimized.webp`). Isso requer reupload manual dos arquivos otimizados em `/public/lovable-uploads/` — posso fazer isso via script no modo default.
 
-**Recomendo**: configurar a regra de cache no Cloudflare do domínio `studio.printmycase.com.br` (se aplicável) e adicionar esta limitação à memória de constraints de SEO.
+### Decisão pendente
+
+Qual caminho prefere?
+- **A)** Pular (recomendado — fallback raramente usado)
+- **B)** Recomprimir mantendo 352x352 com qualidade 72 (~20KB ganho, zero perda visual)
+- **C)** Reduzir para 320x320 com qualidade 75 (~25KB ganho, perda mínima em 2x)
+- **D)** Seguir a proposta original 252x252 (~30KB ganho, perda visível em Retina)
