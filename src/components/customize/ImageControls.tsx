@@ -26,6 +26,7 @@ interface ImageControlsProps {
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
   onGallerySelect: (imageUrl: string) => void;
+  isProcessing?: boolean;
 }
 
 const ImageControls = ({
