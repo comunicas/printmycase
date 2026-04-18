@@ -19,7 +19,7 @@ const UploadSpotlight = ({ open, modelName, onUploadClick, onGalleryClick }: Upl
 
         <div className="text-center space-y-2">
           <h2 className="text-xl font-bold text-foreground">
-            Bora criar sua capa pro {modelName}?
+            Envie a imagem para capa do {modelName}
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Envie uma foto sua, do pet, da família… nós transformamos na capa perfeita para o seu {modelName}!
