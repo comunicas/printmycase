@@ -70,10 +70,9 @@ const SelectModel = () => {
     });
   }, [products, selectedBrand, search]);
 
-  const hasActiveFilters = selectedBrand !== "Todos" || search.trim() !== "";
+  const hasActiveFilters = search.trim() !== "";
 
   const clearFilters = () => {
-    setSelectedBrand("Todos");
     setSearch("");
   };
 
