@@ -78,7 +78,10 @@ export function useCustomizeDraft(params: UseCustomizeDraftParams) {
       if (draft.scale != null) setScale(draft.scale);
       if (draft.position) setPosition(draft.position);
       if (draft.rotation != null) setRotation(draft.rotation);
-      toast({ title: "Rascunho restaurado" });
+      // Suppress toast on first visit when intro dialog is showing
+      if (typeof window !== "undefined" && localStorage.getItem("customize_intro_seen")) {
+        toast({ title: "Rascunho restaurado" });
+      }
     } catch {
       // ignore parse failures
     }
