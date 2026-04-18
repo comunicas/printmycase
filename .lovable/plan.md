@@ -1,45 +1,37 @@
 
-## Auditoria de /public/ (raiz)
+## Por que a produção mostra o fallback (carrossel marquee) em vez das gerações dos usuários
 
-### Inventário
+### Diagnóstico
 
-| Arquivo | Tamanho | Detalhes | Uso | Status |
-|---|---|---|---|---|
-| `favicon.ico` | 56 KB | PNG único 256x256 dentro de .ico | Browser auto | 🟡 Superdimensionado |
-| `logo-printmycase-sm.webp` | 4 KB | WebP otimizado | LCP preload, header, footer, intro, success | ✅ OK |
-| `placeholder.svg` | 3.2 KB | SVG vetor | ProductGallery, Customize fallback | ✅ OK |
-| `llms.txt` | 1.4 KB | AEO/AI crawlers | Texto | ✅ OK |
-| `robots.txt` | 0.4 KB | SEO | Texto | ✅ OK |
-| `googledc7e349a7903758f.html` | 53 B | Search Console verification | Google | ✅ OK |
-| `lovable-uploads/` | — | Já auditado anteriormente | — | ✅ OK |
+O componente `AiCoinsSection` consulta `public_ai_generations` no Supabase e:
+- **Se houver dados** → mostra o grid mosaico com gerações reais dos usuários (correto)
+- **Se vazio/erro** → mostra o carrossel marquee com `ai-showcase-[1-5]-sm.webp` (fallback — o que você vê na imagem)
 
-### Único achado: `favicon.ico` (56 KB)
+```tsx
+const hasPublicImages = images.length > 0;
+{hasPublicImages ? <Grid mosaico /> : <Carrossel fallback />}
+```
 
-Hoje é um **único PNG 256x256 embalado como .ico** — pesado e ineficiente. Favicons modernos devem ter múltiplas resoluções pequenas (16, 32, 48) e idealmente um SVG separado para alta densidade.
+### Causa provável
 
-**Tamanho típico de favicon bem otimizado**: 5–15 KB. Atual 56 KB representa ~40 KB desperdiçados em **todo pageview** (favicon é solicitado em quase todas as navegações).
+Vou verificar as 3 hipóteses possíveis:
+1. **A view `public_ai_generations` está vazia em produção** (nenhuma geração foi marcada como pública/aprovada)
+2. **RLS bloqueando leitura anônima** da view em produção
+3. **Erro silencioso na query** (sem `.then` capturando erro)
 
-### Plano de ação (1 mudança)
+### Investigação a fazer (read-only)
 
-**Recompactar `favicon.ico` em multi-resolução (16, 32, 48)**:
-- Gerar a partir do logo atual (`logo-printmycase-sm.webp`) usando ImageMagick
-- Saída: `.ico` com 3 frames PNG (16x16, 32x32, 48x48)
-- Tamanho esperado: ~5–10 KB
-- Ganho: **~46 KB economizados em cada pageview** (favicon é cacheado mas custa no primeiro load e em cold cache)
+1. Consultar `public_ai_generations` via `supabase--read_query` para ver quantos registros existem
+2. Verificar RLS policies da view/tabela base
+3. Buscar o critério de "público" (provavelmente `is_public=true` na tabela `ai_generations` + migração para bucket `product-assets` conforme memória `public-gallery-permanent-storage`)
+4. Verificar se há gerações aprovadas mas não migradas (campo `public_image_url` nulo)
 
-**Sem alterações em HTML/código** — o caminho `/favicon.ico` é o padrão e continua funcionando.
+### Possíveis correções (a confirmar após diagnóstico)
 
-### Riscos
+- **Se a view está vazia**: ensinar admin a aprovar gerações via painel (`GalleryImagesManager` ou similar) — não é bug de código
+- **Se RLS bloqueia anônimo**: ajustar policy para `SELECT` público
+- **Se há gerações marcadas mas sem `public_image_url`**: rodar `migrate-generation-urls` edge function para mover ao bucket público
 
-- Mínimo. Favicon multi-res é universalmente suportado (IE6+, todos browsers modernos).
-- Visualmente idêntico em todos contextos de exibição (tab, bookmarks, atalhos).
+### Próximo passo
 
-### Não recomendado tocar
-
-- `placeholder.svg` (3.2 KB) — vetor já mínimo e usado em fallback.
-- `logo-printmycase-sm.webp` — já é o LCP otimizado (constraint conhecida em memória).
-- Arquivos texto (`robots.txt`, `llms.txt`, `googledc...html`) — todos sub-2 KB.
-
-### Decisão
-
-Aprove para executar a recompressão do favicon no modo default. Único arquivo afetado: `public/favicon.ico`.
+Investigar via SQL e leitura de código (admin de galeria + edge function de migração) e voltar com o diagnóstico exato + correção recomendada antes de qualquer mudança.
