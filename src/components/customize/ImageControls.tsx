@@ -26,6 +26,7 @@ interface ImageControlsProps {
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
   onGallerySelect: (imageUrl: string) => void;
+  isProcessing?: boolean;
 }
 
 const ImageControls = ({
@@ -33,7 +34,7 @@ const ImageControls = ({
   filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory, onFilterClick,
   onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
-  onGallerySelect,
+  onGallerySelect, isProcessing,
 }: ImageControlsProps) => {
   const hasFilters = filters.length > 0;
   const colsClass = hasFilters ? "grid-cols-3" : "grid-cols-2";
@@ -90,7 +91,7 @@ const ImageControls = ({
           </TabsContent>
         )}
 
-        <TabsContent value="galeria" className="mt-2 max-h-[30vh] overflow-y-auto lg:max-h-none lg:overflow-visible">
+        <TabsContent value="galeria" className={`mt-2 max-h-[30vh] overflow-y-auto lg:max-h-none lg:overflow-visible ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}>
           <GalleryTab onSelect={onGallerySelect} />
         </TabsContent>
       </Tabs>

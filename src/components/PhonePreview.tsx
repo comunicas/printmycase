@@ -16,11 +16,12 @@ interface PhonePreviewProps {
   onUpscaleClick?: () => void;
   previewImageUrl?: string | null;
   onGalleryClick?: () => void;
+  disabled?: boolean;
 }
 
 const CROSSFADE_MS = 200;
 
-const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -270,7 +271,8 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             })()}
             <button
               onClick={() => inputRef.current?.click()}
-              className="w-9 h-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+              disabled={disabled}
+              className="w-9 h-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary"
             >
               <Camera className="w-4 h-4" />
             </button>

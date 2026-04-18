@@ -73,6 +73,7 @@ const Customize = () => {
             processingMessage={c.processingMsg || undefined}
             previewImageUrl={previewImageUrl}
             onGalleryClick={() => setShowGalleryPicker(true)}
+            disabled={c.isProcessing}
           />
         </div>
 
@@ -116,6 +117,7 @@ const Customize = () => {
             onPreviewStart={setPreviewImageUrl}
             onPreviewEnd={() => setPreviewImageUrl(null)}
             onGallerySelect={c.handleGalleryImageSelect}
+            isProcessing={c.isProcessing}
           />
 
           <div className="mt-auto">
