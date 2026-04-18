@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, Move, Loader2, ImagePlus, Sparkles } from "lucide-react";
+import { Camera, Move, Loader2, Sparkles } from "lucide-react";
 
 interface PhonePreviewProps {
   image: string | null;
