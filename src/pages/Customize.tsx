@@ -8,7 +8,6 @@ import ImageControls from "@/components/customize/ImageControls";
 import ContinueBar from "@/components/customize/ContinueBar";
 import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
 import LowResolutionDialog from "@/components/customize/LowResolutionDialog";
-
 import LoginDialog from "@/components/customize/LoginDialog";
 import TermsDialog from "@/components/customize/TermsDialog";
 import GalleryPicker from "@/components/customize/GalleryPicker";
@@ -72,7 +71,6 @@ const Customize = () => {
             imageResolution={c.imageResolution}
             isProcessing={c.isProcessing}
             processingMessage={c.processingMsg || undefined}
-            
             previewImageUrl={previewImageUrl}
             onGalleryClick={() => setShowGalleryPicker(true)}
           />
@@ -205,7 +203,6 @@ const Customize = () => {
         redirectUrl={window.location.href}
         reason={c.loginReason}
       />
-
 
       <TermsDialog
         open={c.showTermsDialog}
