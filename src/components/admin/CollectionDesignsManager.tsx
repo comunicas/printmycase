@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ import { usePagination } from "@/hooks/usePagination";
 type Collection = Tables<"collections">;
 type Design = Tables<"collection_designs">;
 
+const slugify = (val: string) =>
+  val.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
 const CollectionDesignsManager = () => {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>("");
@@ -30,11 +33,13 @@ const CollectionDesignsManager = () => {
   // Form state
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [extraImages, setExtraImages] = useState<string[]>([]);
   const [priceCents, setPriceCents] = useState(4990);
   const [sortOrder, setSortOrder] = useState(0);
+  const [uploadingExtra, setUploadingExtra] = useState(false);
 
-  // Load collections
   useEffect(() => {
     supabase.from("collections").select("*").order("sort_order").then(({ data }) => {
       const cols = data ?? [];
@@ -60,28 +65,41 @@ const CollectionDesignsManager = () => {
 
   const { paginated: paginatedDesigns, page: designPage, setPage: setDesignPage, totalPages: designTotalPages, totalItems: designTotalItems } = usePagination(designs, 12);
 
+  const resetForm = () => {
+    setName(""); setSlug(""); setDescription(""); setImageUrl(""); setExtraImages([]);
+    setPriceCents(4990); setSortOrder(0);
+  };
+
   const openNew = () => {
     setEditing(null);
-    setName(""); setSlug(""); setImageUrl(""); setPriceCents(4990); setSortOrder(0);
+    resetForm();
     setDialogOpen(true);
   };
 
   const openEdit = (d: Design) => {
     setEditing(d);
-    setName(d.name); setSlug(d.slug); setImageUrl(d.image_url); setPriceCents(d.price_cents); setSortOrder(d.sort_order);
+    setName(d.name);
+    setSlug(d.slug);
+    setDescription(d.description ?? "");
+    setImageUrl(d.image_url);
+    setExtraImages(d.images ?? []);
+    setPriceCents(d.price_cents);
+    setSortOrder(d.sort_order);
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
     if (!name.trim() || !slug.trim() || !imageUrl.trim()) {
-      toast({ title: "Preencha nome, slug e imagem", variant: "destructive" });
+      toast({ title: "Preencha nome, slug e imagem de capa", variant: "destructive" });
       return;
     }
     const payload = {
       collection_id: selectedCollectionId,
       name: name.trim(),
-      slug: slug.trim(),
+      slug: slugify(slug),
+      description: description.trim() || null,
       image_url: imageUrl.trim(),
+      images: extraImages,
       price_cents: priceCents,
       sort_order: sortOrder,
     };
@@ -113,24 +131,53 @@ const CollectionDesignsManager = () => {
     fetchDesigns();
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadOne = async (file: File): Promise<string> => {
+    const blob = await optimizeForUpload(file);
+    const path = `collections/designs/${Date.now()}-${crypto.randomUUID()}.webp`;
+    const { error } = await supabase.storage.from("product-assets").upload(path, blob, { contentType: "image/webp" });
+    if (error) throw error;
+    const { data: { publicUrl } } = supabase.storage.from("product-assets").getPublicUrl(path);
+    return publicUrl;
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const blob = await optimizeForUpload(file);
-      const path = `collections/designs/${Date.now()}-${crypto.randomUUID()}.webp`;
-      const { error } = await supabase.storage.from("product-assets").upload(path, blob, { contentType: "image/webp" });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("product-assets").getPublicUrl(path);
-      setImageUrl(publicUrl);
+      const url = await uploadOne(file);
+      setImageUrl(url);
     } catch (err: any) {
       toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
     }
   };
 
+  const handleExtraUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingExtra(true);
+    try {
+      const urls: string[] = [];
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) continue;
+        urls.push(await uploadOne(file));
+      }
+      setExtraImages([...extraImages, ...urls]);
+      toast({ title: `${urls.length} imagem(ns) adicionada(s)` });
+    } catch (err: any) {
+      toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingExtra(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeExtraImage = (idx: number) => {
+    setExtraImages(extraImages.filter((_, i) => i !== idx));
+  };
+
   const autoSlug = (val: string) => {
     setName(val);
-    if (!editing) setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
+    if (!editing) setSlug(slugify(val));
   };
 
   return (
@@ -140,7 +187,6 @@ const CollectionDesignsManager = () => {
         <Button onClick={openNew} disabled={!selectedCollectionId}><Plus className="mr-2 h-4 w-4" /> Novo Design</Button>
       </div>
 
-      {/* Collection selector */}
       <div className="mb-6">
         <Label>Coleção</Label>
         <select
@@ -167,6 +213,9 @@ const CollectionDesignsManager = () => {
                 <div className="p-3 space-y-1">
                   <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
                   <p className="text-sm font-bold text-foreground">{formatPrice(d.price_cents / 100)}</p>
+                  {d.images?.length > 0 && (
+                    <p className="text-[10px] text-muted-foreground">+{d.images.length} foto(s)</p>
+                  )}
                   <div className="flex gap-1 pt-1">
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleToggleActive(d)}>
                       {d.active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -183,7 +232,7 @@ const CollectionDesignsManager = () => {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? "Editar Design" : "Novo Design"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
@@ -191,13 +240,44 @@ const CollectionDesignsManager = () => {
               <Input value={name} onChange={(e) => autoSlug(e.target.value)} />
             </div>
             <div>
-              <Label>Slug</Label>
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
+              <Label>Slug (URL)</Label>
+              <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} />
             </div>
             <div>
-              <Label>Imagem da arte</Label>
-              {imageUrl && <img src={imageUrl} alt="preview" className="w-full h-40 object-cover rounded-lg mb-2" />}
-              <Input type="file" accept="image/*" onChange={handleImageUpload} />
+              <Label>Descrição</Label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                placeholder="Conte a história/inspiração do design, materiais, dicas de uso..."
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <Label>Imagem de capa *</Label>
+              {imageUrl && <img src={imageUrl} alt="capa" className="w-full h-40 object-cover rounded-lg mb-2" />}
+              <Input type="file" accept="image/*" onChange={handleCoverUpload} />
+            </div>
+            <div>
+              <Label>Imagens adicionais (galeria)</Label>
+              {extraImages.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {extraImages.map((url, i) => (
+                    <div key={i} className="relative aspect-square rounded-md overflow-hidden border">
+                      <img src={url} alt={`extra ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeExtraImage(i)}
+                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:opacity-90"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Input type="file" accept="image/*" multiple onChange={handleExtraUpload} disabled={uploadingExtra} />
+              {uploadingExtra && <p className="text-xs text-muted-foreground mt-1">Enviando...</p>}
             </div>
             <div>
               <Label>Preço (centavos)</Label>

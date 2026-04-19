@@ -255,40 +255,40 @@ export type Database = {
           active: boolean
           collection_id: string
           created_at: string
+          description: string | null
           id: string
           image_url: string
+          images: string[]
           name: string
           price_cents: number
           slug: string
           sort_order: number
-          stripe_price_id: string | null
-          stripe_product_id: string | null
         }
         Insert: {
           active?: boolean
           collection_id: string
           created_at?: string
+          description?: string | null
           id?: string
           image_url: string
+          images?: string[]
           name: string
           price_cents: number
           slug: string
           sort_order?: number
-          stripe_price_id?: string | null
-          stripe_product_id?: string | null
         }
         Update: {
           active?: boolean
           collection_id?: string
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string
+          images?: string[]
           name?: string
           price_cents?: number
           slug?: string
           sort_order?: number
-          stripe_price_id?: string | null
-          stripe_product_id?: string | null
         }
         Relationships: [
           {
