@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, type MouseEvent as ReactMouseEvent } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { useDesign, useCollection } from "@/hooks/useCollections";
 import { useProducts } from "@/hooks/useProducts";
