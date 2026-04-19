@@ -150,6 +150,23 @@ const DesignPage = () => {
     return () => { script?.remove(); cleanup(); };
   }, [design, collectionSlug, designSlug]);
 
+  // Tracking: ViewContent (Pixel) + Clarity event, once per design
+  useEffect(() => {
+    if (!design?.id) return;
+    clarityEvent("design_view");
+    pixelEvent(
+      "ViewContent",
+      {
+        content_name: design.name,
+        content_ids: [design.id],
+        content_type: "product",
+        value: design.price_cents / 100,
+        currency: "BRL",
+      },
+      generateEventId()
+    );
+  }, [design?.id]);
+
   if (designLoading || productsLoading) return <LoadingSpinner variant="fullPage" />;
 
   if (!design) {
