@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       const designSlug = decodeURIComponent(designMatch[2]);
       const { data } = await supabase
         .from("collection_designs")
-        .select("name, image_url, slug, price_cents, collections!inner(name, slug)")
+        .select("name, description, image_url, slug, price_cents, collections!inner(name, slug)")
         .eq("slug", designSlug)
         .eq("active", true)
         .single();
@@ -116,7 +116,9 @@ Deno.serve(async (req) => {
         const col = (data as any).collections;
         return html({
           title: `${data.name} — ${col.name} | ${SITE_NAME}`,
-          description: `Capa com design "${data.name}" da coleção ${col.name}. Escolha seu modelo e personalize.`,
+          description:
+            data.description ??
+            `Capa com design "${data.name}" da coleção ${col.name}. Escolha seu modelo e personalize.`,
           image: data.image_url,
           url: `${SITE_URL}/colecao/${colSlug}/${data.slug}`,
           type: "product",
