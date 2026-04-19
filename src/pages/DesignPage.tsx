@@ -11,7 +11,8 @@ import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
 import { setPageSeo, setMeta, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import { type ShippingResult } from "@/lib/shipping";
-import { generateEventId } from "@/lib/meta-pixel";
+import { generateEventId, pixelEvent } from "@/lib/meta-pixel";
+import { clarityEvent } from "@/lib/clarity";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
@@ -148,6 +149,23 @@ const DesignPage = () => {
     script.textContent = JSON.stringify(jsonLd);
     return () => { script?.remove(); cleanup(); };
   }, [design, collectionSlug, designSlug]);
+
+  // Tracking: ViewContent (Pixel) + Clarity event, once per design
+  useEffect(() => {
+    if (!design?.id) return;
+    clarityEvent("design_view");
+    pixelEvent(
+      "ViewContent",
+      {
+        content_name: design.name,
+        content_ids: [design.id],
+        content_type: "product",
+        value: design.price_cents / 100,
+        currency: "BRL",
+      },
+      generateEventId()
+    );
+  }, [design?.id]);
 
   if (designLoading || productsLoading) return <LoadingSpinner variant="fullPage" />;
 

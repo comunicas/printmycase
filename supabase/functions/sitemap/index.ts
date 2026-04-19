@@ -156,8 +156,11 @@ Deno.serve(async (req) => {
     for (const d of designsRes.data ?? []) {
       const collSlug = collMap.get(d.collection_id);
       if (!collSlug) continue;
+      const lastmod = d.created_at
+        ? new Date(d.created_at).toISOString().split("T")[0]
+        : today;
       urls.push(
-        urlEntry(`${SITE_URL}/colecao/${collSlug}/${d.slug}`, "0.6", "weekly")
+        urlEntry(`${SITE_URL}/colecao/${collSlug}/${d.slug}`, "0.6", "weekly", lastmod)
       );
     }
 
