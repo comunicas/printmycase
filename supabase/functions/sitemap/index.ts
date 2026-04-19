@@ -51,11 +51,11 @@ Deno.serve(async (req) => {
       await Promise.all([
         supabase
           .from("products")
-          .select("slug, updated_at")
+          .select("name, slug, updated_at")
           .eq("active", true),
         supabase
           .from("collections")
-          .select("slug, updated_at")
+          .select("id, slug, updated_at")
           .eq("active", true),
         supabase
           .from("collection_designs")
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
           .eq("active", true),
         supabase
           .from("kb_categories")
-          .select("slug, created_at")
+          .select("id, slug, created_at")
           .eq("active", true),
         supabase
           .from("kb_articles")
