@@ -1,45 +1,40 @@
 
-## Implementar 7 melhorias SEO restantes em Coleções/Designs
+## Diagnóstico dos avisos do Google Search Console
 
-### Contexto
-Auditoria anterior identificou 7 melhorias para alinhar o SEO de `/colecoes`, `/colecao/:slug` e `/colecao/:slug/:designSlug` ao padrão já maduro de produtos (`/capa-celular/:brand/:slug`). Vou aplicar nas 3 páginas mais o sitemap.
+As imagens mostram **avisos amarelos opcionais**, não erros. A URL `/colecao/creative/capa-personalizada-you-can` foi validada com sucesso — o schema renderizou inteiro (Offer, shippingDetails, MerchantReturnPolicy, AggregateRating 4.9 / 50 ✅). Os dois avisos:
 
-### Mudanças
+### 1. `shippingRate` não encontrado (em `shippingDetails`)
+Google sugere declarar o **custo do frete** explicitamente (`shippingRate: { value, currency }`). Hoje só temos `shippingDestination` + `deliveryTime`.
 
-**1. `src/pages/DesignPage.tsx` — JSON-LD Product completo**
-- Adicionar `inLanguage: "pt-BR"` no `@graph`
-- Adicionar `category: "Capas para Celular"` no Product
-- Adicionar `aggregateRating` (usar 4.9 / count fixo da coleção, ou herdar do produto base — vou puxar do `useProducts` se já carregado, senão valores default da marca)
-- Garantir `merchantOffer()` (já existe via `BRAND`, conferir uso)
-- Adicionar `BreadcrumbList`: Home → Coleções → {Coleção} → {Design}
+### 2. `returnFees` não encontrado (em `hasMerchantReturnPolicy`)
+Google sugere declarar quem paga o frete da devolução (`returnFees: FreeReturn` ou `ReturnShippingFees`).
 
-**2. `src/pages/CollectionPage.tsx` — JSON-LD CollectionPage + ItemList**
-- `@type: CollectionPage` com `inLanguage: "pt-BR"`
-- `ItemList` com os designs da coleção (position, name, url, image)
-- `BreadcrumbList`: Home → Coleções → {Coleção}
+Ambos são **opcionais** — não bloqueiam indexação nem rich results. Mas preencher melhora elegibilidade para **Merchant Listings** (badges de envio/devolução nos resultados de busca, mais CTR).
 
-**3. `src/pages/Collections.tsx` — JSON-LD CollectionPage índice**
-- `@type: CollectionPage` com `inLanguage: "pt-BR"`
-- `ItemList` com todas as coleções
-- `BreadcrumbList`: Home → Coleções
+### O que vou fazer
 
-**4. `src/lib/merchant-jsonld.ts` — helper `aggregateRatingDefault`**
-- Exportar helper `defaultAggregateRating(rating?, count?)` retornando objeto `AggregateRating` com fallback (ex: 4.9 / 50) para evitar duplicação
+Atualizar **`src/lib/merchant-jsonld.ts`** (helper compartilhado — propaga automaticamente para Product, DesignPage e CollectionPage):
 
-**5. `src/pages/Product.tsx` — adicionar `inLanguage` e `category` (consistência)**
-- Já tem `category`, falta `inLanguage: "pt-BR"` no `@graph`
+**A. Adicionar `shippingRate` em `SHIPPING_DETAILS`:**
+```ts
+shippingRate: { "@type": "MonetaryAmount", value: <X>, currency: "BRL" }
+```
 
-**6. `src/components/SeoHead.tsx` (Landing) — adicionar `inLanguage`**
-- Adicionar `inLanguage: "pt-BR"` no graph raiz (Organization/WebSite)
+**B. Adicionar `returnFees` em `RETURN_POLICY`:**
+```ts
+returnFees: "https://schema.org/FreeReturn" // ou ReturnShippingFees
+```
 
-**7. `supabase/functions/sitemap/index.ts` — `<xhtml:link rel="alternate" hreflang="pt-BR">`**
-- Adicionar namespace xhtml no `<urlset>`
-- Para cada `<url>`, incluir `<xhtml:link rel="alternate" hreflang="pt-BR" href="..."/>` reforçando idioma único (sinaliza Brasil ao Google)
+### Antes de implementar — preciso de 2 decisões de negócio
 
-### Sem alterações de schema
-Sem novas dependências. Cleanup de scripts JSON-LD via `useEffect` return em todas as páginas (padrão já estabelecido).
+**Custo do frete (`shippingRate`):**
+- Frete grátis (R$ 0) → exibe badge "Frete grátis" no Google
+- R$ 15 (PAC médio)
+- R$ 20 (Sedex médio)
+- Buscar de `src/lib/shipping.ts` (se já existir valor padrão configurado)
 
-### Validação pós-implementação
-- `curl` no `/sitemap` confirmando `xhtml:link`
-- `curl` no `/prerender?path=/colecao/...` confirmando JSON-LD novo
-- Validador estrutural via Rich Results (sugestão pro usuário)
+**Política de devolução (`returnFees`):**
+- Cliente paga (`ReturnShippingFees`) — padrão CDC
+- Loja paga (`FreeReturn`) — exibe badge "Devolução grátis", mais atrativo
+
+Me diga as 2 escolhas e eu aplico em 1 edit (o helper centralizado garante que propaga em todas as páginas que usam `merchantOffer()`).
