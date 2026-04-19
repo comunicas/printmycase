@@ -276,7 +276,7 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader breadcrumbs={breadcrumbs} />
-      <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10 space-y-6">
+      <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10 space-y-6 pb-28 lg:pb-10">
 
         {/* Mini preview */}
         {(customization.editedImage || customization.image) && (
@@ -316,7 +316,7 @@ const Checkout = () => {
         />
 
         <Button
-          className="w-full gap-1.5"
+          className="hidden lg:flex w-full gap-1.5"
           onClick={handleCheckout}
           disabled={checkoutLoading || !isAddressValid}
         >
@@ -329,6 +329,32 @@ const Checkout = () => {
 
         <PaymentBadges />
       </main>
+
+      {/* Mobile sticky checkout bar */}
+      <div
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="max-w-xl mx-auto flex items-center gap-3 px-4 py-3">
+          <div className="flex flex-col leading-tight">
+            <span className="text-xs text-muted-foreground">Total</span>
+            <span className="text-base font-semibold text-foreground">
+              {(totalCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </span>
+          </div>
+          <Button
+            className="flex-1 gap-1.5"
+            onClick={handleCheckout}
+            disabled={checkoutLoading || !isAddressValid}
+          >
+            {checkoutLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>Finalizar <ArrowRight className="w-4 h-4" /></>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
