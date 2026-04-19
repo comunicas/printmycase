@@ -196,7 +196,7 @@ const DesignPage = () => {
       
       <AppHeader breadcrumbs={breadcrumbs} />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full p-5 lg:p-10">
+      <main className="flex-1 max-w-4xl mx-auto w-full p-5 lg:p-10 pb-28 lg:pb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Design preview */}
           <div className="space-y-3">
@@ -303,7 +303,7 @@ const DesignPage = () => {
             />
 
             <Button
-              className="w-full gap-1.5"
+              className="w-full gap-1.5 hidden lg:flex"
               onClick={handleCheckout}
               disabled={checkoutLoading || !selectedProductId || !isAddressValid}
             >
@@ -318,6 +318,27 @@ const DesignPage = () => {
           </div>
         </div>
       </main>
+
+      <div
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="max-w-xl mx-auto flex items-center gap-3 px-4 py-3">
+          <div className="flex flex-col leading-tight">
+            <span className="text-xs text-muted-foreground">Total</span>
+            <span className="text-base font-semibold text-foreground">
+              {formatPrice((design.price_cents + shippingCents) / 100)}
+            </span>
+          </div>
+          <Button
+            className="flex-1 gap-1.5"
+            onClick={handleCheckout}
+            disabled={checkoutLoading || !selectedProductId || !isAddressValid}
+          >
+            {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Finalizar <ArrowRight className="w-4 h-4" /></>}
+          </Button>
+        </div>
+      </div>
 
       {showZoom && (
         <div
