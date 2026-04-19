@@ -34,8 +34,8 @@ const Collections = () => {
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
-      const nearBottom = window.innerHeight + y >= document.body.scrollHeight - 600;
-      setShowFab(y > 400 && !nearBottom);
+      const nearBottom = window.innerHeight + y >= document.body.scrollHeight - 300;
+      setShowFab(y > 250 && !nearBottom);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
