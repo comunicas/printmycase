@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
     params.append("payment_method_types[0]", "card");
     params.append("mode", "payment");
 
-    const stripePriceId = isCollectionPurchase ? design!.stripe_price_id : product.stripe_price_id;
+    const stripePriceId = isCollectionPurchase ? null : product.stripe_price_id;
 
     if (stripePriceId) {
       params.append("line_items[0][price]", stripePriceId);
@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
       params.append("line_items[0][price_data][currency]", "brl");
       params.append("line_items[0][price_data][unit_amount]", String(itemPriceCents));
       params.append("line_items[0][price_data][product_data][name]", itemName);
-      params.append("line_items[0][price_data][product_data][description]", isCollectionPurchase ? "Capa com design de coleção" : (product.description || "Capa de celular personalizada"));
+      params.append("line_items[0][price_data][product_data][description]", isCollectionPurchase ? ((design as any).description || "Capa com design de coleção") : (product.description || "Capa de celular personalizada"));
     }
     params.append("line_items[0][quantity]", "1");
 

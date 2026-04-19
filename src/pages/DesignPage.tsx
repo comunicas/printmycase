@@ -35,9 +35,12 @@ const DesignPage = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showZoom, setShowZoom] = useState(false);
   const [zoomImage, setZoomImage] = useState("");
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const initiateCheckoutEventId = useRef(generateEventId());
 
   const selectedProduct = products.find((p) => p.id === selectedProductId);
+  const allDesignImages = design ? [design.image_url, ...(design.images ?? [])].filter(Boolean) : [];
+  const currentImage = allDesignImages[selectedImageIdx] ?? design?.image_url ?? "";
 
   useEffect(() => {
     if (!showZoom) return;
@@ -115,15 +118,17 @@ const DesignPage = () => {
     setMeta("property", "product:price:amount", String(design.price_cents / 100));
     setMeta("property", "product:price:currency", "BRL");
 
+    const allImgs = [design.image_url, ...(design.images ?? [])].filter(Boolean);
+    const productDesc = design.description || desc;
     const jsonLd = {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "Product",
           name: design.name,
-          image,
+          image: allImgs.length > 1 ? allImgs : image,
           url,
-          description: desc,
+          description: productDesc,
           sku: design.slug,
           category: "Capas para Celular",
           brand: BRAND,
@@ -175,36 +180,33 @@ const DesignPage = () => {
           <div className="space-y-3">
             <div className="aspect-square rounded-2xl overflow-hidden bg-muted border">
               <img
-                src={design.image_url}
-                alt={design.name}
+                src={currentImage}
+                alt={`${design.name} ${selectedImageIdx > 0 ? `- foto ${selectedImageIdx + 1}` : ""}`}
                 width={600}
                 height={600}
                 className="w-full h-full object-cover cursor-zoom-in"
-                onClick={() => { setZoomImage(design.image_url); setShowZoom(true); }}
+                onClick={() => { setZoomImage(currentImage); setShowZoom(true); }}
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </div>
-            <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="w-16 h-16 rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-zoom-in flex-shrink-0"
-                  onClick={() => { setZoomImage(design.image_url); setShowZoom(true); }}
-                >
-                  <img
-                    src={design.image_url}
-                    alt={`${design.name} — ampliar`}
-                    width={64}
-                    height={64}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-                <span className="text-xs text-muted-foreground hidden sm:inline">
-                  Clique para ampliar
-                </span>
-                <span className="text-xs text-muted-foreground sm:hidden">
-                  Toque para ampliar
-                </span>
+            {allDesignImages.length > 1 ? (
+              <div className="flex gap-2 flex-wrap">
+                {allDesignImages.map((img, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedImageIdx(i)}
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0 ${
+                      i === selectedImageIdx ? "border-primary" : "border-border hover:border-muted-foreground/40"
+                    }`}
+                  >
+                    <img src={img} alt={`${design.name} — miniatura ${i + 1}`} width={64} height={64} className="w-full h-full object-cover" />
+                  </button>
+                ))}
               </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Clique na imagem para ampliar</p>
+            )}
           </div>
 
           {/* Purchase section */}
@@ -214,6 +216,12 @@ const DesignPage = () => {
               <p className="text-2xl font-bold text-primary mt-2">
                 {formatPrice(design.price_cents / 100)}
               </p>
+              {design.description && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <h2 className="text-sm font-semibold text-foreground mb-2">Descrição</h2>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{design.description}</p>
+                </div>
+              )}
             </div>
 
             {/* Model selector */}
