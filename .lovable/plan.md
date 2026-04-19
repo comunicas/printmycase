@@ -1,40 +1,26 @@
 
-## Diagnóstico dos avisos do Google Search Console
+## Revalidação no Rich Results Test do Google
 
-As imagens mostram **avisos amarelos opcionais**, não erros. A URL `/colecao/creative/capa-personalizada-you-can` foi validada com sucesso — o schema renderizou inteiro (Offer, shippingDetails, MerchantReturnPolicy, AggregateRating 4.9 / 50 ✅). Os dois avisos:
+Não consigo executar essa validação automaticamente — o Rich Results Test do Google (https://search.google.com/test/rich-results) exige interação manual com captcha/login e não expõe API pública gratuita.
 
-### 1. `shippingRate` não encontrado (em `shippingDetails`)
-Google sugere declarar o **custo do frete** explicitamente (`shippingRate: { value, currency }`). Hoje só temos `shippingDestination` + `deliveryTime`.
+### O que posso fazer agora (alternativa equivalente)
 
-### 2. `returnFees` não encontrado (em `hasMerchantReturnPolicy`)
-Google sugere declarar quem paga o frete da devolução (`returnFees: FreeReturn` ou `ReturnShippingFees`).
+**Validação local do JSON-LD servido ao Googlebot:**
+1. `curl` no `/functions/v1/prerender?path=/colecao/creative/capa-personalizada-you-can` (mesma URL que o Search Console mostrou nas screenshots)
+2. Extrair o bloco `<script type="application/ld+json">` do HTML retornado
+3. Confirmar presença literal de:
+   - `"shippingRate"` com `value: 12.90` e `currency: "BRL"` dentro de `shippingDetails`
+   - `"returnFees": "https://schema.org/FreeReturn"` dentro de `hasMerchantReturnPolicy`
+4. Validar JSON parseável (sem syntax error)
+5. Repetir para 1 URL de produto (`/capa-celular/iphone/...`) garantindo propagação do helper compartilhado
 
-Ambos são **opcionais** — não bloqueiam indexação nem rich results. Mas preencher melhora elegibilidade para **Merchant Listings** (badges de envio/devolução nos resultados de busca, mais CTR).
+Isso confirma que o HTML servido aos crawlers já contém os campos. O Google leva de horas a dias para re-rastrear e atualizar o status no Search Console — não há como acelerar pelo nosso lado além de reenviar a URL no Search Console.
 
-### O que vou fazer
+### Passo manual recomendado pra você (depois)
+Após eu confirmar o JSON-LD via curl:
+1. Abrir https://search.google.com/test/rich-results
+2. Colar `https://studio.printmycase.com.br/colecao/creative/capa-personalizada-you-can`
+3. Conferir que os 2 avisos amarelos sumiram
 
-Atualizar **`src/lib/merchant-jsonld.ts`** (helper compartilhado — propaga automaticamente para Product, DesignPage e CollectionPage):
-
-**A. Adicionar `shippingRate` em `SHIPPING_DETAILS`:**
-```ts
-shippingRate: { "@type": "MonetaryAmount", value: <X>, currency: "BRL" }
-```
-
-**B. Adicionar `returnFees` em `RETURN_POLICY`:**
-```ts
-returnFees: "https://schema.org/FreeReturn" // ou ReturnShippingFees
-```
-
-### Antes de implementar — preciso de 2 decisões de negócio
-
-**Custo do frete (`shippingRate`):**
-- Frete grátis (R$ 0) → exibe badge "Frete grátis" no Google
-- R$ 15 (PAC médio)
-- R$ 20 (Sedex médio)
-- Buscar de `src/lib/shipping.ts` (se já existir valor padrão configurado)
-
-**Política de devolução (`returnFees`):**
-- Cliente paga (`ReturnShippingFees`) — padrão CDC
-- Loja paga (`FreeReturn`) — exibe badge "Devolução grátis", mais atrativo
-
-Me diga as 2 escolhas e eu aplico em 1 edit (o helper centralizado garante que propaga em todas as páginas que usam `merchantOffer()`).
+### Sem alterações de código
+QA puro via curl + read-only.
