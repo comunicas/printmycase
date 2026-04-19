@@ -80,11 +80,11 @@ export function useDesignsGroupedByCollection() {
         const flat: DesignWithCollection[] = rows.map(mapDesign);
         setAllDesigns(flat);
 
-        const map = new Map<string, CollectionWithDesigns>();
+        const map = new Map<string, CollectionWithDesigns & { _sortOrder: number }>();
         for (const d of rows) {
           const col = d.collections;
           if (!map.has(col.id)) {
-            map.set(col.id, { id: col.id, name: col.name, slug: col.slug, designs: [] });
+            map.set(col.id, { id: col.id, name: col.name, slug: col.slug, designs: [], _sortOrder: col.sort_order ?? 0 });
           }
           map.get(col.id)!.designs.push({
             id: d.id,
@@ -96,11 +96,9 @@ export function useDesignsGroupedByCollection() {
           });
         }
 
-        const sorted = Array.from(map.values()).sort((a, b) => {
-          const aOrder = rows.find((r) => r.collections.id === a.id)?.collections.sort_order ?? 0;
-          const bOrder = rows.find((r) => r.collections.id === b.id)?.collections.sort_order ?? 0;
-          return aOrder - bOrder;
-        });
+        const sorted = Array.from(map.values())
+          .sort((a, b) => a._sortOrder - b._sortOrder)
+          .map(({ _sortOrder, ...rest }) => rest);
 
         setCollections(sorted);
         setLoading(false);

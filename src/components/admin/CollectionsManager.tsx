@@ -12,6 +12,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { optimizeForUpload } from "@/lib/image-utils";
 import Pagination from "@/components/admin/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { slugify } from "@/lib/slug";
 
 type Collection = Tables<"collections">;
 
@@ -106,7 +107,7 @@ const CollectionsManager = () => {
 
   const autoSlug = (val: string) => {
     setName(val);
-    if (!editing) setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
+    if (!editing) setSlug(slugify(val));
   };
 
   const { paginated, page, setPage, totalPages, totalItems } = usePagination(collections, 10);
@@ -153,7 +154,8 @@ const CollectionsManager = () => {
             </div>
             <div>
               <Label>Slug</Label>
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
+              <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} />
+              <p className="text-xs text-muted-foreground mt-1">URL: /colecao/{slug || "..."}</p>
             </div>
             <div>
               <Label>Descrição</Label>
@@ -173,7 +175,10 @@ const CollectionsManager = () => {
               <Label>Ordem</Label>
               <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
             </div>
-            <Button className="w-full" onClick={handleSave}>{editing ? "Salvar" : "Criar"}</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+              <Button className="flex-1" onClick={handleSave}>{editing ? "Salvar" : "Criar"}</Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
