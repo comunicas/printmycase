@@ -18,6 +18,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import LazyImage from "@/components/LazyImage";
 const SITE_NAME = "Studio PrintMyCase";
 
 const DesignPage = () => {
@@ -344,10 +345,9 @@ const DesignPage = () => {
                     className="group block rounded-xl overflow-hidden border border-border bg-card hover:border-primary/50 transition-colors"
                   >
                     <div className="aspect-square bg-muted overflow-hidden">
-                      <img
+                      <LazyImage
                         src={d.image_url}
                         alt={d.name}
-                        loading="lazy"
                         width={200}
                         height={200}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
