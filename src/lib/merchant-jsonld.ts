@@ -9,6 +9,11 @@ const SHIPPING_DETAILS = {
     "@type": "DefinedRegion" as const,
     addressCountry: "BR",
   },
+  shippingRate: {
+    "@type": "MonetaryAmount" as const,
+    value: 12.90,
+    currency: "BRL",
+  },
   deliveryTime: {
     "@type": "ShippingDeliveryTime" as const,
     handlingTime: { "@type": "QuantitativeValue" as const, minValue: 1, maxValue: 3, unitCode: "d" },
@@ -22,6 +27,7 @@ const RETURN_POLICY = {
   returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
   merchantReturnDays: 7,
   returnMethod: "https://schema.org/ReturnByMail",
+  returnFees: "https://schema.org/FreeReturn",
 };
 
 export function merchantOffer(price: number, url: string) {
