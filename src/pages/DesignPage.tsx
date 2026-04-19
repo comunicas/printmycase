@@ -123,36 +123,47 @@ const DesignPage = () => {
 
     const allImgs = [design.image_url, ...(design.images ?? [])].filter(Boolean);
     const productDesc = design.description || desc;
-    const jsonLd = {
-      "@context": "https://schema.org",
-      inLanguage: "pt-BR",
-      "@graph": [
-        {
-          "@type": "Product",
-          name: design.name,
-          image: allImgs.length > 1 ? allImgs : image,
-          url,
-          description: productDesc,
-          sku: design.slug,
-          category: "Capas para Celular",
-          inLanguage: "pt-BR",
-          brand: BRAND,
-          offers: merchantOffer(design.price_cents / 100, url),
-          aggregateRating: defaultAggregateRating(),
-        },
-        breadcrumbJsonLd([
-          { name: "Home", url: SITE_URL },
-          { name: "Coleções", url: `${SITE_URL}/colecoes` },
-          { name: collection?.name || collectionSlug || "", url: `${SITE_URL}/colecao/${collectionSlug}` },
-          { name: design.name },
-        ]),
-      ],
-    };
+    const similarDesigns = siblingDesigns.filter((d) => d.id !== design.id).slice(0, 8);
+    const graph: any[] = [
+      {
+        "@type": "Product",
+        name: design.name,
+        image: allImgs.length > 1 ? allImgs : image,
+        url,
+        description: productDesc,
+        sku: design.slug,
+        category: "Capas para Celular",
+        inLanguage: "pt-BR",
+        brand: BRAND,
+        offers: merchantOffer(design.price_cents / 100, url),
+        aggregateRating: defaultAggregateRating(),
+      },
+      breadcrumbJsonLd([
+        { name: "Home", url: SITE_URL },
+        { name: "Coleções", url: `${SITE_URL}/colecoes` },
+        { name: collection?.name || collectionSlug || "", url: `${SITE_URL}/colecao/${collectionSlug}` },
+        { name: design.name },
+      ]),
+    ];
+    if (similarDesigns.length > 0) {
+      graph.push({
+        "@type": "ItemList",
+        name: `Designs semelhantes${collection?.name ? ` em ${collection.name}` : ""}`,
+        itemListElement: similarDesigns.map((d, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          url: `${SITE_URL}/colecao/${collectionSlug}/${d.slug}`,
+          name: d.name,
+          image: d.image_url,
+        })),
+      });
+    }
+    const jsonLd = { "@context": "https://schema.org", inLanguage: "pt-BR", "@graph": graph };
     let script = document.querySelector('script[data-seo="design-jsonld"]') as HTMLScriptElement | null;
     if (!script) { script = document.createElement("script"); script.type = "application/ld+json"; script.setAttribute("data-seo", "design-jsonld"); document.head.appendChild(script); }
     script.textContent = JSON.stringify(jsonLd);
     return () => { script?.remove(); cleanup(); };
-  }, [design, collectionSlug, designSlug]);
+  }, [design, collectionSlug, designSlug, siblingDesigns, collection?.name]);
 
   // Tracking: ViewContent (Pixel) + Clarity event, once per design
   useEffect(() => {
