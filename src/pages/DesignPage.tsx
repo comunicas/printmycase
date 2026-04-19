@@ -23,7 +23,7 @@ const SITE_NAME = "Studio PrintMyCase";
 const DesignPage = () => {
   const { collectionSlug, designSlug } = useParams<{ collectionSlug: string; designSlug: string }>();
   const { design, loading: designLoading } = useDesign(designSlug);
-  const { collection } = useCollection(collectionSlug);
+  const { collection, designs: siblingDesigns } = useCollection(collectionSlug);
   const { products, loading: productsLoading } = useProducts();
   const { user } = useAuth();
   const { toast } = useToast();
