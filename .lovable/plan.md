@@ -1,33 +1,33 @@
 
-## Teste E2E — Sticky bar do checkout mobile (390px)
+User confirmou que já está logado e já chegou no checkout (vejo no replay: clicou em "Finalizar Pedido", request `create-checkout` retornou URL Stripe às 05:23:33, depois voltou para `/`). Preciso retomar do zero: navegar para o checkout novamente.
+
+Pelo replay e network: produto `6258a562` (Galaxy S24+), design `14ef96a5` (Why Tho), usuário tem endereço salvo (`732d663b`), CEP já entrou shipping de R$ 12,90. O fluxo funcionou end-to-end uma vez.
+
+## Retomar teste E2E — sticky bar checkout mobile (390px)
 
 ### Roteiro
 
-1. `navigate_to_sandbox` → `/checkout/{id}` em 390×844
-   - Preciso de um produto válido. Vou tentar via fluxo natural: navegar para `/customize/{slug}` (já estamos em `/colecao/creative/capa-personalizada-why-tho`), o que requer uma customização em sessionStorage. Como o checkout exige `customization` em sessionStorage **ou** um pending checkout no DB, e o user provavelmente não tem nenhum dos dois, **preciso verificar se há sessão ativa primeiro**.
-   - Estratégia: `navigate_to_sandbox /checkout/{any-product-id}` → se redirecionar para customize, navego para o produto atual (`/product/capa-personalizada-why-tho`) e sigo o fluxo Personalizar.
-2. Screenshot inicial — confirmar:
-   - Barra fixa visível no rodapé (`fixed bottom-0`)
-   - Total à esquerda, botão "Finalizar" à direita
-   - Botão inline desktop **oculto** (`hidden lg:flex`)
-3. Scroll até o topo → screenshot — barra continua fixa
-4. Scroll até o final → screenshot — barra continua fixa, não sobrepõe `PaymentBadges` (graças ao `pb-28`)
-5. Preencher CEP válido (ex: `01310-100` São Paulo) → aguardar shipping carregar → screenshot — confirmar que **total atualiza** (preço + frete) na barra
-6. Preencher endereço completo (rua, número, bairro) → clicar "Finalizar" no sticky bar → observar:
-   - Loading spinner aparece
-   - Network request para `create-checkout` é disparado
-   - **PARO antes do redirect Stripe** (não vou completar pagamento real)
+1. `navigate_to_sandbox` em 390×844 → ir até `/colecao/creative/capa-personalizada-why-tho` (página do design) e clicar em "Personalizar"/"Comprar" para chegar ao checkout com sessão válida. Se não for possível, tentar direto `/checkout/6258a562-123b-4ab9-8039-4edbc1ee4291` (pode redirecionar se sessionStorage estiver vazio).
+2. **Screenshot inicial** — confirmar barra fixa no rodapé com "Total" + botão "Finalizar"
+3. **Scroll up/down** — screenshot no topo e no fim para verificar:
+   - Barra continua `fixed bottom-0` em todas posições
+   - `PaymentBadges` não fica oculto sob a barra (graças ao `pb-28`)
+4. **CEP**: se shipping não estiver carregado, preencher `01310-100` → aguardar → screenshot confirmando que **total na barra atualiza** de R$ 89,90 para R$ 89,90 + frete
+5. **Clicar "Finalizar"** no botão da barra sticky → observar:
+   - Loading spinner aparece no botão
+   - `list_network_requests` mostra POST para `create-checkout` retornando 200
+   - **PARO antes de seguir o redirect Stripe** (não completo pagamento real)
 
-### Ações destrutivas evitadas
-- **NÃO vou completar o checkout no Stripe** (pagamento real). Paro no momento em que `create-checkout` é invocado e confirmo via `list_network_requests` que a função foi chamada com sucesso.
-- Se a sessão já tiver endereços salvos, uso um existente para evitar criar dados.
+### Ações destrutivas
+- Não completar pagamento Stripe (paro no momento que recebo a URL)
+- Usar endereço já salvo (`Casa - Rua Doutor Samuel Porto`) — não criar novo
 
 ### Saída
-Checklist ✅/❌ de:
-- Barra fixa em todas as posições de scroll
-- Total = produto + frete após CEP
-- Botão dispara `create-checkout` (sem completar pagamento)
-- Sem regressão visual (botão inline desktop oculto, padding-bottom OK)
+Checklist objetivo:
+- [ ] Barra fixa no topo do scroll
+- [ ] Barra fixa no fim do scroll (sem sobrepor PaymentBadges)
+- [ ] Total atualiza com frete na barra
+- [ ] Botão Finalizar dispara `create-checkout` com sucesso
+- [ ] Botão desktop oculto no mobile (`hidden lg:flex`)
 
-### Se bloquear
-Se não houver `customization` em sessão e o redirect para `/customize` exigir upload de imagem real (que não posso fazer via browser), reporto o bloqueio e sugiro que o usuário inicie a customização manualmente, depois eu retomo o teste a partir do `/checkout`.
+Sem mudanças de código.
