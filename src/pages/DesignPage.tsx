@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, type MouseEvent as ReactMouse
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
-import { useDesign } from "@/hooks/useCollections";
+import { useDesign, useCollection } from "@/hooks/useCollections";
 import { useProducts } from "@/hooks/useProducts";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +22,7 @@ const SITE_NAME = "Studio PrintMyCase";
 const DesignPage = () => {
   const { collectionSlug, designSlug } = useParams<{ collectionSlug: string; designSlug: string }>();
   const { design, loading: designLoading } = useDesign(designSlug);
+  const { collection } = useCollection(collectionSlug);
   const { products, loading: productsLoading } = useProducts();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -137,7 +138,7 @@ const DesignPage = () => {
         breadcrumbJsonLd([
           { name: "Home", url: SITE_URL },
           { name: "Coleções", url: `${SITE_URL}/colecoes` },
-          { name: collectionSlug || "", url: `${SITE_URL}/colecao/${collectionSlug}` },
+          { name: collection?.name || collectionSlug || "", url: `${SITE_URL}/colecao/${collectionSlug}` },
           { name: design.name },
         ]),
       ],
@@ -165,7 +166,7 @@ const DesignPage = () => {
 
   const breadcrumbs = [
     { label: "Coleções", to: "/colecoes" },
-    { label: collectionSlug || "", to: `/colecao/${collectionSlug}` },
+    { label: collection?.name || collectionSlug || "", to: `/colecao/${collectionSlug}` },
     { label: design.name },
   ];
 

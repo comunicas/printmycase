@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Pencil, Trash2, Eye, EyeOff, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,19 @@ import type { Tables } from "@/integrations/supabase/types";
 import { optimizeForUpload } from "@/lib/image-utils";
 import Pagination from "@/components/admin/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { slugify } from "@/lib/slug";
 
 type Collection = Tables<"collections">;
 type Design = Tables<"collection_designs">;
 
-const slugify = (val: string) =>
-  val.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+const MAX_EXTRA_IMAGES = 10;
+
+const centsToReais = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
+const reaisToCents = (val: string): number => {
+  const cleaned = val.replace(/[^\d,]/g, "").replace(",", ".");
+  const num = parseFloat(cleaned);
+  return Number.isFinite(num) ? Math.round(num * 100) : 0;
+};
 
 const CollectionDesignsManager = () => {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -36,15 +43,16 @@ const CollectionDesignsManager = () => {
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [extraImages, setExtraImages] = useState<string[]>([]);
-  const [priceCents, setPriceCents] = useState(4990);
+  const [priceInput, setPriceInput] = useState("49,90");
   const [sortOrder, setSortOrder] = useState(0);
   const [uploadingExtra, setUploadingExtra] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; slug?: string; image?: string; price?: string }>({});
 
   useEffect(() => {
     supabase.from("collections").select("*").order("sort_order").then(({ data }) => {
       const cols = data ?? [];
       setCollections(cols);
-      if (cols.length > 0 && !selectedCollectionId) setSelectedCollectionId(cols[0].id);
+      setSelectedCollectionId((prev) => prev || (cols[0]?.id ?? ""));
       setLoading(false);
     });
   }, []);
@@ -67,7 +75,7 @@ const CollectionDesignsManager = () => {
 
   const resetForm = () => {
     setName(""); setSlug(""); setDescription(""); setImageUrl(""); setExtraImages([]);
-    setPriceCents(4990); setSortOrder(0);
+    setPriceInput("49,90"); setSortOrder(0); setErrors({});
   };
 
   const openNew = () => {
@@ -83,16 +91,25 @@ const CollectionDesignsManager = () => {
     setDescription(d.description ?? "");
     setImageUrl(d.image_url);
     setExtraImages(d.images ?? []);
-    setPriceCents(d.price_cents);
+    setPriceInput(centsToReais(d.price_cents));
     setSortOrder(d.sort_order);
+    setErrors({});
     setDialogOpen(true);
   };
 
+  const validate = () => {
+    const next: typeof errors = {};
+    if (!name.trim()) next.name = "Nome obrigatório";
+    if (!slug.trim()) next.slug = "Slug obrigatório";
+    if (!imageUrl.trim()) next.image = "Imagem de capa obrigatória";
+    const cents = reaisToCents(priceInput);
+    if (cents <= 0) next.price = "Preço deve ser maior que zero";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
   const handleSave = async () => {
-    if (!name.trim() || !slug.trim() || !imageUrl.trim()) {
-      toast({ title: "Preencha nome, slug e imagem de capa", variant: "destructive" });
-      return;
-    }
+    if (!validate()) return;
     const payload = {
       collection_id: selectedCollectionId,
       name: name.trim(),
@@ -100,7 +117,7 @@ const CollectionDesignsManager = () => {
       description: description.trim() || null,
       image_url: imageUrl.trim(),
       images: extraImages,
-      price_cents: priceCents,
+      price_cents: reaisToCents(priceInput),
       sort_order: sortOrder,
     };
 
@@ -146,6 +163,7 @@ const CollectionDesignsManager = () => {
     try {
       const url = await uploadOne(file);
       setImageUrl(url);
+      setErrors((prev) => ({ ...prev, image: undefined }));
     } catch (err: any) {
       toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
     }
@@ -154,10 +172,20 @@ const CollectionDesignsManager = () => {
   const handleExtraUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    const remaining = MAX_EXTRA_IMAGES - extraImages.length;
+    if (remaining <= 0) {
+      toast({ title: `Limite de ${MAX_EXTRA_IMAGES} imagens atingido`, variant: "destructive" });
+      e.target.value = "";
+      return;
+    }
+    const toUpload = Array.from(files).slice(0, remaining);
+    if (files.length > remaining) {
+      toast({ title: `Apenas ${remaining} imagem(ns) será(ão) adicionada(s)`, description: `Limite máximo: ${MAX_EXTRA_IMAGES}` });
+    }
     setUploadingExtra(true);
     try {
       const urls: string[] = [];
-      for (const file of Array.from(files)) {
+      for (const file of toUpload) {
         if (!file.type.startsWith("image/")) continue;
         urls.push(await uploadOne(file));
       }
@@ -175,10 +203,22 @@ const CollectionDesignsManager = () => {
     setExtraImages(extraImages.filter((_, i) => i !== idx));
   };
 
+  const moveExtraImage = (idx: number, direction: -1 | 1) => {
+    const target = idx + direction;
+    if (target < 0 || target >= extraImages.length) return;
+    const next = [...extraImages];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    setExtraImages(next);
+  };
+
   const autoSlug = (val: string) => {
     setName(val);
     if (!editing) setSlug(slugify(val));
+    setErrors((prev) => ({ ...prev, name: undefined }));
   };
+
+  const extraCount = extraImages.length;
+  const extraFull = extraCount >= MAX_EXTRA_IMAGES;
 
   return (
     <div>
@@ -236,12 +276,19 @@ const CollectionDesignsManager = () => {
           <DialogHeader><DialogTitle>{editing ? "Editar Design" : "Novo Design"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Nome</Label>
-              <Input value={name} onChange={(e) => autoSlug(e.target.value)} />
+              <Label>Nome *</Label>
+              <Input value={name} onChange={(e) => autoSlug(e.target.value)} aria-invalid={!!errors.name} />
+              {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
             </div>
             <div>
-              <Label>Slug (URL)</Label>
-              <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} />
+              <Label>Slug (URL) *</Label>
+              <Input
+                value={slug}
+                onChange={(e) => { setSlug(slugify(e.target.value)); setErrors((p) => ({ ...p, slug: undefined })); }}
+                aria-invalid={!!errors.slug}
+              />
+              <p className="text-xs text-muted-foreground mt-1">URL: /colecao/.../{slug || "..."}</p>
+              {errors.slug && <p className="text-xs text-destructive mt-1">{errors.slug}</p>}
             </div>
             <div>
               <Label>Descrição</Label>
@@ -255,40 +302,99 @@ const CollectionDesignsManager = () => {
             </div>
             <div>
               <Label>Imagem de capa *</Label>
-              {imageUrl && <img src={imageUrl} alt="capa" className="w-full h-40 object-cover rounded-lg mb-2" />}
-              <Input type="file" accept="image/*" onChange={handleCoverUpload} />
+              {imageUrl && (
+                <div className="relative mb-2">
+                  <img src={imageUrl} alt="capa" className="w-full h-40 object-cover rounded-lg" />
+                  <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded">CAPA</span>
+                </div>
+              )}
+              <Input type="file" accept="image/*" onChange={handleCoverUpload} aria-invalid={!!errors.image} />
+              {errors.image && <p className="text-xs text-destructive mt-1">{errors.image}</p>}
             </div>
             <div>
-              <Label>Imagens adicionais (galeria)</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label>Imagens adicionais (galeria)</Label>
+                <span className={`text-xs ${extraFull ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                  {extraCount}/{MAX_EXTRA_IMAGES}
+                </span>
+              </div>
               {extraImages.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mb-2">
                   {extraImages.map((url, i) => (
-                    <div key={i} className="relative aspect-square rounded-md overflow-hidden border">
+                    <div key={`${url}-${i}`} className="relative aspect-square rounded-md overflow-hidden border group">
                       <img src={url} alt={`extra ${i + 1}`} className="w-full h-full object-cover" />
+                      <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => moveExtraImage(i, -1)}
+                          disabled={i === 0}
+                          className="p-1 text-white disabled:opacity-30 hover:bg-white/10"
+                          aria-label="Mover para esquerda"
+                        >
+                          <ArrowUp className="h-3 w-3 -rotate-90" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveExtraImage(i, 1)}
+                          disabled={i === extraImages.length - 1}
+                          className="p-1 text-white disabled:opacity-30 hover:bg-white/10"
+                          aria-label="Mover para direita"
+                        >
+                          <ArrowDown className="h-3 w-3 -rotate-90" />
+                        </button>
+                      </div>
                       <button
                         type="button"
                         onClick={() => removeExtraImage(i)}
                         className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:opacity-90"
+                        aria-label="Remover"
                       >
                         <X className="h-3 w-3" />
                       </button>
+                      <span className="absolute top-1 left-1 bg-background/80 text-foreground text-[10px] font-medium px-1.5 py-0.5 rounded">
+                        {i + 1}
+                      </span>
                     </div>
                   ))}
                 </div>
               )}
-              <Input type="file" accept="image/*" multiple onChange={handleExtraUpload} disabled={uploadingExtra} />
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleExtraUpload}
+                disabled={uploadingExtra || extraFull}
+              />
               {uploadingExtra && <p className="text-xs text-muted-foreground mt-1">Enviando...</p>}
+              {extraFull && <p className="text-xs text-destructive mt-1">Limite máximo de {MAX_EXTRA_IMAGES} imagens atingido.</p>}
             </div>
             <div>
-              <Label>Preço (centavos)</Label>
-              <Input type="number" value={priceCents} onChange={(e) => setPriceCents(Number(e.target.value))} />
-              <p className="text-xs text-muted-foreground mt-1">{formatPrice(priceCents / 100)}</p>
+              <Label>Preço (R$) *</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                <Input
+                  inputMode="decimal"
+                  value={priceInput}
+                  onChange={(e) => { setPriceInput(e.target.value); setErrors((p) => ({ ...p, price: undefined })); }}
+                  className="pl-9"
+                  placeholder="49,90"
+                  aria-invalid={!!errors.price}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {reaisToCents(priceInput) > 0 ? `${formatPrice(reaisToCents(priceInput) / 100)} (${reaisToCents(priceInput)} centavos)` : "Digite no formato 49,90"}
+              </p>
+              {errors.price && <p className="text-xs text-destructive mt-1">{errors.price}</p>}
             </div>
             <div>
               <Label>Ordem</Label>
               <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
+              <p className="text-xs text-muted-foreground mt-1">Menor número aparece primeiro.</p>
             </div>
-            <Button className="w-full" onClick={handleSave}>{editing ? "Salvar" : "Criar"}</Button>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+              <Button className="flex-1" onClick={handleSave}>{editing ? "Salvar" : "Criar"}</Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

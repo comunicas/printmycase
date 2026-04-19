@@ -43,7 +43,7 @@ const CollectionPage = () => {
                 item: {
                   "@type": "Product",
                   name: d.name,
-                  description: `Capa com design "${d.name}" da coleção ${collection.name}.`,
+                  description: d.description || `Capa com design "${d.name}" da coleção ${collection.name}.`,
                   sku: d.slug,
                   brand: BRAND,
                   image: d.image_url,
