@@ -1,32 +1,40 @@
 
-User quer lazy-load + skeleton nas imagens da seção "Designs semelhantes" do DesignPage. Já existe `loading="lazy"` nas `<img>`. Falta o skeleton enquanto a imagem carrega.
+User quer ItemList JSON-LD na seção "Designs semelhantes" do DesignPage para reforçar SEO de links internos.
 
-Já existe `DesignCardSkeleton.tsx` no projeto — mas é um card inteiro, usado durante fetch. Aqui o fetch dos siblings já terminou; o que falta é skeleton **por imagem** enquanto cada `<img>` baixa.
+## Plano
 
-## Solução
+Adicionar um schema `ItemList` ao JSON-LD já existente no `useEffect` de SEO do `DesignPage.tsx` (linhas ~117-156), incluído no array `@graph` ao lado de `Product` e `BreadcrumbList`.
 
-Criar um pequeno componente `LazyImage` (ou inline com state) que:
-- Mostra `<div className="bg-muted animate-pulse" />` enquanto a imagem não carregou
-- Troca para `<img>` no `onLoad`
-- Mantém `loading="lazy"` + `decoding="async"`
+### Conteúdo do ItemList
+
+```json
+{
+  "@type": "ItemList",
+  "name": "Designs semelhantes em {collection.name}",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "url": "https://studio.printmycase.com.br/colecao/{collectionSlug}/{d.slug}",
+      "name": "{d.name}",
+      "image": "{d.image_url}"
+    },
+    ...
+  ]
+}
+```
 
 ### Mudanças
 
-**1. Novo componente `src/components/LazyImage.tsx`**
-- Props: `src`, `alt`, `width`, `height`, `className`, `wrapperClassName`
-- State: `loaded` (boolean)
-- Renderiza skeleton absoluto sobre a imagem; remove no `onLoad`
-- Reutilizável em outras grids (designs semelhantes, futuras seções)
-
-**2. `src/pages/DesignPage.tsx` — seção "Designs semelhantes"**
-- Substituir `<img>` dentro do `aspect-square` pelo `<LazyImage>`
-- Manter `group-hover:scale-105` no wrapper
+**`src/pages/DesignPage.tsx`** — uma única alteração no useEffect de SEO:
+1. Calcular `similarDesigns = siblingDesigns.filter(d => d.id !== design.id).slice(0, 8)` antes de montar o JSON-LD
+2. Adicionar bloco `ItemList` ao `@graph` apenas se `similarDesigns.length > 0`
+3. Incluir `siblingDesigns` e `collection?.name` nas dependências do `useEffect`
 
 ### Fora de escopo
-- Não trocar a imagem principal do produto (LCP candidate — precisa ser eager)
-- Não mexer em outras grids (Catalog, Collections) — deixar para outra rodada se o user pedir
-- Não adicionar blur-up / placeholder colorido (skeleton cinza basta)
+- Não criar componente/helper separado (uma chamada só, fica inline)
+- Não alterar UI da seção (já implementada)
+- Não tocar Product/Breadcrumb existentes
 
 ### Arquivos
-- `src/components/LazyImage.tsx` (novo, ~30 linhas)
-- `src/pages/DesignPage.tsx` (1 substituição na seção de siblings)
+- `src/pages/DesignPage.tsx` — ~10 linhas adicionadas no useEffect de SEO
