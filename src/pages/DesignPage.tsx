@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, type MouseEvent as ReactMouseEvent } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { useDesign, useCollection } from "@/hooks/useCollections";
 import { useProducts } from "@/hooks/useProducts";
@@ -23,7 +23,7 @@ const SITE_NAME = "Studio PrintMyCase";
 const DesignPage = () => {
   const { collectionSlug, designSlug } = useParams<{ collectionSlug: string; designSlug: string }>();
   const { design, loading: designLoading } = useDesign(designSlug);
-  const { collection } = useCollection(collectionSlug);
+  const { collection, designs: siblingDesigns } = useCollection(collectionSlug);
   const { products, loading: productsLoading } = useProducts();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -197,6 +197,16 @@ const DesignPage = () => {
       <AppHeader breadcrumbs={breadcrumbs} />
 
       <main className="flex-1 max-w-4xl mx-auto w-full p-5 lg:p-10 pb-28 lg:pb-10">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          aria-label="Voltar"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
+        </button>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Design preview */}
           <div className="space-y-3">
@@ -317,6 +327,41 @@ const DesignPage = () => {
             <PaymentBadges />
           </div>
         </div>
+
+        {siblingDesigns.filter((d) => d.id !== design.id).length > 0 && (
+          <section className="mt-12 pt-8 border-t border-border">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              Designs semelhantes{collection?.name ? ` em ${collection.name}` : ""}
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {siblingDesigns
+                .filter((d) => d.id !== design.id)
+                .slice(0, 8)
+                .map((d) => (
+                  <Link
+                    key={d.id}
+                    to={`/colecao/${collectionSlug}/${d.slug}`}
+                    className="group block rounded-xl overflow-hidden border border-border bg-card hover:border-primary/50 transition-colors"
+                  >
+                    <div className="aspect-square bg-muted overflow-hidden">
+                      <img
+                        src={d.image_url}
+                        alt={d.name}
+                        loading="lazy"
+                        width={200}
+                        height={200}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs font-medium text-foreground truncate">{d.name}</p>
+                      <p className="text-xs text-primary font-semibold">{formatPrice(d.price_cents / 100)}</p>
+                    </div>
+                  </Link>
+                ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <div
