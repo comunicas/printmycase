@@ -197,6 +197,16 @@ const DesignPage = () => {
       <AppHeader breadcrumbs={breadcrumbs} />
 
       <main className="flex-1 max-w-4xl mx-auto w-full p-5 lg:p-10 pb-28 lg:pb-10">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          aria-label="Voltar"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
+        </button>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Design preview */}
           <div className="space-y-3">
