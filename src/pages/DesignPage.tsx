@@ -18,6 +18,7 @@ import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import LazyImage from "@/components/LazyImage";
 const SITE_NAME = "Studio PrintMyCase";
 
 const DesignPage = () => {
