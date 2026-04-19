@@ -1,47 +1,53 @@
 
-## Analisar bundle real com rollup-plugin-visualizer
+## Revisão e expansão de Designs de Coleção
 
-### Objetivo
-Rodar `vite build`, gerar visualização interativa dos chunks reais e identificar oportunidades concretas de otimização (chunks gordos, duplicação, vazamento admin→público).
+### Problemas detectados
 
-### Plano
+1. **Legado nunca usado**: `collection_designs.stripe_price_id` e `stripe_product_id` estão NULL em 100% dos 12 designs. Edge function `create-checkout` já cai em fallback `price_data` inline, então remover é seguro.
+2. **Falta de campos**: schema atual não tem `description` nem suporte a múltiplas imagens (só `image_url` única).
+3. **Slugs inválidos**: 5 designs com letras maiúsculas (`Omg`, `Bla`, `Nao-fala-nada`, `Um-dia-de-cada-vez`, `Vida-que-segue`) e 2 coleções (`Creative`, `Design`). URLs case-sensitive quebram navegação e SEO.
+4. **`sort_order` duplicado**: coleção Brasil tem 4 designs com `sort_order=0`.
+5. **Admin limitado**: form atual aceita apenas 1 imagem e não tem textarea de descrição.
+6. **DesignPage**: mostra só uma imagem, sem galeria nem texto descritivo do produto.
 
-**Fase 1 — Instalar visualizer (devDep)**
-- `npm i -D rollup-plugin-visualizer` (apenas dev, não afeta runtime)
+### Plano de execução
 
-**Fase 2 — Configurar `vite.config.ts` temporariamente**
-- Adicionar `visualizer({ filename: 'dist/stats.html', gzipSize: true, brotliSize: true, template: 'treemap' })` ao array de plugins
-- Manter `componentTagger` e demais configs intactos
+**Fase 1 — Migração de schema** (`collection_designs`)
+- Adicionar coluna `description text NULL`
+- Adicionar coluna `images text[] NOT NULL DEFAULT '{}'` (galeria de imagens adicionais; `image_url` permanece como capa principal)
+- Remover colunas legado: `stripe_price_id`, `stripe_product_id`
 
-**Fase 3 — Rodar build**
-- `npm run build` (timeout ~300s)
-- Capturar output: tamanhos de cada chunk (raw / gzip / brotli)
+**Fase 2 — Limpeza de dados** (via insert tool)
+- Normalizar slugs para lowercase + sanitização: `Omg`→`omg`, `Bla`→`bla`, `Nao-fala-nada`→`nao-fala-nada`, `Um-dia-de-cada-vez`→`um-dia-de-cada-vez`, `Vida-que-segue`→`vida-que-segue`
+- Normalizar slugs de coleções: `Creative`→`creative`, `Design`→`design`
+- Reordenar `sort_order` por coleção (0,1,2,3...) eliminando duplicatas
 
-**Fase 4 — Analisar `dist/`**
-- `ls -lah dist/assets/` para ranking de chunks por tamanho
-- Identificar:
-  - Chunk inicial (entry) — alvo: < 100 KB gzip
-  - Chunks lazy maiores que 50 KB gzip
-  - Possível vazamento de `Admin.tsx` ou `admin/*` no bundle público
-  - Duplicação de libs (mesma dep em múltiplos chunks)
+**Fase 3 — Admin: `CollectionDesignsManager`**
+- Adicionar `<textarea>` de descrição no dialog
+- Adicionar uploader de **múltiplas imagens adicionais** (reutilizar padrão de `ProductImagesUpload`): preview em grid, remover individual, reordenar
+- Manter `image_url` como "capa" obrigatória (primeira imagem destacada)
+- Auto-slug já força lowercase (verificar/garantir)
 
-**Fase 5 — Gerar relatório**
-- Copiar `dist/stats.html` para `/mnt/documents/bundle-stats.html` para o usuário inspecionar
-- Listar top 10 chunks por tamanho gzip em formato tabela
-- Recomendações concretas baseadas nos achados (ex.: "split X em chunk próprio", "lazy-load Y")
+**Fase 4 — Frontend: `DesignPage`**
+- Adicionar galeria estilo `ProductGallery` (capa + thumbs das `images` adicionais) com zoom click
+- Adicionar bloco "Descrição" abaixo do título quando `description` existir
+- Atualizar JSON-LD do produto para incluir `description` real e array `image`
 
-**Fase 6 — Cleanup (opcional)**
-- Remover `rollup-plugin-visualizer` do `vite.config.ts` se o usuário não quiser manter (manter como devDep não custa nada em produção)
-
-### Saída esperada
-- Arquivo `bundle-stats.html` interativo (treemap navegável) em `/mnt/documents/`
-- Tabela markdown com top chunks
-- Lista priorizada de otimizações acionáveis (ou confirmação de que está tudo ok)
-
-### Risco
-Baixo. Visualizer é dev-only. `vite.config.ts` pode ser revertido facilmente.
+**Fase 5 — Cleanup de código**
+- Remover referências a `stripe_price_id`/`stripe_product_id` em:
+  - `src/hooks/useCollections.ts` (tipo deriva de `Tables` — auto-atualiza)
+  - `supabase/functions/create-checkout/index.ts` (linha 230: simplificar para sempre usar `price_data` inline em compras de design)
+  - Tipos auto-gerados se atualizam sozinhos via migração
 
 ### Arquivos modificados
-- `package.json` + `package-lock.json` (nova devDep)
-- `vite.config.ts` (1 import + 1 plugin)
-- `/mnt/documents/bundle-stats.html` (novo artifact)
+
+- **Migração SQL** (nova): adicionar `description` + `images[]`, remover stripe_*
+- **Insert SQL** (data): normalizar slugs e sort_order
+- `src/components/admin/CollectionDesignsManager.tsx` — novos campos
+- `src/pages/DesignPage.tsx` — galeria + descrição
+- `supabase/functions/create-checkout/index.ts` — simplificar branch de design
+
+### Riscos
+
+- **Slugs mudam**: URLs antigas quebram. Mitigação: poucos designs (12), tráfego ainda baixo, sem links externos conhecidos para os 5 slugs ruins. Aceitável.
+- **Remover colunas Stripe**: zero impacto em runtime (sempre foram NULL e função usa fallback).
