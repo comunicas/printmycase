@@ -1,31 +1,45 @@
 
-## Revalidação do sitemap em produção
+## Implementar 7 melhorias SEO restantes em Coleções/Designs
 
-Não posso esperar 1h literal (limite de 60s por sleep), mas posso forçar a revalidação agora — o cache de 1h é do CDN/browser, e `supabase--curl_edge_functions` invoca a function diretamente, bypassa cache.
+### Contexto
+Auditoria anterior identificou 7 melhorias para alinhar o SEO de `/colecoes`, `/colecao/:slug` e `/colecao/:slug/:designSlug` ao padrão já maduro de produtos (`/capa-celular/:brand/:slug`). Vou aplicar nas 3 páginas mais o sitemap.
 
-### Plano
+### Mudanças
 
-**Fase 1 — Curl direto na edge function**
-- `supabase--curl_edge_functions` em `/sitemap` (execução fresca, sem cache)
-- Parsear XML retornado
+**1. `src/pages/DesignPage.tsx` — JSON-LD Product completo**
+- Adicionar `inLanguage: "pt-BR"` no `@graph`
+- Adicionar `category: "Capas para Celular"` no Product
+- Adicionar `aggregateRating` (usar 4.9 / count fixo da coleção, ou herdar do produto base — vou puxar do `useProducts` se já carregado, senão valores default da marca)
+- Garantir `merchantOffer()` (já existe via `BRAND`, conferir uso)
+- Adicionar `BreadcrumbList`: Home → Coleções → {Coleção} → {Design}
 
-**Fase 2 — Validação dos silos por marca**
-- Contar URLs por padrão `/capa-celular/{brand}/`
-- Confirmar presença de `iphone`, `samsung`, `motorola`, `xiaomi`
-- Verificar se `outros` desapareceu ou diminuiu drasticamente
-- Cruzar com `supabase--read_query` em `products` para validar contagem esperada por marca
+**2. `src/pages/CollectionPage.tsx` — JSON-LD CollectionPage + ItemList**
+- `@type: CollectionPage` com `inLanguage: "pt-BR"`
+- `ItemList` com os designs da coleção (position, name, url, image)
+- `BreadcrumbList`: Home → Coleções → {Coleção}
 
-**Fase 3 — Validação dos designs com lastmod**
-- Filtrar URLs `/colecao/{slug}/{designSlug}` no XML
-- Confirmar que TODAS contêm `<lastmod>`
-- Reportar contagem total + amostra
+**3. `src/pages/Collections.tsx` — JSON-LD CollectionPage índice**
+- `@type: CollectionPage` com `inLanguage: "pt-BR"`
+- `ItemList` com todas as coleções
+- `BreadcrumbList`: Home → Coleções
 
-**Fase 4 — Validação adicional do CDN público**
-- `browser--navigate_to_url` em `https://studio.printmycase.com.br/sitemap.xml` para conferir se o cache público já refletiu (informativo — se ainda stale, ok, vai expirar naturalmente)
+**4. `src/lib/merchant-jsonld.ts` — helper `aggregateRatingDefault`**
+- Exportar helper `defaultAggregateRating(rating?, count?)` retornando objeto `AggregateRating` com fallback (ex: 4.9 / 50) para evitar duplicação
 
-**Fase 5 — Relatório final**
-- ✅/❌ por fase com números concretos (X designs com lastmod, Y produtos por marca)
-- Recomendação sobre Search Console (re-submit do sitemap se tudo OK)
+**5. `src/pages/Product.tsx` — adicionar `inLanguage` e `category` (consistência)**
+- Já tem `category`, falta `inLanguage: "pt-BR"` no `@graph`
 
-### Sem alterações de código
-QA puro: edge function via curl + queries read-only + 1 navegação opcional ao CDN.
+**6. `src/components/SeoHead.tsx` (Landing) — adicionar `inLanguage`**
+- Adicionar `inLanguage: "pt-BR"` no graph raiz (Organization/WebSite)
+
+**7. `supabase/functions/sitemap/index.ts` — `<xhtml:link rel="alternate" hreflang="pt-BR">`**
+- Adicionar namespace xhtml no `<urlset>`
+- Para cada `<url>`, incluir `<xhtml:link rel="alternate" hreflang="pt-BR" href="..."/>` reforçando idioma único (sinaliza Brasil ao Google)
+
+### Sem alterações de schema
+Sem novas dependências. Cleanup de scripts JSON-LD via `useEffect` return em todas as páginas (padrão já estabelecido).
+
+### Validação pós-implementação
+- `curl` no `/sitemap` confirmando `xhtml:link`
+- `curl` no `/prerender?path=/colecao/...` confirmando JSON-LD novo
+- Validador estrutural via Rich Results (sugestão pro usuário)
