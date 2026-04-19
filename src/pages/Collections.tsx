@@ -20,6 +20,7 @@ const Collections = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [showFab, setShowFab] = useState(false);
 
   const filteredDesigns = useMemo(() => {
     if (!query.trim()) return [];
@@ -28,6 +29,18 @@ const Collections = () => {
   }, [query, allDesigns]);
 
   const isSearching = query.trim().length > 0;
+
+  /* Sticky FAB visibility on mobile */
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      const nearBottom = window.innerHeight + y >= document.body.scrollHeight - 600;
+      setShowFab(y > 400 && !nearBottom);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   /* SEO */
   useEffect(() => {
@@ -107,7 +120,7 @@ const Collections = () => {
           height="300"
         />
       </div>
-      <CardContent className="p-2.5">
+      <CardContent className="p-2 sm:p-2.5">
         <h3 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">{design.name}</h3>
         <span className="inline-block mt-1.5 text-sm font-bold text-foreground bg-accent/60 px-2 py-0.5 rounded-md">
           {formatPrice(design.price_cents / 100)}
@@ -159,12 +172,12 @@ const Collections = () => {
       <AppHeader breadcrumbs={[{ label: "Coleções" }]} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-b from-primary/5 to-background py-12 px-5">
-        <div className="max-w-5xl mx-auto text-center space-y-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+      <section className="bg-gradient-to-b from-primary/5 to-background py-6 md:py-12 px-5">
+        <div className="max-w-5xl mx-auto text-center space-y-3 md:space-y-4">
+          <h1 className="text-2xl md:text-4xl font-bold text-foreground">
             Capinhas Exclusivas para Celular
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="hidden sm:block text-muted-foreground max-w-2xl mx-auto">
             Designs únicos criados por artistas. Proteção premium com acabamento soft-touch. Encontre a capa perfeita ou personalize a sua.
           </p>
           <div className="relative max-w-md mx-auto">
@@ -181,11 +194,11 @@ const Collections = () => {
 
       {/* Tags */}
       {!isSearching && collections.length > 1 && (
-        <div className="max-w-5xl mx-auto px-5 pt-6 pb-2">
+        <div className="max-w-5xl mx-auto px-5 pt-4 md:pt-6 pb-2">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
             <button
               onClick={() => { setActiveTag(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              className={`hidden md:inline-flex shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 !activeTag ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
               }`}
             >
@@ -199,7 +212,7 @@ const Collections = () => {
                   activeTag === col.slug ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
                 }`}
               >
-                {col.name}
+                {col.name} <span className="opacity-60">· {col.designs.length}</span>
               </button>
             ))}
           </div>
@@ -215,7 +228,7 @@ const Collections = () => {
             <p className="text-sm text-muted-foreground mb-4">
               {filteredDesigns.length} resultado{filteredDesigns.length !== 1 ? "s" : ""} para "{query}"
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
               <CtaCard />
               {filteredDesigns.map((d) => (
                 <LazyDesignCard key={d.id} design={d} />
@@ -234,38 +247,51 @@ const Collections = () => {
           <p className="text-center text-muted-foreground py-16">Nenhuma coleção disponível no momento.</p>
         ) : (
           /* Vitrines por Coleção */
-          <div className="space-y-12">
-            {collections.map((col) => (
-              <section key={col.id} id={`colecao-${col.slug}`} className="scroll-mt-24">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl md:text-2xl font-bold text-foreground">{col.name}</h2>
-                  <button
-                    onClick={() => navigate(`/colecao/${col.slug}`)}
-                    className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
-                  >
-                    Ver tudo <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {col.designs.slice(0, 8).map((d) => (
-                    <LazyDesignCard key={d.id} design={d} />
-                  ))}
-                </div>
-                {col.designs.length > 8 && (
-                  <div className="text-center mt-4">
-                    <Button variant="outline" size="sm" className="gap-1" onClick={() => navigate(`/colecao/${col.slug}`)}>
-                      Ver todos os {col.designs.length} designs <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
+          <div className="space-y-10 md:space-y-12">
+            {collections.map((col, colIdx) => {
+              const visible = col.designs.slice(0, 8);
+              // Inject CTA card at position 2 (3rd slot) of the first collection
+              const items: Array<{ kind: "design"; design: DesignData } | { kind: "cta" }> =
+                visible.map((d) => ({ kind: "design" as const, design: d }));
+              if (colIdx === 0 && items.length >= 2) {
+                items.splice(2, 0, { kind: "cta" });
+              }
+              return (
+                <section key={col.id} id={`colecao-${col.slug}`} className="scroll-mt-24">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <h2 className="text-xl md:text-2xl font-bold text-foreground">{col.name}</h2>
+                    <button
+                      onClick={() => navigate(`/colecao/${col.slug}`)}
+                      className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
+                    >
+                      Ver tudo <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                )}
-              </section>
-            ))}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
+                    {items.map((item, i) =>
+                      item.kind === "cta" ? (
+                        <CtaCard key={`cta-${col.id}`} />
+                      ) : (
+                        <LazyDesignCard key={item.design.id} design={item.design} />
+                      )
+                    )}
+                  </div>
+                  {col.designs.length > 8 && (
+                    <div className="hidden md:block text-center mt-4">
+                      <Button variant="outline" size="sm" className="gap-1" onClick={() => navigate(`/colecao/${col.slug}`)}>
+                        Ver todos os {col.designs.length} designs <ArrowRight className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                </section>
+              );
+            })}
           </div>
         )}
 
         {/* CTA Final */}
         {!isSearching && (
-          <section className="mt-16 mb-8 text-center bg-gradient-to-br from-primary/10 to-accent/30 rounded-2xl p-8 md:p-12">
+          <section className="mt-12 md:mt-16 mb-8 text-center bg-gradient-to-br from-primary/10 to-accent/30 rounded-2xl p-5 md:p-12">
             <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
             <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Não encontrou o que procura?</h2>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
@@ -277,6 +303,18 @@ const Collections = () => {
           </section>
         )}
       </main>
+
+      {/* Sticky FAB — mobile only */}
+      {showFab && !isSearching && (
+        <button
+          onClick={() => navigate("/customize")}
+          className="lg:hidden fixed bottom-5 right-5 z-40 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-full shadow-lg shadow-primary/30 font-semibold text-sm animate-in fade-in slide-in-from-bottom-4 duration-300"
+          aria-label="Personalizar capinha"
+        >
+          <Sparkles className="w-4 h-4" />
+          Criar
+        </button>
+      )}
     </div>
   );
 };
