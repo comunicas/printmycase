@@ -327,6 +327,41 @@ const DesignPage = () => {
             <PaymentBadges />
           </div>
         </div>
+
+        {siblingDesigns.filter((d) => d.id !== design.id).length > 0 && (
+          <section className="mt-12 pt-8 border-t border-border">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              Designs semelhantes{collection?.name ? ` em ${collection.name}` : ""}
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {siblingDesigns
+                .filter((d) => d.id !== design.id)
+                .slice(0, 8)
+                .map((d) => (
+                  <Link
+                    key={d.id}
+                    to={`/colecao/${collectionSlug}/${d.slug}`}
+                    className="group block rounded-xl overflow-hidden border border-border bg-card hover:border-primary/50 transition-colors"
+                  >
+                    <div className="aspect-square bg-muted overflow-hidden">
+                      <img
+                        src={d.image_url}
+                        alt={d.name}
+                        loading="lazy"
+                        width={200}
+                        height={200}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs font-medium text-foreground truncate">{d.name}</p>
+                      <p className="text-xs text-primary font-semibold">{formatPrice(d.price_cents / 100)}</p>
+                    </div>
+                  </Link>
+                ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <div
