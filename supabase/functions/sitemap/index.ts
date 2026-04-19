@@ -30,6 +30,7 @@ function urlEntry(
 ) {
   return `  <url>
     <loc>${loc}</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="${loc}"/>
     <priority>${priority}</priority>
     <changefreq>${changefreq}</changefreq>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}
   </url>`;
@@ -189,7 +190,7 @@ Deno.serve(async (req) => {
     }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urls.join("\n")}
 </urlset>`;
 

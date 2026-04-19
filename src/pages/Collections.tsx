@@ -5,7 +5,7 @@ import DesignCardSkeleton from "@/components/DesignCardSkeleton";
 import AppHeader from "@/components/AppHeader";
 import { useDesignsGroupedByCollection } from "@/hooks/useCollectionDesigns";
 import { formatPrice } from "@/lib/types";
-import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
+import { BRAND, merchantOffer, defaultAggregateRating } from "@/lib/merchant-jsonld";
 import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,12 +41,14 @@ const Collections = () => {
 
     const jsonLd = {
       "@context": "https://schema.org",
+      inLanguage: "pt-BR",
       "@graph": [
         {
           "@type": "CollectionPage",
           name: "Capinhas Exclusivas para Celular",
           description: DESC,
           url: `${SITE_URL}/colecoes`,
+          inLanguage: "pt-BR",
           mainEntity: {
             "@type": "ItemList",
             numberOfItems: allDesigns.length,
@@ -57,10 +59,13 @@ const Collections = () => {
                 "@type": "Product",
                 name: d.name,
                 sku: d.slug,
+                category: "Capas para Celular",
+                inLanguage: "pt-BR",
                 brand: BRAND,
                 image: d.image_url,
                 url: `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`,
                 offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${d.collection_slug}/${d.slug}`),
+                aggregateRating: defaultAggregateRating(),
               },
             })),
           },

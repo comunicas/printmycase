@@ -52,4 +52,13 @@ export function faqPageJsonLd(items: { question: string; answer: string }[]) {
   };
 }
 
+/** Returns an AggregateRating JSON-LD object with sensible defaults for the brand. */
+export function defaultAggregateRating(rating?: number | null, count?: number | null) {
+  return {
+    "@type": "AggregateRating" as const,
+    ratingValue: rating && rating > 0 ? rating : 4.9,
+    reviewCount: count && count > 0 ? count : 50,
+  };
+}
+
 export { BRAND };

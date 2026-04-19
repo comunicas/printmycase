@@ -48,9 +48,10 @@ const SeoHead = ({ products: productsProp }: SeoHeadProps) => {
 
     const jsonLd = {
       "@context": "https://schema.org",
+      inLanguage: "pt-BR",
       "@graph": [
-        { "@type": "Organization", name: SITE_NAME, url: SITE_URL, description: DESCRIPTION },
-        { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
+        { "@type": "Organization", name: SITE_NAME, url: SITE_URL, description: DESCRIPTION, inLanguage: "pt-BR" },
+        { "@type": "WebSite", name: SITE_NAME, url: SITE_URL, inLanguage: "pt-BR" },
         ...(products.length > 0
           ? [{
               "@type": "ItemList" as const,
