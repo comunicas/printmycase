@@ -1,40 +1,41 @@
 
-User quer ItemList JSON-LD na seção "Designs semelhantes" do DesignPage para reforçar SEO de links internos.
+## Situação atual
+
+A `CollectionPage.tsx` já possui um `ItemList` JSON-LD — está aninhado como `mainEntity` do `CollectionPage`, com cada item sendo um `Product` completo (name, sku, brand, image, offers, aggregateRating). Isso é tecnicamente correto, mas:
+
+1. O `ItemList` fica "escondido" como sub-entidade — Google detecta, mas o sinal é mais fraco para "carrossel de itens" do que um `ItemList` independente no `@graph`.
+2. Não há `name` nem `url` no próprio `ItemList`, que ajudam o Google a entender a lista como entidade separada (útil para Rich Results de carrossel).
 
 ## Plano
 
-Adicionar um schema `ItemList` ao JSON-LD já existente no `useEffect` de SEO do `DesignPage.tsx` (linhas ~117-156), incluído no array `@graph` ao lado de `Product` e `BreadcrumbList`.
+Promover o `ItemList` a uma entidade própria no `@graph` (ao lado de `CollectionPage` e `BreadcrumbList`), mantendo o `mainEntity` apontando para ele via `@id` para preservar a relação semântica.
 
-### Conteúdo do ItemList
+### Mudança em `src/pages/CollectionPage.tsx`
 
-```json
-{
-  "@type": "ItemList",
-  "name": "Designs semelhantes em {collection.name}",
-  "itemListElement": [
-    {
-      "@type": "ListItem",
-      "position": 1,
-      "url": "https://studio.printmycase.com.br/colecao/{collectionSlug}/{d.slug}",
-      "name": "{d.name}",
-      "image": "{d.image_url}"
-    },
-    ...
-  ]
-}
+1. Definir `itemListId = ${url}#designs`
+2. Extrair o `ItemList` para um objeto separado no `@graph`, adicionando:
+   - `@id: itemListId`
+   - `name: "Designs da coleção {collection.name}"`
+   - `url`
+   - `numberOfItems`
+   - `itemListOrder: "https://schema.org/ItemListOrderAscending"`
+3. No `CollectionPage`, substituir o `mainEntity` inline por `mainEntity: { "@id": itemListId }` (referência)
+4. Manter os `Product` completos dentro do `ItemList` (não mexer)
+
+### Estrutura final do `@graph`
+
+```
+[
+  CollectionPage { mainEntity: { @id: "...#designs" } },
+  ItemList { @id: "...#designs", itemListElement: [Product, Product, ...] },
+  BreadcrumbList
+]
 ```
 
-### Mudanças
-
-**`src/pages/DesignPage.tsx`** — uma única alteração no useEffect de SEO:
-1. Calcular `similarDesigns = siblingDesigns.filter(d => d.id !== design.id).slice(0, 8)` antes de montar o JSON-LD
-2. Adicionar bloco `ItemList` ao `@graph` apenas se `similarDesigns.length > 0`
-3. Incluir `siblingDesigns` e `collection?.name` nas dependências do `useEffect`
-
 ### Fora de escopo
-- Não criar componente/helper separado (uma chamada só, fica inline)
-- Não alterar UI da seção (já implementada)
-- Não tocar Product/Breadcrumb existentes
+- Não mudar UI da página
+- Não mexer em `merchantOffer`, `aggregateRating`, `BRAND`
+- Não criar entrada no `mainEntity` quando `designs.length === 0` (mantém comportamento atual)
 
-### Arquivos
-- `src/pages/DesignPage.tsx` — ~10 linhas adicionadas no useEffect de SEO
+### Arquivo
+- `src/pages/CollectionPage.tsx` — refatoração do bloco JSON-LD (~15 linhas alteradas)
