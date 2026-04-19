@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       await Promise.all([
         supabase
           .from("products")
-          .select("slug, updated_at")
+          .select("name, slug, updated_at")
           .eq("active", true),
         supabase
           .from("collections")
