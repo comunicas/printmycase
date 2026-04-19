@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/AppHeader";
 import { useCollection } from "@/hooks/useCollections";
 import { formatPrice } from "@/lib/types";
-import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
+import { BRAND, merchantOffer, defaultAggregateRating } from "@/lib/merchant-jsonld";
 import { setPageSeo, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,12 +26,14 @@ const CollectionPage = () => {
 
     const jsonLd = {
       "@context": "https://schema.org",
+      inLanguage: "pt-BR",
       "@graph": [
         {
           "@type": "CollectionPage",
           name: collection.name,
           description: desc,
           url,
+          inLanguage: "pt-BR",
           ...(image ? { image } : {}),
           ...(designs.length > 0 ? {
             mainEntity: {
@@ -45,10 +47,13 @@ const CollectionPage = () => {
                   name: d.name,
                   description: d.description || `Capa com design "${d.name}" da coleção ${collection.name}.`,
                   sku: d.slug,
+                  category: "Capas para Celular",
+                  inLanguage: "pt-BR",
                   brand: BRAND,
                   image: d.image_url,
                   url: `${SITE_URL}/colecao/${slug}/${d.slug}`,
                   offers: merchantOffer(d.price_cents / 100, `${SITE_URL}/colecao/${slug}/${d.slug}`),
+                  aggregateRating: defaultAggregateRating(),
                 },
               })),
             },

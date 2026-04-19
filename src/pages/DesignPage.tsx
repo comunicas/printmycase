@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/types";
-import { BRAND, merchantOffer } from "@/lib/merchant-jsonld";
+import { BRAND, merchantOffer, defaultAggregateRating } from "@/lib/merchant-jsonld";
 import { setPageSeo, setMeta, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import { type ShippingResult } from "@/lib/shipping";
 import { generateEventId, pixelEvent } from "@/lib/meta-pixel";
@@ -124,6 +124,7 @@ const DesignPage = () => {
     const productDesc = design.description || desc;
     const jsonLd = {
       "@context": "https://schema.org",
+      inLanguage: "pt-BR",
       "@graph": [
         {
           "@type": "Product",
@@ -133,8 +134,10 @@ const DesignPage = () => {
           description: productDesc,
           sku: design.slug,
           category: "Capas para Celular",
+          inLanguage: "pt-BR",
           brand: BRAND,
           offers: merchantOffer(design.price_cents / 100, url),
+          aggregateRating: defaultAggregateRating(),
         },
         breadcrumbJsonLd([
           { name: "Home", url: SITE_URL },
