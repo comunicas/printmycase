@@ -1,42 +1,33 @@
 
-User quer que o botão "Finalizar Pedido" da página de Checkout fique fixo no rodapé do mobile (sticky bottom bar), padrão consagrado de e-commerce mobile que aumenta conversão.
+## Teste E2E — Sticky bar do checkout mobile (390px)
 
-Preciso confirmar: o usuário disse "produto colecoes" antes, mas agora está em `/colecao/creative/...`. O botão "Finalizar Pedido" existe em `src/pages/Checkout.tsx` (já vi no contexto). Vou aplicar lá.
+### Roteiro
 
-## Botão "Finalizar Pedido" sticky no mobile — `/checkout/:id`
+1. `navigate_to_sandbox` → `/checkout/{id}` em 390×844
+   - Preciso de um produto válido. Vou tentar via fluxo natural: navegar para `/customize/{slug}` (já estamos em `/colecao/creative/capa-personalizada-why-tho`), o que requer uma customização em sessionStorage. Como o checkout exige `customization` em sessionStorage **ou** um pending checkout no DB, e o user provavelmente não tem nenhum dos dois, **preciso verificar se há sessão ativa primeiro**.
+   - Estratégia: `navigate_to_sandbox /checkout/{any-product-id}` → se redirecionar para customize, navego para o produto atual (`/product/capa-personalizada-why-tho`) e sigo o fluxo Personalizar.
+2. Screenshot inicial — confirmar:
+   - Barra fixa visível no rodapé (`fixed bottom-0`)
+   - Total à esquerda, botão "Finalizar" à direita
+   - Botão inline desktop **oculto** (`hidden lg:flex`)
+3. Scroll até o topo → screenshot — barra continua fixa
+4. Scroll até o final → screenshot — barra continua fixa, não sobrepõe `PaymentBadges` (graças ao `pb-28`)
+5. Preencher CEP válido (ex: `01310-100` São Paulo) → aguardar shipping carregar → screenshot — confirmar que **total atualiza** (preço + frete) na barra
+6. Preencher endereço completo (rua, número, bairro) → clicar "Finalizar" no sticky bar → observar:
+   - Loading spinner aparece
+   - Network request para `create-checkout` é disparado
+   - **PARO antes do redirect Stripe** (não vou completar pagamento real)
 
-### Mudança em `src/pages/Checkout.tsx`
+### Ações destrutivas evitadas
+- **NÃO vou completar o checkout no Stripe** (pagamento real). Paro no momento em que `create-checkout` é invocado e confirmo via `list_network_requests` que a função foi chamada com sucesso.
+- Se a sessão já tiver endereços salvos, uso um existente para evitar criar dados.
 
-**1. Botão atual (estático no fluxo):**
-```tsx
-<Button className="w-full gap-1.5" onClick={handleCheckout} disabled={...}>
-  Finalizar Pedido
-</Button>
-<PaymentBadges />
-```
+### Saída
+Checklist ✅/❌ de:
+- Barra fixa em todas as posições de scroll
+- Total = produto + frete após CEP
+- Botão dispara `create-checkout` (sem completar pagamento)
+- Sem regressão visual (botão inline desktop oculto, padding-bottom OK)
 
-**2. Comportamento novo:**
-- **Mobile (`lg:hidden`)**: barra fixa no rodapé com `position: fixed`, fundo `bg-background/95 backdrop-blur`, borda superior, padding com `safe-area-inset-bottom`. Mostra **total** à esquerda + botão "Finalizar" à direita (mesma ergonomia do Mercado Livre / Amazon mobile).
-- **Desktop (`hidden lg:block`)**: mantém o botão inline atual (não polui telas grandes).
-- Adicionar `pb-24 lg:pb-0` no `<main>` para o conteúdo não ficar atrás da barra fixa.
-- `PaymentBadges` continua inline (acima da área do botão fixo).
-
-### Layout da sticky bar mobile
-
-```
-┌─────────────────────────────────────┐
-│ Total                               │
-│ R$ 89,90    [ Finalizar Pedido → ] │
-└─────────────────────────────────────┘
-```
-
-- Total em `text-sm text-muted-foreground` + valor em `text-base font-semibold`
-- Botão `flex-1` à direita, mesmo handler/disabled/loading
-- Z-index: `z-40` (abaixo de modais, acima do conteúdo)
-
-### Arquivos
-- `src/pages/Checkout.tsx` — apenas duplicar o botão em wrapper sticky mobile + esconder o inline no mobile + padding-bottom no main
-
-### Fora de escopo
-- Não mexer em `OrderSummary`, `AddressForm`, `PaymentBadges`
-- Desktop continua exatamente igual
+### Se bloquear
+Se não houver `customization` em sessão e o redirect para `/customize` exigir upload de imagem real (que não posso fazer via browser), reporto o bloqueio e sugiro que o usuário inicie a customização manualmente, depois eu retomo o teste a partir do `/checkout`.
