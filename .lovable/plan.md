@@ -1,37 +1,28 @@
 
-User is asking to test via browser. This is an explicit testing request, so browser tools are appropriate. But I'm in plan mode (READ-ONLY) — I cannot execute browser tools here. Need to present a plan for the test execution.
+## Ajustar thresholds do FAB sticky em `/colecoes`
 
-## Plano de teste E2E — `/colecoes` mobile + desktop
+### Mudança
 
-Vou usar o browser automation para validar as 4 mudanças aprovadas anteriormente.
+Em `src/pages/Collections.tsx`, no `useEffect` do scroll listener (linhas ~40-48):
 
-### Roteiro de teste
+```ts
+const nearBottom = window.innerHeight + y >= document.body.scrollHeight - 600;
+setShowFab(y > 400 && !nearBottom);
+```
 
-**Mobile (390x844)**
-1. `navigate_to_sandbox` → `/colecoes` com viewport 390×844
-2. Screenshot inicial — verificar:
-   - Hero compacto (`py-6`, h1 `text-2xl`, subtítulo oculto)
-   - Tags com contagem (`Brasil · N`, `Creative · N`)
-   - Tag "Todas" ausente no mobile
-   - Topo do primeiro produto visível na primeira dobra
-3. Scroll para ~200px → screenshot — confirmar que o FAB **ainda não apareceu**
-4. Scroll para ~600px → screenshot — confirmar:
-   - FAB "Criar" visível no canto inferior direito
-   - CtaCard "Personalize sua capinha" renderizado na 3ª posição do grid da 1ª coleção
-5. Scroll até o rodapé (perto da CTA final) → screenshot — confirmar que o **FAB sumiu** (nearBottom < 600px)
-6. Verificar ausência do botão "Ver todos os X designs" no rodapé das seções (mobile)
+→
 
-**Desktop (1366x768)**
-7. `set_viewport_size` 1366×768 (preserva sessão)
-8. Screenshot — verificar que desktop manteve:
-   - Hero com padding maior (`md:py-12`)
-   - Tag "Todas" presente (`hidden md:inline-flex`)
-   - Subtítulo visível
-   - Botão "Ver todos os N designs" visível abaixo das seções (`hidden md:block`)
-   - FAB ausente (`lg:hidden`)
+```ts
+const nearBottom = window.innerHeight + y >= document.body.scrollHeight - 300;
+setShowFab(y > 250 && !nearBottom);
+```
 
-### Saída esperada
-Resumo objetivo com checklist ✅/❌ de cada um dos pontos acima + observação de qualquer regressão visual encontrada. Se encontrar bug, paro e reporto antes de propor fix.
+### Resultado esperado
+- FAB "Criar" passa a aparecer após 250px de scroll (antes 400px)
+- Esconde apenas a 300px do rodapé (antes 600px) — funciona em catálogos curtos onde a página inteira tem ~1300px
 
-### Sem mudanças de código
-Teste puro de validação visual e comportamental.
+### Arquivos
+- `src/pages/Collections.tsx` — apenas 2 valores numéricos no listener de scroll
+
+### Fora de escopo
+Sem mudanças de layout, dados ou outros componentes.
