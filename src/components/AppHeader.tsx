@@ -33,7 +33,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
   return (
     <header
       ref={ref}
-      className={`sticky top-0 z-50 transition-all duration-500 ${
+      className={`relative z-50 transition-all duration-500 ${
         isTransparent
           ? showGlass
             ? "glass border-b border-white/10"
