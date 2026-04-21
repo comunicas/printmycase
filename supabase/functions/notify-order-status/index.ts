@@ -99,10 +99,12 @@ Deno.serve(async (req) => {
     const userName = profileRes.data?.full_name || userEmail.split("@")[0];
     const productName = productRes.data?.name ?? order.product_id;
 
-    // Send via send-transactional-email
+    // Send via send-transactional-email (must pass service role key explicitly)
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const { error: sendError } = await supabaseAdmin.functions.invoke(
       "send-transactional-email",
       {
+        headers: { Authorization: `Bearer ${serviceRoleKey}` },
         body: {
           templateName: "order-status-update",
           recipientEmail: userEmail,
