@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Download } from "lucide-react";
+import { ExternalLink, Download, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { OrderCustomizationData } from "@/types/customization";
@@ -12,6 +12,7 @@ interface Props {
 interface ImageState {
   url: string | null;
   loading: boolean;
+  error?: string | null;
 }
 
 const OrderImagesPreviewer = ({ customizationData }: Props) => {
@@ -35,32 +36,40 @@ const OrderImagesPreviewer = ({ customizationData }: Props) => {
       return;
     }
 
+    const sign = async (path: string | undefined, label: string) => {
+      if (!path) return { data: null, error: null };
+      const res = await supabase.storage.from("customizations").createSignedUrl(path, 3600);
+      if (res.error) {
+        console.error(`[OrderImagesPreviewer] Falha ao assinar URL "${label}" (${path}):`, res.error);
+      }
+      return res;
+    };
+
     const load = async () => {
       const [rawRes, optimRes, finalRes, previewRes] = await Promise.all([
-        rawPath
-          ? supabase.storage.from("customizations").createSignedUrl(rawPath, 3600)
-          : Promise.resolve({ data: null, error: null }),
-        optimizedPath
-          ? supabase.storage.from("customizations").createSignedUrl(optimizedPath, 3600)
-          : Promise.resolve({ data: null, error: null }),
-        finalPath
-          ? supabase.storage.from("customizations").createSignedUrl(finalPath, 3600)
-          : Promise.resolve({ data: null, error: null }),
-        previewPath
-          ? supabase.storage.from("customizations").createSignedUrl(previewPath, 3600)
-          : Promise.resolve({ data: null, error: null }),
+        sign(rawPath, "Original"),
+        sign(optimizedPath, "Otimizada"),
+        sign(finalPath, "Recorte"),
+        sign(previewPath, "Imagem Posição"),
       ]);
 
-      setRaw({ url: rawRes.data?.signedUrl ?? null, loading: false });
-      setOptimized({ url: optimRes.data?.signedUrl ?? null, loading: false });
-      setFinal({ url: finalRes.data?.signedUrl ?? null, loading: false });
-      setPreview({ url: previewRes.data?.signedUrl ?? null, loading: false });
+      setRaw({ url: rawRes.data?.signedUrl ?? null, loading: false, error: rawRes.error?.message ?? null });
+      setOptimized({ url: optimRes.data?.signedUrl ?? null, loading: false, error: optimRes.error?.message ?? null });
+      setFinal({ url: finalRes.data?.signedUrl ?? null, loading: false, error: finalRes.error?.message ?? null });
+      setPreview({ url: previewRes.data?.signedUrl ?? null, loading: false, error: previewRes.error?.message ?? null });
     };
 
     load();
   }, [rawPath, optimizedPath, finalPath, previewPath]);
 
-  if (!rawPath && !optimizedPath && !finalPath && !previewPath) return null;
+  if (!rawPath && !optimizedPath && !finalPath && !previewPath) {
+    return (
+      <div className="mt-2">
+        <p className="text-xs font-medium text-muted-foreground mb-1">Imagens da customização</p>
+        <p className="text-xs text-muted-foreground italic">Sem imagens disponíveis para este pedido.</p>
+      </div>
+    );
+  }
 
   const items = [
     { label: "Original", state: raw, path: rawPath },
@@ -88,14 +97,23 @@ const OrderImagesPreviewer = ({ customizationData }: Props) => {
 
   return (
     <>
-      <div className="flex gap-2 mt-2">
+      <div className="mt-2">
+        <p className="text-xs font-medium text-muted-foreground mb-1">Imagens da customização</p>
+        <div className="flex gap-2 flex-wrap">
         {items.map(({ label, state, path }) => {
-          if (!state.url && !state.loading) return null;
+          if (!path) return null;
           return (
             <div key={label} className="flex flex-col items-center gap-1">
               <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
               {state.loading ? (
                 <div className="w-16 h-24 rounded-md bg-muted animate-pulse" />
+              ) : !state.url ? (
+                <div
+                  className="w-16 h-24 rounded-md border border-destructive/40 bg-destructive/5 flex items-center justify-center"
+                  title={`Falha ao carregar (${path})${state.error ? `: ${state.error}` : ""}`}
+                >
+                  <AlertCircle className="w-4 h-4 text-destructive" />
+                </div>
               ) : (
                 <div className="relative group">
                   <button
@@ -127,6 +145,7 @@ const OrderImagesPreviewer = ({ customizationData }: Props) => {
             </div>
           );
         })}
+        </div>
       </div>
 
       <Dialog open={!!lightbox} onOpenChange={() => setLightbox(null)}>
