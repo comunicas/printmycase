@@ -1,53 +1,96 @@
 
+## Diagnóstico provável
 
-## Problema
+O projeto já envia `InitiateCheckout` com `value` e `currency` em `src/pages/Checkout.tsx`, então o alerta da Meta indica que existe **outro disparo de `InitiateCheckout` sem parâmetros**.
 
-As imagens do pedido não aparecem no `OrderDetailDialog` porque há um **mismatch entre o que está gravado no banco e o que o componente lê**.
+Pelo código atual, há 2 pontos importantes:
 
-### Diagnóstico
+1. `Checkout.tsx` já faz:
+   - `pixelEvent("InitiateCheckout", { content_ids, content_type, value, currency }, eventId)`
 
-Os dados no `orders.customization_data` estão salvos (confirmado via query no DB) com as chaves em **snake_case**:
+2. `DesignPage.tsx` **não** dispara Pixel no cliente:
+   - ele só manda `initiate_checkout_event_id` para a função `create-checkout`
+   - a função backend envia CAPI com `value` e `currency`
+   - então, se houver disparo de Pixel nessa jornada, ele provavelmente vem de uma configuração externa da Meta (Event Setup Tool) ou de outro clique genérico sem payload
+
+Isso explica o alerta “Pixel da Meta | value e currency ausentes”: o CAPI pode estar correto, mas o **evento do navegador** está incompleto ou duplicado.
+
+## Correção recomendada
+
+### 1. Padronizar o disparo de `InitiateCheckout` no frontend
+Criar uma função dedicada para `InitiateCheckout` e usar sempre a mesma estrutura.
+
+#### Implementação
+- Em `src/lib/meta-pixel.ts`, adicionar helper como:
+  - `pixelTrackInitiateCheckout(valueBRL, contentId, eventId?)`
+- Esse helper deve sempre enviar:
+  - `value`
+  - `currency: "BRL"`
+  - `content_ids`
+  - `content_type: "product"`
+
+### 2. Usar essa função em `Checkout.tsx`
+Substituir o `pixelEvent("InitiateCheckout", ...)` inline por `pixelTrackInitiateCheckout(...)` para evitar divergência futura.
+
+### 3. Adicionar `InitiateCheckout` também em `DesignPage.tsx`
+Hoje a página de design já cria `initiateCheckoutEventId`, mas não dispara o Pixel antes de chamar `create-checkout`.
+
+#### Ajuste
+No `handleCheckout` de `src/pages/DesignPage.tsx`:
+- disparar `pixelTrackInitiateCheckout(...)` antes de `supabase.functions.invoke("create-checkout", ...)`
+- usar o mesmo `initiateCheckoutEventId.current` já existente para manter deduplicação com o CAPI
+
+Isso cobre a jornada de compra direta da página de design, que hoje depende só do backend para `InitiateCheckout`.
+
+### 4. Revisar configuração externa da Meta
+Como só há um disparo explícito no código, é bem provável que exista um `InitiateCheckout` criado fora do repositório.
+
+#### Verificar e remover
+Na Meta:
+- abrir **Gerenciador de Eventos**
+- revisar se existe `InitiateCheckout` criado por:
+  - Event Setup Tool
+  - clique automático em botão
+  - regra de parceiro/app
+- remover qualquer evento de navegador que dispare `InitiateCheckout` sem payload
+- manter apenas os disparos controlados pelo código
+
+Se isso não for removido, a Meta continuará vendo eventos incompletos mesmo após o ajuste no app.
+
+## Validação
+
+### Teste no navegador
+Usar a ferramenta **Test Events** da Meta e confirmar que, ao iniciar checkout:
+- existe apenas 1 evento Pixel `InitiateCheckout` por ação relevante
+- o payload inclui:
+  - `value`
+  - `currency`
+  - `content_ids`
+  - `content_type`
+
+### Testes de fluxo
+Validar em:
+- `/checkout/:id`
+- `/colecao/:collectionSlug/:designSlug` ao clicar para finalizar compra
+
+### Resultado esperado
+O evento `InitiateCheckout` deve aparecer com:
 ```json
 {
-  "raw_image_url": "...",
-  "original_image_url": "...",
-  "edited_image_url": "...",
-  "preview_image_url": "..."
+  "value": 129.9,
+  "currency": "BRL",
+  "content_ids": ["..."],
+  "content_type": "product"
 }
 ```
 
-O `parseOrderCustomizationData` (`src/types/customization.ts`) **suporta ambos** snake_case e camelCase corretamente — devolve `rawImageUrl`, `originalImageUrl`, etc.
+## Arquivos a alterar
+- `src/lib/meta-pixel.ts` — criar helper específico para `InitiateCheckout`
+- `src/pages/Checkout.tsx` — trocar disparo inline pelo helper
+- `src/pages/DesignPage.tsx` — adicionar disparo de Pixel antes de chamar `create-checkout`
 
-Mas o `OrderImagesPreviewer.tsx` (linhas 23-26) lê os campos **errados**:
-
-```ts
-const rawPath = customizationData?.rawImageUrl ?? undefined;
-const optimizedPath = customizationData?.originalImageUrl ?? undefined;
-const finalPath = customizationData?.editedImageUrl ?? undefined;   // ❌ pega .editedImage no parser
-const previewPath = customizationData?.previewImageUrl ?? undefined;
-```
-
-Espera, deixa eu reler o parser… o parser produz `editedImageUrl` corretamente. Então o componente está lendo OK.
-
-**O verdadeiro bug**: O bucket `customizations` é **privado**, e o componente cria signed URLs corretamente. Vou apontar a causa raiz exata abaixo via investigação adicional dos logs/network — mas o sintoma da imagem mostra que o `OrderImagesPreviewer` **nem sequer renderiza** (não há thumbnails na screenshot).
-
-Causa provável mais forte: o early-return na linha 36 retorna `null` se todos os 4 paths estão undefined. Como o parser está OK e o DB tem os dados, suspeitamos de **falha no `createSignedUrl`** (paths inacessíveis) OU o componente está sendo passado `customizationData` corretamente, mas as 4 chamadas `createSignedUrl` retornam `error` silenciosamente, deixando `state.url = null` e o map filtra com `if (!state.url && !state.loading) return null;` → resultado: **nada renderizado, sem feedback de erro**.
-
-## Plano de correção
-
-### 1. `src/components/admin/OrderImagesPreviewer.tsx`
-- **Logar erros** das chamadas `createSignedUrl` (atualmente engolidos silenciosamente)
-- **Mostrar fallback visível** quando o path existe mas a signed URL falha (ex.: ícone de erro com tooltip do path) em vez de simplesmente sumir
-- **Adicionar título "Imagens da customização"** acima dos thumbnails para o admin saber que a seção existe (mesmo se vazia, mostrar mensagem "Sem imagens disponíveis para este pedido")
-
-### 2. Verificar permissões de Storage
-- Confirmar que o usuário admin (via `user_roles` `has_role(auth.uid(), 'admin')`) tem policy de SELECT no bucket `customizations`. Hoje, signed URLs requerem que o cliente que **gera** a URL tenha permissão de leitura no path. Como os paths estão sob `{user_id}/...`, o admin provavelmente não passa pela RLS de `storage.objects`.
-- **Solução**: Adicionar RLS policy em `storage.objects` para o bucket `customizations` permitindo `SELECT` quando `has_role(auth.uid(), 'admin')`.
-
-### Arquivos
-- `src/components/admin/OrderImagesPreviewer.tsx` — melhor logging + fallback visual + título da seção
-- **Migração SQL**: nova policy em `storage.objects` para admins lerem o bucket `customizations`
-
-### Validação
-- Após mudanças: abrir o mesmo pedido `#be2132f5` no admin → confirmar que os 4 thumbnails (Original, Otimizada, Recorte, Imagem Posição) aparecem.
-
+## Instruções para quem for corrigir
+1. Procurar qualquer origem adicional de `InitiateCheckout` fora do código no Gerenciador de Eventos da Meta
+2. Centralizar o payload do evento em um helper único
+3. Garantir que `DesignPage` também envie o Pixel no cliente
+4. Testar no Test Events da Meta até não aparecer mais evento sem `value` e `currency`
