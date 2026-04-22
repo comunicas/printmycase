@@ -11,7 +11,7 @@ import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer, defaultAggregateRating } from "@/lib/merchant-jsonld";
 import { setPageSeo, setMeta, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import { type ShippingResult } from "@/lib/shipping";
-import { generateEventId, pixelEvent } from "@/lib/meta-pixel";
+import { generateEventId, pixelEvent, pixelTrackInitiateCheckout } from "@/lib/meta-pixel";
 import { clarityEvent } from "@/lib/clarity";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
@@ -75,6 +75,13 @@ const DesignPage = () => {
 
     setCheckoutLoading(true);
     try {
+      clarityEvent("design_buy_now_click");
+      initiateCheckoutEventId.current = pixelTrackInitiateCheckout(
+        (selectedProduct?.price_cents ?? design.price_cents) / 100,
+        selectedProductId,
+        initiateCheckoutEventId.current,
+      );
+
       const cleanZip = addressData.zipInput.replace(/\D/g, "");
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {

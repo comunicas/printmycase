@@ -34,3 +34,22 @@ export function pixelTrackPurchase(
   );
   return id;
 }
+
+export function pixelTrackInitiateCheckout(
+  valueBRL: number,
+  contentId?: string,
+  eventId?: string
+) {
+  const id = eventId || generateEventId();
+  window.fbq?.(
+    "track",
+    "InitiateCheckout",
+    {
+      value: valueBRL,
+      currency: "BRL",
+      ...(contentId ? { content_ids: [contentId], content_type: "product" } : {}),
+    },
+    { eventID: id }
+  );
+  return id;
+}

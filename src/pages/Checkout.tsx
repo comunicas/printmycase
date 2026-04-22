@@ -14,7 +14,7 @@ import AddressForm, { type AddressData } from "@/components/checkout/AddressForm
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { clarityEvent } from "@/lib/clarity";
-import { pixelEvent, generateEventId } from "@/lib/meta-pixel";
+import { generateEventId, pixelTrackInitiateCheckout } from "@/lib/meta-pixel";
 import { parsePendingCustomizationData } from "@/types/customization";
 
 interface CustomizationData {
@@ -57,7 +57,11 @@ const Checkout = () => {
   useEffect(() => {
     if (product && !pixelFired.current) {
       pixelFired.current = true;
-      pixelEvent("InitiateCheckout", { content_ids: [product.id], content_type: "product", value: product.price_cents / 100, currency: "BRL" }, initiateCheckoutEventId.current);
+      initiateCheckoutEventId.current = pixelTrackInitiateCheckout(
+        product.price_cents / 100,
+        product.id,
+        initiateCheckoutEventId.current,
+      );
     }
   }, [product]);
 
