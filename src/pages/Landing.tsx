@@ -97,9 +97,9 @@ const Landing = () => {
             {/* Content */}
             <div className="relative z-10 max-w-3xl mx-auto text-center space-y-5 sm:space-y-7 px-5 pt-20 pb-16">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={{ ...fadeIn(0), textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                Crie sua&nbsp;capa{" "}
-                <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">personalizada</span>{" "}
-                com IA e receba em casa.
+                Capas únicas,&nbsp;
+                <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">criadas com IA</span>{" "}
+                em segundos.
               </h1>
               <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in" style={fadeIn(150)}>Mais de 77 opções de smartphones compatíveis para personalizar sua capa.</p>
 
