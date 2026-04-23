@@ -7,6 +7,7 @@ interface PhonePreviewProps {
   position: { x: number; y: number };
   rotation?: number;
   deviceSlug?: string;
+  showSafeZone?: boolean;
   onPositionChange: (pos: { x: number; y: number }) => void;
   onScaleChange?: (scale: number) => void;
   onImageUpload: (file: File) => void;
@@ -29,7 +30,7 @@ const SAFE_ZONE_PRESETS: Record<string, { insetX: string; top: string; height: s
 
 const DEFAULT_SAFE_ZONE_PRESET = { insetX: "9.2%", top: "4%", height: "17%", radius: "2.7rem", bottomRadius: "3.5rem" };
 
-const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSafeZone = true, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -248,20 +249,22 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, onPosi
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
-            <div
-              className="pointer-events-none absolute z-10 overflow-hidden bg-foreground/40"
-              aria-hidden="true"
-              style={{
-                left: safeZonePreset.insetX,
-                right: safeZonePreset.insetX,
-                top: safeZonePreset.top,
-                height: safeZonePreset.height,
-                borderTopLeftRadius: safeZonePreset.radius,
-                borderTopRightRadius: safeZonePreset.radius,
-                borderBottomLeftRadius: safeZonePreset.bottomRadius,
-                borderBottomRightRadius: safeZonePreset.bottomRadius,
-              }}
-            />
+            {showSafeZone && (
+              <div
+                className="pointer-events-none absolute z-10 overflow-hidden bg-foreground/40"
+                aria-hidden="true"
+                style={{
+                  left: safeZonePreset.insetX,
+                  right: safeZonePreset.insetX,
+                  top: safeZonePreset.top,
+                  height: safeZonePreset.height,
+                  borderTopLeftRadius: safeZonePreset.radius,
+                  borderTopRightRadius: safeZonePreset.radius,
+                  borderBottomLeftRadius: safeZonePreset.bottomRadius,
+                  borderBottomRightRadius: safeZonePreset.bottomRadius,
+                }}
+              />
+            )}
             {image && !isDragging && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
