@@ -6,6 +6,19 @@ import AiFiltersList from "./AiFiltersList";
 import ProductHighlightsList from "./ProductHighlightsList";
 import type { MobileTab } from "./MobileTabBar";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
+
+const tabIds: Record<MobileTab, string> = {
+  filtros: "customize-mobile-tab-filtros",
+  ajustes: "customize-mobile-tab-ajustes",
+  info: "customize-mobile-tab-info",
+};
+
+const panelIds: Record<MobileTab, string> = {
+  filtros: "customize-mobile-panel-filtros",
+  ajustes: "customize-mobile-panel-ajustes",
+  info: "customize-mobile-panel-info",
+};
+
 interface MobileTabOverlayProps {
   activeTab: MobileTab;
   onClose: () => void;
@@ -52,6 +65,7 @@ const MobileTabOverlay = ({
   const [dragDeltaY, setDragDeltaY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startYRef = useRef(0);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const handleClose = useCallback(() => {
     if (isClosing) return;
@@ -64,6 +78,10 @@ const MobileTabOverlay = ({
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, [activeTab]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     startYRef.current = e.touches[0].clientY;
@@ -96,18 +114,22 @@ const MobileTabOverlay = ({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-40 bg-black/30 lg:hidden transition-opacity duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`}
+        className={`fixed inset-0 z-40 bg-black/30 lg:hidden transition-opacity duration-300 motion-reduce:transition-none ${isClosing ? "opacity-0" : "opacity-100"}`}
         onClick={handleClose}
       />
 
       {/* Bottom sheet */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg ${!isDragging ? "transition-transform duration-300 ease-out" : ""} ${isClosing ? "translate-y-full" : dragDeltaY === 0 ? "translate-y-0" : ""}`}
+        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg motion-safe:animate-in motion-safe:slide-in-from-bottom-6 motion-safe:fade-in motion-safe:duration-300 motion-reduce:animate-none ${!isDragging ? "transition-transform duration-300 ease-out motion-reduce:transition-none" : ""} ${isClosing ? "translate-y-full opacity-0" : dragDeltaY === 0 ? "translate-y-0 opacity-100" : ""}`}
         style={{
           marginBottom: "calc(3rem + 3.5rem)",
           ...(dragDeltaY > 0 && !isClosing ? { transform: `translateY(${dragDeltaY}px)` } : {}),
         }}
         onClick={(e) => e.stopPropagation()}
+        role="tabpanel"
+        id={panelIds[activeTab]}
+        aria-labelledby={tabIds[activeTab]}
+        aria-label={tabTitles[activeTab]}
       >
         {/* Handle + Header */}
         <div
@@ -119,14 +141,14 @@ const MobileTabOverlay = ({
           <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mb-2" />
           <div className="flex items-center justify-between w-full px-4 pb-1">
             <h3 className="text-sm font-semibold text-foreground">{tabTitles[activeTab]}</h3>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+            <Button ref={closeButtonRef} variant="ghost" size="icon" className="h-8 w-8 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background" onClick={handleClose} aria-label="Fechar painel de detalhes">
               <X className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto px-4 py-4" style={{ height: "calc(100% - 3.5rem)" }}>
+        <div className="overflow-y-auto px-4 py-4 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:animate-none" style={{ height: "calc(100% - 3.5rem)" }}>
           {activeTab === "info" && (
             <div className="space-y-4">
               <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/25 p-3">
