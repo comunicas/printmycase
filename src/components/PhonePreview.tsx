@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, Move, Loader2, Sparkles } from "lucide-react";
+import { Camera, ImagePlus, Move, Loader2, Sparkles } from "lucide-react";
 
 interface PhonePreviewProps {
   image: string | null;
@@ -246,13 +246,34 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
               />
             </div>
           )}
-            <div
+          <div
               ref={containerRef}
-              className={`absolute inset-0 z-20 ${image ? 'touch-none' : 'touch-manipulation'} group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+              className={`absolute inset-0 z-20 ${image ? 'touch-none' : 'touch-manipulation cursor-pointer'} group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
+            {!image && !isProcessing && (
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                disabled={disabled}
+                className="upload-cta-glow upload-cta-pulse absolute inset-x-5 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center justify-center gap-3 rounded-[2rem] border border-primary/25 bg-card/82 px-6 py-7 text-center shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.015] hover:border-primary/40 hover:bg-card/90 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 sm:inset-x-6 sm:px-7"
+                aria-label="Enviar imagem para começar a personalizar sua capinha"
+              >
+                <span className="upload-cta-icon flex h-16 w-16 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary shadow-lg">
+                  <ImagePlus className="h-8 w-8" aria-hidden="true" />
+                </span>
+                <span className="space-y-1">
+                  <span className="block text-lg font-semibold text-foreground sm:text-xl">
+                    Envie sua imagem
+                  </span>
+                  <span className="block text-sm leading-relaxed text-muted-foreground sm:text-[15px]">
+                    Toque aqui para começar sua capinha
+                  </span>
+                </span>
+              </button>
+            )}
             {showSafeZone && (
               <div
                 className="pointer-events-none absolute z-10 overflow-hidden bg-foreground/40"
@@ -315,6 +336,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
         accept="image/*"
         onChange={handleFileChange}
         className="hidden"
+        aria-label="Enviar imagem para personalizar sua capinha"
       />
     </div>
   );
