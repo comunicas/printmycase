@@ -6,8 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SENDER_DOMAIN = "notify.printmycase.com.br";
-const FROM = "PrintMyCase <noreply@notify.printmycase.com.br>";
+const INTERNAL_FUNCTIONS_BASE = `${Deno.env.get("SUPABASE_URL")}/functions/v1`;
 
 const statusLabels: Record<string, string> = {
   pending: "Pagamento Pendente",
@@ -117,76 +116,38 @@ async function enqueueOrderEmail(
     templateName: string;
   },
 ) {
-  const appUrl = Deno.env.get("APP_URL") || "https://studio.printmycase.com.br";
-  const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/email-assets/logo-printmycase.png`;
-  const messageId = `${params.templateName}-${params.orderId}`;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-  const { error: logError } = await supabaseAdmin
-    .from("email_send_log")
-    .insert({
-      message_id: messageId,
-      recipient_email: params.userEmail,
-      template_name: params.templateName,
-      status: "pending",
-      metadata: {
-        order_id: params.orderId,
-        status: params.newStatus,
-      },
-    });
-
-  if (logError) {
-    if (logError.code === "23505") {
-      console.log(`[email] Duplicate enqueue ignored (${params.templateName}):`, JSON.stringify({ orderId: params.orderId }));
-      return;
-    }
-
-    console.error(`[email] Idempotency reservation failed (${params.templateName}):`, logError.message);
+  if (!serviceRoleKey || !Deno.env.get("SUPABASE_URL")) {
+    console.error(`[email] Missing email dispatch configuration (${params.templateName})`);
     return;
   }
 
-  const html = buildEmailHtml({
-    userName: params.userName,
-    orderId: params.orderId,
-    productName: params.productName,
-    newStatus: params.newStatus,
-    totalCents: params.totalCents,
-    trackingCode: params.trackingCode,
-    appUrl,
-    logoUrl,
-    extraMessage: params.extraMessage,
-  });
-
-  const shortId = params.orderId.slice(0, 8);
-  const statusLabel = statusLabels[params.newStatus] ?? params.newStatus;
-
-  const payload = {
-    to: params.userEmail,
-    from: FROM,
-    sender_domain: SENDER_DOMAIN,
-    subject: `Pedido #${shortId} — ${statusLabel}`,
-    html,
-    purpose: "transactional",
-    message_id: messageId,
-    idempotency_key: `${params.templateName}-${params.orderId}`,
-    label: params.templateName,
-    queued_at: new Date().toISOString(),
-  };
-
-  const { data: msgId, error } = await supabaseAdmin.rpc("enqueue_email", {
-    queue_name: "transactional_emails",
-    payload,
+  const templateName = params.newStatus === "cancelled" ? "order-status-update" : "order-status-update";
+  const { error } = await supabaseAdmin.functions.invoke("send-transactional-email", {
+    headers: { Authorization: `Bearer ${serviceRoleKey}` },
+    body: {
+      templateName,
+      recipientEmail: params.userEmail,
+      idempotencyKey: `${params.templateName}-${params.orderId}`,
+      templateData: {
+        userName: params.userName,
+        orderId: params.orderId,
+        productName: params.productName,
+        newStatus: params.newStatus,
+        totalCents: params.totalCents,
+        trackingCode: params.trackingCode ?? null,
+        rejectionReason: params.extraMessage ?? null,
+      },
+    },
   });
 
   if (error) {
-    console.error(`[email] Enqueue failed (${params.templateName}):`, error.message);
-    await supabaseAdmin.from("email_send_log").update({ status: "failed" }).eq("message_id", messageId);
-  } else {
-    console.log(`[email] Enqueued ${params.templateName}:`, JSON.stringify({ msgId, to: params.userEmail }));
-    await supabaseAdmin
-      .from("email_send_log")
-      .update({ metadata: { order_id: params.orderId, status: params.newStatus, msg_id: msgId } })
-      .eq("message_id", messageId);
+    console.error(`[email] Dispatch failed (${params.templateName}):`, error.message);
+    return;
   }
+
+  console.log(`[email] Dispatched ${params.templateName}:`, JSON.stringify({ to: params.userEmail, orderId: params.orderId }));
 }
 
 async function registerWebhookEvent(
