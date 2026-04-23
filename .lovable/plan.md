@@ -1,113 +1,191 @@
 
-Objetivo: fazer os emails de signup/recovery voltarem ao layout e remetente corretos da PrintMyCase e garantir que o `coin-purchase-confirmation` seja disparado somente após crédito confirmado, deixando rastros `pending/sent` no `email_send_log`.
+Objetivo: padronizar toda a stack de emails para que autenticação, onboarding, moedas e compra usem o mesmo padrão visual, o mesmo remetente lógico, a mesma trilha de observabilidade e a mesma regra de idempotência, eliminando a diferença atual entre auth e app emails.
 
 ## Diagnóstico consolidado
 
-### Auth emails
-A imagem mostra que o usuário está recebendo o template padrão do sistema:
-- remetente: `no-reply@auth.lovable.cloud`
-- assunto/copy em inglês
-- layout genérico, diferente do branding já existente no projeto
+Hoje existem dois caminhos diferentes:
 
-A revisão do projeto confirma o desvio:
-- `supabase/functions/_shared/email-templates/signup.tsx` e `recovery.tsx` já estão customizados em PT-BR e com branding PrintMyCase
-- porém não há registros recentes de `signup`/`recovery` no `email_send_log`
-- também não há logs recentes do `auth-email-hook`
-- o domínio de envio `notify.printmycase.com.br` está com status pendente
+### 1) Auth emails
+- `auth-email-hook` renderiza os templates customizados (`signup`, `recovery`, etc.)
+- depois enfileira em `auth_emails`
+- o dispatcher `process-email-queue` envia via pipeline gerenciada (`sendLovableEmail`)
+- por isso auth hoje não segue exatamente o mesmo provedor/caminho dos app emails
 
-Conclusão:
-- os emails de auth não estão saindo pelo hook/template customizado do projeto
-- por isso o usuário recebe o fallback padrão
-- sem o hook ativo na trilha real, também não há gravação no `email_send_log`
+### 2) App emails
+- `send-transactional-email` renderiza templates do registry
+- envia diretamente via `sendWithResend`
+- grava `pending/sent/suppressed/failed` no `email_send_log`
+- `coin-purchase-confirmation` já foi parcialmente consolidado para entrar por esse caminho
 
-### Coin purchase email
-O código já tenta disparar `coin-purchase-confirmation` em dois pontos:
-- `supabase/functions/stripe-webhook/index.ts`
-- `supabase/functions/verify-coin-purchase/index.ts`
+### Consequência prática
+- signup/recovery podem sair com comportamento diferente dos demais
+- há diferença de provedor, rastreabilidade e troubleshooting
+- o branding ficou parcialmente consistente nos templates, mas não no pipeline inteiro
+- ainda existe risco de divergência futura entre auth e app emails
 
-Mas a validação atual ainda é insuficiente para garantir fechamento operacional:
-- não há registros de `coin-purchase-confirmation` no `email_send_log`
-- o envio está duplicado em dois fluxos de crédito possíveis
-- falta consolidar a regra “disparar após crédito efetivo” em um único caminho confiável e auditável
+## Padrão final proposto
+
+### Meta
+Unificar tudo em um modelo único com 4 pilares:
+
+1. Mesmo padrão visual  
+2. Mesmo padrão de remetente  
+3. Mesma observabilidade (`email_send_log`)  
+4. Mesmas regras de idempotência e erro
+
+### Decisão de arquitetura
+Padronizar auth e app emails no mesmo provedor de envio já usado pelos demais emails do produto.
+
+Na prática:
+- manter `auth-email-hook` como ponto obrigatório de entrada dos eventos de autenticação
+- manter os templates próprios de auth
+- trocar o dispatcher de `auth_emails` para usar o mesmo mecanismo de envio dos app emails
+- preservar a fila, prioridade e retry do fluxo de auth
+- preservar o `email_send_log` como trilha única de auditoria
 
 ## O que será implementado
 
-### 1) Reativar corretamente os emails customizados de auth
-- Reconciliar o fluxo de auth email para que `signup` e `recovery` usem o `auth-email-hook` ativo do projeto
-- Reaplicar/confirmar os templates customizados existentes
-- Garantir que o hook esteja de fato publicando os eventos no fluxo real de envio
-- Validar que os emails deixem de usar o fallback `auth.lovable.cloud`
+### Etapa 1 — Unificar o dispatcher
+Atualizar `process-email-queue` para que:
+- mensagens de `auth_emails` também sejam enviadas pelo mesmo sender usado em `send-transactional-email`
+- continue existindo prioridade para `auth_emails`
+- continue existindo retry, DLQ e TTL
+- `provider_message_id` seja gravado de forma uniforme para auth e app emails
 
-### 2) Ajustar o visual/copy dos templates de signup e recovery
-- Manter o visual alinhado ao branding atual:
-  - logo PrintMyCase
-  - português
-  - CTA com cor primária do app
-  - tipografia/interações consistentes com os templates transacionais já existentes
-- Revisar espaçamento/largura para evitar aparência “genérica” no cliente de email
-- Confirmar consistência entre `signup.tsx` e `recovery.tsx`
+Resultado:
+- signup/recovery passam a usar o mesmo provedor dos outros emails
+- a diferença entre “auth email” e “app email” fica só no gatilho/template, não no transporte
 
-### 3) Corrigir a trilha de observabilidade dos auth emails
-- Garantir que `signup` e `recovery` gravem:
-  - `pending`
-  - `sent` ou `failed`
-  - `provider_message_id`
-- Confirmar isso no `email_send_log` após o hook voltar a ser o caminho efetivo de envio
+### Etapa 2 — Normalizar payload e metadados
+Padronizar os campos de fila/log para ambos os tipos:
+- `message_id`
+- `template_name`
+- `recipient_email`
+- `idempotency_key`
+- `provider`
+- `provider_message_id`
 
-### 4) Consolidar o disparo do coin purchase após crédito confirmado
-- Centralizar a lógica para que o `coin-purchase-confirmation` seja disparado apenas depois de `coin_transactions` ser gravado com sucesso
-- Definir uma única fonte de verdade para o disparo, evitando ambiguidade entre:
-  - `stripe-webhook`
-  - `verify-coin-purchase`
-- Preservar idempotência por `stripe_session_id`
-- Manter o `messageId/idempotencyKey` baseado em `coin-purchase-${sessionId}`
+Também alinhar:
+- nome do template gravado no log
+- from display name
+- from email
+- tags/metadados de provider quando suportados
 
-### 5) Garantir gravação de `sent` para coin purchase
-- Validar que o caminho final use o sender central já existente
-- Confirmar que o `send-transactional-email` seja efetivamente invocado no cenário real de crédito
-- Garantir que a execução resulte em registros no `email_send_log` com:
-  - `template_name = coin-purchase-confirmation`
-  - `pending`
-  - `sent`
-  - `provider_message_id`
+### Etapa 3 — Padronizar visual de todos os auth templates
+Hoje `signup` e `recovery` já estão mais próximos do padrão, mas outros auth templates ainda estão no scaffold genérico.
 
-## Ajustes técnicos previstos
+Vou alinhar também:
+- `magic-link.tsx`
+- `invite.tsx`
+- `email-change.tsx`
+- `reauthentication.tsx`
 
-### Arquivos de auth
+Padrão visual único:
+- logo PrintMyCase
+- tipografia Inter
+- cor primária `hsl(265, 83%, 57%)`
+- fundo branco
+- cards suaves
+- CTA com raio grande (`24px`)
+- copy em PT-BR
+- tom consistente com welcome/coins/order emails
+
+### Etapa 4 — Padronizar assuntos e copy
+Revisar todos os assuntos e microcopy para manter consistência entre:
+- cadastro
+- recuperação
+- link mágico
+- convite
+- troca de email
+- reautenticação
+- boas-vindas
+- compra de moedas
+- compra/pedido
+
+Padrão editorial:
+- PT-BR
+- linguagem direta
+- foco em “capinha”, conta, moedas e compra
+- sem mistura de inglês/default scaffold
+
+### Etapa 5 — Consolidar definitivamente coins
+Fechar o fluxo do `coin-purchase-confirmation` para que:
+- o disparo aconteça só após crédito confirmado
+- a chamada seja sempre idempotente por sessão
+- o `email_send_log` registre `pending` e `sent`
+- não haja duplicidade entre webhook e verificação posterior
+
+### Etapa 6 — Revisar padronização do pedido
+Conferir se o email de compra/pedido segue o mesmo padrão de:
+- branding
+- assunto
+- log
+- remetente
+- idempotência
+
+E alinhar a definição do primeiro status enviado ao cliente:
+- `analyzing` ou equivalente final aprovado no fluxo
+
+## Arquivos a ajustar
+
+### Dispatcher / envio
+- `supabase/functions/process-email-queue/index.ts`
+- possivelmente `supabase/functions/_shared/resend.ts` para suportar uso compartilhado no dispatcher
+
+### Auth
 - `supabase/functions/auth-email-hook/index.ts`
 - `supabase/functions/_shared/email-templates/signup.tsx`
 - `supabase/functions/_shared/email-templates/recovery.tsx`
+- `supabase/functions/_shared/email-templates/magic-link.tsx`
+- `supabase/functions/_shared/email-templates/invite.tsx`
+- `supabase/functions/_shared/email-templates/email-change.tsx`
+- `supabase/functions/_shared/email-templates/reauthentication.tsx`
 
-### Arquivos de coins
+### App emails / coins / compra
+- `supabase/functions/_shared/transactional-email.ts`
+- `supabase/functions/send-transactional-email/index.ts`
 - `supabase/functions/stripe-webhook/index.ts`
 - `supabase/functions/verify-coin-purchase/index.ts`
-- possivelmente um helper compartilhado para evitar duplicação do disparo
+- se necessário, templates em `_shared/transactional-email-templates/`
 
-### Validação de catálogo
-- `supabase/functions/_shared/transactional-email-templates/registry.ts`
-- `supabase/functions/send-transactional-email/index.ts`
+## Regras que serão preservadas
+- `auth-email-hook` continua existindo e continua sendo a entrada dos eventos de auth
+- filas continuam sendo usadas
+- auth continua prioritário
+- retry/DLQ/TTL continuam ativos
+- não haverá envio em massa nem mudança para emails de marketing
 
-## Observação importante de infraestrutura
-Hoje o domínio de envio está pendente. Sem a conclusão dessa ativação, os emails de autenticação podem continuar caindo no fallback padrão, mesmo com o código ajustado. Portanto o fechamento completo depende de dois itens juntos:
-- correção do caminho técnico de auth no projeto
-- ativação final do domínio de envio no backend de emails
+## Dependência externa importante
+O domínio `notify.printmycase.com.br` ainda está pendente.
+
+Isso significa:
+- posso padronizar o código e o pipeline agora
+- mas o comportamento final de remetente/entrega só ficará 100% consistente quando a ativação do domínio terminar no backend de emails
 
 ## Critérios de aceite
-A tarefa pode ser fechada quando houver evidência de que:
 
 ### Auth
-- `signup` chega com visual PrintMyCase, em PT-BR
-- `recovery` chega com visual PrintMyCase, em PT-BR
-- o remetente deixa de aparecer como `no-reply@auth.lovable.cloud`
-- ambos registram `pending` + `sent` no `email_send_log`
+- `signup` e `recovery` usam o mesmo provedor/caminho dos demais emails
+- deixam de ter aparência/caminho divergente
+- registram `pending` + `sent` com `provider_message_id`
+- chegam com branding PrintMyCase em PT-BR
 
-### Coins
-- após crédito confirmado de moedas, `coin-purchase-confirmation` é disparado
-- o envio ocorre uma única vez por sessão de compra
-- há registros `pending` + `sent` em `email_send_log`
-- `provider_message_id` fica persistido
+### App emails
+- `welcome-email`, `coin-purchase-confirmation` e compra/pedido seguem exatamente o mesmo padrão visual e de log
+- coin purchase dispara uma única vez após crédito confirmado
+
+### Plataforma inteira
+- mesma identidade visual em todos os templates
+- mesma trilha de observabilidade
+- mesmo padrão de remetente
+- mesma convenção de idempotência
+- menor diferença operacional entre auth e app emails
 
 ## Resultado esperado
-- signup/recovery deixam de usar o template fallback e passam a usar o branding real da PrintMyCase
-- o fluxo de moedas fica auditável de ponta a ponta
-- o `email_send_log` passa a refletir corretamente tanto auth quanto compra de moedas
+Ao final, “padronizar tudo” significará:
+- um único padrão de envio
+- um único padrão de branding
+- um único padrão de logs
+- um único padrão de confiabilidade
+
+Com isso, signup/recovery deixam de ser uma exceção e passam a fazer parte da mesma esteira dos outros emails do produto.
