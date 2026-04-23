@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.49.8";
 
 /** Brand mapping matching src/lib/utils.ts extractBrand + src/lib/brand-seo.ts */
 const BRAND_PATTERNS: [RegExp, string][] = [

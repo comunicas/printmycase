@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     if (cronSecret && cronHeader === cronSecret) {
       authenticated = true;
     } else if (authHeader?.startsWith("Bearer ")) {
-      const { createClient } = await import("jsr:@supabase/supabase-js@2");
+      const { createClient } = await import("npm:@supabase/supabase-js@2.49.8");
       const sb = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_ANON_KEY")!,
