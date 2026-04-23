@@ -35,6 +35,8 @@ const initialValues = {
   website: "",
 };
 
+const FORM_ID = "customize-contact-form";
+
 const CustomizeContactDialog = ({ open, onOpenChange }: CustomizeContactDialogProps) => {
   const [name, setName] = useState(initialValues.name);
   const [email, setEmail] = useState(initialValues.email);
@@ -146,7 +148,7 @@ const CustomizeContactDialog = ({ open, onOpenChange }: CustomizeContactDialogPr
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4 pb-6 sm:space-y-5 sm:pb-8">
+              <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-4 pb-6 sm:space-y-5 sm:pb-8">
                 <FormField label="Nome" id="customize-contact-name" required error={errors.name}>
                   <Input
                     id="customize-contact-name"
@@ -209,12 +211,9 @@ const CustomizeContactDialog = ({ open, onOpenChange }: CustomizeContactDialogPr
                   Cancelar
                 </Button>
                 <SubmitButton
+                  form={FORM_ID}
                   className="w-full sm:min-w-40 sm:w-auto"
                   loading={loading}
-                  onClick={(event) => {
-                    const form = (event.currentTarget as HTMLButtonElement).form;
-                    form?.requestSubmit();
-                  }}
                 >
                   Enviar
                 </SubmitButton>
