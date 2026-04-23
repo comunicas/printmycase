@@ -25,6 +25,7 @@ import UsersManager from "@/components/admin/UsersManager";
 import StoresManager from "@/components/admin/StoresManager";
 import InstagramPostsManager from "@/components/admin/InstagramPostsManager";
 import ContactMessagesManager from "@/components/admin/ContactMessagesManager";
+import AuthEmailTestManager from "@/components/admin/AuthEmailTestManager";
 
 const sectionMap: Record<AdminSection, React.ComponentType> = {
   orders: OrdersManager,
@@ -48,6 +49,7 @@ const sectionMap: Record<AdminSection, React.ComponentType> = {
   faq: FaqManager,
   legal: LegalDocsManager,
   "contact-messages": ContactMessagesManager,
+  "auth-email-test": AuthEmailTestManager,
 };
 
 const Admin = () => {
