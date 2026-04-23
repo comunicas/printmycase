@@ -140,7 +140,7 @@ supabase/
     │   └── transactional-email-templates/ # Templates transacionais (order status)
     ├── admin-sync-stripe/          # Sincroniza produto individual com Stripe
     ├── apply-ai-filter/            # Aplica filtro IA via Fal.ai (style transfer)
-    ├── auth-email-hook/            # Hook de email customizado (templates React)
+    ├── auth-email-hook/            # Hook de auth que renderiza templates React e envia via Resend
     ├── bulk-sync-stripe/           # Sincroniza todos os produtos com Stripe
     ├── cleanup-pending-checkouts/  # Limpa checkouts pendentes expirados
     ├── create-checkout/            # Cria Stripe Checkout Session
@@ -154,8 +154,8 @@ supabase/
     ├── optimize-existing-images/   # Otimiza imagens já existentes no storage
     ├── prerender/                  # Pre-rendering para SEO/bots
     ├── preview-transactional-email/ # Preview de templates transacionais
-    ├── process-email-queue/        # Processa fila de emails (pgmq)
-    ├── send-transactional-email/   # Envia emails do app pela infraestrutura nativa com fila
+    ├── process-email-queue/        # Worker legado da fila nativa de emails
+    ├── send-transactional-email/   # Renderiza templates transacionais e envia via Resend
     ├── sitemap/                    # Geração dinâmica de sitemap.xml
     ├── stripe-webhook/             # Processa eventos do Stripe (payment + Purchase CAPI)
     ├── upload-gallery-zip/         # Upload em lote de imagens de galeria via ZIP
@@ -336,14 +336,14 @@ Moedas virtuais para uso de recursos de IA (filtros, upscale). Bônus concedido 
 | `delete-account` | Deleta conta + avatar + cascade |
 | `admin-sync-stripe` | Sincroniza produto com Stripe (valida admin) |
 | `bulk-sync-stripe` | Sincroniza todos os produtos com Stripe |
-| `notify-order-status` | Envia email ao atualizar status do pedido |
-| `auth-email-hook` | Hook de email customizado (templates React) |
+| `notify-order-status` | Envia email ao atualizar status do pedido via sender central |
+| `auth-email-hook` | Hook de auth com templates React enviados via Resend |
 | `cleanup-pending-checkouts` | Limpa checkouts pendentes expirados |
 | `optimize-existing-images` | Otimiza imagens já existentes no storage |
 | `prerender` | Pre-rendering de páginas para SEO/bots |
 | `sitemap` | Geração dinâmica de sitemap.xml |
-| `send-transactional-email` | Envia emails do app pela infraestrutura nativa com fila |
-| `process-email-queue` | Processa fila de emails (pgmq) |
+| `send-transactional-email` | Renderiza templates do app e envia via Resend com logs locais |
+| `process-email-queue` | Worker legado do pipeline nativo anterior |
 | `preview-transactional-email` | Preview de templates transacionais |
 | `handle-email-suppression` | Processa bounces/complaints de email |
 | `handle-email-unsubscribe` | Processa unsubscribe de email |
