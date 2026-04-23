@@ -1,15 +1,11 @@
 import 'https://deno.land/std@0.224.0/dotenv/load.ts'
 import { assert, assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts'
-import { createClient } from 'npm:@supabase/supabase-js@2.49.8'
 
 const SUPABASE_URL = Deno.env.get('VITE_SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('VITE_SUPABASE_PUBLISHABLE_KEY')!
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const EXPECTED_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev'
 const EXPECTED_FROM_NAME = Deno.env.get('RESEND_FROM_NAME') || 'PrintMyCase'
-
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
-const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 function uniqueEmail(prefix: string) {
   const id = crypto.randomUUID().slice(0, 8)
@@ -20,14 +16,17 @@ async function waitForStatus(messagePrefix: string, templateName: 'signup' | 're
   const timeoutAt = Date.now() + 90_000
 
   while (Date.now() < timeoutAt) {
-    const { data, error } = await admin
-      .from('email_send_log')
-      .select('message_id, status, recipient_email, metadata, created_at')
-      .eq('template_name', templateName)
-      .like('message_id', `${messagePrefix}%`)
-      .order('created_at', { ascending: true })
-
-    if (error) throw error
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/email_send_log?select=message_id,status,recipient_email,metadata,created_at&template_name=eq.${templateName}&message_id=like.${encodeURIComponent(`${messagePrefix}%`)}&order=created_at.asc`,
+      {
+        headers: {
+          apikey: SERVICE_ROLE_KEY,
+          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+        },
+      },
+    )
+    const data = await response.json()
+    if (!response.ok) throw new Error(JSON.stringify(data))
 
     const statuses = new Set((data ?? []).map((row) => row.status))
     if (statuses.has('pending') && statuses.has('sent')) {
@@ -44,15 +43,23 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   const email = uniqueEmail('auth-e2e')
   const password = `Pmc!${crypto.randomUUID()}123`
 
-  const { error: signUpError } = await client.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name: 'Teste E2E Auth' },
-      emailRedirectTo: 'https://studio.printmycase.com.br',
+  const signUpResponse = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     },
+    body: JSON.stringify({
+      email,
+      password,
+      data: { full_name: 'Teste E2E Auth' },
+      email_redirect_to: 'https://studio.printmycase.com.br',
+    }),
   })
-  assertEquals(signUpError, null)
+  const signUpPayload = await signUpResponse.json()
+  assertEquals(signUpResponse.status, 200)
+  assert(signUpPayload.user)
 
   const signupRows = await waitForStatus(email, 'signup')
   const signupSent = signupRows.find((row) => row.status === 'sent')
@@ -64,10 +71,21 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   assertEquals(signupSent.metadata?.from, `${EXPECTED_FROM_NAME} <${EXPECTED_FROM_EMAIL}>`)
   assert(typeof signupSent.metadata?.provider_message_id === 'string' && signupSent.metadata.provider_message_id.length > 0)
 
-  const { error: recoveryError } = await client.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://studio.printmycase.com.br/reset-password',
+  const recoveryResponse = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({
+      email,
+      redirect_to: 'https://studio.printmycase.com.br/reset-password',
+    }),
   })
-  assertEquals(recoveryError, null)
+  const recoveryPayload = await recoveryResponse.json()
+  assertEquals(recoveryResponse.status, 200)
+  assert(recoveryPayload !== undefined)
 
   const recoveryRows = await waitForStatus(email, 'recovery')
   const recoverySent = recoveryRows.find((row) => row.status === 'sent')
