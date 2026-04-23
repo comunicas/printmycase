@@ -1,4 +1,4 @@
-import { SlidersHorizontal, Wand2, Image as ImageIcon } from "lucide-react";
+import { SlidersHorizontal, Wand2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AdjustmentsPanel from "./AdjustmentsPanel";
 import AiFiltersList from "./AiFiltersList";
@@ -26,7 +26,6 @@ interface ImageControlsProps {
   onUndoLastFilter: () => void;
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
-  isProcessing?: boolean;
 }
 
 const ImageControls = ({
@@ -34,7 +33,6 @@ const ImageControls = ({
   filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory, onFilterClick,
   onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
-  isProcessing,
 }: ImageControlsProps) => {
   const hasFilters = filters.length > 0;
   const colsClass = hasFilters ? "grid-cols-2" : "grid-cols-1";

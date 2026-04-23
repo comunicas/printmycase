@@ -3,7 +3,6 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdjustmentsPanel from "./AdjustmentsPanel";
 import AiFiltersList from "./AiFiltersList";
-import GalleryTab from "./GalleryTab";
 import type { MobileTab } from "./MobileTabBar";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
 interface MobileTabOverlayProps {
@@ -30,13 +29,11 @@ interface MobileTabOverlayProps {
   onUndoLastFilter: () => void;
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
-  onGallerySelect: (imageUrl: string) => void;
 }
 
 const tabTitles: Record<MobileTab, string> = {
   ajustes: "Ajustes",
   filtros: "Filtros IA",
-  galeria: "Galeria",
 };
 
 const MobileTabOverlay = ({
@@ -45,7 +42,6 @@ const MobileTabOverlay = ({
   filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory,
   onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
-  onGallerySelect,
 }: MobileTabOverlayProps) => {
   const [isClosing, setIsClosing] = useState(false);
   const [dragDeltaY, setDragDeltaY] = useState(0);
@@ -85,11 +81,6 @@ const MobileTabOverlay = ({
       setDragDeltaY(0);
     }
   }, [isDragging, dragDeltaY, handleClose]);
-
-  const handleGallerySelect = (url: string) => {
-    onGallerySelect(url);
-    handleClose();
-  };
 
   const handleFilterClick = (filterId: string) => {
     onFilterClick(filterId);
@@ -166,10 +157,6 @@ const MobileTabOverlay = ({
                 onPreviewEnd={onPreviewEnd}
               />
             </div>
-          )}
-
-          {activeTab === "galeria" && (
-            <GalleryTab onSelect={handleGallerySelect} />
           )}
         </div>
       </div>
