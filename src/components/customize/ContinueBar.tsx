@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { ArrowRight, Check, Download, Loader2, RotateCcw } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 interface ContinueBarProps {
@@ -60,12 +61,17 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
 
   if (inline) {
     return (
-      <div className="flex items-center gap-2 w-full py-3">
-        {resetButton}
-        {downloadButton}
-        <Button className="flex-1 gap-1.5" onClick={onContinue} disabled={disabled}>
-          {renderButtonContent()}
-        </Button>
+      <div className="w-full py-3 space-y-2">
+        <div className="flex items-center gap-2 w-full">
+          {resetButton}
+          {downloadButton}
+          <Button className="flex-1 gap-1.5" onClick={onContinue} disabled={disabled}>
+            {renderButtonContent()}
+          </Button>
+        </div>
+        <Link to="/contato" className="block text-center text-sm text-primary hover:text-primary/80 transition-colors">
+          Precisando de ajuda? Fale Conosco
+        </Link>
       </div>
     );
   }
@@ -74,13 +80,18 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
     <>
       {/* Mobile */}
       <div className="flex-shrink-0 lg:hidden border-t border-border bg-background/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-center gap-3 px-3 py-2">
-          {resetButton}
-          {downloadButton}
-          <div className="flex-1" />
-          <Button className="gap-1.5 shrink-0" onClick={onContinue} disabled={disabled}>
-            {renderButtonContent()}
-          </Button>
+        <div className="px-3 py-2 space-y-2">
+          <div className="flex items-center gap-3">
+            {resetButton}
+            {downloadButton}
+            <div className="flex-1" />
+            <Button className="gap-1.5 shrink-0" onClick={onContinue} disabled={disabled}>
+              {renderButtonContent()}
+            </Button>
+          </div>
+          <Link to="/contato" className="block text-center text-sm text-primary hover:text-primary/80 transition-colors">
+            Precisando de ajuda? Fale Conosco
+          </Link>
         </div>
       </div>
     </>
