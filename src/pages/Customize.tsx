@@ -67,6 +67,7 @@ const Customize = () => {
             scale={c.scale}
             position={c.position}
             rotation={c.rotation}
+            previewMode="rear"
             onPositionChange={c.setPosition}
             onScaleChange={c.setScale}
             onImageUpload={c.handleImageUpload}
