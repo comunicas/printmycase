@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.49.8";
 
 const SITE_URL = "https://studio.printmycase.com.br";
 const SITE_NAME = "PrintMyCase";
