@@ -1,97 +1,87 @@
 
-Objetivo: eliminar os warnings de console relacionados a `ref` em componentes React para que a página de customização fique 100% limpa, sem ruído vindo do CTA/preview nem dos diálogos abertos nessa jornada.
+Objetivo: aprimorar apenas o bloco de informações do produto já existente no topo da sidebar da página `/customize/:slug`, usando a copy e os atributos da referência, sem mudar sua posição no layout.
 
-## Diagnóstico confirmado
-O warning atual aponta para:
-- `TermsDialog`
-- `DialogFooter`
-- wrapper interno de `src/components/ui/dialog.tsx`
+## O que será alterado
 
-Hoje:
-- `DialogOverlay`, `DialogContent`, `DialogTitle` e `DialogDescription` já usam `React.forwardRef`
-- `DialogHeader` e `DialogFooter` ainda são function components simples, sem `forwardRef`
+### 1) Manter o bloco no local atual
+O card continuará exatamente na área já destacada por você:
+- topo da sidebar direita no desktop
+- acima do título “Personalize sua Case”
 
-Como esses wrappers aparecem como filhos diretos em estruturas Radix, o React/Radix pode tentar anexar refs neles, gerando o warning:
+Não haverá mudança estrutural de posição, apenas refinamento do conteúdo e da hierarquia visual.
+
+### 2) Evoluir o resumo do produto com a copy da referência
+Hoje o bloco mostra apenas:
+- imagem do aparelho
+- nome do produto
+- preço
+
+Ele será enriquecido para incluir, logo abaixo do preço, uma lista curta de atributos com copy inspirada na imagem enviada:
+
+- `Policarbonato + TPU — proteção contra impactos e encaixe seguro`
+- `Impressão UV LED — cores vivas, alta nitidez e ótima durabilidade`
+- `Acabamento premium — fosco ou brilho, resistente e refinado`
+
+A ideia é transformar o bloco em um resumo de valor do produto, sem ficar pesado.
+
+### 3) Refinar a apresentação visual do bloco
+O card passará a ter leitura mais premium e escaneável:
+
+- thumbnail do produto mantida
+- nome e preço com hierarquia mais forte
+- bullets curtos com ícones sutis
+- melhor espaçamento entre imagem, texto e benefícios
+- visual compacto para não empurrar demais os controles da customização
+
+Direção esperada:
 ```text
-Function components cannot be given refs
+[imagem]  iPhone 16
+         R$ 119,90
+
+         • Policarbonato + TPU — proteção contra impactos e encaixe seguro
+         • Impressão UV LED — cores vivas, alta nitidez e ótima durabilidade
+         • Acabamento premium — fosco ou brilho, resistente e refinado
 ```
 
-Isso bate com a regra já registrada no projeto:
-- componentes renderizados como filhos diretos de elementos Radix devem usar `React.forwardRef`
+## Arquivo impactado
 
-## O que será corrigido
+### `src/pages/Customize.tsx`
+O bloco de resumo do produto dentro do `aside` será refatorado para:
+- manter imagem, nome e preço
+- adicionar os atributos/copys logo abaixo
+- ajustar espaçamento e estilos do card
 
-### 1) Ajustar `DialogHeader` e `DialogFooter` para `forwardRef`
-Em `src/components/ui/dialog.tsx`:
-- converter `DialogHeader` para `React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>`
-- converter `DialogFooter` para `React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>`
-- preservar classes, API pública e `displayName`
+## Abordagem de implementação
+1. Reaproveitar o bloco já existente no topo da sidebar.
+2. Substituir o layout simples atual por uma versão mais rica e compacta.
+3. Inserir três bullets de benefícios com ícones leves e consistentes com a UI.
+4. Garantir que o bloco continue harmonioso com o restante da sidebar e não roube foco do CTA principal de upload no preview.
 
-Resultado esperado:
-- `TermsDialog` deixa de emitir warning ao abrir
-- qualquer outro modal que use `DialogHeader`/`DialogFooter` também herda a correção
-
-### 2) Fazer uma limpeza preventiva nos componentes da jornada de customização
-Validar os diálogos usados em `/customize/:slug`:
-- `TermsDialog`
-- `LowResolutionDialog`
-- `FilterConfirmDialog`
-- `UpscaleConfirmDialog`
-- `LoginDialog`
-- `IntroDialog`
-
-Objetivo:
-- garantir que nenhum wrapper customizado usado como filho de Radix esteja sem `forwardRef`
-- evitar que o preview/CTA pareça “culpado” por warnings originados em modais auxiliares
-
-### 3) Manter intacto o CTA recém-adicionado no frame
-Nenhuma mudança visual no CTA será necessária, a menos que a auditoria encontre algum wrapper do preview usando `asChild` ou recebendo ref indevido.
-
-Resultado esperado:
-- o CTA continua com glow/animação suave
-- o console fica limpo ao abrir a página, interagir com upload e abrir dialogs da jornada
-
-## Arquivos impactados
-
-### `src/components/ui/dialog.tsx`
-Mudança principal:
-- migrar `DialogHeader` e `DialogFooter` para `forwardRef`
-
-### Possíveis arquivos de verificação sem mudança estrutural grande
-- `src/components/customize/TermsDialog.tsx`
-- `src/components/customize/LowResolutionDialog.tsx`
-- `src/components/customize/FilterConfirmDialog.tsx`
-- `src/components/customize/UpscaleConfirmDialog.tsx`
-- `src/components/customize/LoginDialog.tsx`
-- `src/components/customize/IntroDialog.tsx`
-
-## Estratégia de implementação
-1. Atualizar wrappers do sistema de dialog para aceitar ref corretamente.
-2. Revisar os modais da jornada de customização para confirmar que não há outro wrapper equivalente quebrando a regra.
-3. Validar que o comportamento visual e responsivo continua igual.
-4. Confirmar que o console não mostra mais warning de `Function components cannot be given refs`.
+## Regras que serão respeitadas
+- não mover o bloco de lugar
+- não alterar o fluxo de customização
+- não reintroduzir modal nem galeria
+- não poluir visualmente a sidebar
+- manter foco no primeiro passo da jornada: enviar imagem
 
 ## Check final documentado
 
-### Console
-- não aparece mais warning de `Function components cannot be given refs`
-- abrir `TermsDialog` não gera erro
-- abrir dialogs auxiliares da customização não gera erro
+### Conteúdo
+- o bloco continua no topo da sidebar direita
+- nome e preço permanecem visíveis
+- os atributos da referência aparecem abaixo do preço
+- a copy está refinada e clara
 
-### Preview / CTA
-- CTA dentro do frame continua aparecendo apenas sem imagem
-- clicar no CTA continua abrindo o seletor de arquivos
-- após upload, CTA desaparece normalmente
+### Visual
+- o resumo ficou mais premium e informativo
+- os bullets têm boa legibilidade
+- o bloco continua compacto
+- não cria excesso de altura ou desbalanceamento na sidebar
 
-### Regressão visual
-- headers e footers dos dialogs mantêm layout atual
-- mobile continua fullscreen com cantos retos
-- desktop continua com card central e cantos arredondados
-
-### Regressão funcional
-- botões de cancelar/confirmar continuam funcionando
-- overlays dos dialogs continuam abrindo/fechando normalmente
-- nenhum comportamento da página `/customize/:slug` é alterado além da limpeza de warnings
+### Regressão
+- CTA de upload no frame continua intacto
+- controles de ajustes/filtros continuam na mesma ordem
+- botão “Finalizar” e restante da jornada não são afetados
 
 ## Resultado esperado
-Depois da correção, o preview de customização e seus modais associados ficam com o console limpo, sem warnings de refs, preservando a UX atual e garantindo uma base mais robusta para futuras interações com CTA, upload e diálogos.
+Depois da implementação, o local já destacado por você passa a comunicar melhor o valor da capinha com materiais, impressão e acabamento, usando uma copy mais comercial e informativa, sem mudar a estrutura da página.
