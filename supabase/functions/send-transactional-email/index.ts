@@ -1,6 +1,6 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2.49.8'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { DEFAULT_FROM_EMAIL, DEFAULT_FROM_NAME, sendWithResend } from '../_shared/resend.ts'
 
@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (token === supabaseServiceKey) {
+      // Internal edge-to-edge invocation using the service role secret.
+    } else {
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     })
@@ -94,6 +97,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Forbidden: service_role required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
     }
   } catch {
     return new Response(
@@ -354,7 +358,7 @@ Deno.serve(async (req) => {
   })
 
   try {
-    await sendWithResend({
+    const resendResult = await sendWithResend({
       to: effectiveRecipient,
       from: `${SITE_NAME} <${FROM_EMAIL}>`,
       subject: resolvedSubject,
@@ -377,6 +381,8 @@ Deno.serve(async (req) => {
         provider: 'resend',
         idempotency_key: idempotencyKey,
         unsubscribe_token: unsubscribeToken,
+        provider_message_id: resendResult?.id ?? null,
+        template_name: templateName,
       },
     })
 
