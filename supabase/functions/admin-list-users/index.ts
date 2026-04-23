@@ -54,6 +54,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: adminRoles, error: rolesError } = await adminClient
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+
+    if (rolesError) throw rolesError;
+
+    const adminIds = new Set((adminRoles || []).map((row) => row.user_id));
+
     // Fetch all auth users (paginated internally)
     const allUsers: { id: string; email: string; created_at: string }[] = [];
     let page = 1;
@@ -72,6 +81,7 @@ Deno.serve(async (req) => {
           id: u.id,
           email: u.email || "",
           created_at: u.created_at,
+          is_admin: adminIds.has(u.id),
         });
       }
 

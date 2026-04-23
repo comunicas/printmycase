@@ -29,6 +29,7 @@ interface MergedUser {
   created_at: string;
   coin_balance: number;
   order_count: number;
+  is_admin: boolean;
 }
 
 type SortKey = "created_at" | "full_name" | "coin_balance" | "order_count";
@@ -56,7 +57,7 @@ const UsersManager = () => {
     try {
       const { data: authData, error: authError } = await supabase.functions.invoke("admin-list-users");
       if (authError) throw authError;
-      const authUsers: AuthUser[] = authData?.users || [];
+      const authUsers: Array<AuthUser & { is_admin?: boolean }> = authData?.users || [];
 
       const { data: profiles } = await supabase.from("profiles").select("id, full_name, phone, avatar_url, created_at");
 
@@ -98,6 +99,7 @@ const UsersManager = () => {
           created_at: profile?.created_at || au.created_at,
           coin_balance: balanceMap.get(au.id) || 0,
           order_count: orderCountMap.get(au.id) || 0,
+          is_admin: !!au.is_admin,
         };
       });
 
@@ -179,6 +181,15 @@ const UsersManager = () => {
     return sortDir === "asc"
       ? <ArrowUp className="w-3.5 h-3.5 ml-1 inline text-primary" />
       : <ArrowDown className="w-3.5 h-3.5 ml-1 inline text-primary" />;
+  };
+
+  const handleRoleChanged = (userId: string, isAdmin: boolean) => {
+    setUsers((current) => current.map((item) => (
+      item.id === userId ? { ...item, is_admin: isAdmin } : item
+    )));
+    setSelectedUser((current) => (
+      current && current.id === userId ? { ...current, is_admin: isAdmin } : current
+    ));
   };
 
   return (
@@ -265,6 +276,7 @@ const UsersManager = () => {
                   Nome {renderSortIcon("full_name")}
                 </TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Perfil</TableHead>
                 <TableHead>Telefone</TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => handleSort("created_at")}>
                   Cadastro {renderSortIcon("created_at")}
@@ -280,7 +292,7 @@ const UsersManager = () => {
             <TableBody>
               {paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Nenhum usuário encontrado
                   </TableCell>
                 </TableRow>
@@ -303,7 +315,12 @@ const UsersManager = () => {
                         {u.full_name || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">{u.email || "—"}</TableCell>
+                     <TableCell className="text-sm">{u.email || "—"}</TableCell>
+                     <TableCell>
+                       <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                         {u.is_admin ? "Administrador" : "Usuário"}
+                       </span>
+                     </TableCell>
                     <TableCell className="text-sm">{u.phone || "—"}</TableCell>
                     <TableCell className="text-sm">{fmtDate(u.created_at)}</TableCell>
                     <TableCell className="text-right">
@@ -330,6 +347,7 @@ const UsersManager = () => {
         open={!!selectedUser}
         onClose={() => setSelectedUser(null)}
         user={selectedUser}
+        onRoleChanged={handleRoleChanged}
       />
     </div>
   );
