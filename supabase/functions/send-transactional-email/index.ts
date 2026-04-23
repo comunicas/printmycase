@@ -38,10 +38,72 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
   }
 }
 
-// Auth: this function requires service_role authentication. The Supabase gateway
-// validates the JWT (verify_jwt = true), and we additionally check that the
-// caller has the service_role claim to prevent abuse via the public anon key
-// (which would allow anyone to send branded emails / phishing).
+async function insertEmailLog(
+  supabase: ReturnType<typeof createClient>,
+  payload: {
+    message_id: string
+    template_name: string
+    recipient_email: string
+    status: string
+    metadata?: Record<string, unknown>
+    error_message?: string
+  }
+) {
+  const { error } = await supabase.from('email_send_log').insert(payload)
+
+  if (error) {
+    console.error('Failed to persist email_send_log entry', {
+      error,
+      messageId: payload.message_id,
+      templateName: payload.template_name,
+      status: payload.status,
+    })
+  }
+
+  return error
+}
+
+async function resolveRequestContext(
+  token: string,
+  supabaseUrl: string,
+  supabaseAnonKey: string,
+  supabaseServiceKey: string,
+) {
+  if (token === supabaseServiceKey) {
+    return { mode: 'service_role' as const }
+  }
+
+  const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  })
+  const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token)
+  const fallbackClaims = parseJwtClaims(token)
+  const resolvedClaims = claimsData?.claims ?? fallbackClaims
+
+  if (claimsError && fallbackClaims?.role !== 'service_role') {
+    throw new Error('UNAUTHORIZED')
+  }
+
+  if (resolvedClaims?.role === 'service_role') {
+    return { mode: 'service_role' as const }
+  }
+
+  const userId = resolvedClaims?.sub
+  const userEmail = resolvedClaims?.email
+
+  if (typeof userId !== 'string' || typeof userEmail !== 'string') {
+    throw new Error('UNAUTHORIZED')
+  }
+
+  return {
+    mode: 'user' as const,
+    userId,
+    userEmail: userEmail.toLowerCase(),
+  }
+}
+
+// Auth: service_role can send any registered app email.
+// Authenticated end users can only self-trigger the welcome email once.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -73,32 +135,14 @@ Deno.serve(async (req) => {
     )
   }
 
+  let requestContext: Awaited<ReturnType<typeof resolveRequestContext>>
   try {
-    if (token === supabaseServiceKey) {
-      // Internal edge-to-edge invocation using the service role secret.
-    } else {
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    })
-    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token)
-    const fallbackClaims = parseJwtClaims(token)
-
-    if (claimsError && fallbackClaims?.role !== 'service_role') {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const resolvedRole = claimsData?.claims?.role ?? fallbackClaims?.role
-
-    if (resolvedRole !== 'service_role') {
-      return new Response(
-        JSON.stringify({ error: 'Forbidden: service_role required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-    }
+    requestContext = await resolveRequestContext(
+      token,
+      supabaseUrl,
+      supabaseAnonKey,
+      supabaseServiceKey,
+    )
   } catch {
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
@@ -107,16 +151,16 @@ Deno.serve(async (req) => {
   }
 
   // Parse request body
-    let templateName: string
-    let recipientEmail: string
-    let idempotencyKey: string
-    let messageId: string
+  let templateName: string
+  let recipientEmail: string
+  let idempotencyKey: string
+  let messageId: string
   let templateData: Record<string, any> = {}
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
     recipientEmail = body.recipientEmail || body.recipient_email
-    messageId = body.messageId || body.message_id || crypto.randomUUID()
+    messageId = body.messageId || body.message_id || body.idempotencyKey || body.idempotency_key || crypto.randomUUID()
     idempotencyKey = body.idempotencyKey || body.idempotency_key || messageId
     if (body.templateData && typeof body.templateData === 'object') {
       templateData = body.templateData
@@ -157,10 +201,36 @@ Deno.serve(async (req) => {
     )
   }
 
+  if (requestContext.mode === 'user') {
+    if (templateName !== 'welcome-email') {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const expectedMessageId = `welcome-${requestContext.userId}`
+    if (messageId !== expectedMessageId || idempotencyKey !== expectedMessageId) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid welcome email request' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (recipientEmail && recipientEmail.toLowerCase() !== requestContext.userEmail) {
+      return new Response(
+        JSON.stringify({ error: 'Recipient mismatch' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    recipientEmail = requestContext.userEmail
+  }
+
   // Resolve effective recipient: template-level `to` takes precedence over
   // the caller-provided recipientEmail. This allows notification templates
   // to always send to a fixed address (e.g., site owner from env var).
-  const effectiveRecipient = template.to || recipientEmail
+  const effectiveRecipient = (template.to || recipientEmail || '').toLowerCase()
 
   if (!effectiveRecipient) {
     return new Response(
@@ -176,6 +246,56 @@ Deno.serve(async (req) => {
 
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+  if (requestContext.mode === 'user' && requestContext.userId) {
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', requestContext.userId)
+      .maybeSingle()
+
+    if (profileError) {
+      console.error('Failed to load profile for welcome email', {
+        error: profileError,
+        userId: requestContext.userId,
+      })
+      return new Response(
+        JSON.stringify({ error: 'Failed to prepare email' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    templateData = {
+      userName: profileData?.full_name || requestContext.userEmail.split('@')[0],
+      recipientEmail: requestContext.userEmail,
+    }
+  }
+
+  const { data: existingEntries, error: dedupeError } = await supabase
+    .from('email_send_log')
+    .select('status')
+    .eq('message_id', messageId)
+    .in('status', ['pending', 'sent', 'suppressed'])
+    .limit(1)
+
+  if (dedupeError) {
+    console.error('Failed to check email idempotency', {
+      error: dedupeError,
+      messageId,
+      templateName,
+    })
+    return new Response(
+      JSON.stringify({ error: 'Failed to verify idempotency' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
+  if ((existingEntries ?? []).length > 0) {
+    return new Response(
+      JSON.stringify({ success: true, sent: false, duplicate: true }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
 
   // 2. Check suppression list (fail-closed: if we can't verify, don't send)
   const { data: suppressed, error: suppressionError } = await supabase
