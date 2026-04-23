@@ -31,7 +31,7 @@ const productHighlights = [
   {
     icon: SwatchBook,
     title: "Acabamento premium",
-    description: "fosco ou brilho, resistente e refinado",
+    description: "fosco ou brilho, resistente",
   },
 ] as const;
 
@@ -94,9 +94,6 @@ const Customize = () => {
                 <p className="text-base font-semibold text-foreground leading-tight">{c.productName}</p>
                 <p className="text-base text-primary font-semibold">
                   {c.product?.price_cents ? formatPrice(c.product.price_cents / 100) : ""}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Capinha personalizada com materiais e impressão de padrão premium.
                 </p>
               </div>
             </div>
