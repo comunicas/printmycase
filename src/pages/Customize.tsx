@@ -98,14 +98,14 @@ const Customize = () => {
               </div>
             </div>
 
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               {productHighlights.map(({ icon: Icon, title, description }) => (
-                <li key={title} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
-                    <Icon className="h-3.5 w-3.5" />
+                <li key={title} className="flex items-start gap-2">
+                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-sm bg-muted/60 text-muted-foreground">
+                    <Icon className="h-3 w-3" />
                   </span>
-                  <div className="min-w-0 text-sm leading-snug text-muted-foreground">
-                    <span className="font-medium text-foreground">{title}</span>
+                  <div className="min-w-0 max-w-[220px] text-[12px] leading-[1.3] text-muted-foreground">
+                    <span className="font-normal text-foreground/90">{title}</span>
                     <span>{" — "}{description}</span>
                   </div>
                 </li>
