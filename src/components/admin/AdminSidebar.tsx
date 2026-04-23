@@ -22,7 +22,7 @@ export type AdminSection =
   | "products" | "collections" | "designs" | "stores"
   | "ai-filters" | "ai-categories" | "illustrations" | "galleries" | "ai-generations" | "user-generations"
   | "coin-transactions" | "coin-packages"
-  | "kb-categories" | "kb-articles" | "faq" | "legal" | "instagram-posts" | "contact-messages";
+  | "kb-categories" | "kb-articles" | "faq" | "legal" | "instagram-posts" | "contact-messages" | "auth-email-test";
 
 interface AdminSidebarProps {
   activeSection: AdminSection;
@@ -76,6 +76,12 @@ const groups: { label: string; items: { key: AdminSection; label: string; icon: 
       { key: "faq", label: "FAQ Home", icon: Star },
       { key: "legal", label: "Legal", icon: FileText },
       { key: "contact-messages", label: "Contato", icon: Mail },
+    ],
+  },
+  {
+    label: "Infra",
+    items: [
+      { key: "auth-email-test", label: "Teste Auth Email", icon: Mail },
     ],
   },
 ];
