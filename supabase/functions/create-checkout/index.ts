@@ -226,6 +226,7 @@ Deno.serve(async (req) => {
     const params = new URLSearchParams();
     params.append("payment_method_types[0]", "card");
     params.append("mode", "payment");
+    params.append("allow_promotion_codes", "true");
 
     const stripePriceId = isCollectionPurchase ? null : product.stripe_price_id;
 
