@@ -11,6 +11,7 @@ import { formatPrice } from "@/lib/types";
 import SeoHead from "@/components/SeoHead";
 import { getOptimizedUrl } from "@/lib/image-utils";
 import AppHeader from "@/components/AppHeader";
+import PromoBanner from "@/components/PromoBanner";
 import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import PaymentBadges from "@/components/PaymentBadges";
@@ -63,8 +64,12 @@ const Landing = () => {
         <main>
           {/* Hero — Dark */}
           <section aria-label="Banner principal" className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 z-30">
+              <PromoBanner />
+            </div>
+
             {/* Header inside hero */}
-            <div className="absolute top-0 left-0 right-0 z-20">
+            <div className="absolute top-10 sm:top-11 left-0 right-0 z-20">
               <AppHeader variant="transparent" />
             </div>
 
