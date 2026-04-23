@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { statusLabels } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
 import LoadingSpinner from "@/components/ui/loading-spinner";
@@ -9,6 +11,7 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 interface UserDetailDialogProps {
   open: boolean;
   onClose: () => void;
+  onRoleChanged?: (userId: string, isAdmin: boolean) => void;
   user: {
     id: string;
     email: string;
@@ -18,6 +21,7 @@ interface UserDetailDialogProps {
     created_at: string;
     coin_balance: number;
     order_count: number;
+    is_admin?: boolean;
   } | null;
 }
 
@@ -41,19 +45,23 @@ interface GenerationRow {
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-const UserDetailDialog = ({ open, onClose, user }: UserDetailDialogProps) => {
+const UserDetailDialog = ({ open, onClose, user, onRoleChanged }: UserDetailDialogProps) => {
+  const { toast } = useToast();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [generations, setGenerations] = useState<GenerationRow[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingGens, setLoadingGens] = useState(false);
   const [tab, setTab] = useState("orders");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [updatingRole, setUpdatingRole] = useState(false);
 
   useEffect(() => {
     if (!open || !user) return;
     setTab("orders");
+    setIsAdmin(!!user.is_admin);
     fetchOrders(user.id);
     fetchGenerations(user.id);
-  }, [open, user?.id]);
+  }, [open, user?.id, user?.is_admin]);
 
   const fetchOrders = async (userId: string) => {
     setLoadingOrders(true);
@@ -80,6 +88,39 @@ const UserDetailDialog = ({ open, onClose, user }: UserDetailDialogProps) => {
     setLoadingGens(false);
   };
 
+  const handleAdminRole = async (nextIsAdmin: boolean) => {
+    if (!user) return;
+
+    setUpdatingRole(true);
+    try {
+      const { error } = await supabase.functions.invoke("admin-manage-user-role", {
+        body: {
+          targetUserId: user.id,
+          makeAdmin: nextIsAdmin,
+        },
+      });
+
+      if (error) throw error;
+
+      setIsAdmin(nextIsAdmin);
+      onRoleChanged?.(user.id, nextIsAdmin);
+      toast({
+        title: nextIsAdmin ? "Privilégio admin concedido" : "Privilégio admin removido",
+        description: nextIsAdmin
+          ? "O usuário já pode acessar o painel administrativo."
+          : "O usuário voltou a ter acesso comum.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Não foi possível atualizar o privilégio",
+        description: err?.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingRole(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -103,10 +144,24 @@ const UserDetailDialog = ({ open, onClose, user }: UserDetailDialogProps) => {
             <p className="text-sm text-muted-foreground truncate">{user.email}</p>
             {user.phone && <p className="text-sm text-muted-foreground">{user.phone}</p>}
           </div>
-          <div className="text-right text-sm space-y-1">
+          <div className="text-right text-sm space-y-2">
             <p>Cadastro: {fmtDate(user.created_at)}</p>
             <p>🪙 {user.coin_balance} coins</p>
             <p>{user.order_count} pedido(s)</p>
+            <div className="flex flex-col items-end gap-2">
+              <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                {isAdmin ? "Administrador" : "Usuário"}
+              </span>
+              <Button
+                type="button"
+                variant={isAdmin ? "outline" : "default"}
+                size="sm"
+                disabled={updatingRole}
+                onClick={() => handleAdminRole(!isAdmin)}
+              >
+                {updatingRole ? "Salvando..." : isAdmin ? "Remover admin" : "Tornar admin"}
+              </Button>
+            </div>
           </div>
         </div>
 
