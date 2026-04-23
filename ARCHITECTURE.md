@@ -351,6 +351,13 @@ Moedas virtuais para uso de recursos de IA (filtros, upscale). Bônus concedido 
 | `admin-list-users` | Lista usuários com paginação (admin) |
 | `migrate-generation-urls` | Migra URLs de gerações para novo formato |
 
+## Arquitetura ativa de emails
+
+- **Fluxo ativo**: `auth-email-hook` e `send-transactional-email` renderizam templates e enviam diretamente via Resend pelo connector gateway.
+- **Observabilidade**: cada envio registra eventos append-only em `email_send_log` com `message_id`, `status` e `metadata.provider_message_id` quando disponível.
+- **Remetente**: o remetente padrão fica centralizado em `supabase/functions/_shared/resend.ts` e pode ser sobrescrito por secrets (`RESEND_FROM_EMAIL`, `RESEND_FROM_NAME`).
+- **Legado**: `process-email-queue` permanece apenas para compatibilidade/histórico do pipeline nativo anterior e não é mais o caminho principal de envio.
+
 ## Analytics e Rastreamento
 
 ### Meta Pixel (Browser)
