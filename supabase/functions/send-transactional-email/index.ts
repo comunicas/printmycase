@@ -2,18 +2,10 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+import { DEFAULT_FROM_EMAIL, DEFAULT_FROM_NAME, sendWithResend } from '../_shared/resend.ts'
 
-// Configuration baked in at scaffold time — do NOT change these manually.
-// To update, re-run the email domain setup flow.
-const SITE_NAME = "PrintMyCase"
-// SENDER_DOMAIN is the verified sender subdomain FQDN (e.g., "notify.example.com").
-// It MUST match the subdomain delegated to Lovable's nameservers — never the root domain.
-// The email API looks up this exact domain; a mismatch causes "No email domain record found".
-const SENDER_DOMAIN = "notify.printmycase.com.br"
-// FROM_DOMAIN is the domain shown in the From: header (e.g., "example.com").
-// When display_from_root is enabled, this can be the root domain for cleaner branding,
-// even though actual sending uses the subdomain above.
-const FROM_DOMAIN = "printmycase.com.br"
+const SITE_NAME = DEFAULT_FROM_NAME
+const FROM_EMAIL = DEFAULT_FROM_EMAIL
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -353,10 +345,7 @@ Deno.serve(async (req) => {
       ? template.subject(templateData)
       : template.subject
 
-  // 5. Enqueue the pre-rendered email for async processing by the dispatcher.
-  // The dispatcher (process-email-queue) handles sending, retries, and rate-limit backoff.
-
-  // Log pending BEFORE enqueue so we have a record even if enqueue crashes
+  // 5. Enviar via Resend e manter log mínimo local
   await supabase.from('email_send_log').insert({
     message_id: messageId,
     template_name: templateName,
@@ -364,27 +353,45 @@ Deno.serve(async (req) => {
     status: 'pending',
   })
 
-  const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-    queue_name: 'transactional_emails',
-    payload: {
-      message_id: messageId,
+  try {
+    await sendWithResend({
       to: effectiveRecipient,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-      sender_domain: SENDER_DOMAIN,
+      from: `${SITE_NAME} <${FROM_EMAIL}>`,
       subject: resolvedSubject,
       html,
       text: plainText,
-      purpose: 'transactional',
-      label: templateName,
-      idempotency_key: idempotencyKey,
-      unsubscribe_token: unsubscribeToken,
-      queued_at: new Date().toISOString(),
-    },
-  })
+      replyTo: 'sac@printmycase.com.br',
+      tags: [
+        { name: 'template', value: templateName },
+        { name: 'message_id', value: messageId },
+        { name: 'idempotency_key', value: idempotencyKey },
+      ],
+    })
 
-  if (enqueueError) {
-    console.error('Failed to enqueue email', {
-      error: enqueueError,
+    await supabase.from('email_send_log').insert({
+      message_id: messageId,
+      template_name: templateName,
+      recipient_email: effectiveRecipient,
+      status: 'sent',
+      metadata: {
+        provider: 'resend',
+        idempotency_key: idempotencyKey,
+        unsubscribe_token: unsubscribeToken,
+      },
+    })
+
+    console.log('Transactional email sent via Resend', { templateName, effectiveRecipient })
+
+    return new Response(
+      JSON.stringify({ success: true, sent: true }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  } catch (error) {
+    console.error('Failed to send email via Resend', {
+      error,
       templateName,
       effectiveRecipient,
     })
@@ -394,22 +401,12 @@ Deno.serve(async (req) => {
       template_name: templateName,
       recipient_email: effectiveRecipient,
       status: 'failed',
-      error_message: 'Failed to enqueue email',
+      error_message: error instanceof Error ? error.message : 'Failed to send email',
     })
 
-    return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
+    return new Response(JSON.stringify({ error: 'Failed to send email' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-
-  console.log('Transactional email enqueued', { templateName, effectiveRecipient })
-
-  return new Response(
-    JSON.stringify({ success: true, queued: true }),
-    {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    }
-  )
 })

@@ -9,6 +9,7 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
+import { DEFAULT_FROM_EMAIL, DEFAULT_FROM_NAME, sendWithResend } from '../_shared/resend.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,10 +37,9 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "PrintMyCase"
-const SENDER_DOMAIN = "notify.printmycase.com.br"
+const SITE_NAME = DEFAULT_FROM_NAME
 const ROOT_DOMAIN = "studio.printmycase.com.br"
-const FROM_DOMAIN = "printmycase.com.br"
+const FROM_EMAIL = DEFAULT_FROM_EMAIL
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
@@ -234,7 +234,6 @@ async function handleWebhook(req: Request): Promise<Response> {
     plainText: true,
   })
 
-  // Enqueue email for async processing by the dispatcher (process-email-queue).
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -250,44 +249,48 @@ async function handleWebhook(req: Request): Promise<Response> {
     status: 'pending',
   })
 
-  const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-    queue_name: 'auth_emails',
-    payload: {
-      run_id,
-      message_id: messageId,
+  try {
+    await sendWithResend({
       to: payload.data.email,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-      sender_domain: SENDER_DOMAIN,
+      from: `${SITE_NAME} <${FROM_EMAIL}>`,
       subject: EMAIL_SUBJECTS[emailType] || 'Notification',
       html,
       text,
-      purpose: 'transactional',
-      label: emailType,
-      queued_at: new Date().toISOString(),
-    },
-  })
+      tags: [
+        { name: 'template', value: emailType },
+        { name: 'message_id', value: messageId },
+        { name: 'run_id', value: run_id },
+      ],
+    })
 
-  if (enqueueError) {
-    console.error('Failed to enqueue auth email', { error: enqueueError, run_id, emailType })
+    await supabase.from('email_send_log').insert({
+      message_id: messageId,
+      template_name: emailType,
+      recipient_email: payload.data.email,
+      status: 'sent',
+      metadata: { provider: 'resend', run_id },
+    })
+
+    console.log('Auth email sent via Resend', { emailType, email: payload.data.email, run_id })
+
+    return new Response(
+      JSON.stringify({ success: true, sent: true }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Failed to send auth email via Resend', { error, run_id, emailType })
     await supabase.from('email_send_log').insert({
       message_id: messageId,
       template_name: emailType,
       recipient_email: payload.data.email,
       status: 'failed',
-      error_message: 'Failed to enqueue email',
+      error_message: error instanceof Error ? error.message : 'Failed to send email',
     })
-    return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
+    return new Response(JSON.stringify({ error: 'Failed to send email' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-
-  console.log('Auth email enqueued', { emailType, email: payload.data.email, run_id })
-
-  return new Response(
-    JSON.stringify({ success: true, queued: true }),
-    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  )
 }
 
 Deno.serve(async (req) => {
