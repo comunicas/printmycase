@@ -38,11 +38,11 @@ type SafeZonePreset = {
 };
 
 const SAFE_ZONE_PRESETS: Record<string, SafeZonePreset> = {
-  "iphone-12-pro-max": { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 30px)", radius: "1.5rem", bottomRadius: "3.5rem" },
-  "iphone-15-pro-max": { insetX: "5%", width: "40%", top: "3.05%", height: "calc(15.2% + 20px)", radius: "1.5rem", bottomRadius: "3.8rem" },
-  "iphone-17-pro": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem", mobileRadius: "1.45rem", mobileBottomRadius: "1.45rem" },
-  "iphone-17-pro-max": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem", mobileRadius: "1.45rem", mobileBottomRadius: "1.45rem" },
-  "iphone-17-air": { insetX: "8.8%", top: "3.5%", height: "calc(8.5% + 5px)", radius: "2.2rem", bottomRadius: "2.2rem", mobileRadius: "1.45rem", mobileBottomRadius: "1.45rem" },
+  "iphone-12-pro-max": { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 30px)", radius: "1.5rem", bottomRadius: "3.5rem", mobileRadius: "1rem", mobileBottomRadius: "2.5rem" },
+  "iphone-15-pro-max": { insetX: "5%", width: "40%", top: "3.05%", height: "calc(15.2% + 20px)", radius: "1.5rem", bottomRadius: "3.8rem", mobileRadius: "1rem", mobileBottomRadius: "2.6rem" },
+  "iphone-17-pro": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem", mobileRadius: "1.15rem", mobileBottomRadius: "1.15rem" },
+  "iphone-17-pro-max": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem", mobileRadius: "1.15rem", mobileBottomRadius: "1.15rem" },
+  "iphone-17-air": { insetX: "8.8%", top: "3.5%", height: "calc(8.5% + 5px)", radius: "2.2rem", bottomRadius: "2.2rem", mobileRadius: "1.15rem", mobileBottomRadius: "1.15rem" },
 };
 
 const DEFAULT_SAFE_ZONE_PRESET: SafeZonePreset = { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 20px)", radius: "1.5rem", bottomRadius: "3.5rem" };
@@ -313,7 +313,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
             )}
             {showSafeZone && (
               <div
-                className="pointer-events-none absolute z-10 overflow-hidden bg-foreground/40"
+                className="pointer-events-none absolute z-10 overflow-hidden border-[3px] border-foreground bg-foreground/40 box-border"
                 aria-hidden="true"
                 style={{
                   left: safeZonePreset.width ? (safeZonePreset.insetX ?? "5%") : safeZonePreset.insetX,
@@ -325,6 +325,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
                   borderTopRightRadius: safeZoneRadius,
                   borderBottomLeftRadius: safeZonePreset.width ? safeZoneRadius : safeZoneBottomRadius,
                   borderBottomRightRadius: safeZonePreset.width ? safeZoneRadius : safeZoneBottomRadius,
+                  borderColor: "hsl(var(--foreground))",
                 }}
               />
             )}
