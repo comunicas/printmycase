@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     const adminIds = new Set((adminRoles || []).map((row) => row.user_id));
 
     // Fetch all auth users (paginated internally)
-    const allUsers: { id: string; email: string; created_at: string }[] = [];
+    const allUsers: { id: string; email: string; created_at: string; is_admin: boolean }[] = [];
     let page = 1;
     const perPage = 1000;
 
