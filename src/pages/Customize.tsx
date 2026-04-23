@@ -56,6 +56,8 @@ const Customize = () => {
             onImageUpload={c.handleImageUpload}
             imageResolution={c.imageResolution}
             isProcessing={c.isProcessing}
+            uploadState={c.uploadState}
+            uploadStatusLabel={c.uploadStatusLabel || undefined}
             processingMessage={c.processingMsg || undefined}
             previewImageUrl={previewImageUrl}
             disabled={c.isProcessing}
