@@ -6,6 +6,7 @@ interface PhonePreviewProps {
   scale: number;
   position: { x: number; y: number };
   rotation?: number;
+  deviceSlug?: string;
   onPositionChange: (pos: { x: number; y: number }) => void;
   onScaleChange?: (scale: number) => void;
   onImageUpload: (file: File) => void;
@@ -21,7 +22,14 @@ interface PhonePreviewProps {
 
 const CROSSFADE_MS = 200;
 
-const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
+const SAFE_ZONE_PRESETS: Record<string, { insetX: string; top: string; height: string; radius: string; bottomRadius: string }> = {
+  "iphone-15-pro-max": { insetX: "8.4%", top: "3.5%", height: "15.2%", radius: "2.95rem", bottomRadius: "3.8rem" },
+  "iphone-17-pro": { insetX: "9.5%", top: "4.2%", height: "18%", radius: "2.6rem", bottomRadius: "3.4rem" },
+};
+
+const DEFAULT_SAFE_ZONE_PRESET = { insetX: "9.2%", top: "4%", height: "17%", radius: "2.7rem", bottomRadius: "3.5rem" };
+
+const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -181,6 +189,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
 
   const oversize = Math.max(150, scale * 1.25);
   const offset = -(oversize - 100) / 2;
+  const safeZonePreset = (deviceSlug && SAFE_ZONE_PRESETS[deviceSlug]) || DEFAULT_SAFE_ZONE_PRESET;
   const buildImageStyle = (src: string) => ({
     backgroundImage: `url("${src}")`,
     backgroundSize: `${scale * (100 / oversize)}%`,
@@ -240,8 +249,18 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             onPointerUp={onPointerUp}
           >
             <div
-              className="pointer-events-none absolute left-[9.5%] right-[9.5%] top-[4.2%] z-10 h-[18%] overflow-hidden rounded-[2.6rem] rounded-b-[3.4rem] bg-foreground/40"
+              className="pointer-events-none absolute z-10 overflow-hidden bg-foreground/40"
               aria-hidden="true"
+              style={{
+                left: safeZonePreset.insetX,
+                right: safeZonePreset.insetX,
+                top: safeZonePreset.top,
+                height: safeZonePreset.height,
+                borderTopLeftRadius: safeZonePreset.radius,
+                borderTopRightRadius: safeZonePreset.radius,
+                borderBottomLeftRadius: safeZonePreset.bottomRadius,
+                borderBottomRightRadius: safeZonePreset.bottomRadius,
+              }}
             />
             {image && !isDragging && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
