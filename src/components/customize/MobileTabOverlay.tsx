@@ -37,7 +37,7 @@ interface MobileTabOverlayProps {
 
 const tabTitles: Record<MobileTab, string> = {
   ajustes: "Ajustes",
-  info: "Informações",
+  info: "Detalhes do produto",
   filtros: "Filtros IA",
 };
 
