@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
+      allow_promotion_codes: true,
       line_items: [
         {
           price_data: {
