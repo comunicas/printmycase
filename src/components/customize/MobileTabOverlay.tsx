@@ -120,9 +120,9 @@ const MobileTabOverlay = ({
 
       {/* Bottom sheet */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden h-[60vh] bg-background rounded-t-2xl shadow-lg motion-safe:animate-in motion-safe:slide-in-from-bottom-6 motion-safe:fade-in motion-safe:duration-300 motion-reduce:animate-none ${!isDragging ? "transition-transform duration-300 ease-out motion-reduce:transition-none" : ""} ${isClosing ? "translate-y-full opacity-0" : dragDeltaY === 0 ? "translate-y-0 opacity-100" : ""}`}
+        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden flex max-h-[46vh] min-h-[32vh] flex-col bg-background rounded-t-xl shadow-lg motion-safe:animate-in motion-safe:slide-in-from-bottom-6 motion-safe:fade-in motion-safe:duration-300 motion-reduce:animate-none ${!isDragging ? "transition-transform duration-300 ease-out motion-reduce:transition-none" : ""} ${isClosing ? "translate-y-full opacity-0" : dragDeltaY === 0 ? "translate-y-0 opacity-100" : ""}`}
         style={{
-          marginBottom: "calc(3rem + 3.5rem)",
+          marginBottom: "calc(3rem + env(safe-area-inset-bottom))",
           ...(dragDeltaY > 0 && !isClosing ? { transform: `translateY(${dragDeltaY}px)` } : {}),
         }}
         onClick={(e) => e.stopPropagation()}
@@ -133,13 +133,13 @@ const MobileTabOverlay = ({
       >
         {/* Handle + Header */}
         <div
-          className="flex flex-col items-center pt-2 pb-1 border-b border-border/50 cursor-grab active:cursor-grabbing"
+          className="flex flex-col items-center border-b border-border/50 pt-1.5 pb-0.5 cursor-grab active:cursor-grabbing"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mb-2" />
-          <div className="flex items-center justify-between w-full px-4 pb-1">
+          <div className="mb-1.5 h-1 w-10 rounded-full bg-muted-foreground/30" />
+          <div className="flex w-full items-center justify-between px-3 pb-1">
             <h3 className="text-sm font-semibold text-foreground">{tabTitles[activeTab]}</h3>
             <Button ref={closeButtonRef} variant="ghost" size="icon" className="h-8 w-8 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background" onClick={handleClose} aria-label="Fechar painel de detalhes">
               <X className="w-4 h-4" />
@@ -148,7 +148,7 @@ const MobileTabOverlay = ({
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto px-4 py-4 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:animate-none" style={{ height: "calc(100% - 3.5rem)" }}>
+        <div className="flex-1 overflow-y-auto px-3 py-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:animate-none">
           {activeTab === "info" && (
             <div className="space-y-4">
               <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/25 p-3">

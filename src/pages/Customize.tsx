@@ -174,15 +174,17 @@ const Customize = () => {
           hasFilters={c.filters.length > 0}
           disabled={c.isProcessing || !c.image}
         />
-        <ContinueBar
-          isModified={c.isModified}
-          onReset={c.handleReset}
-          onContinue={c.handleContinue}
-          disabled={!c.image || c.isProcessing}
-          isRendering={c.isRendering}
-          showDownload={!!c.activeFilterId}
-          onDownload={c.handleDownload}
-        />
+        {!mobileTab && (
+          <ContinueBar
+            isModified={c.isModified}
+            onReset={c.handleReset}
+            onContinue={c.handleContinue}
+            disabled={!c.image || c.isProcessing}
+            isRendering={c.isRendering}
+            showDownload={!!c.activeFilterId}
+            onDownload={c.handleDownload}
+          />
+        )}
       </div>
 
       <FilterConfirmDialog
