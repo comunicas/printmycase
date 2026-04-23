@@ -137,7 +137,7 @@ const Landing = () => {
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-4">Da sua ideia para o seu celular em 3 passos</h2>
 
                 <p className="text-center text-muted-foreground max-w-xl mx-auto mb-14">
-                  Em apenas 3 passos simples, sua capinha personalizada sai do zero e chega na sua porta.
+                  Sua capinha personalizada sai do zero e chega na sua porta.
                 </p>
               </ScrollReveal>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
