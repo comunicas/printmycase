@@ -3,11 +3,15 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdjustmentsPanel from "./AdjustmentsPanel";
 import AiFiltersList from "./AiFiltersList";
+import ProductHighlightsList from "./ProductHighlightsList";
 import type { MobileTab } from "./MobileTabBar";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
 interface MobileTabOverlayProps {
   activeTab: MobileTab;
   onClose: () => void;
+  productName: string;
+  productPrice: string;
+  productImage: string;
   hasImage: boolean;
   scale: number;
   rotation: number;
@@ -33,11 +37,12 @@ interface MobileTabOverlayProps {
 
 const tabTitles: Record<MobileTab, string> = {
   ajustes: "Ajustes",
+  info: "Informações",
   filtros: "Filtros IA",
 };
 
 const MobileTabOverlay = ({
-  activeTab, onClose, hasImage,
+  activeTab, onClose, productName, productPrice, productImage, hasImage,
   scale, rotation, showSafeZone, onScaleChange, onRotate, onExpand, onShowSafeZoneChange,
   filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory,
   onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
@@ -122,6 +127,24 @@ const MobileTabOverlay = ({
 
         {/* Content */}
         <div className="overflow-y-auto px-4 py-4" style={{ height: "calc(100% - 3.5rem)" }}>
+          {activeTab === "info" && (
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/25 p-3">
+                <img
+                  src={productImage}
+                  alt={productName}
+                  className="h-14 w-14 flex-shrink-0 rounded-lg bg-background object-contain"
+                />
+                <div className="min-w-0 space-y-1">
+                  <p className="text-sm font-semibold leading-tight text-foreground">{productName}</p>
+                  <p className="text-sm font-semibold text-primary">{productPrice}</p>
+                </div>
+              </div>
+
+              <ProductHighlightsList compact className="space-y-2" />
+            </div>
+          )}
+
           {activeTab === "ajustes" && (
             <div className={!hasImage ? "opacity-50 pointer-events-none" : ""}>
               <AdjustmentsPanel
