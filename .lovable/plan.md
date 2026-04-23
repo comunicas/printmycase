@@ -1,105 +1,94 @@
 
-Objetivo: refinar o `TermsDialog` para ficar mais confortável no mobile e adotar fullscreen como padrão em todos os dispositivos, sem card central no desktop/tablet.
+Objetivo: substituir o CTA textual de contato na experiência de customização por um ícone pequeno, nos pontos destacados nas imagens, deixando a interface mais limpa sem perder acesso rápido à página `/contato`.
 
 ## O que será alterado
 
-### 1) Fullscreen em todos os breakpoints
-O `TermsDialog` deixará de usar comportamento híbrido mobile fullscreen + desktop card e passará a abrir sempre como tela/modal fullscreen.
+### 1) Trocar o CTA textual do rodapé por ícone pequeno
+Hoje o `ContinueBar` exibe o texto:
+- `Precisando de ajuda? Fale Conosco`
 
-Implementação:
-- remover classes responsivas que recentralizam e limitam o dialog em `sm+`
-- manter `inset-0`, `h-[100dvh]`, `w-screen`, `max-w-none`, `rounded-none`
-- eliminar `sm:max-w-md`, `sm:max-h-[90dvh]`, `sm:rounded-lg`, `sm:border`, `sm:translate-*`
-
-Resultado:
-- mesma experiência visual em mobile, tablet e desktop
-- leitura mais consistente entre dispositivos
-- modal sempre acima de toda a interface, sem competir com a área de customização ao fundo
-
-### 2) Refinar o espaçamento mobile
-O layout interno será ajustado para ficar menos apertado e mais equilibrado no mobile.
+Esse trecho será substituído por um CTA compacto em formato de ícone clicável.
 
 Direção:
-- reduzir sensação de “caixa espremida”
-- dar mais respiro vertical entre header, descrição, lista e bloco final
-- ajustar paddings para leitura mais confortável em telas pequenas
-- melhorar alinhamento entre ícones, títulos e linhas de texto
-- revisar altura e espaçamento do footer para os botões não parecerem colados
+- remover a linha textual abaixo do botão `Finalizar`
+- inserir um botão/link pequeno com ícone de ajuda/contato
+- manter navegação para `/contato`
+- preservar acessibilidade com `aria-label` e tooltip/título quando fizer sentido
 
-Ajustes previstos:
-- header com padding mais consistente
-- body com espaçamento vertical levemente mais generoso
-- lista de regras com menor ruído visual e melhor ritmo
-- footer com paddings mais estáveis e separação clara do conteúdo
+Arquivo principal:
+- `src/components/customize/ContinueBar.tsx`
 
-### 3) Refinar a UX do fullscreen no desktop/tablet
-Como fullscreen passará a ser o padrão geral, a modal será tratada como uma “tela de confirmação” e não como um card ampliado.
+### 2) Adicionar o mesmo CTA no topo da customização
+No header da tela de customização será incluído um ícone pequeno de contato no lado direito, na área indicada nas imagens.
 
-Implementação:
-- largura de leitura controlada dentro do fullscreen, sem recentralizar como popup pequeno
-- conteúdo principal em coluna com área rolável central
-- header fixo no topo e footer fixo na base
-- manter o conteúdo escaneável e não excessivamente largo em desktop
+Direção:
+- posicionar o ícone junto ao grupo atual do topo, sem competir com o botão de ajuda/tutorial e saldo
+- manter tamanho discreto e alinhado ao visual existente
+- usar comportamento consistente entre mobile e desktop
+- linkar para `/contato`
 
-Estrutura:
-```text
-[topo fixo com título + descrição + fechar]
-[corpo rolável com regras resumidas]
-[rodapé fixo com cancelar + CTA principal]
-```
+Arquivo principal:
+- `src/components/customize/CustomizeHeader.tsx`
 
-Resultado:
-- fullscreen sem parecer vazio ou desproporcional
-- melhor conforto de leitura em telas grandes
-- decisão rápida e clara em qualquer dispositivo
+### 3) Refinar o padrão visual do ícone
+O CTA será tratado como ação secundária, não como destaque principal.
 
-### 4) Preservar hierarquia de camadas e comportamento atual
-A correção de z-index já planejada/necessária será mantida como parte da solução.
+Direção visual:
+- usar botão `ghost`/ícone pequeno
+- cor neutra com hover sutil
+- foco visível consistente
+- área clicável confortável, mas sem “peso” visual
+- manter estética clean e premium da customização
 
-Garantias:
-- overlay continua cobrindo toda a interface
-- content continua acima do overlay
-- footer fixo, tabs mobile, continue bar e outros elementos não aparecem sobre a modal
-- comportamento jurídico/funcional permanece igual: aceite obrigatório no primeiro upload da sessão
+### 4) Garantir acessibilidade
+Como o texto visível será removido, o CTA precisa continuar claro para teclado e leitores de tela.
+
+Implementação planejada:
+- `aria-label` descritivo, como `Falar com o suporte` ou `Abrir contato`
+- `title`/tooltip opcional para reforçar entendimento visual
+- foco visível com `focus-visible`
+- manter como link real para `/contato`
 
 ## Arquivos impactados
 
-### `src/components/customize/TermsDialog.tsx`
+### `src/components/customize/ContinueBar.tsx`
 Será ajustado para:
-- remover o modo card em `sm+`
-- manter fullscreen em todos os breakpoints
-- refinar paddings, gaps e largura útil de leitura
-- melhorar o ritmo visual do conteúdo e dos botões
+- remover o texto “Precisando de ajuda? Fale Conosco”
+- inserir CTA de contato por ícone no bloco inferior/mobile e versão inline/desktop
+- preservar espaçamento do footer sem criar buracos visuais
 
-### `src/components/ui/dialog.tsx`
-Será revisado para:
-- garantir que o `DialogContent` base não force recentralização/cantos arredondados no caso dessa modal
-- preservar z-index correto e animações consistentes para a experiência fullscreen
+### `src/components/customize/CustomizeHeader.tsx`
+Será ajustado para:
+- incluir ícone pequeno de contato no grupo de ações do topo
+- equilibrar espaçamento com botão de ajuda e saldo de moedas
+
+### `src/components/ui/tooltip.tsx`
+Provavelmente não exigirá mudança estrutural, mas poderá ser reutilizado se o ícone receber tooltip.
 
 ## Abordagem de implementação
-1. Remover as classes responsivas de card do `TermsDialog`.
-2. Garantir fullscreen real em mobile, tablet e desktop.
-3. Refinar paddings e espaçamentos internos para melhorar conforto visual no mobile.
-4. Ajustar a largura útil do conteúdo dentro do fullscreen para não ficar nem apertado nem largo demais.
-5. Validar que header e footer permanecem fixos e que o corpo continua rolável.
-6. Confirmar que a hierarquia visual e o bloqueio da interface ao fundo continuam corretos.
+1. Criar um padrão compacto de link de contato por ícone.
+2. Aplicar esse padrão no `ContinueBar` em vez do texto atual.
+3. Aplicar o mesmo padrão no `CustomizeHeader`, nos locais indicados.
+4. Ajustar espaçamento para evitar desalinhamento em mobile e desktop.
+5. Garantir `aria-label`, foco visível e clique confortável.
+6. Validar que o resultado fique discreto e claramente acionável.
 
 ## Check final documentado
 
-### Fullscreen
-- modal ocupa 100% da viewport em mobile, tablet e desktop
-- não existe mais versão em card central
-- cantos retos em todos os dispositivos
+### UX
+- texto longo de contato sai do rodapé
+- CTA fica mais limpo e menos intrusivo
+- acesso ao contato continua rápido
 
-### Espaçamento e UX
-- header respira melhor no mobile
-- lista de regras fica mais fácil de ler
-- footer não fica apertado
-- conteúdo continua rápido de entender
+### Posicionamento
+- ícone aparece nos pontos indicados nas imagens
+- não conflita com `Finalizar`, ajuda ou saldo
+- layout continua equilibrado em mobile e desktop
 
-### Camadas
-- nada da interface aparece por cima
-- overlay e content mantêm precedência correta
+### Acessibilidade
+- ícone tem nome acessível
+- foco visível funciona
+- navegação por teclado continua correta
 
 ## Resultado esperado
-Depois do ajuste, a modal de termos passa a usar fullscreen como padrão em qualquer dispositivo e ganha um refinamento de espaçamento no mobile, ficando mais limpa, mais confortável de ler e mais consistente com a importância da ação.
+Depois do ajuste, o contato na tela de customização deixará de ocupar uma linha textual no rodapé e passará a aparecer como um ícone pequeno e discreto, também presente no topo da interface, mantendo acesso rápido ao contato com uma UI mais limpa e refinada.
