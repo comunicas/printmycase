@@ -236,16 +236,16 @@ const PhonePreview = ({ image, scale, position, rotation = 0, previewMode = "rea
               />
             </div>
           )}
-          <div
-            ref={containerRef}
-            className={`absolute inset-0 z-10 ${image ? 'touch-none' : 'touch-manipulation'} group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+            <div
+              ref={containerRef}
+              className={`absolute inset-0 z-20 ${image ? 'touch-none' : 'touch-manipulation'} group/drag ${image ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
             {shouldShowMainFade && (
               <>
-                <div className="pointer-events-none absolute left-[11%] right-[11%] top-[5%] h-[20%] rounded-b-[3.2rem] bg-gradient-to-b from-foreground/46 via-foreground/20 to-transparent" />
+                <div className="pointer-events-none absolute left-[11%] right-[11%] top-[5%] z-10 h-[20%] rounded-b-[3.2rem] bg-gradient-to-b from-foreground/46 via-foreground/20 to-transparent" />
               </>
             )}
             {image && !isDragging && (
