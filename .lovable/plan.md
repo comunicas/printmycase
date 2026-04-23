@@ -1,139 +1,228 @@
 
-Objetivo: corrigir o envio duplicado do welcome email para novos usuários, validar o fluxo real de signup com um novo usuário e eliminar a condição de corrida que hoje permite dois disparos antes da idempotência ser registrada.
+Objetivo: implementar rastreamento ponta a ponta dos fluxos `signup` e `recovery`, desde o `run_hook` disparado por `/signup` e `/recover` até a criação das linhas `pending` e `sent` em `email_send_log`, com correlação explícita por `message_id` e `idempotency_key`.
 
-## Diagnóstico
+## Diagnóstico consolidado
 
-### O que já ficou evidente
-- O email de ativação/signup chegou, então o fluxo principal de auth está funcionando.
-- O usuário recebeu 2 emails de boas-vindas.
-- Os logs do sender mostram duas execuções quase simultâneas do `welcome-email`.
-- Também há erro de chave única no `email_send_log` para status `sent`:
-  - `idx_email_send_log_message_sent_unique`
-  - `message_id = welcome-{userId}`
+Hoje o fluxo de auth já faz:
+- `auth-email-hook` recebe o evento
+- renderiza o template
+- grava `pending` em `email_send_log`
+- enfileira em `auth_emails`
+- `process-email-queue` envia e grava `sent`
 
-### Causa raiz provável
-Hoje o disparo de welcome no frontend acontece em `src/contexts/AuthContext.tsx` dentro de um `useEffect` dependente de:
-- `user.id`
-- `user.email`
-- `user.email_confirmed_at`
+Mas ainda faltam 3 coisas para o rastreamento ficar realmente end-to-end:
+1. `message_id` é gerado com `randomUUID()`, então não expressa a origem do `run_hook`
+2. `idempotency_key` existe só no `metadata` e hoje replica o `message_id`, sem trilha forte para auditoria
+3. não há um contexto de trace consistente carregando `run_id`, `action_type`, `message_id` e `idempotency_key` do hook até o dispatcher
 
-Esse mesmo estado pode ser atualizado por mais de um caminho:
-- `supabase.auth.getSession()`
-- `supabase.auth.onAuthStateChange(...)`
+## Problema técnico atual
 
-Como o flag em `sessionStorage` só é salvo depois do retorno bem-sucedido da função, duas execuções concorrentes podem acontecer antes do bloqueio local entrar em vigor.
+### No `auth-email-hook`
+- existe log `Received auth event`, mas sem checkpoints suficientes
+- `message_id` é randômico
+- `idempotency_key` é igual ao `message_id`
+- a linha `pending` não preserva um bloco de trace completo para depuração posterior
 
-Além disso, o backend atual de `send-transactional-email` faz uma checagem de idempotência antes do envio, mas ainda existe janela de corrida:
-1. chamada A verifica e não encontra `pending/sent`
-2. chamada B verifica e não encontra `pending/sent`
-3. as duas enviam
-4. apenas uma consegue gravar `sent`; a outra bate na unique constraint
+### No `process-email-queue`
+- a linha `sent` usa `payload.idempotency_key`, mas não propaga o contexto completo do hook
+- o dispatcher não registra claramente o vínculo entre:
+  - `run_id`
+  - `action_type`
+  - `message_id`
+  - `idempotency_key`
+  - `provider_message_id`
 
-Conclusão: a duplicidade não é só de log; ela pode realmente gerar dois envios.
+### No teste E2E atual
+- ele valida chegada de `pending/sent`
+- mas não valida a trilha inteira de correlação
+- não prova que `pending` e `sent` pertencem ao mesmo rastreamento iniciado no `run_hook`
 
-## O que será corrigido
+## O que será implementado
 
-### 1) Blindagem no frontend do welcome email
-Ajustar `src/contexts/AuthContext.tsx` para impedir reentrância no mesmo ciclo de sessão:
-- adicionar trava em memória com `useRef`
-- marcar o envio como “em andamento” antes de chamar a função remota
-- manter o `sessionStorage` como persistência complementar
-- garantir que `getSession` + `onAuthStateChange` não disparem dois invokes simultâneos
+### Etapa 1 — Padronizar um trace context para auth emails
+Criar um contexto de rastreamento único no `auth-email-hook` com campos como:
+- `run_id`
+- `hook_event_type`
+- `action_type`
+- `recipient_email`
+- `message_id`
+- `idempotency_key`
+- `queue = auth_emails`
 
-Resultado esperado:
-- o navegador dispara no máximo uma tentativa de welcome por usuário/sessão
+Esse objeto será a fonte única de verdade do fluxo.
 
-### 2) Blindagem forte no backend contra condição de corrida
-Reforçar `supabase/functions/send-transactional-email/index.ts` para que o `welcome-email` seja idempotente antes do envio real, não apenas no log final.
+### Etapa 2 — Tornar a correlação determinística no hook
+Trocar a geração randômica atual por uma convenção estável baseada no `run_id`:
 
-Ajuste previsto:
-- usar um lock lógico persistente via `email_send_log` logo no início
-- tratar conflito/duplicidade como sucesso silencioso sem reenviar
-- garantir que a segunda chamada concorrente saia antes do `sendWithResend`
-
-Como a tabela hoje é append-only, a implementação deve seguir esse modelo e evitar update destrutivo. A ideia é usar o próprio `message_id`/`pending` como barreira operacional e tratar conflito como “já em processamento”.
-
-Resultado esperado:
-- mesmo que o frontend chame duas vezes, apenas uma chamada envia
-
-### 3) Revisar o comportamento do teste E2E com novo usuário
-Atualizar o teste de ponta a ponta em `supabase/functions/auth-email-hook/index.test.ts` para validar melhor o fluxo real:
-- continuar criando um usuário novo
-- validar `signup` com `pending/sent`
-- validar `recovery` com `pending/sent`
-- opcionalmente acrescentar checagem de que o `welcome-email` exista no máximo uma vez por `message_id` quando o usuário confirmar/entrar no app, sem acoplar o teste de auth a timing instável de UI
-
-Importante:
-- o teste atual cobre auth email/log
-- o bug relatado agora é no welcome, que nasce no app após autenticação/sessão
-- por isso o teste de auth pode continuar separado, e o welcome deve ganhar validação específica
-
-### 4) Tratar o erro de log duplicado sem deixar ruído operacional
-Hoje os logs mostram erro de constraint para um caso que deve ser entendido como duplicata inofensiva após a correção.
-Vou ajustar o tratamento para:
-- reconhecer conflito esperado de idempotência
-- evitar poluição de erro quando a segunda chamada for barrada corretamente
-- manter logs úteis para falhas reais
-
-## Arquivos a ajustar
-- `src/contexts/AuthContext.tsx`
-- `supabase/functions/send-transactional-email/index.ts`
-- `supabase/functions/auth-email-hook/index.test.ts`
-
-Se necessário para robustez adicional:
-- `supabase/migrations/...` para adicionar um índice/regra auxiliar de idempotência específico de “pending lock”, sem quebrar o modelo append-only
-
-## Estratégia técnica
-
-### Frontend
-Aplicar padrão:
-- `welcomeSentRef`
-- `welcomeInFlightRef`
-- checagem antecipada antes do invoke
-- set da trava antes do await
-
-Fluxo:
+Exemplo de padrão:
 ```text
-session resolvida
-  -> usuário confirmado?
-    -> já enviado ou em andamento? sai
-    -> marca em andamento
-    -> chama sender
-    -> sucesso: marca sessionStorage
-    -> finaliza trava
+message_id       = auth-signup-{run_id}
+idempotency_key  = auth-signup-{run_id}
+message_id       = auth-recovery-{run_id}
+idempotency_key  = auth-recovery-{run_id}
 ```
 
-### Backend
-Fortalecer a sequência:
+Se eu precisar separar semanticamente os dois campos, mantenho:
 ```text
-recebe request
-  -> verifica idempotência
-  -> tenta registrar lock inicial do message_id
-  -> se lock já existe, retorna duplicate=true
-  -> só então renderiza/envia
-  -> registra sent/failure
+message_id      = auth-{action_type}-{run_id}
+idempotency_key = auth:{action_type}:{run_id}
 ```
 
-Isso fecha a janela de corrida que hoje permite dois envios antes da unique constraint de `sent`.
+Resultado:
+- a origem do email fica legível
+- retries do mesmo hook mantêm a mesma identidade
+- o `pending` e o `sent` passam a ser correlacionáveis sem heurística
+
+### Etapa 3 — Enriquecer a linha `pending` no `email_send_log`
+A gravação `pending` no `auth-email-hook` passará a incluir, além do remetente:
+- `idempotency_key`
+- `run_id`
+- `hook_event_type`
+- `action_type`
+- `queue`
+- possivelmente `trace_stage = hook_pending_logged`
+
+Se necessário para consulta mais forte, vou adicionar coluna dedicada `idempotency_key` em `email_send_log` via migration e continuar espelhando no `metadata`.
+
+### Etapa 4 — Propagar o trace inteiro para a fila
+O payload enviado ao `enqueue_email` passará a carregar:
+- `message_id`
+- `idempotency_key`
+- `run_id`
+- `action_type`
+- `hook_event_type`
+- `recipient_email`
+- `queued_at`
+
+Assim o dispatcher não depende só do que estava salvo no log inicial.
+
+### Etapa 5 — Fechar a trilha no `process-email-queue`
+A gravação `sent` passará a espelhar o mesmo contexto da `pending`, adicionando:
+- `provider_message_id`
+- `run_id`
+- `message_id`
+- `idempotency_key`
+- `action_type`
+- `queue`
+- `trace_stage = dispatcher_sent`
+
+Também vou reforçar logs estruturados do dispatcher para auth emails:
+- claim da mensagem
+- início do send
+- sucesso com `provider_message_id`
+- falha/rate limit com o mesmo par `message_id` + `idempotency_key`
+
+### Etapa 6 — Instrumentar logs estruturados no hook
+Adicionar checkpoints explícitos no `auth-email-hook`:
+- hook recebido
+- template resolvido
+- `pending` persistido
+- enqueue concluído
+- erro de persistência
+- erro de enqueue
+
+Todos com:
+- `run_id`
+- `action_type`
+- `message_id`
+- `idempotency_key`
+- `recipient_email`
+
+Isso permite validar o começo do fluxo mesmo quando houver problema entre hook e fila.
+
+### Etapa 7 — Reforçar o teste E2E de `signup`
+Atualizar `supabase/functions/auth-email-hook/index.test.ts` para:
+- disparar `/auth/v1/signup` com usuário novo
+- aguardar linhas `pending` e `sent`
+- validar que ambas têm:
+  - o mesmo `message_id`
+  - o mesmo `idempotency_key`
+  - `template_name = signup`
+  - `recipient_email` igual ao usuário criado
+  - `provider_message_id` preenchido na `sent`
+  - remetente correto
+- validar também que a identidade do trace carrega `run_id`/origem do hook no `metadata`
+
+### Etapa 8 — Reforçar o teste E2E de `recovery`
+Fazer o mesmo para `/auth/v1/recover`:
+- dispara recovery para o mesmo usuário
+- aguarda `pending` + `sent`
+- valida:
+  - mesmo `message_id`
+  - mesmo `idempotency_key`
+  - `template_name = recovery`
+  - remetente correto
+  - `provider_message_id` presente
+  - contexto de trace preservado do hook ao dispatcher
+
+## Mudanças previstas por arquivo
+
+### `supabase/functions/auth-email-hook/index.ts`
+- gerar `message_id` e `idempotency_key` determinísticos por `run_id`
+- criar objeto de trace
+- enriquecer `pending`
+- propagar trace completo no payload da fila
+- adicionar logs estruturados de cada checkpoint
+
+### `supabase/functions/process-email-queue/index.ts`
+- ler trace do payload da fila
+- gravar `sent` com os mesmos campos de correlação
+- incluir `provider_message_id`
+- logar o caminho auth queue -> provider -> `email_send_log`
+
+### `supabase/functions/auth-email-hook/index.test.ts`
+- fortalecer helpers para validar correlação
+- testar `signup`
+- testar `recovery`
+- verificar que `pending` e `sent` pertencem ao mesmo trace
+
+### `supabase/migrations/...` (se necessário)
+Adicionar coluna/index de apoio para observabilidade:
+- `idempotency_key text`
+- índice para consulta por `idempotency_key`
+
+Isso evita depender apenas de filtro em JSON quando precisarmos auditar rapidamente os fluxos.
+
+## Estratégia de correlação final
+
+```text
+/signup
+  -> run_hook(auth-email-hook)
+    -> run_id recebido
+    -> message_id/idempotency_key derivados do run_id
+    -> pending gravado no email_send_log
+    -> payload enfileirado com os mesmos IDs
+    -> process-email-queue lê payload
+    -> envia via provider
+    -> sent gravado com o mesmo message_id/idempotency_key + provider_message_id
+```
+
+Mesmo raciocínio para `/recover`.
 
 ## Critérios de aceite
-A tarefa poderá ser considerada fechada quando houver evidência de que:
 
-### Signup / recovery
-- um novo usuário recebe o email de ativação com remetente correto
-- `signup` grava `pending` e `sent` no `email_send_log`
-- `recovery` grava `pending` e `sent` no `email_send_log`
+### Signup
+- `/signup` dispara o hook
+- existe 1 linha `pending` e 1 linha `sent`
+- ambas compartilham o mesmo `message_id`
+- ambas compartilham o mesmo `idempotency_key`
+- a `sent` contém `provider_message_id`
+- o `metadata` permite relacionar o fluxo ao `run_hook`
 
-### Welcome
-- novo usuário não recebe 2 emails de boas-vindas
-- `welcome-email` dispara no máximo 1 vez por `userId`
-- não aparecem novos erros de unique constraint para o mesmo `message_id` em cenário normal
-- chamadas concorrentes são absorvidas como duplicadas sem reenvio real
+### Recovery
+- `/recover` dispara o hook
+- existe 1 linha `pending` e 1 linha `sent`
+- ambas compartilham o mesmo `message_id`
+- ambas compartilham o mesmo `idempotency_key`
+- a `sent` contém `provider_message_id`
+- o `metadata` permite relacionar o fluxo ao `run_hook`
 
 ## Resultado esperado
-Depois da correção:
-- o signup continua funcionando
-- o recovery continua funcionando
-- o welcome deixa de duplicar
-- a idempotência passa a ser consistente tanto no frontend quanto no backend
-- os logs deixam de registrar erro falso-positivo por corrida de envio
+Depois da implementação, será possível seguir cada envio de `signup` e `recovery` ponta a ponta com uma trilha auditável e estável:
+- origem no `run_hook`
+- persistência `pending`
+- enqueue
+- envio no dispatcher
+- persistência `sent`
+
+Tudo correlacionado por `message_id` e `idempotency_key`, sem depender de UUIDs soltos ou inferência manual.
