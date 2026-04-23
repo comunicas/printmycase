@@ -1,141 +1,105 @@
 
-Objetivo: ampliar o plano anterior do `TermsDialog` para não só corrigir fullscreen e z-index no mobile, mas também refinar a UX da modal, reduzir a densidade de texto e tornar a leitura/decisão mais rápida sem perder a proteção jurídica essencial.
+Objetivo: refinar o `TermsDialog` para ficar mais confortável no mobile e adotar fullscreen como padrão em todos os dispositivos, sem card central no desktop/tablet.
 
 ## O que será alterado
 
-### 1) Corrigir fullscreen real e hierarquia de camadas
-A base do dialog será ajustada para que a modal de termos fique acima de toda a UI fixa do mobile.
+### 1) Fullscreen em todos os breakpoints
+O `TermsDialog` deixará de usar comportamento híbrido mobile fullscreen + desktop card e passará a abrir sempre como tela/modal fullscreen.
 
 Implementação:
-- elevar `DialogOverlay` e `DialogContent` acima do bloco mobile com `z-[60]`
-- garantir overlay cobrindo toda a viewport
-- manter content acima do overlay
-- preservar o padrão do projeto:
-  - mobile = fullscreen, cantos retos
-  - desktop = card central arredondado
+- remover classes responsivas que recentralizam e limitam o dialog em `sm+`
+- manter `inset-0`, `h-[100dvh]`, `w-screen`, `max-w-none`, `rounded-none`
+- eliminar `sm:max-w-md`, `sm:max-h-[90dvh]`, `sm:rounded-lg`, `sm:border`, `sm:translate-*`
 
-Arquivos:
-- `src/components/ui/dialog.tsx`
-- `src/components/customize/TermsDialog.tsx`
+Resultado:
+- mesma experiência visual em mobile, tablet e desktop
+- leitura mais consistente entre dispositivos
+- modal sempre acima de toda a interface, sem competir com a área de customização ao fundo
 
-### 2) Transformar a modal em tela full screen de verdade no mobile
-O `TermsDialog` deixará de parecer um card esticado e passará a funcionar como uma tela mobile dedicada.
+### 2) Refinar o espaçamento mobile
+O layout interno será ajustado para ficar menos apertado e mais equilibrado no mobile.
+
+Direção:
+- reduzir sensação de “caixa espremida”
+- dar mais respiro vertical entre header, descrição, lista e bloco final
+- ajustar paddings para leitura mais confortável em telas pequenas
+- melhorar alinhamento entre ícones, títulos e linhas de texto
+- revisar altura e espaçamento do footer para os botões não parecerem colados
+
+Ajustes previstos:
+- header com padding mais consistente
+- body com espaçamento vertical levemente mais generoso
+- lista de regras com menor ruído visual e melhor ritmo
+- footer com paddings mais estáveis e separação clara do conteúdo
+
+### 3) Refinar a UX do fullscreen no desktop/tablet
+Como fullscreen passará a ser o padrão geral, a modal será tratada como uma “tela de confirmação” e não como um card ampliado.
+
+Implementação:
+- largura de leitura controlada dentro do fullscreen, sem recentralizar como popup pequeno
+- conteúdo principal em coluna com área rolável central
+- header fixo no topo e footer fixo na base
+- manter o conteúdo escaneável e não excessivamente largo em desktop
 
 Estrutura:
 ```text
-[topo fixo]
-- título
-- subtítulo curto
-- fechar
-
-[conteúdo rolável]
-- aviso curto
-- lista resumida de proibições
-- bloco final de responsabilidade
-
-[rodapé fixo]
-- cancelar
-- aceitar
+[topo fixo com título + descrição + fechar]
+[corpo rolável com regras resumidas]
+[rodapé fixo com cancelar + CTA principal]
 ```
 
 Resultado:
-- leitura mais escaneável
-- botões sempre visíveis
-- sem competição com footer/continue bar do app
+- fullscreen sem parecer vazio ou desproporcional
+- melhor conforto de leitura em telas grandes
+- decisão rápida e clara em qualquer dispositivo
 
-### 3) Refinar a copy e reduzir a quantidade de texto
-O conteúdo atual será resumido para uma versão mais objetiva, mantendo as regras centrais.
+### 4) Preservar hierarquia de camadas e comportamento atual
+A correção de z-index já planejada/necessária será mantida como parte da solução.
 
-Direção de copy:
-- trocar parágrafos longos por bullets curtos
-- remover repetições
-- manter tom claro, firme e confiável
-- destacar só o que importa para decisão rápida
-
-Estrutura sugerida:
-- introdução curta: “Antes de enviar sua imagem, confirme que o conteúdo é permitido.”
-- 3 regras principais em lista:
-  - marcas/logos apenas se forem seus
-  - proibido usar famosos, times, filmes, séries, músicas e obras protegidas
-  - proibido conteúdo ofensivo, violento, pornográfico ou discriminatório
-- bloco final resumido:
-  - “Você é responsável pelo conteúdo enviado. Personalizações fora das regras podem ser canceladas.”
-
-Isso preserva o requisito legal da memória do projeto, mas melhora bastante a UX.
-
-### 4) Melhorar hierarquia visual e legibilidade
-A modal será refinada para parecer mais premium e mais rápida de entender.
-
-Ajustes previstos:
-- título forte + subtítulo curto
-- ícone menor e menos dominante
-- espaçamento mais controlado
-- uso de lista com ícones/checks/alertas discretos
-- bloco final de responsabilidade destacado visualmente
-- largura de leitura confortável no desktop
-- área de rolagem só no conteúdo, não no modal inteiro
-
-### 5) Refinar microinterações e ações
-As ações finais também serão melhoradas para clareza.
-
-Direção:
-- CTA principal mais direto, por exemplo:
-  - `Entendi e continuar`
-- ação secundária:
-  - `Cancelar`
-- foco visível claro
-- animação de entrada/saída consistente com o restante dos dialogs
-- fechamento por toque fora permanece apenas se isso não conflitar com a intenção jurídica atual; se necessário, manter fechamento explícito por cancelar/close
-
-### 6) Melhorar a percepção de segurança sem assustar
-A modal deve comunicar responsabilidade sem parecer excessivamente burocrática.
-
-Ajustes de UX:
-- reduzir caixa alta e blocos densos
-- trocar “IMPORTANTE” longo por card/resumo objetivo
-- manter linguagem simples
-- priorizar leitura em menos de 10 segundos
+Garantias:
+- overlay continua cobrindo toda a interface
+- content continua acima do overlay
+- footer fixo, tabs mobile, continue bar e outros elementos não aparecem sobre a modal
+- comportamento jurídico/funcional permanece igual: aceite obrigatório no primeiro upload da sessão
 
 ## Arquivos impactados
 
-### `src/components/ui/dialog.tsx`
-Será ajustado para:
-- subir z-index global do overlay e content
-- manter animações consistentes e fullscreen mobile estável
-
 ### `src/components/customize/TermsDialog.tsx`
 Será ajustado para:
-- layout fullscreen real no mobile
-- header/body/footer bem definidos
-- texto resumido e reorganizado
-- melhor hierarquia visual e botões fixos no rodapé
+- remover o modo card em `sm+`
+- manter fullscreen em todos os breakpoints
+- refinar paddings, gaps e largura útil de leitura
+- melhorar o ritmo visual do conteúdo e dos botões
+
+### `src/components/ui/dialog.tsx`
+Será revisado para:
+- garantir que o `DialogContent` base não force recentralização/cantos arredondados no caso dessa modal
+- preservar z-index correto e animações consistentes para a experiência fullscreen
 
 ## Abordagem de implementação
-1. Corrigir a camada do dialog para vencer toda a UI fixa mobile.
-2. Reestruturar o `TermsDialog` como tela fullscreen no mobile.
-3. Reescrever a copy em formato mais curto e escaneável.
-4. Destacar responsabilidade final em um bloco visual simples.
-5. Refinar espaçamento, foco visível e CTA principal.
-6. Manter desktop intacto como card central.
-7. Validar no viewport mobile atual para garantir cobertura total e melhor leitura.
+1. Remover as classes responsivas de card do `TermsDialog`.
+2. Garantir fullscreen real em mobile, tablet e desktop.
+3. Refinar paddings e espaçamentos internos para melhorar conforto visual no mobile.
+4. Ajustar a largura útil do conteúdo dentro do fullscreen para não ficar nem apertado nem largo demais.
+5. Validar que header e footer permanecem fixos e que o corpo continua rolável.
+6. Confirmar que a hierarquia visual e o bloqueio da interface ao fundo continuam corretos.
 
 ## Check final documentado
 
-### Fullscreen e camadas
-- modal cobre 100% da tela no mobile
-- footer/tab bar não aparece por cima
-- z-index está correto em overlay e content
+### Fullscreen
+- modal ocupa 100% da viewport em mobile, tablet e desktop
+- não existe mais versão em card central
+- cantos retos em todos os dispositivos
 
-### UX e conteúdo
-- texto ficou mais curto e mais claro
-- regras principais podem ser entendidas rapidamente
-- responsabilidade final continua explícita
-- botões ficam sempre acessíveis
+### Espaçamento e UX
+- header respira melhor no mobile
+- lista de regras fica mais fácil de ler
+- footer não fica apertado
+- conteúdo continua rápido de entender
 
-### Visual
-- modal parece tela dedicada no mobile
-- desktop continua como card central refinado
-- animações e foco visível permanecem consistentes
+### Camadas
+- nada da interface aparece por cima
+- overlay e content mantêm precedência correta
 
 ## Resultado esperado
-Depois do ajuste, a modal de termos ficará realmente fullscreen no mobile, visualmente mais limpa e hierarquizada, com texto resumido e mais fácil de entender. O usuário conseguirá ler rapidamente as regras, entender sua responsabilidade e concluir a ação sem fricção desnecessária.
+Depois do ajuste, a modal de termos passa a usar fullscreen como padrão em qualquer dispositivo e ganha um refinamento de espaçamento no mobile, ficando mais limpa, mais confortável de ler e mais consistente com a importância da ação.
