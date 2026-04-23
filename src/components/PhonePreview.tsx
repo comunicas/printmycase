@@ -1,5 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, ImagePlus, Move, Loader2, Sparkles } from "lucide-react";
+import { Camera, CheckCircle2, ImagePlus, Move, Loader2, Sparkles } from "lucide-react";
+
+type UploadState = "idle" | "preparing" | "optimizing" | "ready";
 
 interface PhonePreviewProps {
   image: string | null;
@@ -14,6 +16,8 @@ interface PhonePreviewProps {
   
   imageResolution?: { w: number; h: number } | null;
   isProcessing?: boolean;
+  uploadState?: UploadState;
+  uploadStatusLabel?: string;
   processingMessage?: string;
   onUpscaleClick?: () => void;
   previewImageUrl?: string | null;
@@ -34,7 +38,7 @@ const SAFE_ZONE_PRESETS: Record<string, SafeZonePreset> = {
 
 const DEFAULT_SAFE_ZONE_PRESET: SafeZonePreset = { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 20px)", radius: "1.5rem", bottomRadius: "3.5rem" };
 
-const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSafeZone = true, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, disabled }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSafeZone = true, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, uploadState = "idle", uploadStatusLabel, processingMessage, onUpscaleClick, previewImageUrl, disabled }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -195,6 +199,10 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
   const oversize = Math.max(150, scale * 1.25);
   const offset = -(oversize - 100) / 2;
   const safeZonePreset = (deviceSlug && SAFE_ZONE_PRESETS[deviceSlug]) || DEFAULT_SAFE_ZONE_PRESET;
+  const isUploadBusy = uploadState === "preparing" || uploadState === "optimizing";
+  const showUploadReady = uploadState === "ready";
+  const showStatusOverlay = isProcessing || isUploadBusy || showUploadReady;
+  const statusMessage = isUploadBusy ? uploadStatusLabel : processingMessage || uploadStatusLabel || "Processando...";
   const buildImageStyle = (src: string) => ({
     backgroundImage: `url("${src}")`,
     backgroundSize: `${scale * (100 / oversize)}%`,
@@ -209,7 +217,11 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
   return (
     <div className="flex flex-col items-center gap-2 lg:gap-3">
       <div className="relative">
-        <div className="relative h-[min(410px,50dvh)] aspect-[260/532] lg:h-[70vh] lg:w-auto lg:aspect-[260/532] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden">
+        <div
+          className="relative h-[min(410px,50dvh)] aspect-[260/532] lg:h-[70vh] lg:w-auto lg:aspect-[260/532] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden"
+          aria-busy={isProcessing || isUploadBusy}
+          aria-describedby="customize-upload-status"
+        >
           {/* Previous image layer (fading out) */}
           {prevImage && (
             <div
@@ -297,10 +309,21 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
               </div>
             )}
           </div>
-          {isProcessing && (
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <span className="text-xs font-medium text-muted-foreground mt-2">{processingMessage || "Processando..."}</span>
+            {showStatusOverlay && (
+              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/65 backdrop-blur-md rounded-[2rem] lg:rounded-[2.4rem] motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 motion-reduce:animate-none">
+                <div className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-border/70 bg-card/90 px-5 py-4 shadow-xl motion-safe:animate-in motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:animate-none">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border/70 bg-background/90 text-primary shadow-sm">
+                    {showUploadReady ? (
+                      <CheckCircle2 className="h-6 w-6 motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-200 motion-reduce:animate-none" />
+                    ) : (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    )}
+                  </div>
+                  <div className="space-y-1 text-center">
+                    <p className="text-sm font-semibold text-foreground">{showUploadReady ? "Tudo certo" : "Aguarde um instante"}</p>
+                    <span className="block text-xs font-medium text-muted-foreground">{statusMessage}</span>
+                  </div>
+                </div>
             </div>
           )}
         </div>
@@ -323,7 +346,8 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
             <button
               onClick={() => inputRef.current?.click()}
               disabled={disabled}
-              className="w-9 h-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary"
+              className="w-9 h-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary"
+              aria-label="Trocar imagem da capinha"
             >
               <Camera className="w-4 h-4" />
             </button>
@@ -338,6 +362,9 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
         className="hidden"
         aria-label="Enviar imagem para personalizar sua capinha"
       />
+      <div id="customize-upload-status" className="sr-only" aria-live="polite" aria-atomic="true">
+        {showStatusOverlay ? statusMessage : ""}
+      </div>
     </div>
   );
 };

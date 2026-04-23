@@ -14,6 +14,8 @@ import { useCustomizeFilters } from "@/hooks/customize/useCustomizeFilters";
 import { useCustomizeRender } from "@/hooks/customize/useCustomizeRender";
 import { useCustomizeTracking } from "@/hooks/customize/useCustomizeTracking";
 
+type UploadState = "idle" | "preparing" | "optimizing" | "ready";
+
 export function useCustomize(productId: string | undefined) {
   const { product, loading: productLoading } = useProduct(productId);
   const { toast } = useToast();
@@ -31,6 +33,7 @@ export function useCustomize(productId: string | undefined) {
   const [filterHistory, setFilterHistory] = useState<FilterHistoryEntry[]>([]);
   const [imageFileName, setImageFileName] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [uploadState, setUploadState] = useState<UploadState>("idle");
   const [imageResolution, setImageResolution] = useState<{ w: number; h: number } | null>(null);
   const [scale, setScale] = useState(DEFAULTS.scale);
   const [position, setPosition] = useState(DEFAULTS.position);
@@ -135,6 +138,20 @@ export function useCustomize(productId: string | undefined) {
 
   const isProcessing = isCompressing || renderFlow.isRendering || !!filterFlow.applyingFilterId || filterFlow.isUpscaling;
   const productName = product?.name?.replace("Capa ", "") ?? "iPhone";
+  const uploadReadyTimeoutRef = useRef<number | null>(null);
+  const uploadStatusLabel = uploadState === "preparing"
+    ? "Preparando imagem…"
+    : uploadState === "optimizing"
+      ? "Otimizando para personalização…"
+      : uploadState === "ready"
+        ? "Imagem pronta para editar"
+        : null;
+
+  useEffect(() => {
+    return () => {
+      if (uploadReadyTimeoutRef.current) window.clearTimeout(uploadReadyTimeoutRef.current);
+    };
+  }, []);
 
   const handleReset = useCallback(() => {
     setScale(DEFAULTS.scale);
@@ -176,8 +193,13 @@ export function useCustomize(productId: string | undefined) {
   }, [imageResolution, image, toast]);
 
   const processImageFile = useCallback((file: File) => {
+    if (uploadReadyTimeoutRef.current) {
+      window.clearTimeout(uploadReadyTimeoutRef.current);
+      uploadReadyTimeoutRef.current = null;
+    }
     setImageFileName(file.name);
     setIsCompressing(true);
+    setUploadState("preparing");
     setActiveFilterId(null);
     setFilteredImage(null);
     setFilterHistory([]);
@@ -185,6 +207,7 @@ export function useCustomize(productId: string | undefined) {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const originalDataUrl = e.target?.result as string;
+      setUploadState("optimizing");
       const res = await getImageResolution(originalDataUrl);
       setImageResolution(res);
 
@@ -202,6 +225,11 @@ export function useCustomize(productId: string | undefined) {
       setRawImage(url);
       setOriginalImage(url);
       setIsCompressing(false);
+      setUploadState("ready");
+      uploadReadyTimeoutRef.current = window.setTimeout(() => {
+        setUploadState("idle");
+        uploadReadyTimeoutRef.current = null;
+      }, 1600);
       if (compressed) toast({ title: "Imagem otimizada automaticamente" });
       trackImageUploaded();
     };
@@ -303,6 +331,8 @@ export function useCustomize(productId: string | undefined) {
     aiUpscaleCost,
     isModified,
     isProcessing,
+    uploadState,
+    uploadStatusLabel,
     isCompressing,
     isRendering: renderFlow.isRendering,
     isUpscaling: filterFlow.isUpscaling,
