@@ -1,12 +1,29 @@
 
-Objetivo: validar e corrigir a safe zone mobile para que fique menos arredondada apenas nos quatro cantos, sem alterar posição/largura/altura nos modelos que já existem hoje, e aplicar borda preta sólida de 3px em todas as safe zones.
+Objetivo: reduzir a borda da safe zone de `3px` para `1px` sem alterar posição, largura, altura ou os modelos já existentes, e tratar corretamente o erro de publicação `dist upload failed`, separando o que é ajuste de código do que é timeout de infraestrutura no upload do build.
 
-## O que será ajustado
+## O que será alterado
 
-### 1) Corrigir somente os modelos já implementados
-O ajuste ficará restrito aos modelos que já possuem preset em `src/components/PhonePreview.tsx`.
+### 1) Reduzir a borda da safe zone para 1px
+Arquivo:
+- `src/components/PhonePreview.tsx`
 
-Modelos atualmente implementados:
+Implementação:
+- trocar a borda atual da overlay da safe zone de `3px` para `1px`
+- manter o mesmo contorno preto sólido em todos os safe zones
+- preservar o mesmo arredondamento já ajustado no mobile e desktop
+- não mexer em:
+  - `top`
+  - `height`
+  - `width`
+  - `insetX`
+  - lógica de escolha entre `radius` / `mobileRadius`
+
+Resultado esperado:
+- safe zone continua com o mesmo shape e mesma geometria
+- apenas o traço do contorno fica mais fino e mais próximo da referência
+
+### 2) Restringir a correção apenas aos modelos já existentes
+Escopo mantido:
 - `iphone-12-pro-max`
 - `iphone-15-pro-max`
 - `iphone-17-pro`
@@ -14,75 +31,64 @@ Modelos atualmente implementados:
 - `iphone-17-air`
 
 Direção:
-- não adicionar novos modelos
-- revisar apenas os presets existentes
-- manter o comportamento atual por modelo
+- não criar novos presets
+- não alterar presets fora desses modelos
+- não expandir a lógica para novos aparelhos
 
-### 2) Refinar apenas o arredondamento mobile
-A correção do mobile será cirúrgica: mexer só no raio dos quatro cantos.
+### 3) Validar visualmente que não houve mudança de geometria
+Validação no preview após o ajuste:
+- posição da safe zone igual à atual
+- largura igual à atual
+- altura igual à atual
+- apenas a espessura da borda muda de `3px` para `1px`
+- mobile continua menos arredondado só nos quatro cantos, como já definido
 
-Escopo:
-- revisar `mobileRadius` e `mobileBottomRadius` dos modelos que já usam diferenciação mobile
-- se necessário, padronizar o mesmo tratamento mobile apenas nos modelos já existentes
-- manter o desktop como referência visual de canto menos arredondado
+## Tratamento do erro `dist upload failed`
+O erro reportado:
+```text
+generate R2 credentials ... request canceled (Client.Timeout exceeded while awaiting headers)
+```
 
-Não será alterado:
-- `top`
-- `height`
-- `width`
-- `insetX`
-- posição geral da safe zone
+Interpretação:
+- isso indica timeout na etapa de upload/publicação do build
+- não aponta para erro de React, TypeScript, Vite ou do código da safe zone
+- é um problema de infraestrutura de publicação, não da implementação visual em si
 
-Resultado esperado:
-- safe zone mobile menos redonda nos quatro cantos
-- mesma geometria atual
-- sem deslocamento visual
+### Como vou tratar isso
+1. Aplicar somente a correção de código da borda `3px -> 1px`.
+2. Validar que o projeto continua compilando sem erro de código.
+3. Tentar nova publicação.
+4. Se o mesmo timeout ocorrer de novo, considerar como falha transitória da infraestrutura de upload e não como regressão do app.
 
-### 3) Aplicar borda preta de 3px em todas as safe zones
-Hoje a safe zone usa apenas preenchimento escuro translúcido. Será adicionada uma borda preta sólida de 3px em todos os casos.
+### O que não será feito
+- não haverá mudanças arbitrárias em `vite.config.ts` só por causa desse erro
+- não serão adicionados novos modelos
+- não será alterada a geometria da safe zone para “compensar” a borda
 
-Implementação:
-- aplicar `border: 3px solid #000`
-- manter o preenchimento interno atual, salvo ajuste fino de contraste se necessário
-- garantir que a borda acompanhe exatamente os mesmos raios do shape
-
-Resultado esperado:
-- todas as safe zones ficam mais definidas visualmente
-- leitura do contorno melhora em qualquer aparelho
-- o contorno não altera a posição do overlay
-
-## Arquivo impactado
-
-### `src/components/PhonePreview.tsx`
-Será ajustado para:
-- revisar os presets existentes da safe zone
-- reduzir o arredondamento mobile apenas nos quatro cantos
-- preservar posição, largura e altura
-- aplicar borda preta de 3px em todas as safe zones
-
-## Validação no preview
-Depois da implementação, a validação no preview será feita comparando os modelos já existentes para confirmar:
-
-### Geometria
-- posição não mudou
-- largura não mudou
-- altura não mudou
-
-### Forma
-- apenas os quatro cantos ficaram menos arredondados no mobile
-- desktop continua como referência
-- não houve mudança de shape fora do raio
-
-### Contorno
-- todas as safe zones exibem borda preta sólida de 3px
-- borda acompanha corretamente o arredondamento de cada preset
+## Arquivos impactados
+- `src/components/PhonePreview.tsx`
 
 ## Abordagem de implementação
-1. Revisar os presets atuais em `PhonePreview`.
-2. Ajustar apenas os raios mobile dos modelos já implementados.
-3. Não tocar em `top`, `height`, `width` e `insetX`.
-4. Adicionar borda preta de 3px ao elemento da safe zone.
-5. Validar no preview os modelos já existentes, sem incluir novos.
+1. Trocar a classe/estilo da borda da safe zone de `3px` para `1px`.
+2. Manter intactos os presets e a geometria atual.
+3. Verificar no preview os mesmos modelos já implementados.
+4. Rodar validação de build.
+5. Repetir a publicação para confirmar se o timeout era apenas transitório de upload.
+
+## Check final documentado
+
+### Safe zone
+- borda preta agora é `1px`
+- sem mudança de posição
+- sem mudança de largura
+- sem mudança de altura
+- sem novos modelos
+- mobile continua menos arredondado apenas nos quatro cantos
+
+### Publicação
+- código validado localmente
+- nova tentativa de publicação executada
+- se falhar novamente com o mesmo timeout, classificar como problema de infraestrutura de upload e não do app
 
 ## Resultado esperado
-Depois da correção, a safe zone mobile ficará menos arredondada somente nos quatro cantos, mantendo exatamente a mesma posição e dimensões atuais nos modelos já implementados, e todas as safe zones passarão a ter borda preta sólida de 3px para um contorno mais preciso.
+Depois do ajuste, a safe zone ficará com contorno preto de `1px`, mantendo exatamente a mesma geometria e os mesmos modelos já implementados. Em paralelo, a publicação será reexecutada para confirmar se o erro de `dist upload failed` foi apenas um timeout transitório da infraestrutura de upload.
