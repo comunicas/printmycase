@@ -18,3 +18,5 @@ project_id = "iqnqpwnbdqzvqssxcxgb"
 
   [functions.get-success-order]
     verify_jwt = false
+  [functions.submit-contact]
+    verify_jwt = false
