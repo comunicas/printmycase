@@ -79,6 +79,31 @@ const SAMPLE_DATA: Record<string, object> = {
   },
 }
 
+async function insertEmailLog(
+  supabase: ReturnType<typeof createClient>,
+  payload: {
+    message_id: string
+    template_name: string
+    recipient_email: string
+    status: string
+    metadata?: Record<string, unknown>
+    error_message?: string
+  }
+) {
+  const { error } = await supabase.from('email_send_log').insert(payload)
+
+  if (error) {
+    console.error('Failed to persist auth email log', {
+      error,
+      messageId: payload.message_id,
+      templateName: payload.template_name,
+      status: payload.status,
+    })
+  }
+
+  return error
+}
+
 // Preview endpoint handler - returns rendered HTML without sending email
 async function handlePreview(req: Request): Promise<Response> {
   const previewCorsHeaders = {
@@ -242,7 +267,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   const messageId = crypto.randomUUID()
 
   // Log pending BEFORE enqueue so we have a record even if enqueue crashes
-  await supabase.from('email_send_log').insert({
+  await insertEmailLog(supabase, {
     message_id: messageId,
     template_name: emailType,
     recipient_email: payload.data.email,
@@ -263,7 +288,7 @@ async function handleWebhook(req: Request): Promise<Response> {
       ],
     })
 
-    await supabase.from('email_send_log').insert({
+    await insertEmailLog(supabase, {
       message_id: messageId,
       template_name: emailType,
       recipient_email: payload.data.email,
@@ -284,7 +309,7 @@ async function handleWebhook(req: Request): Promise<Response> {
     )
   } catch (error) {
     console.error('Failed to send auth email via Resend', { error, run_id, emailType })
-    await supabase.from('email_send_log').insert({
+    await insertEmailLog(supabase, {
       message_id: messageId,
       template_name: emailType,
       recipient_email: payload.data.email,
