@@ -7,12 +7,20 @@ const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const EXPECTED_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev'
 const EXPECTED_FROM_NAME = Deno.env.get('RESEND_FROM_NAME') || 'PrintMyCase'
 
+interface EmailLogRow {
+  message_id: string
+  status: string
+  recipient_email: string
+  metadata?: Record<string, unknown>
+  created_at: string
+}
+
 function uniqueEmail(prefix: string) {
   const id = crypto.randomUUID().slice(0, 8)
   return `${prefix}+${id}@example.test`
 }
 
-async function waitForStatus(messagePrefix: string, templateName: 'signup' | 'recovery') {
+async function waitForStatus(messagePrefix: string, templateName: 'signup' | 'recovery'): Promise<EmailLogRow[]> {
   const timeoutAt = Date.now() + 90_000
 
   while (Date.now() < timeoutAt) {
@@ -25,10 +33,10 @@ async function waitForStatus(messagePrefix: string, templateName: 'signup' | 're
         },
       },
     )
-    const data = await response.json()
+    const data = (await response.json()) as EmailLogRow[]
     if (!response.ok) throw new Error(JSON.stringify(data))
 
-    const statuses = new Set((data ?? []).map((row) => row.status))
+    const statuses = new Set((data ?? []).map((row: EmailLogRow) => row.status))
     if (statuses.has('pending') && statuses.has('sent')) {
       return data ?? []
     }
@@ -62,7 +70,7 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   assert(signUpPayload.user)
 
   const signupRows = await waitForStatus(email, 'signup')
-  const signupSent = signupRows.find((row) => row.status === 'sent')
+  const signupSent = signupRows.find((row: EmailLogRow) => row.status === 'sent')
   assert(signupSent)
   assertEquals(signupSent.recipient_email, email)
   assertEquals(signupSent.metadata?.provider, 'resend')
@@ -88,7 +96,7 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   assert(recoveryPayload !== undefined)
 
   const recoveryRows = await waitForStatus(email, 'recovery')
-  const recoverySent = recoveryRows.find((row) => row.status === 'sent')
+  const recoverySent = recoveryRows.find((row: EmailLogRow) => row.status === 'sent')
   assert(recoverySent)
   assertEquals(recoverySent.recipient_email, email)
   assertEquals(recoverySent.metadata?.provider, 'resend')
