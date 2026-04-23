@@ -33,10 +33,13 @@ const Contact = () => {
     }
 
     setLoading(true);
-    const { error } = await supabase.from("contact_messages").insert({
-      name: name.trim(),
-      email: email.trim(),
-      message: message.trim(),
+    const { error } = await supabase.functions.invoke("submit-contact", {
+      body: {
+        name: name.trim(),
+        email: email.trim(),
+        message: message.trim(),
+        website,
+      },
     });
     setLoading(false);
 

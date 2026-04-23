@@ -155,7 +155,7 @@ supabase/
     ├── prerender/                  # Pre-rendering para SEO/bots
     ├── preview-transactional-email/ # Preview de templates transacionais
     ├── process-email-queue/        # Processa fila de emails (pgmq)
-    ├── send-transactional-email/   # Envia email transacional via Resend
+    ├── send-transactional-email/   # Envia emails do app pela infraestrutura nativa com fila
     ├── sitemap/                    # Geração dinâmica de sitemap.xml
     ├── stripe-webhook/             # Processa eventos do Stripe (payment + Purchase CAPI)
     ├── upload-gallery-zip/         # Upload em lote de imagens de galeria via ZIP
@@ -342,7 +342,7 @@ Moedas virtuais para uso de recursos de IA (filtros, upscale). Bônus concedido 
 | `optimize-existing-images` | Otimiza imagens já existentes no storage |
 | `prerender` | Pre-rendering de páginas para SEO/bots |
 | `sitemap` | Geração dinâmica de sitemap.xml |
-| `send-transactional-email` | Envia email transacional via Resend |
+| `send-transactional-email` | Envia emails do app pela infraestrutura nativa com fila |
 | `process-email-queue` | Processa fila de emails (pgmq) |
 | `preview-transactional-email` | Preview de templates transacionais |
 | `handle-email-suppression` | Processa bounces/complaints de email |

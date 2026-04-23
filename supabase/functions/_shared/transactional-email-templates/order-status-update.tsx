@@ -49,6 +49,7 @@ interface OrderStatusUpdateProps {
   totalCents?: number
   trackingCode?: string | null
   rejectionReason?: string | null
+  extraMessage?: string | null
 }
 
 const OrderStatusUpdateEmail = ({
@@ -59,6 +60,7 @@ const OrderStatusUpdateEmail = ({
   totalCents = 0,
   trackingCode,
   rejectionReason,
+  extraMessage,
 }: OrderStatusUpdateProps) => {
   const shortId = (orderId || '').slice(0, 8)
   const statusLabel = statusLabels[newStatus || ''] ?? newStatus
@@ -101,6 +103,12 @@ const OrderStatusUpdateEmail = ({
               <Text style={{ fontSize: '14px', color: '#7c2d12', lineHeight: '1.5', margin: '0' }}>
                 {rejectionReason}
               </Text>
+            </Section>
+          ) : null}
+
+          {extraMessage ? (
+            <Section style={infoCard}>
+              <Text style={infoText}>{extraMessage}</Text>
             </Section>
           ) : null}
 
@@ -209,6 +217,19 @@ const rejectionCard = {
   padding: '16px 20px',
   marginTop: '16px',
   border: '1px solid #fed7aa',
+}
+const infoCard = {
+  backgroundColor: '#f5f3ff',
+  borderRadius: '12px',
+  padding: '16px 20px',
+  marginTop: '16px',
+  border: '1px solid #ddd6fe',
+}
+const infoText = {
+  fontSize: '14px',
+  color: '#4c1d95',
+  lineHeight: '1.6',
+  margin: '0',
 }
 const button = {
   display: 'inline-block' as const,
