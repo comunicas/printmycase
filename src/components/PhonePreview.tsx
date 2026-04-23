@@ -243,7 +243,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
           >
             {showSafeAreaOverlay && (
               <>
-                <div className="pointer-events-none absolute left-[22%] right-[22%] top-[3.2%] h-[13%] rounded-b-[1.9rem] bg-gradient-to-b from-foreground/40 via-foreground/16 to-transparent" />
+                <div className="pointer-events-none absolute left-[8%] right-[8%] top-[2.8%] h-[18%] rounded-t-[2.2rem] rounded-b-[2.8rem] bg-gradient-to-b from-foreground/34 via-foreground/14 to-transparent" />
               </>
             )}
             {image && !isDragging && (
