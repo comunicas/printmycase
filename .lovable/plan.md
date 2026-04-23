@@ -1,108 +1,128 @@
 
-Objetivo: ajustar o bloco de highlights da sidebar em `/customize/:slug` para ficar o mais fiel possível à referência enviada, com copy 1:1 em termos e pontuação, e ao mesmo tempo reduzir o peso visual do bloco para deixá-lo mais clean, discreto e com menos atenção que o CTA principal de upload.
+Objetivo: revisar a experiência mobile de `/customize/:slug` para que o CTA principal de upload e a copy do produto também funcionem bem no celular, com hierarquia clara, layout limpo e sem competir com o fluxo principal de personalização.
 
-## Diagnóstico atual
-Hoje o bloco em `src/pages/Customize.tsx` já está muito próximo da referência na copy:
+## O que será construído
+
+### 1) Levar a copy do produto para o mobile no ponto certo da jornada
+Hoje os highlights do produto existem só no `aside` desktop em `src/pages/Customize.tsx`. No mobile, essa camada de contexto praticamente some.
+
+Será adicionada uma versão mobile do resumo do produto, reaproveitando a mesma copy já validada:
 - `Policarbonato + TPU — proteção contra impactos e encaixe seguro`
 - `Impressão UV LED — cores vivas, alta nitidez e ótima durabilidade`
 - `Acabamento premium — fosco ou brilho, resistente`
 
-Mas ainda há diferenças visuais em relação à referência:
-- ícones estão maiores e com mais destaque
-- tipografia está um pouco mais forte
-- espaçamento pode estar mais “UI” do que “editorial”
-- a quebra de linha depende do container atual, então precisa ser preservada com mais cuidado para continuar visualmente fiel
+Direção:
+- posicionar esse bloco no mobile logo abaixo do preview, acima das barras fixas inferiores
+- manter leitura compacta e discreta
+- preservar a mesma copy 1:1 já aprovada
+- evitar duplicação visual exagerada quando a imagem já estiver carregada
 
-## O que será ajustado
+### 2) Revisar o CTA dentro do frame no mobile
+O CTA atual em `src/components/PhonePreview.tsx` já existe, mas foi pensado com uma base compartilhada entre desktop e mobile.
 
-### 1) Confirmar a copy 1:1 com a referência
-No array `productHighlights` em `src/pages/Customize.tsx`, manter exatamente estes textos:
+A implementação será refinada para o mobile com foco em:
+- melhor proporção dentro do frame menor
+- menos peso visual excessivo
+- leitura mais imediata no viewport 390x844
+- toque confortável sem parecer um card grande demais
 
-- `Policarbonato + TPU` + `proteção contra impactos e encaixe seguro`
-- `Impressão UV LED` + `cores vivas, alta nitidez e ótima durabilidade`
-- `Acabamento premium` + `fosco ou brilho, resistente`
+Ajustes previstos:
+- reduzir levemente padding, tamanhos de ícone e tipografia no estado mobile
+- manter o CTA centralizado no frame vazio
+- garantir que o botão continue claramente clicável
+- preservar a hierarquia: título forte + linha de apoio curta
+- validar que o CTA continua harmonioso com safe zone, borda do aparelho e overlay de processamento
 
-Com garantia de:
-- mesmo termo
-- mesma pontuação
-- uso do travessão `—`
-- nenhuma palavra extra
-- nenhuma remoção indevida
+### 3) Separar melhor responsabilidades desktop/mobile
+Hoje o desktop tem:
+- resumo do produto na sidebar
+- controles completos no `aside`
 
-### 2) Refinar o bloco para ficar mais discreto
-Reduzir o peso visual do bloco sem mudar sua posição:
-- diminuir tamanho dos ícones
-- diminuir o círculo/fundo dos ícones
-- suavizar contraste do fundo dos ícones
-- reduzir levemente o tamanho da fonte dos highlights
-- deixar o título do highlight menos “pesado” visualmente
-- apertar espaçamentos verticais para um bloco mais compacto
+E o mobile tem:
+- preview
+- barra de abas
+- barra de finalizar
 
-Direção visual:
+A revisão vai organizar isso melhor:
+- desktop continua com o bloco atual no topo da sidebar
+- mobile ganha seu próprio bloco enxuto de informações do produto
+- evitar que o usuário mobile dependa só do header/model selector para entender o valor do produto
+
+### 4) Reaproveitar a estrutura de highlights sem inconsistência
+Para não manter duas versões divergentes da mesma copy:
+- extrair a estrutura de dados dos highlights para reaproveitamento interno
+- usar o mesmo conteúdo em desktop e mobile
+- permitir apenas pequenas diferenças visuais de spacing/tamanho entre breakpoints
+
+Isso reduz risco de:
+- copy divergente entre desktop e mobile
+- futuras alterações feitas em apenas um lugar
+- quebra de fidelidade com a referência já aprovada
+
+### 5) Refinar a hierarquia visual mobile sem competir com o CTA principal
+A regra será:
+- CTA no frame continua sendo o principal convite à ação
+- bloco de produto no mobile atua como apoio informativo
+- `ContinueBar` continua simples, sem reintroduzir nome/preço no botão
+- barras fixas inferiores não devem sufocar o conteúdo acima
+
+Direção visual para o mobile:
 ```text
-mais editorial / informativo
-menos card chamativo / menos destaque visual
+[Header]
+[Preview com CTA quando vazio]
+[Resumo do produto / highlights discretos]
+[Histórico de filtros]
+[Tab bar]
+[Continue bar]
 ```
 
-### 3) Preservar a hierarquia correta da página
-O bloco de atributos deve continuar secundário em relação a:
-- CTA de upload dentro do frame
-- preview do produto
-- fluxo principal de customização
-
-Para isso, o ajuste vai:
-- manter preço e nome legíveis
-- deixar os bullets mais sutis
-- evitar cores muito vibrantes ou áreas sólidas muito chamativas
-- manter boa leitura sem competir com o CTA do frame
-
-### 4) Cuidar da fidelidade das quebras de linha
-Como a referência mostra quebras específicas por largura:
-- o bloco será ajustado para favorecer uma largura de texto próxima da referência
-- o espaçamento entre ícone e texto será refinado para não empurrar quebras desnecessárias
-- a implementação vai buscar reproduzir o comportamento visual da referência no desktop atual do projeto
-
-Importante:
-- a quebra exata pode variar minimamente conforme fonte/renderização do navegador
-- a meta é atingir equivalência visual prática no viewport desktop atual do projeto
-
-## Arquivo impactado
+## Arquivos impactados
 
 ### `src/pages/Customize.tsx`
-Mudanças previstas:
-- manter a estrutura do bloco atual
-- ajustar somente copy final, classes de tipografia, espaçamento e tamanho/estilo dos ícones
-- sem mover o bloco de lugar
-- sem alterar fluxo funcional da página
+Será ajustado para:
+- reaproveitar os highlights também no mobile
+- inserir um bloco de resumo mobile em posição estratégica abaixo do preview
+- manter o resumo desktop no local atual
 
-## Estratégia de implementação
-1. Revisar o array `productHighlights` e garantir que o texto esteja exatamente igual à referência.
-2. Reduzir a presença visual dos ícones e seus containers.
-3. Diminuir discretamente a fonte e o peso tipográfico dos bullets.
-4. Refinar gaps e alinhamentos para aproximar as quebras de linha da imagem enviada.
-5. Validar que o bloco continua compacto e harmonioso com a sidebar de 420px.
+### `src/components/PhonePreview.tsx`
+Será refinado para:
+- ajustar sizing e spacing do CTA no frame para mobile
+- calibrar melhor a presença visual do botão vazio sem perder destaque
+- manter upload, processing overlay, preview de filtro e badge de resolução intactos
+
+## Abordagem de implementação
+1. Reaproveitar a mesma copy dos highlights já aprovada.
+2. Criar uma apresentação mobile compacta do resumo do produto.
+3. Ajustar o CTA do frame com classes responsivas mais refinadas para mobile.
+4. Preservar o comportamento atual de upload, drag, pinch, overlay e processing state.
+5. Validar que desktop não regrediu visualmente.
+
+## Regras que serão respeitadas
+- não mudar o fluxo funcional de upload
+- não mover o resumo desktop de lugar
+- não poluir o mobile com um card pesado
+- não adicionar preço/nome ao botão “Finalizar”
+- manter o CTA do frame como principal ponto de entrada da jornada
+- manter a copy dos highlights fiel à referência já aprovada
 
 ## Check final documentado
 
-### Fidelidade da copy
-- textos dos 3 highlights estão 1:1 com a referência
-- travessão e vírgulas conferem com a imagem
-- nenhum termo extra foi mantido
+### Mobile
+- o CTA dentro do frame fica melhor dimensionado e mais natural no celular
+- o resumo do produto aparece também no mobile
+- os highlights continuam discretos e legíveis
+- o conteúdo não conflita com as barras fixas inferiores
 
-### Visual
-- ícones estão menores
-- o bloco está mais clean e discreto
-- tipografia está menos chamativa
-- o resumo continua elegante e legível
+### Desktop
+- o bloco atual continua no topo da sidebar
+- a copy permanece igual à versão aprovada
+- não há regressão no layout existente
 
-### Layout
-- bloco permanece no topo da sidebar
-- quebras de linha ficam visualmente próximas da referência
-- a altura do bloco não compromete os controles abaixo
-
-### Hierarquia
-- CTA de upload no frame continua sendo o principal ponto de atenção
-- highlights funcionam como apoio informativo, não como elemento principal
+### Regressão funcional
+- upload continua funcionando pelo frame e pelo botão secundário
+- overlay de processamento continua cobrindo corretamente o preview
+- safe zone, arraste, zoom e rotação continuam intactos
+- dialogs e fluxo de customização não mudam
 
 ## Resultado esperado
-Depois da implementação, o bloco de highlights ficará mais fiel à referência tanto no texto quanto na sensação visual: mesma copy, mesma intenção de leitura, menos peso gráfico e aparência mais limpa, discreta e premium dentro da sidebar de customização.
+Depois da implementação, o mobile passa a comunicar melhor o produto e o próximo passo da jornada: o CTA dentro do frame fica mais bem resolvido para tela pequena e a copy do produto também aparece no celular de forma compacta, clean e informativa, sem competir com a ação principal de enviar imagem.
