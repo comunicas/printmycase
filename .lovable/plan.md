@@ -1,143 +1,85 @@
 
-Objetivo: corrigir a customização para remover o CTA de contato do rodapé, restaurar o foco de conversão do footer como antes, e trocar o contato do header por uma modal simples dentro do fluxo, sem tirar o usuário da navegação de `/customize/:slug`.
+Objetivo: corrigir o plano anterior para deixar claro que o ajuste da safe zone será apenas no mobile e somente no arredondamento dos quatro cantos, reduzindo a curvatura para seguir o mesmo padrão visual do desktop, além de trocar o CTA principal para `Comprar agora`.
 
 ## O que será alterado
 
-### 1) Remover o CTA de contato do rodapé
-O ícone de contato será retirado do `ContinueBar` em todas as variações.
+### 1) Ajustar apenas o arredondamento da safe zone no mobile
+A correção da safe zone não vai mexer em posição, largura, altura ou proporção geral.
+
+Implementação:
+- atuar somente nos valores de `radius` e `bottomRadius`
+- reduzir o arredondamento dos quatro cantos
+- usar o desktop como referência visual do quanto a curva deve ficar mais seca
+- manter o shape atual, apenas menos redondo
+
+Escopo:
+- foco principal nos modelos móveis destacados:
+  - `iphone-17-pro`
+  - `iphone-17-pro-max`
+  - validar consistência com `iphone-17-air` se usar o mesmo padrão visual
 
 Resultado:
-- o rodapé volta a priorizar conversão
-- some a distração lateral perto do botão `Finalizar`
-- o layout retorna ao padrão anterior, mantendo reset/download/finalizar
+- safe zone menos arredondada
+- quatro cantos mais próximos da referência desktop
+- visual mais técnico e menos “inchado” no topo e nas bordas
 
-Arquivo:
-- `src/components/customize/ContinueBar.tsx`
+### 2) Preservar toda a geometria atual da safe zone
+Para evitar desalinhar o preview, a alteração será restrita ao raio dos cantos.
 
-### 2) Restaurar o footer com foco em conversão
-O `ContinueBar` será reequilibrado para ficar visualmente centrado na ação principal.
+Não será alterado:
+- `top`
+- `height`
+- `width`
+- `insetX`
+- posicionamento geral da overlay
 
-Direção:
-- preservar o botão `Finalizar` como ação dominante
-- manter o reset como ação secundária apenas quando houver modificação
-- manter download apenas quando aplicável
-- remover qualquer elemento que concorra com a decisão de compra/continuidade
+Resultado:
+- o ajuste fica cirúrgico
+- o mobile se aproxima do desktop sem criar regressão no enquadramento
+
+### 3) Alterar o CTA principal para “Comprar agora”
+O botão principal do `ContinueBar` será atualizado de `Finalizar` para `Comprar agora`.
+
+Implementação:
+- trocar apenas o texto principal do botão
+- manter ícone, hierarquia e comportamento atual
+- manter o loading coerente com compra, sem adicionar ruído visual
 
 Observação:
-- isso respeita a memória do projeto de manter o botão `Finalizar` simples, direto e sem ruído extra
-
-### 3) Trocar o contato do header por modal simples
-O botão de contato no topo deixará de navegar para `/contato` e passará a abrir uma modal leve dentro da própria tela de customização.
-
-Objetivo da modal:
-- evitar saída de contexto
-- permitir contato rápido sem interromper o fluxo
-- manter UX discreta e direta
-
-Arquivos:
-- `src/components/customize/CustomizeHeader.tsx`
-- novo componente dedicado, seguindo o padrão existente de dialogs da customização
-
-### 4) Criar uma modal de contato enxuta
-A modal será propositalmente simples e rápida de preencher, inspirada no formulário atual de `/contato`, mas adaptada para uso contextual.
-
-Estrutura sugerida:
-```text
-[título curto]
-[descrição curta]
-
-[nome]
-[email]
-[mensagem]
-
-[cancelar] [enviar]
-```
-
-Campos:
-- Nome
-- Email
-- Mensagem
-- honeypot invisível `website` preservado para anti-spam
-
-Comportamento:
-- envio usando a mesma function já usada na página de contato
-- feedback claro de loading, sucesso e erro
-- fechamento simples após envio com confirmação curta
-
-Arquivos:
-- novo componente de modal de contato em `src/components/customize/`
-- reutilização da integração já existente de `submit-contact`
-
-### 5) Manter a modal consistente com o padrão visual atual
-A modal de contato seguirá a linguagem já usada na customização.
-
-Direção visual:
-- mobile fullscreen
-- desktop também fullscreen, acompanhando o padrão recente dos dialogs
-- header/body/footer bem definidos
-- animações e foco visível consistentes com `Dialog`
-- copy curta e objetiva para não competir com o fluxo principal
-
-### 6) Preservar acessibilidade e fluxo
-A nova solução precisa continuar funcional para teclado e leitores de tela.
-
-Implementação prevista:
-- botão do header com `aria-label` claro
-- foco inicial no conteúdo da modal
-- labels adequados nos campos
-- mensagens de erro/sucesso compreensíveis
-- fechamento por botão explícito e comportamento padrão de dialog
+- isso continua respeitando a preferência do projeto de manter o botão simples, só com rótulo e ícone
 
 ## Arquivos impactados
 
+### `src/components/PhonePreview.tsx`
+Será ajustado para:
+- reduzir o arredondamento da safe zone
+- alinhar os quatro cantos ao padrão visual do desktop
+- preservar toda a geometria existente
+
 ### `src/components/customize/ContinueBar.tsx`
 Será ajustado para:
-- remover o ícone/link de contato
-- restaurar o arranjo anterior com foco no CTA principal
-
-### `src/components/customize/CustomizeHeader.tsx`
-Será ajustado para:
-- substituir navegação para `/contato` por abertura de modal local
-- controlar estado `open` da modal de contato
-
-### Novo componente de contato da customização
-Será criado para:
-- renderizar a modal simples
-- conter o formulário enxuto
-- reaproveitar a lógica de envio para `submit-contact`
-
-### Possível reutilização de:
-- `src/components/ui/dialog.tsx`
-- `src/components/ui/form-field.tsx`
-- `src/components/ui/input.tsx`
-- `src/components/forms/SubmitButton.tsx`
-- `src/hooks/use-toast.ts`
+- trocar o label principal para `Comprar agora`
+- manter o estado de loading consistente com a ação
 
 ## Abordagem de implementação
-1. Remover o CTA de contato do `ContinueBar`.
-2. Restaurar o layout do rodapé para priorizar `Finalizar`.
-3. Adicionar estado local de abertura da modal no header.
-4. Criar a modal simples de contato com formulário enxuto.
-5. Integrar o envio com a mesma function usada em `/contato`.
-6. Exibir feedback de loading, sucesso e erro sem sair da página.
-7. Validar responsividade, acessibilidade e ausência de conflito com z-index/dialogs existentes.
+1. Revisar os presets da safe zone dos modelos afetados.
+2. Reduzir apenas `radius` e `bottomRadius`.
+3. Garantir que os quatro cantos fiquem menos arredondados no mobile.
+4. Preservar posição e tamanho atuais da safe zone.
+5. Atualizar o CTA principal para `Comprar agora`.
+6. Validar consistência visual entre mobile e a referência do desktop.
 
 ## Check final documentado
 
-### Rodapé
-- contato removido do footer
-- conversão volta a ser a prioridade visual
-- reset/download/finalizar continuam corretos
+### Safe zone
+- alteração feita apenas no arredondamento
+- quatro cantos menos redondos
+- mobile visualmente alinhado ao desktop
+- sem mudança de posição ou tamanho da overlay
 
-### Header
-- botão de contato não navega mais para outra página
-- abre modal simples dentro da customização
-
-### Modal
-- formulário é curto e claro
-- envio funciona sem sair do fluxo
-- sucesso/erro ficam compreensíveis
-- mobile e desktop respeitam o padrão fullscreen atual
+### CTA
+- botão principal mostra `Comprar agora`
+- continua simples, direto e orientado à conversão
 
 ## Resultado esperado
-Depois do ajuste, o rodapé da customização volta a ficar limpo e orientado à conversão, enquanto o contato permanece acessível no topo através de uma modal simples e contextual, sem tirar o usuário da navegação principal.
+Depois do ajuste, a safe zone mobile ficará menos arredondada nos quatro cantos, seguindo melhor a referência visual do desktop sem mudar sua geometria, e o botão principal da customização passará a usar o texto `Comprar agora`.
