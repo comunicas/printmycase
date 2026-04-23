@@ -20,12 +20,12 @@ function uniqueEmail(prefix: string) {
   return `${prefix}+${id}@example.test`
 }
 
-async function waitForStatus(messagePrefix: string, templateName: 'signup' | 'recovery'): Promise<EmailLogRow[]> {
+async function waitForStatus(recipientEmail: string, templateName: 'signup' | 'recovery', startedAt: string): Promise<EmailLogRow[]> {
   const timeoutAt = Date.now() + 90_000
 
   while (Date.now() < timeoutAt) {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/email_send_log?select=message_id,status,recipient_email,metadata,created_at&template_name=eq.${templateName}&message_id=like.${encodeURIComponent(`${messagePrefix}%`)}&order=created_at.asc`,
+      `${SUPABASE_URL}/rest/v1/email_send_log?select=message_id,status,recipient_email,metadata,created_at&template_name=eq.${templateName}&recipient_email=eq.${encodeURIComponent(recipientEmail)}&created_at=gte.${encodeURIComponent(startedAt)}&order=created_at.asc`,
       {
         headers: {
           apikey: SERVICE_ROLE_KEY,
@@ -50,6 +50,7 @@ async function waitForStatus(messagePrefix: string, templateName: 'signup' | 're
 Deno.test('signup e recovery gravam pending/sent com remetente correto', async () => {
   const email = uniqueEmail('auth-e2e')
   const password = `Pmc!${crypto.randomUUID()}123`
+  const signupStartedAt = new Date().toISOString()
 
   const signUpResponse = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
     method: 'POST',
@@ -69,7 +70,7 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   assertEquals(signUpResponse.status, 200)
   assert(signUpPayload.user)
 
-  const signupRows = await waitForStatus(email, 'signup')
+  const signupRows = await waitForStatus(email, 'signup', signupStartedAt)
   const signupSent = signupRows.find((row: EmailLogRow) => row.status === 'sent')
   assert(signupSent)
   assertEquals(signupSent.recipient_email, email)
@@ -79,6 +80,7 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   assertEquals(signupSent.metadata?.from, `${EXPECTED_FROM_NAME} <${EXPECTED_FROM_EMAIL}>`)
   assert(typeof signupSent.metadata?.provider_message_id === 'string' && signupSent.metadata.provider_message_id.length > 0)
 
+  const recoveryStartedAt = new Date().toISOString()
   const recoveryResponse = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
     method: 'POST',
     headers: {
@@ -95,7 +97,7 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   assertEquals(recoveryResponse.status, 200)
   assert(recoveryPayload !== undefined)
 
-  const recoveryRows = await waitForStatus(email, 'recovery')
+  const recoveryRows = await waitForStatus(email, 'recovery', recoveryStartedAt)
   const recoverySent = recoveryRows.find((row: EmailLogRow) => row.status === 'sent')
   assert(recoverySent)
   assertEquals(recoverySent.recipient_email, email)
