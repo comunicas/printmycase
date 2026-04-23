@@ -13,10 +13,6 @@ interface DispatchResult {
   duplicate?: boolean
 }
 
-function hasMessageId(value: unknown): value is { message_id?: string | null } {
-  return typeof value === 'object' && value !== null && 'message_id' in value
-}
-
 export async function dispatchCoinPurchaseConfirmation(
   supabaseAdmin: ReturnType<typeof createClient>,
   params: CoinPurchaseEmailParams,
