@@ -1,131 +1,113 @@
 
-Objetivo: fechar a tarefa apenas quando houver evidência operacional dos fluxos críticos já implementados. Pela revisão atual, o escopo está quase completo, mas ainda existem pendências importantes antes de considerar 100% concluído.
+Objetivo: fazer os emails de signup/recovery voltarem ao layout e remetente corretos da PrintMyCase e garantir que o `coin-purchase-confirmation` seja disparado somente após crédito confirmado, deixando rastros `pending/sent` no `email_send_log`.
 
-## Status atual
+## Diagnóstico consolidado
 
-### Já está implementado no código
-- Emails de autenticação via `auth-email-hook`:
-  - `signup`
-  - `invite`
-  - `magiclink`
-  - `recovery`
-  - `email_change`
-  - `reauthentication`
-- Emails do app já registrados no sender central:
-  - `welcome-email`
-  - `contact-confirmation`
-  - `contact-notification`
-  - `coin-purchase-confirmation`
-  - `order-status-update`
-- Observabilidade reforçada:
-  - `auth-email-hook` já tenta registrar `pending`, `sent` e `failed`
-  - `send-transactional-email` já tem deduplicação/idempotência e grava `email_send_log`
-  - `provider_message_id` é persistido em `metadata` quando disponível
-- Documentação já atualizada em `ARCHITECTURE.md` com a matriz de emails
+### Auth emails
+A imagem mostra que o usuário está recebendo o template padrão do sistema:
+- remetente: `no-reply@auth.lovable.cloud`
+- assunto/copy em inglês
+- layout genérico, diferente do branding já existente no projeto
 
-### Evidência já encontrada
-- `welcome-email` tem log recente de envio com sucesso em produção
-- O fluxo de boas-vindas está funcional no backend e no gatilho do `AuthContext`
+A revisão do projeto confirma o desvio:
+- `supabase/functions/_shared/email-templates/signup.tsx` e `recovery.tsx` já estão customizados em PT-BR e com branding PrintMyCase
+- porém não há registros recentes de `signup`/`recovery` no `email_send_log`
+- também não há logs recentes do `auth-email-hook`
+- o domínio de envio `notify.printmycase.com.br` está com status pendente
 
-## Pendências importantes antes de fechar
+Conclusão:
+- os emails de auth não estão saindo pelo hook/template customizado do projeto
+- por isso o usuário recebe o fallback padrão
+- sem o hook ativo na trilha real, também não há gravação no `email_send_log`
 
-### 1) Validar auth de forma conclusiva
-Ainda falta evidência final de produção para os dois fluxos mínimos de auth:
-- `signup`
-- `recovery`
+### Coin purchase email
+O código já tenta disparar `coin-purchase-confirmation` em dois pontos:
+- `supabase/functions/stripe-webhook/index.ts`
+- `supabase/functions/verify-coin-purchase/index.ts`
 
-O ponto de fechamento não é só “hook executou”, e sim confirmar no `email_send_log`:
-- registro `pending`
-- registro `sent`
-- `provider_message_id`
-- remetente final correto
+Mas a validação atual ainda é insuficiente para garantir fechamento operacional:
+- não há registros de `coin-purchase-confirmation` no `email_send_log`
+- o envio está duplicado em dois fluxos de crédito possíveis
+- falta consolidar a regra “disparar após crédito efetivo” em um único caminho confiável e auditável
 
-### 2) Validar compra de moedas em produção
-O email `coin-purchase-confirmation` está implementado e ligado em:
-- `stripe-webhook`
-- `verify-coin-purchase`
+## O que será implementado
 
-Mas não há evidência revisada nesta auditoria de:
-- envio real em produção
-- registro correspondente no `email_send_log`
-- confirmação de que a idempotência está funcionando no cenário real
+### 1) Reativar corretamente os emails customizados de auth
+- Reconciliar o fluxo de auth email para que `signup` e `recovery` usem o `auth-email-hook` ativo do projeto
+- Reaplicar/confirmar os templates customizados existentes
+- Garantir que o hook esteja de fato publicando os eventos no fluxo real de envio
+- Validar que os emails deixem de usar o fallback `auth.lovable.cloud`
 
-### 3) Validar fluxo de pedido em produção
-`order-status-update` existe e está integrado, mas ainda precisa evidência real para pelo menos:
-- confirmação inicial de pedido
-- `shipped` com rastreio
-- `delivered` ou `cancelled`
+### 2) Ajustar o visual/copy dos templates de signup e recovery
+- Manter o visual alinhado ao branding atual:
+  - logo PrintMyCase
+  - português
+  - CTA com cor primária do app
+  - tipografia/interações consistentes com os templates transacionais já existentes
+- Revisar espaçamento/largura para evitar aparência “genérica” no cliente de email
+- Confirmar consistência entre `signup.tsx` e `recovery.tsx`
 
-Sem isso, o fluxo está implementado, mas ainda não está “fechado” operacionalmente.
+### 3) Corrigir a trilha de observabilidade dos auth emails
+- Garantir que `signup` e `recovery` gravem:
+  - `pending`
+  - `sent` ou `failed`
+  - `provider_message_id`
+- Confirmar isso no `email_send_log` após o hook voltar a ser o caminho efetivo de envio
 
-### 4) Revisar pequena inconsistência documental/funcional do pedido
-A documentação diz que o pedido está coberto desde a confirmação inicial, mas nesta revisão ainda é necessário confirmar se o primeiro email realmente está sendo disparado no evento inicial esperado, e qual status o cliente recebe primeiro:
-- `paid`
-- ou `analyzing`
+### 4) Consolidar o disparo do coin purchase após crédito confirmado
+- Centralizar a lógica para que o `coin-purchase-confirmation` seja disparado apenas depois de `coin_transactions` ser gravado com sucesso
+- Definir uma única fonte de verdade para o disparo, evitando ambiguidade entre:
+  - `stripe-webhook`
+  - `verify-coin-purchase`
+- Preservar idempotência por `stripe_session_id`
+- Manter o `messageId/idempotencyKey` baseado em `coin-purchase-${sessionId}`
 
-Isso precisa ficar consistente entre:
-- `ARCHITECTURE.md`
-- `stripe-webhook`
-- template `order-status-update`
-- regra de negócio do pedido
+### 5) Garantir gravação de `sent` para coin purchase
+- Validar que o caminho final use o sender central já existente
+- Confirmar que o `send-transactional-email` seja efetivamente invocado no cenário real de crédito
+- Garantir que a execução resulte em registros no `email_send_log` com:
+  - `template_name = coin-purchase-confirmation`
+  - `pending`
+  - `sent`
+  - `provider_message_id`
 
-## Decisão recomendada
-Ainda não fechar a tarefa como concluída.
+## Ajustes técnicos previstos
 
-Ela pode ser considerada em fase final, com implementação praticamente pronta, mas ainda com pendências de validação operacional dos fluxos mais importantes.
+### Arquivos de auth
+- `supabase/functions/auth-email-hook/index.ts`
+- `supabase/functions/_shared/email-templates/signup.tsx`
+- `supabase/functions/_shared/email-templates/recovery.tsx`
 
-## Próximos passos para fechar de verdade
+### Arquivos de coins
+- `supabase/functions/stripe-webhook/index.ts`
+- `supabase/functions/verify-coin-purchase/index.ts`
+- possivelmente um helper compartilhado para evitar duplicação do disparo
 
-### Etapa 1 — Validar auth
-Executar e registrar evidência para:
-- `signup`
-- `recovery`
+### Validação de catálogo
+- `supabase/functions/_shared/transactional-email-templates/registry.ts`
+- `supabase/functions/send-transactional-email/index.ts`
 
-Critério:
-- email recebido
-- `email_send_log` com `pending` + `sent`
-- `provider_message_id` presente
+## Observação importante de infraestrutura
+Hoje o domínio de envio está pendente. Sem a conclusão dessa ativação, os emails de autenticação podem continuar caindo no fallback padrão, mesmo com o código ajustado. Portanto o fechamento completo depende de dois itens juntos:
+- correção do caminho técnico de auth no projeto
+- ativação final do domínio de envio no backend de emails
 
-### Etapa 2 — Validar moedas
-Executar uma compra real/controlada de moedas e confirmar:
-- crédito efetivo
-- envio de `coin-purchase-confirmation`
-- log completo no `email_send_log`
-- ausência de duplicidade entre webhook e verificação manual
+## Critérios de aceite
+A tarefa pode ser fechada quando houver evidência de que:
 
-### Etapa 3 — Validar pedido
-Executar um caso controlado de pedido e confirmar:
-- email inicial de confirmação/status
-- `shipped` com tracking
-- `delivered` ou `cancelled`
-- consistência do assunto e conteúdo por status
+### Auth
+- `signup` chega com visual PrintMyCase, em PT-BR
+- `recovery` chega com visual PrintMyCase, em PT-BR
+- o remetente deixa de aparecer como `no-reply@auth.lovable.cloud`
+- ambos registram `pending` + `sent` no `email_send_log`
 
-### Etapa 4 — Ajuste final de alinhamento
-Se necessário, alinhar a definição do “primeiro email do pedido” para evitar ambiguidade entre:
-- pagamento confirmado
-- pedido recebido
-- analyzing
+### Coins
+- após crédito confirmado de moedas, `coin-purchase-confirmation` é disparado
+- o envio ocorre uma única vez por sessão de compra
+- há registros `pending` + `sent` em `email_send_log`
+- `provider_message_id` fica persistido
 
-## Critério final de encerramento
-A tarefa pode ser fechada quando houver evidência concreta, em produção, de:
-
-- auth:
-  - `signup`
-  - `recovery`
-- onboarding:
-  - `welcome-email`
-- moedas:
-  - `coin-purchase-confirmation`
-- pedido:
-  - confirmação inicial
-  - `shipped`
-  - `delivered` ou `cancelled`
-
-E, em todos eles:
-- remetente correto
-- `email_send_log` preenchido
-- `provider_message_id` quando aplicável
-- sem duplicidade indevida
-
-## Conclusão
-Resposta objetiva: ainda há pendências importantes, mas agora são principalmente de validação operacional, não mais de construção estrutural. O código-base e a matriz principal de emails já estão montados; o que falta para encerrar com segurança é provar em produção os fluxos críticos de auth, moedas e pedido.
+## Resultado esperado
+- signup/recovery deixam de usar o template fallback e passam a usar o branding real da PrintMyCase
+- o fluxo de moedas fica auditável de ponta a ponta
+- o `email_send_log` passa a refletir corretamente tanto auth quanto compra de moedas
