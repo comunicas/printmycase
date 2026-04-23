@@ -7,7 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ShieldAlert } from "lucide-react";
+import { Check, ShieldAlert } from "lucide-react";
 
 interface TermsDialogProps {
   open: boolean;
@@ -17,45 +17,54 @@ interface TermsDialogProps {
 
 const TermsDialog = ({ open, onOpenChange, onAccept }: TermsDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="w-screen h-[100dvh] max-w-full rounded-none p-6 overflow-y-auto sm:w-full sm:h-auto sm:max-w-md sm:rounded-lg sm:max-h-[90dvh] gap-3 flex flex-col justify-center">
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 text-primary" />
+    <DialogContent className="inset-0 flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:left-[50%] sm:top-[50%] sm:h-auto sm:max-h-[90dvh] sm:w-full sm:max-w-md sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg sm:border">
+      <DialogHeader className="shrink-0 border-b px-5 pb-4 pt-6 text-left sm:px-6">
+        <DialogTitle className="flex items-center gap-2 pr-10 text-base sm:text-lg">
+          <ShieldAlert className="h-5 w-5 text-primary" />
           Termos de Uso de Imagem
         </DialogTitle>
-        <DialogDescription>
-          Leia e aceite os termos antes de enviar sua imagem.
+        <DialogDescription className="text-sm leading-relaxed">
+          Antes de enviar sua imagem, confirme que o conteúdo está dentro das regras.
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
-        <p>
-          O uso de nomes de marcas ou logomarca somente são permitidos se forem
-          da sua empresa.
-        </p>
-        <p>
-          Não é permitido o uso de imagens ou nome de famosos, jogadores, séries,
-          filmes, times e/ou partes de músicas e livros, pois todos possuem
-          direitos autorais não pertencentes a nós e/ou você.
-        </p>
-        <p>
-          Conteúdos de caráter religioso, violento, pornográfico e/ou
-          preconceituoso não são permitidos.
-        </p>
-        <p className="font-semibold text-foreground">
-          IMPORTANTE: Caso a sua customização descumpra alguma das regras acima,
-          o item poderá ser cancelado automaticamente. Lembre-se, a estampa
-          produzida é de sua autoria e você tem total responsabilidade sobre ela.
-          Caso a regra seja quebrada o envio da case cancelada ficará por sua
-          responsabilidade.
-        </p>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+        <div className="space-y-5">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            A personalização precisa respeitar direitos autorais e regras de conteúdo.
+          </p>
+
+          <ul className="space-y-3" aria-label="Regras para envio de imagem">
+            {[
+              "Marcas e logotipos só podem ser usados se forem da sua empresa.",
+              "Não use famosos, times, filmes, séries, músicas, livros ou qualquer obra protegida.",
+              "Não envie conteúdo ofensivo, violento, pornográfico ou discriminatório.",
+            ].map((rule) => (
+              <li key={rule} className="flex items-start gap-3 rounded-md border bg-muted/40 p-3 text-sm leading-relaxed text-foreground">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+                <span>{rule}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="rounded-md border bg-muted/50 p-4">
+            <p className="text-sm font-medium text-foreground">Responsabilidade pelo conteúdo</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Você é responsável pela arte enviada. Personalizações fora das regras podem ser canceladas automaticamente.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <DialogFooter className="gap-2 sm:gap-0">
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
+      <DialogFooter className="shrink-0 border-t px-5 py-4 sm:px-6 sm:gap-2">
+        <Button className="w-full sm:w-auto" variant="ghost" onClick={() => onOpenChange(false)}>
           Cancelar
         </Button>
-        <Button onClick={onAccept}>Li e aceito os termos</Button>
+        <Button className="w-full sm:w-auto" onClick={onAccept}>
+          Entendi e continuar
+        </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
