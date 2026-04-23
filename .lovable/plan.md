@@ -1,191 +1,139 @@
 
-Objetivo: padronizar toda a stack de emails para que autenticação, onboarding, moedas e compra usem o mesmo padrão visual, o mesmo remetente lógico, a mesma trilha de observabilidade e a mesma regra de idempotência, eliminando a diferença atual entre auth e app emails.
+Objetivo: corrigir o envio duplicado do welcome email para novos usuários, validar o fluxo real de signup com um novo usuário e eliminar a condição de corrida que hoje permite dois disparos antes da idempotência ser registrada.
 
-## Diagnóstico consolidado
+## Diagnóstico
 
-Hoje existem dois caminhos diferentes:
+### O que já ficou evidente
+- O email de ativação/signup chegou, então o fluxo principal de auth está funcionando.
+- O usuário recebeu 2 emails de boas-vindas.
+- Os logs do sender mostram duas execuções quase simultâneas do `welcome-email`.
+- Também há erro de chave única no `email_send_log` para status `sent`:
+  - `idx_email_send_log_message_sent_unique`
+  - `message_id = welcome-{userId}`
 
-### 1) Auth emails
-- `auth-email-hook` renderiza os templates customizados (`signup`, `recovery`, etc.)
-- depois enfileira em `auth_emails`
-- o dispatcher `process-email-queue` envia via pipeline gerenciada (`sendLovableEmail`)
-- por isso auth hoje não segue exatamente o mesmo provedor/caminho dos app emails
+### Causa raiz provável
+Hoje o disparo de welcome no frontend acontece em `src/contexts/AuthContext.tsx` dentro de um `useEffect` dependente de:
+- `user.id`
+- `user.email`
+- `user.email_confirmed_at`
 
-### 2) App emails
-- `send-transactional-email` renderiza templates do registry
-- envia diretamente via `sendWithResend`
-- grava `pending/sent/suppressed/failed` no `email_send_log`
-- `coin-purchase-confirmation` já foi parcialmente consolidado para entrar por esse caminho
+Esse mesmo estado pode ser atualizado por mais de um caminho:
+- `supabase.auth.getSession()`
+- `supabase.auth.onAuthStateChange(...)`
 
-### Consequência prática
-- signup/recovery podem sair com comportamento diferente dos demais
-- há diferença de provedor, rastreabilidade e troubleshooting
-- o branding ficou parcialmente consistente nos templates, mas não no pipeline inteiro
-- ainda existe risco de divergência futura entre auth e app emails
+Como o flag em `sessionStorage` só é salvo depois do retorno bem-sucedido da função, duas execuções concorrentes podem acontecer antes do bloqueio local entrar em vigor.
 
-## Padrão final proposto
+Além disso, o backend atual de `send-transactional-email` faz uma checagem de idempotência antes do envio, mas ainda existe janela de corrida:
+1. chamada A verifica e não encontra `pending/sent`
+2. chamada B verifica e não encontra `pending/sent`
+3. as duas enviam
+4. apenas uma consegue gravar `sent`; a outra bate na unique constraint
 
-### Meta
-Unificar tudo em um modelo único com 4 pilares:
+Conclusão: a duplicidade não é só de log; ela pode realmente gerar dois envios.
 
-1. Mesmo padrão visual  
-2. Mesmo padrão de remetente  
-3. Mesma observabilidade (`email_send_log`)  
-4. Mesmas regras de idempotência e erro
+## O que será corrigido
 
-### Decisão de arquitetura
-Padronizar auth e app emails no mesmo provedor de envio já usado pelos demais emails do produto.
+### 1) Blindagem no frontend do welcome email
+Ajustar `src/contexts/AuthContext.tsx` para impedir reentrância no mesmo ciclo de sessão:
+- adicionar trava em memória com `useRef`
+- marcar o envio como “em andamento” antes de chamar a função remota
+- manter o `sessionStorage` como persistência complementar
+- garantir que `getSession` + `onAuthStateChange` não disparem dois invokes simultâneos
 
-Na prática:
-- manter `auth-email-hook` como ponto obrigatório de entrada dos eventos de autenticação
-- manter os templates próprios de auth
-- trocar o dispatcher de `auth_emails` para usar o mesmo mecanismo de envio dos app emails
-- preservar a fila, prioridade e retry do fluxo de auth
-- preservar o `email_send_log` como trilha única de auditoria
+Resultado esperado:
+- o navegador dispara no máximo uma tentativa de welcome por usuário/sessão
 
-## O que será implementado
+### 2) Blindagem forte no backend contra condição de corrida
+Reforçar `supabase/functions/send-transactional-email/index.ts` para que o `welcome-email` seja idempotente antes do envio real, não apenas no log final.
 
-### Etapa 1 — Unificar o dispatcher
-Atualizar `process-email-queue` para que:
-- mensagens de `auth_emails` também sejam enviadas pelo mesmo sender usado em `send-transactional-email`
-- continue existindo prioridade para `auth_emails`
-- continue existindo retry, DLQ e TTL
-- `provider_message_id` seja gravado de forma uniforme para auth e app emails
+Ajuste previsto:
+- usar um lock lógico persistente via `email_send_log` logo no início
+- tratar conflito/duplicidade como sucesso silencioso sem reenviar
+- garantir que a segunda chamada concorrente saia antes do `sendWithResend`
 
-Resultado:
-- signup/recovery passam a usar o mesmo provedor dos outros emails
-- a diferença entre “auth email” e “app email” fica só no gatilho/template, não no transporte
+Como a tabela hoje é append-only, a implementação deve seguir esse modelo e evitar update destrutivo. A ideia é usar o próprio `message_id`/`pending` como barreira operacional e tratar conflito como “já em processamento”.
 
-### Etapa 2 — Normalizar payload e metadados
-Padronizar os campos de fila/log para ambos os tipos:
-- `message_id`
-- `template_name`
-- `recipient_email`
-- `idempotency_key`
-- `provider`
-- `provider_message_id`
+Resultado esperado:
+- mesmo que o frontend chame duas vezes, apenas uma chamada envia
 
-Também alinhar:
-- nome do template gravado no log
-- from display name
-- from email
-- tags/metadados de provider quando suportados
+### 3) Revisar o comportamento do teste E2E com novo usuário
+Atualizar o teste de ponta a ponta em `supabase/functions/auth-email-hook/index.test.ts` para validar melhor o fluxo real:
+- continuar criando um usuário novo
+- validar `signup` com `pending/sent`
+- validar `recovery` com `pending/sent`
+- opcionalmente acrescentar checagem de que o `welcome-email` exista no máximo uma vez por `message_id` quando o usuário confirmar/entrar no app, sem acoplar o teste de auth a timing instável de UI
 
-### Etapa 3 — Padronizar visual de todos os auth templates
-Hoje `signup` e `recovery` já estão mais próximos do padrão, mas outros auth templates ainda estão no scaffold genérico.
+Importante:
+- o teste atual cobre auth email/log
+- o bug relatado agora é no welcome, que nasce no app após autenticação/sessão
+- por isso o teste de auth pode continuar separado, e o welcome deve ganhar validação específica
 
-Vou alinhar também:
-- `magic-link.tsx`
-- `invite.tsx`
-- `email-change.tsx`
-- `reauthentication.tsx`
-
-Padrão visual único:
-- logo PrintMyCase
-- tipografia Inter
-- cor primária `hsl(265, 83%, 57%)`
-- fundo branco
-- cards suaves
-- CTA com raio grande (`24px`)
-- copy em PT-BR
-- tom consistente com welcome/coins/order emails
-
-### Etapa 4 — Padronizar assuntos e copy
-Revisar todos os assuntos e microcopy para manter consistência entre:
-- cadastro
-- recuperação
-- link mágico
-- convite
-- troca de email
-- reautenticação
-- boas-vindas
-- compra de moedas
-- compra/pedido
-
-Padrão editorial:
-- PT-BR
-- linguagem direta
-- foco em “capinha”, conta, moedas e compra
-- sem mistura de inglês/default scaffold
-
-### Etapa 5 — Consolidar definitivamente coins
-Fechar o fluxo do `coin-purchase-confirmation` para que:
-- o disparo aconteça só após crédito confirmado
-- a chamada seja sempre idempotente por sessão
-- o `email_send_log` registre `pending` e `sent`
-- não haja duplicidade entre webhook e verificação posterior
-
-### Etapa 6 — Revisar padronização do pedido
-Conferir se o email de compra/pedido segue o mesmo padrão de:
-- branding
-- assunto
-- log
-- remetente
-- idempotência
-
-E alinhar a definição do primeiro status enviado ao cliente:
-- `analyzing` ou equivalente final aprovado no fluxo
+### 4) Tratar o erro de log duplicado sem deixar ruído operacional
+Hoje os logs mostram erro de constraint para um caso que deve ser entendido como duplicata inofensiva após a correção.
+Vou ajustar o tratamento para:
+- reconhecer conflito esperado de idempotência
+- evitar poluição de erro quando a segunda chamada for barrada corretamente
+- manter logs úteis para falhas reais
 
 ## Arquivos a ajustar
-
-### Dispatcher / envio
-- `supabase/functions/process-email-queue/index.ts`
-- possivelmente `supabase/functions/_shared/resend.ts` para suportar uso compartilhado no dispatcher
-
-### Auth
-- `supabase/functions/auth-email-hook/index.ts`
-- `supabase/functions/_shared/email-templates/signup.tsx`
-- `supabase/functions/_shared/email-templates/recovery.tsx`
-- `supabase/functions/_shared/email-templates/magic-link.tsx`
-- `supabase/functions/_shared/email-templates/invite.tsx`
-- `supabase/functions/_shared/email-templates/email-change.tsx`
-- `supabase/functions/_shared/email-templates/reauthentication.tsx`
-
-### App emails / coins / compra
-- `supabase/functions/_shared/transactional-email.ts`
+- `src/contexts/AuthContext.tsx`
 - `supabase/functions/send-transactional-email/index.ts`
-- `supabase/functions/stripe-webhook/index.ts`
-- `supabase/functions/verify-coin-purchase/index.ts`
-- se necessário, templates em `_shared/transactional-email-templates/`
+- `supabase/functions/auth-email-hook/index.test.ts`
 
-## Regras que serão preservadas
-- `auth-email-hook` continua existindo e continua sendo a entrada dos eventos de auth
-- filas continuam sendo usadas
-- auth continua prioritário
-- retry/DLQ/TTL continuam ativos
-- não haverá envio em massa nem mudança para emails de marketing
+Se necessário para robustez adicional:
+- `supabase/migrations/...` para adicionar um índice/regra auxiliar de idempotência específico de “pending lock”, sem quebrar o modelo append-only
 
-## Dependência externa importante
-O domínio `notify.printmycase.com.br` ainda está pendente.
+## Estratégia técnica
 
-Isso significa:
-- posso padronizar o código e o pipeline agora
-- mas o comportamento final de remetente/entrega só ficará 100% consistente quando a ativação do domínio terminar no backend de emails
+### Frontend
+Aplicar padrão:
+- `welcomeSentRef`
+- `welcomeInFlightRef`
+- checagem antecipada antes do invoke
+- set da trava antes do await
+
+Fluxo:
+```text
+session resolvida
+  -> usuário confirmado?
+    -> já enviado ou em andamento? sai
+    -> marca em andamento
+    -> chama sender
+    -> sucesso: marca sessionStorage
+    -> finaliza trava
+```
+
+### Backend
+Fortalecer a sequência:
+```text
+recebe request
+  -> verifica idempotência
+  -> tenta registrar lock inicial do message_id
+  -> se lock já existe, retorna duplicate=true
+  -> só então renderiza/envia
+  -> registra sent/failure
+```
+
+Isso fecha a janela de corrida que hoje permite dois envios antes da unique constraint de `sent`.
 
 ## Critérios de aceite
+A tarefa poderá ser considerada fechada quando houver evidência de que:
 
-### Auth
-- `signup` e `recovery` usam o mesmo provedor/caminho dos demais emails
-- deixam de ter aparência/caminho divergente
-- registram `pending` + `sent` com `provider_message_id`
-- chegam com branding PrintMyCase em PT-BR
+### Signup / recovery
+- um novo usuário recebe o email de ativação com remetente correto
+- `signup` grava `pending` e `sent` no `email_send_log`
+- `recovery` grava `pending` e `sent` no `email_send_log`
 
-### App emails
-- `welcome-email`, `coin-purchase-confirmation` e compra/pedido seguem exatamente o mesmo padrão visual e de log
-- coin purchase dispara uma única vez após crédito confirmado
-
-### Plataforma inteira
-- mesma identidade visual em todos os templates
-- mesma trilha de observabilidade
-- mesmo padrão de remetente
-- mesma convenção de idempotência
-- menor diferença operacional entre auth e app emails
+### Welcome
+- novo usuário não recebe 2 emails de boas-vindas
+- `welcome-email` dispara no máximo 1 vez por `userId`
+- não aparecem novos erros de unique constraint para o mesmo `message_id` em cenário normal
+- chamadas concorrentes são absorvidas como duplicadas sem reenvio real
 
 ## Resultado esperado
-Ao final, “padronizar tudo” significará:
-- um único padrão de envio
-- um único padrão de branding
-- um único padrão de logs
-- um único padrão de confiabilidade
-
-Com isso, signup/recovery deixam de ser uma exceção e passam a fazer parte da mesma esteira dos outros emails do produto.
+Depois da correção:
+- o signup continua funcionando
+- o recovery continua funcionando
+- o welcome deixa de duplicar
+- a idempotência passa a ser consistente tanto no frontend quanto no backend
+- os logs deixam de registrar erro falso-positivo por corrida de envio
