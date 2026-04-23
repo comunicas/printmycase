@@ -1,120 +1,196 @@
 
-Objetivo: configurar o remetente final do Resend como `PrintMyCase <noreply@printmycase.com.br>` e validar o envio em produção para os dois fluxos ativos: autenticação e emails transacionais.
+Objetivo revisado: fechar o escopo completo de emails do produto com uma matriz única de fluxos, cobrindo autenticação, onboarding, moedas e compra, além de consolidar o que já existe, o que falta implementar e quais validações precisam ser feitas para considerar a entrega concluída.
 
-## Diagnóstico atual
-- O helper compartilhado já suporta configuração por secrets:
-  - `RESEND_FROM_EMAIL`
-  - `RESEND_FROM_NAME`
-- O fallback atual ainda é:
-  - email: `onboarding@resend.dev`
-  - nome: `PrintMyCase`
-- Os fluxos ativos já usam esse helper central:
-  - `auth-email-hook`
-  - `send-transactional-email`
-- Os logs mais recentes mostram o problema real em produção:
-  - erro `403 validation_error`
-  - motivo: o Resend ainda está em modo de teste e só permite envio para `suporte@printmycase.com.br`
-  - isso confirma que o remetente final ainda não foi aplicado com um domínio verificado
+## Escopo final de emails
 
-## Estado atual do checklist
-### Já está pronto
-- [x] Integração com Resend via connector existe
-- [x] O projeto já lê `RESEND_FROM_EMAIL` e `RESEND_FROM_NAME`
-- [x] Auth e transacional compartilham o mesmo remetente padrão
-- [x] O domínio informado para uso final é `printmycase.com.br`
-- [x] O endereço desejado foi definido como `noreply@printmycase.com.br`
+### 1) Autenticação / cadastro
+Emails necessários:
+- Confirmação de cadastro
+- Recuperação de senha
+- Magic link
+- Troca de email
+- Reautenticação / código
+- Convite, se o fluxo continuar ativo
 
-### O que está faltando
-- [ ] Definir as duas secrets no backend:
-  - `RESEND_FROM_EMAIL=noreply@printmycase.com.br`
-  - `RESEND_FROM_NAME=PrintMyCase`
-- [ ] Redeployar as funções de email para garantir que a configuração ativa use o novo remetente
-- [ ] Validar um envio transacional em produção
-- [ ] Validar um envio de auth em produção
-- [ ] Confirmar nos logs que o erro 403 desapareceu
+Estado atual no código:
+- Já existem templates e envio centralizado para:
+  - `signup`
+  - `invite`
+  - `magiclink`
+  - `recovery`
+  - `email_change`
+  - `reauthentication`
+- Já passam pelo `auth-email-hook`
+- Já usam o remetente central
+- Já gravam em `email_send_log`
 
-## Melhor caminho
-### Etapa 1 — Configurar o remetente final
-Atualizar as secrets de runtime para:
-- `RESEND_FROM_EMAIL = noreply@printmycase.com.br`
-- `RESEND_FROM_NAME = PrintMyCase`
+Ajustes planejados:
+- Fortalecer observabilidade do `auth-email-hook` para não ignorar falha de gravação no log
+- Validar em produção pelo menos:
+  - `signup`
+  - `recovery`
 
-Resultado esperado:
-- todo envio que hoje cai no fallback `onboarding@resend.dev` passa a sair com o remetente final da marca
+### 2) Bem-vindo
+Email necessário:
+- Boas-vindas após confirmação/cadastro concluído
 
-### Etapa 2 — Garantir coerência entre código e runtime
-Depois de definir as secrets:
-- redeployar pelo menos estas funções:
-  - `auth-email-hook`
-  - `send-transactional-email`
-  - `submit-contact`
+Estado atual:
+- Não existe template de boas-vindas
+- Não há gatilho explícito para esse envio
+
+Implementação planejada:
+- Criar template transacional `welcome-email`
+- Definir disparo idempotente após cadastro efetivamente concluído
+- Preferir gatilho baseado em usuário já criado/ativo, evitando disparo antes da confirmação de email
+- Registrar no `email_send_log` como qualquer outro email transacional
+
+### 3) Coins / uso de moedas
+Emails necessários:
+- Compra de moedas confirmada
+- Crédito de moedas concluído
+- Consumo de moedas em filtros IA: avaliar como comunicação operacional, não por padrão um email por uso
+- Alerta/resumo de saldo baixo: opcional, não obrigatório nesta fase
+
+Estado atual:
+- Compra de moedas existe no backend
+- Crédito de moedas existe via webhook/validação
+- Não existe email de confirmação de compra de moedas
+- Não existe email de uso de moedas
+
+Decisão de produto recomendada:
+- Implementar agora apenas os emails realmente necessários:
+  - confirmação de compra de moedas
+  - confirmação de crédito recebido
+- Não implementar email por cada uso de coins em filtro/upscale nesta etapa
+  - motivo: alto ruído, baixo valor, risco de excesso de envio
+- Se desejado depois, tratar “uso de coins” como resumo periódico ou evento excepcional, não como email por ação
+
+Implementação planejada:
+- Criar template transacional `coin-purchase-confirmation`
+- Disparar após crédito efetivo e idempotente das moedas
+- Incluir:
+  - quantidade comprada
+  - saldo/validade quando aplicável
+  - referência da compra
+  - CTA para usar moedas em IA
+
+### 4) Compra de case / pedido
+Emails necessários:
+- Pedido recebido / pagamento confirmado
+- Atualizações de status do pedido
+- Cancelamento por expiração/falha relevante
+- Envio com rastreio
+- Entrega concluída
+- Recusa de imagem, quando aplicável
+
+Estado atual:
+- Já existe template `order-status-update`
+- Já existe envio em:
+  - `stripe-webhook`
   - `notify-order-status`
+- Já cobre parte dos estados:
+  - analyzing / confirmação operacional do pedido
+  - cancelled
+  - shipped
+  - delivered
+  - rejected
+  - demais atualizações via status
 
-Resultado esperado:
-- produção passa a usar a configuração nova de forma consistente
+Ajustes planejados:
+- Consolidar formalmente a matriz de mensagens por status
+- Garantir consistência de assunto, conteúdo e idempotência
+- Validar que o email de compra inicial represente claramente:
+  - pedido recebido
+  - pagamento confirmado
+  - próximos passos
+- Confirmar se `paid` continuará visível ao cliente ou se `analyzing` será o primeiro status comunicado
 
-### Etapa 3 — Validar transacional em produção
-Executar uma validação real com um dos fluxos transacionais já existentes:
-- recomendado:
-  - fluxo de contato, porque é simples e controlado
-- opcional complementar:
-  - atualização de status de pedido
+## Matriz final recomendada
 
-Critérios de sucesso:
-- a função responde sem erro
-- não aparece mais `403 validation_error`
-- o `email_send_log` registra `pending` e depois `sent`
-- o metadado `provider_message_id` é preenchido quando retornado pelo Resend
+### Auth
+- `signup` — obrigatório
+- `recovery` — obrigatório
+- `magiclink` — obrigatório se o fluxo estiver habilitado
+- `email_change` — obrigatório
+- `reauthentication` — obrigatório
+- `invite` — opcional conforme uso real
 
-### Etapa 4 — Validar auth em produção
-Executar um teste real de autenticação:
-- cadastro novo com confirmação de email, ou
-- recuperação de senha
+### App emails
+- `welcome-email` — novo, obrigatório
+- `contact-confirmation` — já existe
+- `contact-notification` — já existe
+- `coin-purchase-confirmation` — novo, obrigatório
+- `order-status-update` — já existe e será consolidado como email principal de pedido
 
-Critérios de sucesso:
-- `auth-email-hook` executa sem erro
-- o email chega com remetente `PrintMyCase <noreply@printmycase.com.br>`
-- o log do envio aparece corretamente
-- não há fallback para `onboarding@resend.dev`
+## Implementação proposta
 
-### Etapa 5 — Fechar observabilidade
-Após os testes:
-- revisar logs das funções:
-  - `auth-email-hook`
-  - `send-transactional-email`
-- revisar entradas recentes no `email_send_log`
-- confirmar que os dois fluxos estão saindo pelo mesmo remetente final
+### Etapa 1 — Auditoria e consolidação do catálogo
+- Mapear oficialmente todos os emails ativos e seus gatilhos
+- Separar auth vs emails do app
+- Documentar a matriz final em `ARCHITECTURE.md`
 
-Resultado esperado:
-- migração do remetente concluída e validada com evidência operacional
+### Etapa 2 — Corrigir observabilidade do auth
+- Ajustar `auth-email-hook` para checar erro em inserts de `pending`, `sent` e `failed`
+- Garantir log estruturado no console quando a trilha falhar
+- Confirmar que `provider_message_id` continua sendo persistido
 
-## Comentários importantes
-- O domínio `printmycase.com.br` precisa estar realmente verificado no Resend para permitir envios a terceiros.
-- O log atual indica que a conta ainda está operando como sandbox/teste para envios externos.
-- Como o código já está preparado para ler as secrets, o trabalho principal agora é configuração + deploy + teste real.
-- Não vejo necessidade de refatorar código adicional para essa etapa, a menos que a validação revele novo erro após sair do remetente de teste.
+### Etapa 3 — Criar novos templates necessários
+- Criar `welcome-email`
+- Criar `coin-purchase-confirmation`
+- Registrar ambos no registry transacional
+- Manter visual e branding iguais ao padrão existente
 
-## Arquivos e áreas impactadas
-- `supabase/functions/_shared/resend.ts`
-- `supabase/functions/auth-email-hook/index.ts`
-- `supabase/functions/send-transactional-email/index.ts`
-- `supabase/functions/submit-contact/index.ts`
-- `supabase/functions/notify-order-status/index.ts`
+### Etapa 4 — Ligar os gatilhos corretos
+- Bem-vindo:
+  - disparar somente após o cadastro estar realmente concluído
+  - com idempotência por usuário
+- Compra de moedas:
+  - disparar após crédito efetivo das moedas
+  - com idempotência por sessão/compra
+- Pedido:
+  - revisar gatilhos já existentes e remover ambiguidades entre “pedido confirmado” e “mudança de status”
 
-## Critério de conclusão
-A etapa estará finalizada quando estes pontos forem verdadeiros:
-- [ ] Remetente ativo = `PrintMyCase <noreply@printmycase.com.br>`
-- [ ] Auth email enviado com sucesso em produção
-- [ ] Email transacional enviado com sucesso em produção
-- [ ] Nenhum erro 403 de sandbox/teste nos logs recentes
-- [ ] Logs e rastreabilidade confirmados para ambos os fluxos
+### Etapa 5 — Validar em produção
+Validar com evidência em `email_send_log`:
+- signup
+- recovery
+- welcome-email
+- coin-purchase-confirmation
+- order-status-update para pelo menos:
+  - confirmação inicial
+  - shipped com rastreio
+  - delivered ou cancelled
+
+## Critérios de aceite
+
+A tarefa estará fechada quando:
+- o remetente final estiver consistente em todos os fluxos
+- auth emails críticos estiverem validados em produção
+- existir email de boas-vindas funcionando
+- existir email de compra de moedas funcionando
+- fluxo de compra de case estiver coberto do recebimento às atualizações de status
+- `email_send_log` registrar corretamente `pending` e `sent/failed` com `provider_message_id` quando disponível
+- a documentação refletir a matriz final de emails
 
 ## Detalhes técnicos
-- O helper central já aplica:
-  - `from = \`${DEFAULT_FROM_NAME} <${DEFAULT_FROM_EMAIL}>\``
-- Hoje os defaults são:
-  - `onboarding@resend.dev`
-  - `PrintMyCase`
-- O erro visto em produção foi:
-  - `You can only send testing emails to your own email address`
-- Isso indica que o bloqueio atual é de remetente/domínio efetivo no Resend, não de template ou de lógica de envio.
+Arquivos centrais envolvidos:
+- `supabase/functions/auth-email-hook/index.ts`
+- `supabase/functions/send-transactional-email/index.ts`
+- `supabase/functions/_shared/transactional-email-templates/registry.ts`
+- `supabase/functions/_shared/transactional-email-templates/*`
+- `supabase/functions/stripe-webhook/index.ts`
+- `supabase/functions/verify-coin-purchase/index.ts`
+- `supabase/functions/notify-order-status/index.ts`
+- `ARCHITECTURE.md`
+
+Bugs/gaps identificados nesta revisão:
+- `auth-email-hook` ainda não valida explicitamente erro das gravações no `email_send_log`
+- não existe email de boas-vindas
+- não existe email de compra/crédito de moedas
+- “uso de coins” ainda não deve virar email por ação nesta fase; o fluxo necessário é compra/crédito, não ruído operacional
+
+Resultado final esperado:
+- stack de emails completa e coerente para cadastro, onboarding, moedas e compra
+- menor risco operacional
+- rastreabilidade completa
+- cobertura funcional dos emails realmente necessários do produto
