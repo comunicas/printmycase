@@ -1,12 +1,11 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, Move, Loader2, Sparkles, Eye, EyeOff } from "lucide-react";
+import { Camera, Move, Loader2, Sparkles } from "lucide-react";
 
 interface PhonePreviewProps {
   image: string | null;
   scale: number;
   position: { x: number; y: number };
   rotation?: number;
-  previewMode?: "front" | "rear";
   onPositionChange: (pos: { x: number; y: number }) => void;
   onScaleChange?: (scale: number) => void;
   onImageUpload: (file: File) => void;
@@ -22,7 +21,7 @@ interface PhonePreviewProps {
 
 const CROSSFADE_MS = 200;
 
-const PhonePreview = ({ image, scale, position, rotation = 0, previewMode = "rear", onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -34,7 +33,6 @@ const PhonePreview = ({ image, scale, position, rotation = 0, previewMode = "rea
   const [displayImage, setDisplayImage] = useState<string | null>(image);
   const [prevImage, setPrevImage] = useState<string | null>(null);
   const [fadeIn, setFadeIn] = useState(false);
-  const [showSafeAreaOverlay, setShowSafeAreaOverlay] = useState(true);
 
   useEffect(() => {
     if (image === displayImage) return;
@@ -183,8 +181,6 @@ const PhonePreview = ({ image, scale, position, rotation = 0, previewMode = "rea
 
   const oversize = Math.max(150, scale * 1.25);
   const offset = -(oversize - 100) / 2;
-  const shouldShowMainFade = previewMode === "rear" || showSafeAreaOverlay;
-
   const buildImageStyle = (src: string) => ({
     backgroundImage: `url("${src}")`,
     backgroundSize: `${scale * (100 / oversize)}%`,
@@ -243,28 +239,11 @@ const PhonePreview = ({ image, scale, position, rotation = 0, previewMode = "rea
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
-            {shouldShowMainFade && (
-              <div
-                className="pointer-events-none absolute left-[9.5%] right-[9.5%] top-[4.2%] z-[35] h-[20%] overflow-hidden rounded-[2.6rem] rounded-b-[3.4rem] border border-foreground/12 border-b-0"
-              >
-                <div className="absolute inset-x-0 top-0 h-[28%] bg-foreground/18" />
-                <div className="absolute inset-0 bg-gradient-to-b from-foreground/82 via-foreground/42 to-transparent" />
-              </div>
-            )}
             {image && !isDragging && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => setShowSafeAreaOverlay((current) => !current)}
-              className="absolute bottom-3 left-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-background/85 text-foreground shadow-lg transition-colors hover:bg-background"
-              aria-label={showSafeAreaOverlay ? "Ocultar área segura da câmera" : "Mostrar área segura da câmera"}
-              title={showSafeAreaOverlay ? "Ocultar área segura da câmera" : "Mostrar área segura da câmera"}
-            >
-              {showSafeAreaOverlay ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
           </div>
           {isProcessing && (
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
