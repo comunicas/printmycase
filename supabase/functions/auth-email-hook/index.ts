@@ -9,7 +9,7 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
-import { DEFAULT_FROM_EMAIL, DEFAULT_FROM_NAME } from '../_shared/resend.ts'
+import { DEFAULT_FROM_EMAIL, DEFAULT_FROM_NAME, sendWithResend } from '../_shared/resend.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -64,6 +64,63 @@ function buildTraceContext(payload: any): AuthTraceContext {
     message_id: `auth-${actionType}-${runId}`,
     idempotency_key: `auth:${actionType}:${runId}`,
     queue: 'auth_emails',
+  }
+}
+
+function buildEmailLogMetadata(trace: AuthTraceContext, traceStage: string, providerMessageId: string | null = null) {
+  return {
+    provider: 'resend',
+    provider_message_id: providerMessageId,
+    queue: trace.queue,
+    idempotency_key: trace.idempotency_key,
+    from_email: FROM_EMAIL,
+    from_name: SITE_NAME,
+    from: `${SITE_NAME} <${FROM_EMAIL}>`,
+    run_id: trace.run_id,
+    hook_event_type: trace.hook_event_type,
+    action_type: trace.action_type,
+    trace_stage: traceStage,
+    trace,
+  }
+}
+
+async function insertSentFallbackLog(
+  supabase: ReturnType<typeof createClient>,
+  trace: AuthTraceContext,
+  emailType: string,
+  providerMessageId: string | null,
+) {
+  const { data: sentRow } = await supabase
+    .from('email_send_log')
+    .select('id')
+    .eq('message_id', trace.message_id)
+    .eq('status', 'sent')
+    .limit(1)
+    .maybeSingle()
+
+  if (sentRow) {
+    console.log('Auth email fallback sent log already exists, skipping duplicate sent insert', {
+      trace_stage: 'fallback_sent_duplicate_skipped',
+      ...trace,
+    })
+    return
+  }
+
+  const { error: sentInsertError } = await supabase.from('email_send_log').insert({
+    message_id: trace.message_id,
+    template_name: emailType,
+    recipient_email: trace.recipient_email,
+    status: 'sent',
+    metadata: buildEmailLogMetadata(trace, 'hook_fallback_sent', providerMessageId),
+  })
+
+  if (sentInsertError) {
+    console.error('Failed to persist auth email fallback sent log', {
+      trace_stage: 'fallback_sent_persist_failed',
+      ...trace,
+      error: sentInsertError,
+    })
+    throw new Error('Failed to persist fallback sent log')
   }
 }
 
@@ -309,19 +366,7 @@ async function handleWebhook(req: Request): Promise<Response> {
     template_name: emailType,
     recipient_email: trace.recipient_email,
     status: 'pending',
-    metadata: {
-      provider: 'resend',
-      queue: trace.queue,
-      idempotency_key: trace.idempotency_key,
-      from_email: FROM_EMAIL,
-      from_name: SITE_NAME,
-      from: `${SITE_NAME} <${FROM_EMAIL}>`,
-      run_id: trace.run_id,
-      hook_event_type: trace.hook_event_type,
-      action_type: trace.action_type,
-      trace_stage: 'hook_pending_logged',
-      trace,
-    },
+    metadata: buildEmailLogMetadata(trace, 'hook_pending_logged'),
   }
 
   const { error: pendingInsertError } = await supabase.from('email_send_log').insert(pendingLog)
@@ -372,30 +417,68 @@ async function handleWebhook(req: Request): Promise<Response> {
       ...trace,
       error: enqueueError,
     })
-    await supabase.from('email_send_log').insert({
-      message_id: trace.message_id,
-      template_name: emailType,
-      recipient_email: trace.recipient_email,
-      status: 'failed',
-      error_message: 'Failed to enqueue email',
-      metadata: {
-        provider: 'resend',
-        queue: trace.queue,
-        idempotency_key: trace.idempotency_key,
-        from_email: FROM_EMAIL,
-        from_name: SITE_NAME,
+    console.log('Auth email queue fallback starting direct send', {
+      trace_stage: 'fallback_direct_send_started',
+      ...trace,
+    })
+
+    try {
+      const resendResult = await sendWithResend({
+        to: trace.recipient_email,
         from: `${SITE_NAME} <${FROM_EMAIL}>`,
-        run_id: trace.run_id,
-        hook_event_type: trace.hook_event_type,
-        action_type: trace.action_type,
-        trace_stage: 'hook_enqueue_failed',
-        trace,
-      },
-    })
-    return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+        subject: EMAIL_SUBJECTS[emailType] || 'Notification',
+        html,
+        text,
+        replyTo: 'sac@printmycase.com.br',
+        tags: [
+          { name: 'queue', value: trace.queue },
+          { name: 'template', value: emailType },
+          { name: 'message_id', value: trace.message_id },
+          { name: 'delivery_path', value: 'hook_fallback' },
+        ],
+      })
+
+      await insertSentFallbackLog(supabase, trace, emailType, resendResult?.id ?? null)
+
+      console.log('Auth email sent via direct fallback', {
+        trace_stage: 'fallback_direct_send_completed',
+        ...trace,
+        provider_message_id: resendResult?.id ?? null,
+      })
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          queued: false,
+          fallback: true,
+          message_id: trace.message_id,
+          idempotency_key: trace.idempotency_key,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    } catch (fallbackError) {
+      const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : 'Fallback send failed'
+
+      await supabase.from('email_send_log').insert({
+        message_id: trace.message_id,
+        template_name: emailType,
+        recipient_email: trace.recipient_email,
+        status: 'failed',
+        error_message: fallbackMessage,
+        metadata: buildEmailLogMetadata(trace, 'hook_enqueue_failed'),
+      })
+
+      console.error('Auth email direct fallback failed', {
+        trace_stage: 'fallback_direct_send_failed',
+        ...trace,
+        error: fallbackError,
+      })
+
+      return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
   }
 
   console.log('Auth email enqueued', {
