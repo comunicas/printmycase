@@ -24,6 +24,7 @@ interface PhonePreviewProps {
 const CROSSFADE_MS = 200;
 
 const SAFE_ZONE_PRESETS: Record<string, { insetX: string; top: string; height: string; radius: string; bottomRadius: string }> = {
+  "iphone-12-pro-max": { insetX: "9.2%", top: "4%", height: "calc(17% + 10px)", radius: "2.7rem", bottomRadius: "3.5rem" },
   "iphone-15-pro-max": { insetX: "8.4%", top: "3.5%", height: "15.2%", radius: "2.95rem", bottomRadius: "3.8rem" },
   "iphone-17-pro": { insetX: "9.5%", top: "4.2%", height: "18%", radius: "2.6rem", bottomRadius: "3.4rem" },
 };
