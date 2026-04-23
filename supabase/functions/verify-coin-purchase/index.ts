@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     // Check idempotency — already credited?
     const { data: existing } = await supabaseAdmin
@@ -111,6 +112,8 @@ Deno.serve(async (req) => {
       });
     }
 
+    const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
     // Credit coins with idempotency key
     const { error: insertError } = await supabaseAdmin
       .from("coin_transactions")
@@ -118,7 +121,7 @@ Deno.serve(async (req) => {
         user_id: userId,
         amount: coinAmount,
         type: "coin_purchase",
-        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        expires_at: expiresAt,
         description: `Compra de ${coinAmount} moedas`,
         stripe_session_id: sessionId,
       });
@@ -136,6 +139,32 @@ Deno.serve(async (req) => {
     }
 
     console.log("[verify-coin] Coins credited:", coinAmount, "to user:", userId);
+
+    const [{ data: profileData }, { data: balanceAfter }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+      supabaseAdmin.rpc("get_coin_balance", { _user_id: userId }),
+    ]);
+
+    const { error: emailError } = await supabaseAdmin.functions.invoke("send-transactional-email", {
+      headers: { Authorization: `Bearer ${serviceRoleKey}` },
+      body: {
+        templateName: "coin-purchase-confirmation",
+        recipientEmail: userEmail,
+        messageId: `coin-purchase-${sessionId}`,
+        idempotencyKey: `coin-purchase-${sessionId}`,
+        templateData: {
+          userName: profileData?.full_name || userEmail.split("@")[0],
+          coinsPurchased: coinAmount,
+          balanceAfter: typeof balanceAfter === "number" ? balanceAfter : null,
+          expiresAt,
+          orderReference: sessionId,
+        },
+      },
+    });
+
+    if (emailError) {
+      console.error("[verify-coin] Coin email dispatch failed:", emailError.message);
+    }
 
     return new Response(JSON.stringify({ status: "credited", coins: coinAmount }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
