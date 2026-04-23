@@ -542,6 +542,9 @@ Deno.serve(async (req) => {
         idempotency_key: idempotencyKey,
         unsubscribe_token: unsubscribeToken,
         provider_message_id: resendResult?.id ?? null,
+        from_email: FROM_EMAIL,
+        from_name: SITE_NAME,
+        from: `${SITE_NAME} <${FROM_EMAIL}>`,
         template_name: templateName,
       },
     })
