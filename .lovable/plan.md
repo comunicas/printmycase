@@ -1,131 +1,92 @@
 
-Objetivo: mover a copy mobile do produto para dentro da navegação por abas da página `/customize/:slug`, criando uma nova aba de informações que concentre o resumo do produto e os highlights com a mesma copy do desktop, em vez de deixá-los soltos abaixo do preview.
+Objetivo: reorganizar as abas mobile de `/customize/:slug` para que `Filtros IA` apareça na primeira posição e a aba de informações do produto passe para a terceira posição, com um rótulo mais alinhado ao conteúdo, como `Detalhes` ou `Produto`.
 
 ## O que será alterado
 
-### 1) Criar uma nova aba mobile de informações
-A navegação mobile hoje tem:
-- `Ajustes`
-- `Filtros IA`
+### 1) Reordenar as abas mobile
+A barra inferior mobile em `src/components/customize/MobileTabBar.tsx` será reorganizada para esta ordem:
 
-Ela passará a incluir uma terceira aba:
-- `Info`
-
-Essa nova aba será usada para exibir:
-- imagem do produto
-- nome do produto
-- preço
-- lista de highlights com a mesma copy do desktop
-
-Direção:
 ```text
-[Ajustes] [Info] [Filtros IA]
+[Filtros IA] [Ajustes] [Detalhes]
 ```
 
-### 2) Levar a copy para junto das informações do produto
-O bloco mobile que hoje fica abaixo do preview em `src/pages/Customize.tsx` será removido dessa posição.
+Se `Filtros IA` não estiver disponível para aquele produto, a ordem visível passa a ser:
 
-Em vez disso, o conteúdo será consolidado dentro da nova aba `Info`, reunindo:
-- thumbnail
+```text
+[Ajustes] [Detalhes]
+```
+
+### 2) Renomear a aba de informações
+A aba hoje identificada visualmente como `Info`/`Informações` será trocada para um nome mais orientado ao conteúdo do produto.
+
+Direção recomendada:
+- rótulo da tab: `Detalhes`
+- título do bottom sheet: `Detalhes do produto`
+
+Alternativa equivalente, se quiser manter mais comercial:
+- rótulo da tab: `Produto`
+- título do bottom sheet: `Detalhes do produto`
+
+A implementação seguirá uma nomenclatura consistente entre:
+- label da tab
+- título do overlay
+- intenção do conteúdo exibido
+
+### 3) Preservar o conteúdo atual da aba de produto
+A terceira aba continuará exibindo exatamente o que já foi organizado:
+- imagem do produto
 - nome
 - preço
-- highlights reaproveitados via `ProductHighlightsList`
+- highlights com a mesma copy do desktop
 
-Isso resolve o ponto principal pedido por você:
-- a copy fica junto com as informações do produto
-- a experiência mobile fica mais organizada
-- o preview continua mais limpo visualmente
+Nada muda no conteúdo em si; apenas:
+- nome da aba
+- posição na navegação
+- título exibido no overlay
 
-### 3) Manter a copy exatamente igual ao desktop
-A aba `Info` vai reutilizar a mesma fonte de dados já extraída para os highlights, preservando a copy 1:1:
-
-- `Policarbonato + TPU — proteção contra impactos e encaixe seguro`
-- `Impressão UV LED — cores vivas, alta nitidez e ótima durabilidade`
-- `Acabamento premium — fosco ou brilho, resistente`
-
-Sem duplicar textos manualmente em dois lugares.
-
-### 4) Ajustar o overlay mobile para suportar a nova aba
-O `MobileTabOverlay` hoje renderiza apenas:
-- painel de ajustes
-- lista de filtros
-
-Ele será ampliado para também renderizar a aba `Info`, com um layout compacto e consistente com o restante da UI mobile:
-- topo com thumbnail + nome + preço
-- highlights abaixo
-- visual clean, discreto e informativo
-- sem competir com o CTA principal do frame
-
-### 5) Preservar a hierarquia da jornada mobile
-A organização final ficará assim:
-```text
-[Header]
-[Preview com CTA principal]
-[Histórico de filtros]
-[Tab bar: Ajustes / Info / Filtros]
-[Continue bar]
-```
-
-Quando o usuário tocar em `Info`, abre o bottom sheet com os detalhes do produto.
-Assim:
-- o CTA no frame continua sendo a ação principal
-- a copy do produto continua acessível
-- o conteúdo informativo não ocupa espaço fixo abaixo do preview
+### 4) Manter a acessibilidade e a lógica de bloqueio atuais
+A lógica atual em `MobileTabBar.tsx` será preservada:
+- `Filtros IA` e `Ajustes` continuam respeitando o estado de bloqueio quando ainda não há imagem
+- a aba de detalhes do produto continua acessível mesmo antes do upload
+- a lógica de abrir/fechar a mesma aba ao tocar novamente permanece igual
 
 ## Arquivos impactados
 
 ### `src/components/customize/MobileTabBar.tsx`
 Será ajustado para:
-- adicionar o tipo/aba `info`
-- incluir ícone e rótulo da nova aba
-- manter a lógica de tabs visíveis estável
+- reordenar o array `tabs`
+- trocar o label da aba `info` para `Detalhes` ou `Produto`
+- manter a regra atual de desabilitação por aba
 
 ### `src/components/customize/MobileTabOverlay.tsx`
 Será ajustado para:
-- suportar `activeTab === "info"`
-- receber props do produto necessárias para renderizar resumo + highlights
-- exibir a copy do produto no mesmo padrão do desktop
-
-### `src/pages/Customize.tsx`
-Será ajustado para:
-- parar de renderizar o card mobile solto abaixo do preview
-- passar nome, preço e imagem do produto para o `MobileTabOverlay`
-- manter o resumo desktop no local atual, sem mudanças estruturais
+- atualizar `tabTitles` da aba `info`
+- refletir o novo nome visual no header do bottom sheet
+- manter intacto o conteúdo da aba
 
 ## Abordagem de implementação
-1. Estender o tipo `MobileTab` com a nova opção `info`.
-2. Adicionar a aba `Info` na barra inferior mobile.
-3. Passar dados do produto para o overlay mobile.
-4. Renderizar dentro do overlay um bloco de informações reutilizando `ProductHighlightsList compact`.
-5. Remover o card informativo fixo que hoje fica abaixo do preview no mobile.
-6. Garantir que desktop continue intacto.
-
-## Regras que serão respeitadas
-- não mover o bloco desktop de lugar
-- manter a copy dos highlights idêntica à já aprovada
-- não alterar o fluxo funcional de upload/customização
-- manter o CTA do frame como principal ponto de atenção
-- não adicionar nome/preço no botão “Finalizar”
+1. Reordenar o array de tabs para `filtros`, `ajustes`, `info`.
+2. Atualizar o label visível da aba `info`.
+3. Atualizar o título correspondente no overlay.
+4. Validar que a renderização condicional de `hasFilters` não quebra a ordem esperada.
+5. Confirmar que o comportamento de tab ativa e fechamento continua igual.
 
 ## Check final documentado
 
-### Mobile
-- existe nova aba `Info`
-- a copy ficou junto das informações do produto
-- o card solto abaixo do preview foi removido
-- a aba mostra nome, preço, imagem e highlights com a mesma copy do desktop
-- o layout continua limpo e compacto
+### Navegação mobile
+- `Filtros IA` aparece na primeira posição
+- `Ajustes` fica no meio
+- `Detalhes`/`Produto` fica na terceira posição
 
-### Desktop
-- o resumo do produto permanece no topo da sidebar
-- highlights continuam iguais
-- nenhuma regressão visual ou estrutural
+### Conteúdo
+- aba final continua mostrando nome, preço, imagem e highlights
+- copy dos highlights permanece igual ao desktop
+- nenhuma regressão no conteúdo do bottom sheet
 
-### Regressão funcional
-- tabs mobile continuam abrindo/fechando normalmente
-- ajustes e filtros continuam funcionando
-- CTA do preview continua intacto
-- barra de finalizar continua sem mudanças indevidas
+### Comportamento
+- aba de detalhes continua acessível sem imagem
+- filtros e ajustes continuam respeitando bloqueio quando necessário
+- abrir/fechar tabs continua funcionando normalmente
 
 ## Resultado esperado
-Depois da implementação, o mobile deixa de exibir a copy como um bloco separado sob o preview e passa a concentrar as informações do produto em uma nova aba `Info`, com a mesma copy do desktop, deixando a interface mais organizada, limpa e coerente com a navegação por abas.
+Depois da implementação, a navegação mobile ficará mais coerente com a prioridade de uso: `Filtros IA` virá primeiro, `Ajustes` depois, e a aba de informações do produto ficará por último com um nome mais claro e mais alinhado ao conteúdo exibido.
