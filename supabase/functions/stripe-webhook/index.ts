@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
 
             const userEmail = userRes.data?.user?.email;
             if (userEmail) {
-              await enqueueOrderEmail(supabaseAdmin, {
+              await dispatchOrderStatusEmail(supabaseAdmin, {
                 userEmail,
                 userName: profileRes.data?.full_name || userEmail.split("@")[0],
                 orderId: order.order_id,
@@ -292,7 +292,7 @@ Deno.serve(async (req) => {
                 newStatus: "analyzing",
                 totalCents: order.total_cents,
                 extraMessage: "Recebemos seu pagamento e seu pedido está sendo analisado. Em breve começaremos a produção!",
-                templateName: "order_confirmed",
+                idempotencyKey: `order_confirmed-${order.order_id}`,
               });
             }
           } catch (emailErr) {
@@ -354,7 +354,7 @@ Deno.serve(async (req) => {
 
           const userEmail = userRes.data?.user?.email;
           if (userEmail) {
-            await enqueueOrderEmail(supabaseAdmin, {
+            await dispatchOrderStatusEmail(supabaseAdmin, {
               userEmail,
               userName: profileRes.data?.full_name || userEmail.split("@")[0],
               orderId: order.id,
@@ -362,7 +362,7 @@ Deno.serve(async (req) => {
               newStatus: "cancelled",
               totalCents: order.total_cents,
               extraMessage: "O prazo de pagamento expirou e seu pedido foi cancelado automaticamente. Você pode fazer um novo pedido a qualquer momento.",
-              templateName: "order_cancelled",
+              idempotencyKey: `order_cancelled-${order.id}`,
             });
           }
         }
