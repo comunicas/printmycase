@@ -2,7 +2,7 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { parseEmailWebhookPayload } from 'npm:@lovable.dev/email-js'
 import { WebhookError, verifyWebhookRequest } from 'npm:@lovable.dev/webhooks-js'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2.49.8'
 import { SignupEmail } from '../_shared/email-templates/signup.tsx'
 import { InviteEmail } from '../_shared/email-templates/invite.tsx'
 import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
@@ -250,7 +250,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   })
 
   try {
-    await sendWithResend({
+    const resendResult = await sendWithResend({
       to: payload.data.email,
       from: `${SITE_NAME} <${FROM_EMAIL}>`,
       subject: EMAIL_SUBJECTS[emailType] || 'Notification',
@@ -268,7 +268,12 @@ async function handleWebhook(req: Request): Promise<Response> {
       template_name: emailType,
       recipient_email: payload.data.email,
       status: 'sent',
-      metadata: { provider: 'resend', run_id },
+      metadata: {
+        provider: 'resend',
+        run_id,
+        email_type: emailType,
+        provider_message_id: resendResult?.id ?? null,
+      },
     })
 
     console.log('Auth email sent via Resend', { emailType, email: payload.data.email, run_id })
