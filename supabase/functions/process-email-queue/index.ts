@@ -77,6 +77,59 @@ function buildTraceMetadata(payload: Record<string, unknown>, queue: string, tra
   }
 }
 
+async function ensurePendingTraceLog(
+  supabase: ReturnType<typeof createClient>,
+  payload: Record<string, unknown>,
+  queue: string,
+) {
+  if (typeof payload.message_id !== 'string' || !payload.message_id) return
+
+  const { data: existingPending, error: pendingLookupError } = await supabase
+    .from('email_send_log')
+    .select('id')
+    .eq('message_id', payload.message_id)
+    .eq('status', 'pending')
+    .limit(1)
+    .maybeSingle()
+
+  if (pendingLookupError) {
+    console.error('Failed to check existing pending trace log', {
+      queue,
+      message_id: payload.message_id,
+      error: pendingLookupError,
+    })
+    return
+  }
+
+  if (existingPending) return
+
+  const { error: pendingInsertError } = await supabase.from('email_send_log').insert({
+    message_id: payload.message_id,
+    template_name: (payload.label || queue) as string,
+    recipient_email: payload.to,
+    status: 'pending',
+    metadata: buildTraceMetadata(payload, queue, 'dispatcher_pending_reconstructed'),
+  })
+
+  if (pendingInsertError) {
+    console.error('Failed to reconstruct missing pending trace log', {
+      queue,
+      message_id: payload.message_id,
+      error: pendingInsertError,
+    })
+    return
+  }
+
+  console.warn('Dispatcher reconstructed missing pending trace log', {
+    trace_stage: 'dispatcher_pending_reconstructed',
+    queue,
+    message_id: payload.message_id,
+    idempotency_key: payload.idempotency_key,
+    run_id: payload.run_id,
+    action_type: payload.action_type,
+  })
+}
+
 // Move a message to the dead letter queue and log the reason.
 async function moveToDlq(
   supabase: ReturnType<typeof createClient>,
@@ -273,6 +326,8 @@ Deno.serve(async (req) => {
       }
 
       try {
+        await ensurePendingTraceLog(supabase, payload, queue)
+
         console.log('Processing queued email message', {
           trace_stage: 'dispatcher_claimed',
           queue,
