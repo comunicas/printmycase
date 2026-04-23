@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
-import { ArrowRight, Check, Download, Loader2, MessageCircleMore, RotateCcw } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowRight, Check, Download, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ContinueBarProps {
@@ -49,21 +48,6 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
     </Button>
   );
 
-  const contactButton = (
-    <Button
-      asChild
-      variant="ghost"
-      size="icon"
-      className="h-10 w-10 shrink-0 text-muted-foreground"
-      aria-label="Abrir contato"
-      title="Abrir contato"
-    >
-      <Link to="/contato">
-        <MessageCircleMore className="w-4 h-4" />
-      </Link>
-    </Button>
-  );
-
   const renderButtonContent = () =>
     isRendering ? (
       <><Loader2 className="w-4 h-4 animate-spin" /> Processando compra...</>
@@ -77,11 +61,12 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
   if (inline) {
     return (
       <div className="w-full py-3">
-        <div className="flex items-center gap-2 w-full">
-          {resetButton}
-          {downloadButton}
-          {contactButton}
-          <Button className="flex-1 gap-1.5" onClick={onContinue} disabled={disabled}>
+        <div className="flex items-center gap-3 w-full">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {resetButton}
+            {downloadButton}
+          </div>
+          <Button className="flex-1 gap-1.5 sm:min-w-[148px] sm:flex-none" onClick={onContinue} disabled={disabled}>
             {renderButtonContent()}
           </Button>
         </div>
@@ -95,10 +80,10 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
       <div className="flex-shrink-0 lg:hidden border-t border-border bg-background/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
         <div className="px-3 py-2 space-y-2">
           <div className="flex items-center gap-3">
-            {resetButton}
-            {downloadButton}
-            <div className="flex-1" />
-            {contactButton}
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              {resetButton}
+              {downloadButton}
+            </div>
             <Button className="gap-1.5 shrink-0" onClick={onContinue} disabled={disabled}>
               {renderButtonContent()}
             </Button>
