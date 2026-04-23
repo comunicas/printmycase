@@ -1,8 +1,7 @@
-import { SlidersHorizontal, Wand2, Image as ImageIcon } from "lucide-react";
+import { SlidersHorizontal, Wand2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AdjustmentsPanel from "./AdjustmentsPanel";
 import AiFiltersList from "./AiFiltersList";
-import GalleryTab from "./GalleryTab";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
 
 interface ImageControlsProps {
@@ -27,8 +26,6 @@ interface ImageControlsProps {
   onUndoLastFilter: () => void;
   onPreviewStart?: (imageUrl: string) => void;
   onPreviewEnd?: () => void;
-  onGallerySelect: (imageUrl: string) => void;
-  isProcessing?: boolean;
 }
 
 const ImageControls = ({
@@ -36,10 +33,9 @@ const ImageControls = ({
   filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory, onFilterClick,
   onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
-  onGallerySelect, isProcessing,
 }: ImageControlsProps) => {
   const hasFilters = filters.length > 0;
-  const colsClass = hasFilters ? "grid-cols-3" : "grid-cols-2";
+  const colsClass = hasFilters ? "grid-cols-2" : "grid-cols-1";
 
   return (
     <div className="w-full max-w-xs sm:max-w-sm lg:max-w-none">
@@ -55,10 +51,6 @@ const ImageControls = ({
               Filtros IA
             </TabsTrigger>
           )}
-          <TabsTrigger value="galeria" className="gap-1.5 text-xs">
-            <ImageIcon className="w-3.5 h-3.5" />
-            Galeria
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="ajustes" className={`space-y-3 mt-2 ${!hasImage ? "opacity-50 pointer-events-none" : ""}`}>
@@ -95,9 +87,6 @@ const ImageControls = ({
           </TabsContent>
         )}
 
-        <TabsContent value="galeria" className={`mt-2 max-h-[30vh] overflow-y-auto lg:max-h-none lg:overflow-visible ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}>
-          <GalleryTab onSelect={onGallerySelect} />
-        </TabsContent>
       </Tabs>
     </div>
   );

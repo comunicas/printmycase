@@ -1,6 +1,6 @@
-import { SlidersHorizontal, Wand2, Image as ImageIcon } from "lucide-react";
+import { SlidersHorizontal, Wand2 } from "lucide-react";
 
-export type MobileTab = "ajustes" | "filtros" | "galeria";
+export type MobileTab = "ajustes" | "filtros";
 
 interface MobileTabBarProps {
   activeTab: MobileTab | null;
@@ -13,7 +13,6 @@ const MobileTabBar = ({ activeTab, onTabClick, hasFilters, disabled }: MobileTab
   const tabs: { id: MobileTab; label: string; icon: typeof SlidersHorizontal; hidden?: boolean }[] = [
     { id: "ajustes", label: "Ajustes", icon: SlidersHorizontal },
     { id: "filtros", label: "Filtros IA", icon: Wand2, hidden: !hasFilters },
-    { id: "galeria", label: "Galeria", icon: ImageIcon },
   ];
 
   const visibleTabs = tabs.filter((t) => !t.hidden);

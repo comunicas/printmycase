@@ -17,7 +17,6 @@ interface PhonePreviewProps {
   processingMessage?: string;
   onUpscaleClick?: () => void;
   previewImageUrl?: string | null;
-  onGalleryClick?: () => void;
   disabled?: boolean;
 }
 
@@ -35,7 +34,7 @@ const SAFE_ZONE_PRESETS: Record<string, SafeZonePreset> = {
 
 const DEFAULT_SAFE_ZONE_PRESET: SafeZonePreset = { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 20px)", radius: "1.5rem", bottomRadius: "3.5rem" };
 
-const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSafeZone = true, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSafeZone = true, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, disabled }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);

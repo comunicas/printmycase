@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PhonePreview from "@/components/PhonePreview";
 import { formatPrice } from "@/lib/types";
@@ -10,10 +10,8 @@ import FilterConfirmDialog from "@/components/customize/FilterConfirmDialog";
 import LowResolutionDialog from "@/components/customize/LowResolutionDialog";
 import LoginDialog from "@/components/customize/LoginDialog";
 import TermsDialog from "@/components/customize/TermsDialog";
-import GalleryPicker from "@/components/customize/GalleryPicker";
 import { useCustomize } from "@/hooks/useCustomize.tsx";
 import IntroDialog from "@/components/customize/IntroDialog";
-import UploadSpotlight from "@/components/customize/UploadSpotlight";
 import MobileTabBar, { type MobileTab } from "@/components/customize/MobileTabBar";
 import MobileTabOverlay from "@/components/customize/MobileTabOverlay";
 import FilterHistoryBar from "@/components/customize/FilterHistoryBar";
@@ -23,27 +21,9 @@ const Customize = () => {
   const navigate = useNavigate();
   const c = useCustomize(id);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-  const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab | null>(null);
   const [showSafeZone, setShowSafeZone] = useState(true);
   const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
-  const spotlightInputRef = useRef<HTMLInputElement>(null);
-
-  const handleSpotlightUpload = useCallback(() => {
-    spotlightInputRef.current?.click();
-  }, []);
-
-  const handleSpotlightFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      c.handleImageUpload(file);
-    }
-    e.target.value = "";
-  }, [c.handleImageUpload]);
-
-  const handleSpotlightGallery = useCallback(() => {
-    setShowGalleryPicker(true);
-  }, []);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
@@ -77,7 +57,6 @@ const Customize = () => {
             isProcessing={c.isProcessing}
             processingMessage={c.processingMsg || undefined}
             previewImageUrl={previewImageUrl}
-            onGalleryClick={() => setShowGalleryPicker(true)}
             disabled={c.isProcessing}
           />
         </div>
@@ -123,8 +102,6 @@ const Customize = () => {
             onUndoLastFilter={c.handleUndoLastFilter}
             onPreviewStart={setPreviewImageUrl}
             onPreviewEnd={() => setPreviewImageUrl(null)}
-            onGallerySelect={c.handleGalleryImageSelect}
-            isProcessing={c.isProcessing}
           />
 
           <div className="mt-auto">
@@ -168,7 +145,6 @@ const Customize = () => {
           onUndoLastFilter={c.handleUndoLastFilter}
           onPreviewStart={setPreviewImageUrl}
           onPreviewEnd={() => setPreviewImageUrl(null)}
-          onGallerySelect={c.handleGalleryImageSelect}
         />
       )}
 
@@ -221,12 +197,6 @@ const Customize = () => {
         onAccept={c.handleTermsAccept}
       />
 
-      <GalleryPicker
-        open={showGalleryPicker}
-        onOpenChange={setShowGalleryPicker}
-        onSelect={c.handleGalleryImageSelect}
-      />
-
       <IntroDialog open={showIntro} onOpenChange={setShowIntro} />
 
       <LowResolutionDialog
@@ -235,20 +205,6 @@ const Customize = () => {
         resolution={c.imageResolution}
         onUpscale={c.handleLowResUpscale}
         hasUpscaleFilter={c.filters.some((f) => f.model_url?.includes("aura-sr"))}
-      />
-
-      <UploadSpotlight
-        open={!c.image && !c.restoring}
-        modelName={c.productName}
-        onUploadClick={handleSpotlightUpload}
-        onGalleryClick={handleSpotlightGallery}
-      />
-      <input
-        ref={spotlightInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleSpotlightFile}
       />
     </div>
   );
