@@ -26,14 +26,14 @@ const CROSSFADE_MS = 200;
 type SafeZonePreset = { insetX?: string; width?: string; top: string; height: string; radius: string; bottomRadius: string };
 
 const SAFE_ZONE_PRESETS: Record<string, SafeZonePreset> = {
-  "iphone-12-pro-max": { width: "40%", top: "3.5%", height: "calc(17% + 20px)", radius: "2.7rem", bottomRadius: "3.5rem" },
-  "iphone-15-pro-max": { width: "40%", top: "3.05%", height: "calc(15.2% + 10px)", radius: "2.95rem", bottomRadius: "3.8rem" },
-  "iphone-17-pro": { width: "40%", top: "3.7%", height: "calc(18% + 10px)", radius: "2.6rem", bottomRadius: "3.4rem" },
+  "iphone-12-pro-max": { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 20px)", radius: "2.7rem", bottomRadius: "3.5rem" },
+  "iphone-15-pro-max": { insetX: "5%", width: "40%", top: "3.05%", height: "calc(15.2% + 10px)", radius: "2.95rem", bottomRadius: "3.8rem" },
+  "iphone-17-pro": { insetX: "5%", width: "40%", top: "3.7%", height: "calc(18% + 10px)", radius: "2.6rem", bottomRadius: "3.4rem" },
   "iphone-17-pro-max": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.7rem", bottomRadius: "3.5rem" },
   "iphone-17-air": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.7rem", bottomRadius: "3.5rem" },
 };
 
-const DEFAULT_SAFE_ZONE_PRESET: SafeZonePreset = { width: "40%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.7rem", bottomRadius: "3.5rem" };
+const DEFAULT_SAFE_ZONE_PRESET: SafeZonePreset = { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.7rem", bottomRadius: "3.5rem" };
 
 const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSafeZone = true, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -259,15 +259,15 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
                 className="pointer-events-none absolute z-10 overflow-hidden bg-foreground/40"
                 aria-hidden="true"
                 style={{
-                  left: safeZonePreset.width ? "0" : safeZonePreset.insetX,
+                  left: safeZonePreset.width ? (safeZonePreset.insetX ?? "5%") : safeZonePreset.insetX,
                   right: safeZonePreset.width ? "auto" : safeZonePreset.insetX,
                   width: safeZonePreset.width,
                   top: safeZonePreset.top,
                   height: safeZonePreset.height,
                   borderTopLeftRadius: safeZonePreset.radius,
                   borderTopRightRadius: safeZonePreset.radius,
-                  borderBottomLeftRadius: safeZonePreset.bottomRadius,
-                  borderBottomRightRadius: safeZonePreset.bottomRadius,
+                  borderBottomLeftRadius: safeZonePreset.width ? safeZonePreset.radius : safeZonePreset.bottomRadius,
+                  borderBottomRightRadius: safeZonePreset.width ? safeZonePreset.radius : safeZonePreset.bottomRadius,
                 }}
               />
             )}
