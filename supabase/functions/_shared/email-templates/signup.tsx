@@ -22,8 +22,6 @@ interface SignupEmailProps {
   confirmationUrl: string
 }
 
-const LOGO_URL = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
-
 export const SignupEmail = ({
   siteName,
   siteUrl,
@@ -64,19 +62,21 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
+const LOGO_URL = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
+
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
-const container = { padding: '32px 25px' }
+const container = { padding: '32px 25px', maxWidth: '520px', margin: '0 auto' }
 const logo = { height: '40px', width: 'auto', marginBottom: '24px' }
 const h1 = {
   fontSize: '22px',
-  fontWeight: 'bold' as const,
+  fontWeight: '700' as const,
   color: '#19191d',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
   color: '#555555',
-  lineHeight: '1.5',
+  lineHeight: '1.6',
   margin: '0 0 25px',
 }
 const link = { color: 'hsl(265, 83%, 57%)', textDecoration: 'underline' }

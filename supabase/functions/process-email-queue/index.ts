@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
       }
 
       try {
-        await sendLovableEmail(
+        const sendResult = await sendLovableEmail(
           {
             run_id: payload.run_id,
             to: payload.to,
@@ -270,12 +270,22 @@ Deno.serve(async (req) => {
           { apiKey, sendUrl: Deno.env.get('LOVABLE_SEND_URL') }
         )
 
+        const providerMessageId =
+          sendResult && typeof sendResult === 'object' && 'message_id' in sendResult
+            ? (sendResult as { message_id?: string | null }).message_id ?? null
+            : null
+
         // Log success
         await supabase.from('email_send_log').insert({
           message_id: payload.message_id,
           template_name: payload.label || queue,
           recipient_email: payload.to,
           status: 'sent',
+          metadata: {
+            provider: 'lovable',
+            provider_message_id: providerMessageId,
+            idempotency_key: payload.idempotency_key ?? null,
+          },
         })
 
         // Delete from queue

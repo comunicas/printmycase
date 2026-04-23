@@ -19,8 +19,6 @@ interface RecoveryEmailProps {
   confirmationUrl: string
 }
 
-const LOGO_URL = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
-
 export const RecoveryEmail = ({
   siteName,
   confirmationUrl,
@@ -33,15 +31,15 @@ export const RecoveryEmail = ({
         <Img src={LOGO_URL} alt={siteName} height="40" style={logo} />
         <Heading style={h1}>Redefinir sua senha</Heading>
         <Text style={text}>
-          Recebemos uma solicitação para redefinir sua senha na {siteName}. Clique
-          no botão abaixo para escolher uma nova senha.
+          Recebemos uma solicitação para redefinir sua senha na {siteName}.
+          Clique no botão abaixo para escolher uma nova senha com segurança.
         </Text>
         <Button style={button} href={confirmationUrl}>
           Redefinir Senha
         </Button>
         <Text style={footer}>
-          Se você não solicitou a redefinição de senha, pode ignorar este email.
-          Sua senha não será alterada.
+          Se você não solicitou a redefinição, pode ignorar este email. Sua
+          senha continuará a mesma.
         </Text>
       </Container>
     </Body>
@@ -50,19 +48,21 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
+const LOGO_URL = 'https://iqnqpwnbdqzvqssxcxgb.supabase.co/storage/v1/object/public/email-assets/logo-printmycase.png'
+
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
-const container = { padding: '32px 25px' }
+const container = { padding: '32px 25px', maxWidth: '520px', margin: '0 auto' }
 const logo = { height: '40px', width: 'auto', marginBottom: '24px' }
 const h1 = {
   fontSize: '22px',
-  fontWeight: 'bold' as const,
+  fontWeight: '700' as const,
   color: '#19191d',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
   color: '#555555',
-  lineHeight: '1.5',
+  lineHeight: '1.6',
   margin: '0 0 25px',
 }
 const button = {

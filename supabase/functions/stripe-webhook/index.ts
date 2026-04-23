@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.8";
+import { dispatchCoinPurchaseConfirmation } from "../_shared/transactional-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -150,49 +151,6 @@ async function enqueueOrderEmail(
   console.log(`[email] Dispatched ${params.templateName}:`, JSON.stringify({ to: params.userEmail, orderId: params.orderId }));
 }
 
-async function enqueueCoinPurchaseEmail(
-  supabaseAdmin: ReturnType<typeof createClient>,
-  params: {
-    userId: string;
-    userEmail: string;
-    coinsPurchased: number;
-    sessionId: string;
-    expiresAt: string;
-  },
-) {
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!serviceRoleKey) {
-    console.error("[email] Missing service role for coin purchase email");
-    return;
-  }
-
-  const [{ data: profileRes }, { data: balanceAfterRes }] = await Promise.all([
-    supabaseAdmin.from("profiles").select("full_name").eq("id", params.userId).maybeSingle(),
-    supabaseAdmin.rpc("get_coin_balance", { _user_id: params.userId }),
-  ]);
-
-  const { error } = await supabaseAdmin.functions.invoke("send-transactional-email", {
-    headers: { Authorization: `Bearer ${serviceRoleKey}` },
-    body: {
-      templateName: "coin-purchase-confirmation",
-      recipientEmail: params.userEmail,
-      messageId: `coin-purchase-${params.sessionId}`,
-      idempotencyKey: `coin-purchase-${params.sessionId}`,
-      templateData: {
-        userName: profileRes?.full_name || params.userEmail.split("@")[0],
-        coinsPurchased: params.coinsPurchased,
-        balanceAfter: typeof balanceAfterRes === "number" ? balanceAfterRes : null,
-        expiresAt: params.expiresAt,
-        orderReference: params.sessionId,
-      },
-    },
-  });
-
-  if (error) {
-    console.error("[email] Coin purchase dispatch failed:", error.message);
-  }
-}
-
 async function registerWebhookEvent(
   supabaseAdmin: ReturnType<typeof createClient>,
   event: { id?: string; type?: string; data?: { object?: { id?: string } } },
@@ -339,7 +297,7 @@ Deno.serve(async (req) => {
             const { data: userData } = await supabaseAdmin.auth.admin.getUserById(metadata.user_id);
             const userEmail = userData?.user?.email;
             if (userEmail) {
-              await enqueueCoinPurchaseEmail(supabaseAdmin, {
+              await dispatchCoinPurchaseConfirmation(supabaseAdmin, {
                 userId: metadata.user_id,
                 userEmail,
                 coinsPurchased: parseInt(metadata.coin_amount),
