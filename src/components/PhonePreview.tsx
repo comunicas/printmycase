@@ -26,14 +26,14 @@ const CROSSFADE_MS = 200;
 type SafeZonePreset = { insetX?: string; width?: string; top: string; height: string; radius: string; bottomRadius: string };
 
 const SAFE_ZONE_PRESETS: Record<string, SafeZonePreset> = {
-  "iphone-12-pro-max": { insetX: "5%", width: "35%", top: "3.5%", height: "calc(17% + 30px)", radius: "1.5rem", bottomRadius: "3.5rem" },
-  "iphone-15-pro-max": { insetX: "5%", width: "35%", top: "3.05%", height: "calc(15.2% + 20px)", radius: "1.5rem", bottomRadius: "3.8rem" },
-  "iphone-17-pro": { insetX: "5%", width: "35%", top: "3.7%", height: "calc(18% + 20px)", radius: "1.5rem", bottomRadius: "3.4rem" },
+  "iphone-12-pro-max": { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 30px)", radius: "1.5rem", bottomRadius: "3.5rem" },
+  "iphone-15-pro-max": { insetX: "5%", width: "40%", top: "3.05%", height: "calc(15.2% + 20px)", radius: "1.5rem", bottomRadius: "3.8rem" },
+  "iphone-17-pro": { insetX: "5%", width: "40%", top: "3.7%", height: "calc(18% + 20px)", radius: "1.5rem", bottomRadius: "3.4rem" },
   "iphone-17-pro-max": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.7rem", bottomRadius: "3.5rem" },
   "iphone-17-air": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.7rem", bottomRadius: "3.5rem" },
 };
 
-const DEFAULT_SAFE_ZONE_PRESET: SafeZonePreset = { insetX: "5%", width: "35%", top: "3.5%", height: "calc(17% + 20px)", radius: "1.5rem", bottomRadius: "3.5rem" };
+const DEFAULT_SAFE_ZONE_PRESET: SafeZonePreset = { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 20px)", radius: "1.5rem", bottomRadius: "3.5rem" };
 
 const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSafeZone = true, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
