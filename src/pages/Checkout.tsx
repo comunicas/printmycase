@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
@@ -331,6 +331,10 @@ const Checkout = () => {
           )}
         </Button>
 
+        <Link to="/contato" className="hidden lg:block text-center text-sm text-primary hover:text-primary/80 transition-colors">
+          Precisando de ajuda? Fale Conosco
+        </Link>
+
         <PaymentBadges />
       </main>
 
@@ -339,24 +343,29 @@ const Checkout = () => {
         className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="max-w-xl mx-auto flex items-center gap-3 px-4 py-3">
-          <div className="flex flex-col leading-tight">
-            <span className="text-xs text-muted-foreground">Total</span>
-            <span className="text-base font-semibold text-foreground">
-              {(totalCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-            </span>
+        <div className="max-w-xl mx-auto px-4 py-3 space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col leading-tight">
+              <span className="text-xs text-muted-foreground">Total</span>
+              <span className="text-base font-semibold text-foreground">
+                {(totalCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </span>
+            </div>
+            <Button
+              className="flex-1 gap-1.5"
+              onClick={handleCheckout}
+              disabled={checkoutLoading || !isAddressValid}
+            >
+              {checkoutLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>Finalizar <ArrowRight className="w-4 h-4" /></>
+              )}
+            </Button>
           </div>
-          <Button
-            className="flex-1 gap-1.5"
-            onClick={handleCheckout}
-            disabled={checkoutLoading || !isAddressValid}
-          >
-            {checkoutLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>Finalizar <ArrowRight className="w-4 h-4" /></>
-            )}
-          </Button>
+          <Link to="/contato" className="block text-center text-sm text-primary hover:text-primary/80 transition-colors">
+            Precisando de ajuda? Fale Conosco
+          </Link>
         </div>
       </div>
     </div>
