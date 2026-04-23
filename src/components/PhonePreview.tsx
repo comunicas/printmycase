@@ -258,17 +258,17 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={disabled}
-                className="upload-cta-glow upload-cta-pulse absolute inset-x-5 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center justify-center gap-3 rounded-[2rem] border border-primary/25 bg-card/82 px-6 py-7 text-center shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.015] hover:border-primary/40 hover:bg-card/90 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 sm:inset-x-6 sm:px-7"
+                className="upload-cta-glow upload-cta-pulse absolute inset-x-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center justify-center gap-2.5 rounded-[1.6rem] border border-primary/20 bg-card/80 px-4 py-5 text-center shadow-lg backdrop-blur-sm transition-all duration-300 hover:scale-[1.015] hover:border-primary/35 hover:bg-card/88 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 sm:inset-x-5 sm:gap-3 sm:rounded-[2rem] sm:px-6 sm:py-7"
                 aria-label="Enviar imagem para começar a personalizar sua capinha"
               >
-                <span className="upload-cta-icon flex h-16 w-16 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary shadow-lg">
-                  <ImagePlus className="h-8 w-8" aria-hidden="true" />
+                <span className="upload-cta-icon flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary shadow-md sm:h-16 sm:w-16">
+                  <ImagePlus className="h-6 w-6 sm:h-8 sm:w-8" aria-hidden="true" />
                 </span>
-                <span className="space-y-1">
-                  <span className="block text-lg font-semibold text-foreground sm:text-xl">
+                <span className="space-y-0.5 sm:space-y-1">
+                  <span className="block text-base font-semibold text-foreground sm:text-xl">
                     Envie sua imagem
                   </span>
-                  <span className="block text-sm leading-relaxed text-muted-foreground sm:text-[15px]">
+                  <span className="block text-[12px] leading-snug text-muted-foreground sm:text-[15px] sm:leading-relaxed">
                     Toque aqui para começar sua capinha
                   </span>
                 </span>

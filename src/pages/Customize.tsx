@@ -1,4 +1,3 @@
-import { ShieldCheck, Sparkles, SwatchBook } from "lucide-react";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PhonePreview from "@/components/PhonePreview";
@@ -16,24 +15,7 @@ import IntroDialog from "@/components/customize/IntroDialog";
 import MobileTabBar, { type MobileTab } from "@/components/customize/MobileTabBar";
 import MobileTabOverlay from "@/components/customize/MobileTabOverlay";
 import FilterHistoryBar from "@/components/customize/FilterHistoryBar";
-
-const productHighlights = [
-  {
-    icon: ShieldCheck,
-    title: "Policarbonato + TPU",
-    description: "proteção contra impactos e encaixe seguro",
-  },
-  {
-    icon: Sparkles,
-    title: "Impressão UV LED",
-    description: "cores vivas, alta nitidez e ótima durabilidade",
-  },
-  {
-    icon: SwatchBook,
-    title: "Acabamento premium",
-    description: "fosco ou brilho, resistente",
-  },
-] as const;
+import ProductHighlightsList from "@/components/customize/ProductHighlightsList";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -98,19 +80,7 @@ const Customize = () => {
               </div>
             </div>
 
-            <ul className="space-y-2">
-              {productHighlights.map(({ icon: Icon, title, description }) => (
-                <li key={title} className="flex items-start gap-2">
-                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-sm bg-muted/60 text-muted-foreground">
-                    <Icon className="h-3 w-3" />
-                  </span>
-                  <div className="min-w-0 max-w-[220px] text-[12px] leading-[1.3] text-muted-foreground">
-                    <span className="font-normal text-foreground/90">{title}</span>
-                    <span>{" — "}{description}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <ProductHighlightsList />
           </div>
 
           <h2 className="text-lg font-semibold text-foreground">Personalize sua Case</h2>
@@ -183,7 +153,26 @@ const Customize = () => {
         />
       )}
 
-      {/* Mobile fixed footer: TabBar + ContinueBar */}
+        <section className="lg:hidden w-full max-w-[360px] space-y-2 px-1 pb-2">
+          <div className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2.5">
+            <div className="mb-1.5 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-medium leading-tight text-foreground">{c.productName}</p>
+                <p className="text-[13px] font-semibold text-primary">
+                  {c.product?.price_cents ? formatPrice(c.product.price_cents / 100) : ""}
+                </p>
+              </div>
+              <img
+                src={c.product?.device_image || c.product?.images?.[0] || "/placeholder.svg"}
+                alt={c.productName}
+                className="h-11 w-11 flex-shrink-0 rounded-md object-contain bg-background"
+              />
+            </div>
+            <ProductHighlightsList compact />
+          </div>
+        </section>
+
+        {/* Mobile fixed footer: TabBar + ContinueBar */}
       <div className="lg:hidden flex-shrink-0 relative z-[60]">
         <FilterHistoryBar
           filterHistory={c.filterHistory}
