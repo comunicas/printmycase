@@ -1,85 +1,88 @@
 
-Objetivo: corrigir o plano anterior para deixar claro que o ajuste da safe zone será apenas no mobile e somente no arredondamento dos quatro cantos, reduzindo a curvatura para seguir o mesmo padrão visual do desktop, além de trocar o CTA principal para `Comprar agora`.
+Objetivo: validar e corrigir a safe zone mobile para que fique menos arredondada apenas nos quatro cantos, sem alterar posição/largura/altura nos modelos que já existem hoje, e aplicar borda preta sólida de 3px em todas as safe zones.
 
-## O que será alterado
+## O que será ajustado
 
-### 1) Ajustar apenas o arredondamento da safe zone no mobile
-A correção da safe zone não vai mexer em posição, largura, altura ou proporção geral.
+### 1) Corrigir somente os modelos já implementados
+O ajuste ficará restrito aos modelos que já possuem preset em `src/components/PhonePreview.tsx`.
 
-Implementação:
-- atuar somente nos valores de `radius` e `bottomRadius`
-- reduzir o arredondamento dos quatro cantos
-- usar o desktop como referência visual do quanto a curva deve ficar mais seca
-- manter o shape atual, apenas menos redondo
+Modelos atualmente implementados:
+- `iphone-12-pro-max`
+- `iphone-15-pro-max`
+- `iphone-17-pro`
+- `iphone-17-pro-max`
+- `iphone-17-air`
+
+Direção:
+- não adicionar novos modelos
+- revisar apenas os presets existentes
+- manter o comportamento atual por modelo
+
+### 2) Refinar apenas o arredondamento mobile
+A correção do mobile será cirúrgica: mexer só no raio dos quatro cantos.
 
 Escopo:
-- foco principal nos modelos móveis destacados:
-  - `iphone-17-pro`
-  - `iphone-17-pro-max`
-  - validar consistência com `iphone-17-air` se usar o mesmo padrão visual
-
-Resultado:
-- safe zone menos arredondada
-- quatro cantos mais próximos da referência desktop
-- visual mais técnico e menos “inchado” no topo e nas bordas
-
-### 2) Preservar toda a geometria atual da safe zone
-Para evitar desalinhar o preview, a alteração será restrita ao raio dos cantos.
+- revisar `mobileRadius` e `mobileBottomRadius` dos modelos que já usam diferenciação mobile
+- se necessário, padronizar o mesmo tratamento mobile apenas nos modelos já existentes
+- manter o desktop como referência visual de canto menos arredondado
 
 Não será alterado:
 - `top`
 - `height`
 - `width`
 - `insetX`
-- posicionamento geral da overlay
+- posição geral da safe zone
 
-Resultado:
-- o ajuste fica cirúrgico
-- o mobile se aproxima do desktop sem criar regressão no enquadramento
+Resultado esperado:
+- safe zone mobile menos redonda nos quatro cantos
+- mesma geometria atual
+- sem deslocamento visual
 
-### 3) Alterar o CTA principal para “Comprar agora”
-O botão principal do `ContinueBar` será atualizado de `Finalizar` para `Comprar agora`.
+### 3) Aplicar borda preta de 3px em todas as safe zones
+Hoje a safe zone usa apenas preenchimento escuro translúcido. Será adicionada uma borda preta sólida de 3px em todos os casos.
 
 Implementação:
-- trocar apenas o texto principal do botão
-- manter ícone, hierarquia e comportamento atual
-- manter o loading coerente com compra, sem adicionar ruído visual
+- aplicar `border: 3px solid #000`
+- manter o preenchimento interno atual, salvo ajuste fino de contraste se necessário
+- garantir que a borda acompanhe exatamente os mesmos raios do shape
 
-Observação:
-- isso continua respeitando a preferência do projeto de manter o botão simples, só com rótulo e ícone
+Resultado esperado:
+- todas as safe zones ficam mais definidas visualmente
+- leitura do contorno melhora em qualquer aparelho
+- o contorno não altera a posição do overlay
 
-## Arquivos impactados
+## Arquivo impactado
 
 ### `src/components/PhonePreview.tsx`
 Será ajustado para:
-- reduzir o arredondamento da safe zone
-- alinhar os quatro cantos ao padrão visual do desktop
-- preservar toda a geometria existente
+- revisar os presets existentes da safe zone
+- reduzir o arredondamento mobile apenas nos quatro cantos
+- preservar posição, largura e altura
+- aplicar borda preta de 3px em todas as safe zones
 
-### `src/components/customize/ContinueBar.tsx`
-Será ajustado para:
-- trocar o label principal para `Comprar agora`
-- manter o estado de loading consistente com a ação
+## Validação no preview
+Depois da implementação, a validação no preview será feita comparando os modelos já existentes para confirmar:
+
+### Geometria
+- posição não mudou
+- largura não mudou
+- altura não mudou
+
+### Forma
+- apenas os quatro cantos ficaram menos arredondados no mobile
+- desktop continua como referência
+- não houve mudança de shape fora do raio
+
+### Contorno
+- todas as safe zones exibem borda preta sólida de 3px
+- borda acompanha corretamente o arredondamento de cada preset
 
 ## Abordagem de implementação
-1. Revisar os presets da safe zone dos modelos afetados.
-2. Reduzir apenas `radius` e `bottomRadius`.
-3. Garantir que os quatro cantos fiquem menos arredondados no mobile.
-4. Preservar posição e tamanho atuais da safe zone.
-5. Atualizar o CTA principal para `Comprar agora`.
-6. Validar consistência visual entre mobile e a referência do desktop.
-
-## Check final documentado
-
-### Safe zone
-- alteração feita apenas no arredondamento
-- quatro cantos menos redondos
-- mobile visualmente alinhado ao desktop
-- sem mudança de posição ou tamanho da overlay
-
-### CTA
-- botão principal mostra `Comprar agora`
-- continua simples, direto e orientado à conversão
+1. Revisar os presets atuais em `PhonePreview`.
+2. Ajustar apenas os raios mobile dos modelos já implementados.
+3. Não tocar em `top`, `height`, `width` e `insetX`.
+4. Adicionar borda preta de 3px ao elemento da safe zone.
+5. Validar no preview os modelos já existentes, sem incluir novos.
 
 ## Resultado esperado
-Depois do ajuste, a safe zone mobile ficará menos arredondada nos quatro cantos, seguindo melhor a referência visual do desktop sem mudar sua geometria, e o botão principal da customização passará a usar o texto `Comprar agora`.
+Depois da correção, a safe zone mobile ficará menos arredondada somente nos quatro cantos, mantendo exatamente a mesma posição e dimensões atuais nos modelos já implementados, e todas as safe zones passarão a ter borda preta sólida de 3px para um contorno mais preciso.
