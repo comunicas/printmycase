@@ -2,14 +2,13 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { parseEmailWebhookPayload } from 'npm:@lovable.dev/email-js'
 import { WebhookError, verifyWebhookRequest } from 'npm:@lovable.dev/webhooks-js'
-import { createClient } from 'npm:@supabase/supabase-js@2.49.8'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { SignupEmail } from '../_shared/email-templates/signup.tsx'
 import { InviteEmail } from '../_shared/email-templates/invite.tsx'
 import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
-import { DEFAULT_FROM_EMAIL, DEFAULT_FROM_NAME, sendWithResend } from '../_shared/resend.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,12 +17,12 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirme sua conta PrintMyCase',
-  invite: 'Convite PrintMyCase',
-  magiclink: 'Acesse sua conta PrintMyCase',
-  recovery: 'Redefinir senha — PrintMyCase',
-  email_change: 'Confirme a troca de email — PrintMyCase',
-  reauthentication: 'Código de verificação — PrintMyCase',
+  signup: 'Confirm your email',
+  invite: "You've been invited",
+  magiclink: 'Your login link',
+  recovery: 'Reset your password',
+  email_change: 'Confirm your new email',
+  reauthentication: 'Your verification code',
 }
 
 // Template mapping
@@ -37,16 +36,17 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = DEFAULT_FROM_NAME
-const ROOT_DOMAIN = "studio.printmycase.com.br"
-const FROM_EMAIL = DEFAULT_FROM_EMAIL
+const SITE_NAME = "printmycase"
+const SENDER_DOMAIN = "notify.printmycase.com.br"
+const ROOT_DOMAIN = "printmycase.com.br"
+const FROM_DOMAIN = "notify.printmycase.com.br" // Domain shown in From address (may be root or sender subdomain)
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
 // The sample email uses a fixed placeholder (RFC 6761 .test TLD) so the Go backend
 // can always find-and-replace it with the actual recipient when sending test emails,
 // even if the project's domain has changed since the template was scaffolded.
-const SAMPLE_PROJECT_URL = "https://studio.printmycase.com.br"
+const SAMPLE_PROJECT_URL = "https://printmycase.lovable.app"
 const SAMPLE_EMAIL = "user@example.test"
 const SAMPLE_DATA: Record<string, object> = {
   signup: {
@@ -77,31 +77,6 @@ const SAMPLE_DATA: Record<string, object> = {
   reauthentication: {
     token: '123456',
   },
-}
-
-async function insertEmailLog(
-  supabase: ReturnType<typeof createClient>,
-  payload: {
-    message_id: string
-    template_name: string
-    recipient_email: string
-    status: string
-    metadata?: Record<string, unknown>
-    error_message?: string
-  }
-) {
-  const { error } = await supabase.from('email_send_log').insert(payload)
-
-  if (error) {
-    console.error('Failed to persist auth email log', {
-      error,
-      messageId: payload.message_id,
-      templateName: payload.template_name,
-      status: payload.status,
-    })
-  }
-
-  return error
 }
 
 // Preview endpoint handler - returns rendered HTML without sending email
@@ -259,6 +234,7 @@ async function handleWebhook(req: Request): Promise<Response> {
     plainText: true,
   })
 
+  // Enqueue email for async processing by the dispatcher (process-email-queue).
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -267,60 +243,51 @@ async function handleWebhook(req: Request): Promise<Response> {
   const messageId = crypto.randomUUID()
 
   // Log pending BEFORE enqueue so we have a record even if enqueue crashes
-  await insertEmailLog(supabase, {
+  await supabase.from('email_send_log').insert({
     message_id: messageId,
     template_name: emailType,
     recipient_email: payload.data.email,
     status: 'pending',
   })
 
-  try {
-    const resendResult = await sendWithResend({
+  const { error: enqueueError } = await supabase.rpc('enqueue_email', {
+    queue_name: 'auth_emails',
+    payload: {
+      run_id,
+      message_id: messageId,
       to: payload.data.email,
-      from: `${SITE_NAME} <${FROM_EMAIL}>`,
+      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      sender_domain: SENDER_DOMAIN,
       subject: EMAIL_SUBJECTS[emailType] || 'Notification',
       html,
       text,
-      tags: [
-        { name: 'template', value: emailType },
-        { name: 'message_id', value: messageId },
-        { name: 'run_id', value: run_id },
-      ],
-    })
+      purpose: 'transactional',
+      label: emailType,
+      queued_at: new Date().toISOString(),
+    },
+  })
 
-    await insertEmailLog(supabase, {
-      message_id: messageId,
-      template_name: emailType,
-      recipient_email: payload.data.email,
-      status: 'sent',
-      metadata: {
-        provider: 'resend',
-        run_id,
-        email_type: emailType,
-        provider_message_id: resendResult?.id ?? null,
-      },
-    })
-
-    console.log('Auth email sent via Resend', { emailType, email: payload.data.email, run_id })
-
-    return new Response(
-      JSON.stringify({ success: true, sent: true }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  } catch (error) {
-    console.error('Failed to send auth email via Resend', { error, run_id, emailType })
-    await insertEmailLog(supabase, {
+  if (enqueueError) {
+    console.error('Failed to enqueue auth email', { error: enqueueError, run_id, emailType })
+    await supabase.from('email_send_log').insert({
       message_id: messageId,
       template_name: emailType,
       recipient_email: payload.data.email,
       status: 'failed',
-      error_message: error instanceof Error ? error.message : 'Failed to send email',
+      error_message: 'Failed to enqueue email',
     })
-    return new Response(JSON.stringify({ error: 'Failed to send email' }), {
+    return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+
+  console.log('Auth email enqueued', { emailType, email: payload.data.email, run_id })
+
+  return new Response(
+    JSON.stringify({ success: true, queued: true }),
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  )
 }
 
 Deno.serve(async (req) => {
