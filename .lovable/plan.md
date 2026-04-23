@@ -1,194 +1,233 @@
 
-Objetivo refatorado: abandonar a infraestrutura atual de envio e migrar para Resend com o menor risco possível, preservando apenas os gatilhos de negócio já existentes.
+Objetivo revisado: validar o que realmente aconteceu no último cadastro, separar o que está funcionando do que está inconsistente, e fechar um plano de correção do fluxo de emails em cima de evidências do código e dos logs atuais.
 
-## Diagnóstico do estado atual
-- O projeto hoje está acoplado à infraestrutura nativa de emails em vários pontos:
-  - emails de autenticação
-  - sender central de app emails
-  - fila/processador
-  - unsubscribe e suppression
-  - logs de envio
-- O domínio `notify.printmycase.com.br` ainda está pendente nessa infraestrutura atual.
-- Isso importa porque, se o mesmo subdomínio for reaproveitado no Resend, pode haver conflito de DNS.
-- Hoje o contato e o status de pedido já dependem do sender central atual.
-- Não há conexão Resend já disponível no workspace neste momento, então a integração por connector ainda precisará ser criada antes da implementação.
+## Diagnóstico do último usuário cadastrado
 
-## Melhor caminho recomendado
-Melhor caminho: usar Resend em um subdomínio separado do fluxo atual.
+### O que os logs mostram
+Último cadastro identificado:
+- email: `suporte@printmycase.com.br`
+- evento de signup: `2026-04-23T04:43:45Z`
+- o hook de email foi executado com sucesso no cadastro
+- depois houve `GET /verify` com `303` em `2026-04-23T04:44:18Z`
+- em seguida houve login bem-sucedido
 
-Recomendação prática:
-- manter o domínio atual fora da migração imediata
-- configurar o Resend em um subdomínio dedicado, por exemplo:
-  - `mail.printmycase.com.br`, ou
-  - `notify2.printmycase.com.br`
-- só usar `notify.printmycase.com.br` no Resend se você realmente quiser aposentar o arranjo atual e remover a delegação DNS anterior no provedor de domínio
+Leitura prática:
+- o fluxo de autenticação do último usuário não aparenta estar quebrado do ponto de vista do cadastro
+- houve solicitação de confirmação e depois verificação bem-sucedida
+- não apareceu erro explícito de auth no backend para esse usuário
 
-Por que esse caminho é melhor:
-- reduz risco de conflito DNS
-- evita ficar bloqueado pela configuração pendente atual
-- permite migração gradual
-- facilita rollback
+### O que está inconsistente
+Mesmo com o hook de auth executado com sucesso:
+- não apareceram registros recentes de auth em `email_send_log` para `signup`, `recovery`, `magiclink`, etc.
+- também não apareceram logs recentes úteis de execução de `auth-email-hook` ou `send-transactional-email`
 
-## Resposta direta às suas perguntas
+Conclusão:
+- o signup do último usuário aparentemente funcionou
+- mas a observabilidade do fluxo de auth está inconsistente com o código atual
+- hoje não dá para afirmar com segurança se:
+  - o email foi enviado pela implementação nova via Resend e não foi logado
+  - ou o fluxo real em produção/teste ainda está passando por um caminho diferente do esperado
 
-### 1) “Preciso fazer algo lá?”
-Sim, provavelmente no painel do Resend e no provedor DNS do domínio.
+## Checklist do estado atual do plano
 
-Se for usar um subdomínio novo no Resend:
-- adicionar o domínio/subdomínio no Resend
-- copiar os registros DNS que o Resend pedir
-- publicar esses registros no seu provedor DNS
-- aguardar validação no Resend
+### 1) Fluxo de auth email
+- [x] Existe `auth-email-hook`
+- [x] O hook foi chamado com sucesso no último signup
+- [x] O último usuário conseguiu verificar a conta
+- [ ] O envio de auth está observável no `email_send_log`
+- [ ] Há confirmação clara de que o código implantado corresponde exatamente ao código atual do repositório
 
-Se quiser usar exatamente `notify.printmycase.com.br`:
-- antes precisa desligar o uso atual desse subdomínio na infraestrutura antiga
-- depois remover no provedor DNS qualquer delegação/NS antiga desse subdomínio
-- só então validar esse mesmo subdomínio no Resend
+Status:
+- funcional do ponto de vista do usuário
+- parcial do ponto de vista técnico e de rastreabilidade
 
-### 2) “Você conecta via API no Resend?”
-Sim, o plano refatorado é integrar o backend com a API do Resend.
-Como você escolheu usar connector, o fluxo ideal é:
-- conectar a conta Resend ao projeto
-- usar essa conexão no backend para enviar os emails
-- substituir os pontos atuais de envio por chamadas ao Resend
+### 2) Fluxo de emails transacionais
+- [x] Existe sender central via `send-transactional-email`
+- [x] `submit-contact` usa o sender central
+- [x] `notify-order-status` usa o sender central
+- [x] Templates de contato e status estão registrados
+- [ ] Ainda falta validar envios reais recentes após a migração
 
-## O que muda no plano original
-O plano anterior partia da premissa de estabilizar a infraestrutura atual.
-Isso deixa de ser o melhor caminho se a decisão é usar Resend.
+Status:
+- estrutura principal pronta
+- falta validação operacional final
 
-Portanto:
-- sai a etapa de “destravar domínio atual”
-- sai a etapa de “estabilizar fila atual como base definitiva”
-- entra a etapa de “desacoplar gatilhos do provedor atual”
-- entra a etapa de “validar DNS e envio real no Resend”
-- a fila/logs/unsubscribe atuais passam a ser reavaliados: ou são removidos da responsabilidade de envio, ou ficam apenas como legado temporário durante a transição
+### 3) Integração Resend
+- [x] Existe helper compartilhado `_shared/resend.ts`
+- [x] A integração usa gateway do connector
+- [x] `RESEND_API_KEY` e `LOVABLE_API_KEY` já existem
+- [ ] O remetente ainda está em `onboarding@resend.dev`
+- [ ] Ainda não está fechado o uso de domínio/remetente final verificado no Resend
 
-## Plano refatorado para Resend
+Status:
+- integração conectada
+- branding/remetente de produção ainda incompleto
 
-### Etapa 1 — Decisão de domínio de envio
-Definir uma das duas estratégias:
+### 4) Infra antiga
+- [x] `process-email-queue` segue no projeto como legado
+- [x] `ARCHITECTURE.md` já menciona a fila como legado
+- [ ] Ainda existem resíduos do fluxo antigo na operação e na documentação
+- [ ] Ainda há histórico de falhas antigas em `email_send_log`
 
-Opção A — recomendada
-- usar novo subdomínio no Resend
+Status:
+- convivência entre legado e fluxo novo ainda não foi totalmente limpa
 
-Opção B — mais arriscada
-- reaproveitar `notify.printmycase.com.br`
-- exige desmontar a configuração anterior antes
+## Bugs e riscos reais encontrados
 
-Resultado esperado
-- domínio de envio da nova arquitetura definido sem ambiguidade
-
-### Etapa 2 — Habilitar acesso ao Resend no projeto
-- criar/vincular a conexão Resend no projeto
-- confirmar que o backend consegue autenticar no Resend
-- padronizar a estratégia de envio por connector
-
-Resultado esperado
-- projeto apto a falar com a API do Resend
-
-### Etapa 3 — Desenhar a nova arquitetura mínima
-Substituir a infraestrutura atual de envio por uma arquitetura mais simples:
-- auth emails via Resend
-- app emails via Resend
-- manter templates React/HTML onde fizer sentido
-- remover dependência operacional da fila atual para os fluxos principais
-
-Resultado esperado
-- definição clara do que será mantido, adaptado ou aposentado
-
-### Etapa 4 — Migrar primeiro os app emails
-Ordem segura:
-1. contato
-2. status de pedido
-
-Por quê:
-- são fluxos controlados e fáceis de validar
-- geram menos risco que auth
-
-Resultado esperado
-- contato e pedidos enviando por Resend sem depender do sender atual
-
-### Etapa 5 — Migrar os auth emails
-- revisar hook atual de auth
-- substituir o mecanismo de entrega para Resend
-- validar:
-  - confirmação de conta
-  - recuperação de senha
-  - magic link
-  - troca de email
-  - reauthentication
-
-Resultado esperado
-- autenticação inteira usando Resend com branding consistente
-
-### Etapa 6 — Revisar unsubscribe/suppression/logs
-Aqui há uma decisão de arquitetura:
-- manter tabelas locais apenas como auditoria interna, ou
-- simplificar e deixar o Resend concentrar a telemetria principal
-
-Recomendação:
-- manter logs mínimos locais só para rastreabilidade dos fluxos críticos
-- não tentar replicar toda a complexidade atual se ela não for necessária
-
-Resultado esperado
-- observabilidade suficiente sem reimplementar uma infraestrutura pesada
-
-### Etapa 7 — Limpeza da infraestrutura antiga
-Depois que tudo estiver validado:
-- remover acoplamentos ao sender atual
-- remover dependência do processador de fila atual
-- revisar documentação
-- deixar claro quais funções ainda existem por compatibilidade e quais saem de operação
-
-Resultado esperado
-- arquitetura final coerente, sem dois provedores “meio ativos”
-
-## Checklist de migração segura
-
-### Pode começar agora
-- [x] decisão de trocar de provedor foi tomada
-- [x] já existem gatilhos principais mapeados
-- [x] contato e status de pedido já estão identificados no código
-
-### Falta antes de implementar
-- [ ] escolher se o Resend usará subdomínio novo ou o `notify.printmycase.com.br`
-- [ ] conectar o Resend ao projeto
-- [ ] confirmar o domínio validado no Resend
-- [ ] definir como tratar auth emails na nova arquitetura
-
-### Falta para concluir de fato
-- [ ] migrar contato para Resend
-- [ ] migrar status de pedido para Resend
-- [ ] migrar auth emails para Resend
-- [ ] validar envios reais ponta a ponta
-- [ ] revisar documentação
-- [ ] desativar dependência operacional do fluxo antigo
-
-## Recomendação final
-O melhor caminho não é “consertar primeiro a estrutura atual”.
-O melhor caminho, dado seu objetivo, é:
-
-1. configurar Resend em um subdomínio novo
-2. integrar o projeto ao Resend
-3. migrar primeiro contato e status de pedido
-4. migrar auth emails depois
-5. só no final aposentar a infraestrutura atual
-
-Isso reduz risco, evita conflito DNS e acelera a entrada em produção.
-
-## Detalhes técnicos
-Arquivos mais impactados no plano refatorado:
+### Bug 1 — imports de `@supabase/supabase-js` ainda estão flutuando em funções de email
+Arquivos afetados:
 - `supabase/functions/auth-email-hook/index.ts`
 - `supabase/functions/send-transactional-email/index.ts`
-- `supabase/functions/process-email-queue/index.ts`
 - `supabase/functions/submit-contact/index.ts`
-- `supabase/functions/notify-order-status/index.ts`
-- `supabase/functions/handle-email-unsubscribe/index.ts`
-- `supabase/functions/handle-email-suppression/index.ts`
-- `supabase/functions/_shared/transactional-email-templates/registry.ts`
+
+Problema:
+- esses arquivos ainda usam `npm:@supabase/supabase-js@2`
+- o projeto já teve erro real de bundling por resolução de dependência em edge functions
+- manter versão flutuante aqui reabre risco de deploy inconsistente
+
+Correção recomendada:
+- fixar a mesma versão já padronizada nas outras functions: `npm:@supabase/supabase-js@2.49.8`
+
+### Bug 2 — remetente padrão continua em modo de teste
+Arquivo:
+- `supabase/functions/_shared/resend.ts`
+
+Problema:
+- `DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'`
+- isso é aceitável para smoke test, mas não para operação final da marca
+- o fluxo “migrou para Resend”, mas ainda não está finalizado como remetente de produção
+
+Correção recomendada:
+- trocar para o remetente/domínio já verificado no Resend
+- centralizar isso em constante única para auth e transacional
+
+### Bug 3 — parsing frágil da resposta do gateway do Resend
+Arquivo:
+- `supabase/functions/_shared/resend.ts`
+
+Problema:
+- `JSON.parse(responseText)` é chamado sem proteção
+- se o gateway responder com corpo vazio, HTML, texto simples ou erro não-JSON, o código explode com erro secundário
+- isso mascara a causa real do problema
+
+Correção recomendada:
+- fazer parse defensivo
+- preservar status HTTP + corpo bruto quando a resposta não for JSON
+
+### Bug 4 — lacuna de observabilidade no fluxo de auth
+Arquivos/áreas:
+- `auth-email-hook`
+- `email_send_log`
+- implantação/logs do hook
+
+Problema:
+- os logs de auth mostram que o hook rodou
+- mas não existem registros recentes de `signup`/`recovery` no `email_send_log`
+- isso indica divergência entre fluxo real e telemetria esperada
+
+Correção recomendada:
+- revisar o código implantado do `auth-email-hook`
+- confirmar se a versão em produção/teste é a nova
+- garantir que o hook sempre grave `pending/sent/failed` com `message_id`, `run_id` e `provider_message_id`
+
+### Bug 5 — documentação ainda não fechou a migração
+Arquivo:
 - `ARCHITECTURE.md`
 
-Pontos de atenção:
-- o subdomínio `notify.printmycase.com.br` está pendente na estrutura atual
-- não há conexão Resend disponível ainda no projeto
-- se o mesmo subdomínio for reutilizado, será necessário ajustar DNS no provedor antes da validação no Resend
+Problema:
+- a documentação já aponta Resend e fila legada, mas ainda não deixa totalmente explícito:
+  - qual fluxo está ativo
+  - qual fluxo é só legado
+  - quais verificações operacionais devem ser usadas
+- isso dificulta manutenção futura
+
+Correção recomendada:
+- consolidar a arquitetura final “ativa”
+- marcar worker/fila antigos como compatibilidade/remoção futura
+
+## Comentário técnico sobre o último signup
+O último usuário cadastrado não indica bug funcional de cadastro/confirmacão.
+O bug principal encontrado nesta revisão não está no signup em si, e sim em:
+- rastreabilidade incompleta do auth email
+- endurecimento insuficiente da integração Resend
+- restos de acoplamento e inconsistência entre código, logs e operação real
+
+## Plano refatorado de correção
+
+### Etapa 1 — Corrigir a base técnica do sender Resend
+1. Fixar `@supabase/supabase-js@2.49.8` em todas as functions de email ainda pendentes
+2. Tornar `_shared/resend.ts` resiliente a respostas não-JSON
+3. Preparar o helper para armazenar o `id` retornado pelo Resend quando existir
+4. Padronizar o remetente em uma configuração única
+
+Resultado esperado:
+- deploy mais estável
+- erros mais diagnósticos
+- base pronta para auditoria real
+
+### Etapa 2 — Fechar a observabilidade do auth-email-hook
+1. Revisar o hook para garantir gravação consistente em `email_send_log`
+2. Incluir em `metadata`:
+   - `provider: resend`
+   - `run_id`
+   - `provider_message_id`
+   - `email_type`
+3. Confirmar que o caminho de auth em uso é realmente este hook
+
+Resultado esperado:
+- cada signup/recovery passa a ter rastreio confiável
+
+### Etapa 3 — Validar transacional após migração
+1. Testar `submit-contact`
+2. Testar `notify-order-status`
+3. Confirmar `pending -> sent` no log
+4. Registrar `provider_message_id` também no transacional
+
+Resultado esperado:
+- contato e status do pedido com ciclo completo verificável
+
+### Etapa 4 — Encerrar a limpeza do legado
+1. Revisar `process-email-queue` como legado explícito
+2. Identificar se ainda existe algum chamador real da fila antiga
+3. Limpar documentação residual
+4. Decidir se a função legada fica apenas para histórico/rollback ou se será aposentada depois
+
+Resultado esperado:
+- uma arquitetura principal só
+- menos confusão operacional
+
+## O que falta para finalizar o plano de emails
+Para considerar a migração realmente concluída, estes pontos ainda precisam ficar verdadeiros:
+
+- [ ] sender final do Resend configurado com domínio/remetente de produção
+- [ ] auth emails com log consistente no `email_send_log`
+- [ ] transacionais com log consistente no `email_send_log`
+- [ ] helper do Resend endurecido contra respostas inválidas
+- [ ] imports pinados nas functions de email
+- [ ] documentação final consolidada
+- [ ] legado explicitamente desativado ou claramente isolado
+
+## Ordem recomendada de implementação
+1. endurecer `_shared/resend.ts`
+2. pinar dependências das functions de email
+3. revisar e redeployar `auth-email-hook`
+4. revisar e redeployar `send-transactional-email`
+5. validar um signup novo
+6. validar contato
+7. validar status de pedido
+8. atualizar documentação final
+
+## Detalhes técnicos
+Arquivos mais críticos desta revisão:
+- `supabase/functions/_shared/resend.ts`
+- `supabase/functions/auth-email-hook/index.ts`
+- `supabase/functions/send-transactional-email/index.ts`
+- `supabase/functions/submit-contact/index.ts`
+- `supabase/functions/notify-order-status/index.ts`
+- `ARCHITECTURE.md`
+
+Evidências principais usadas nesta revisão:
+- logs de auth do último signup mostram sucesso no hook e verificação posterior
+- consulta recente em `email_send_log` não mostra entradas de auth recentes
+- `DEFAULT_FROM_EMAIL` ainda está em `onboarding@resend.dev`
+- imports de `supabase-js` nas functions de email ainda estão em versão flutuante
