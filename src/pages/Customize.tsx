@@ -102,7 +102,6 @@ const Customize = () => {
             onUndoLastFilter={c.handleUndoLastFilter}
             onPreviewStart={setPreviewImageUrl}
             onPreviewEnd={() => setPreviewImageUrl(null)}
-            isProcessing={c.isProcessing}
           />
 
           <div className="mt-auto">
