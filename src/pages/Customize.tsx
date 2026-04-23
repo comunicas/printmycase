@@ -1,3 +1,4 @@
+import { ShieldCheck, Sparkles, SwatchBook } from "lucide-react";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PhonePreview from "@/components/PhonePreview";
@@ -15,6 +16,24 @@ import IntroDialog from "@/components/customize/IntroDialog";
 import MobileTabBar, { type MobileTab } from "@/components/customize/MobileTabBar";
 import MobileTabOverlay from "@/components/customize/MobileTabOverlay";
 import FilterHistoryBar from "@/components/customize/FilterHistoryBar";
+
+const productHighlights = [
+  {
+    icon: ShieldCheck,
+    title: "Policarbonato + TPU",
+    description: "proteção contra impactos e encaixe seguro",
+  },
+  {
+    icon: Sparkles,
+    title: "Impressão UV LED",
+    description: "cores vivas, alta nitidez e ótima durabilidade",
+  },
+  {
+    icon: SwatchBook,
+    title: "Acabamento premium",
+    description: "fosco ou brilho, resistente e refinado",
+  },
+] as const;
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -64,18 +83,37 @@ const Customize = () => {
         {/* Desktop sidebar — right side */}
         <aside className="hidden lg:flex flex-col gap-4 lg:w-[420px] lg:flex-shrink-0 h-full px-8 py-6 overflow-y-auto bg-muted/40 border-l border-border">
           {/* Product summary */}
-          <div className="flex items-center gap-3 pb-4 border-b border-border">
-            <img
-              src={c.product?.device_image || c.product?.images?.[0] || "/placeholder.svg"}
-              alt={c.productName}
-              className="w-16 h-16 object-contain rounded-lg bg-background"
-            />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{c.productName}</p>
-              <p className="text-sm text-primary font-medium">
-                {c.product?.price_cents ? formatPrice(c.product.price_cents / 100) : ""}
-              </p>
+          <div className="space-y-4 pb-4 border-b border-border">
+            <div className="flex items-start gap-3">
+              <img
+                src={c.product?.device_image || c.product?.images?.[0] || "/placeholder.svg"}
+                alt={c.productName}
+                className="w-16 h-16 object-contain rounded-lg bg-background"
+              />
+              <div className="min-w-0 space-y-1">
+                <p className="text-base font-semibold text-foreground leading-tight">{c.productName}</p>
+                <p className="text-base text-primary font-semibold">
+                  {c.product?.price_cents ? formatPrice(c.product.price_cents / 100) : ""}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Capinha personalizada com materiais e impressão de padrão premium.
+                </p>
+              </div>
             </div>
+
+            <ul className="space-y-2.5">
+              {productHighlights.map(({ icon: Icon, title, description }) => (
+                <li key={title} className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <div className="min-w-0 text-sm leading-snug text-muted-foreground">
+                    <span className="font-medium text-foreground">{title}</span>
+                    <span>{" — "}{description}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <h2 className="text-lg font-semibold text-foreground">Personalize sua Case</h2>
