@@ -13,6 +13,10 @@ interface DispatchResult {
   duplicate?: boolean
 }
 
+function hasMessageId(value: unknown): value is { message_id?: string | null } {
+  return typeof value === 'object' && value !== null && 'message_id' in value
+}
+
 export async function dispatchCoinPurchaseConfirmation(
   supabaseAdmin: ReturnType<typeof createClient>,
   params: CoinPurchaseEmailParams,
@@ -78,9 +82,12 @@ export async function dispatchCoinPurchaseConfirmation(
     return { success: false }
   }
 
-  const payload = await response.json().catch(() => null)
+  const payload: unknown = await response.json().catch(() => null)
   return {
     success: true,
-    duplicate: Boolean(payload?.duplicate),
+    duplicate:
+      typeof payload === 'object' && payload !== null && 'duplicate' in payload
+        ? Boolean((payload as { duplicate?: unknown }).duplicate)
+        : false,
   }
 }
