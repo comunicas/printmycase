@@ -26,14 +26,23 @@ interface PhonePreviewProps {
 
 const CROSSFADE_MS = 200;
 
-type SafeZonePreset = { insetX?: string; width?: string; top: string; height: string; radius: string; bottomRadius: string };
+type SafeZonePreset = {
+  insetX?: string;
+  width?: string;
+  top: string;
+  height: string;
+  radius: string;
+  bottomRadius: string;
+  mobileRadius?: string;
+  mobileBottomRadius?: string;
+};
 
 const SAFE_ZONE_PRESETS: Record<string, SafeZonePreset> = {
   "iphone-12-pro-max": { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 30px)", radius: "1.5rem", bottomRadius: "3.5rem" },
   "iphone-15-pro-max": { insetX: "5%", width: "40%", top: "3.05%", height: "calc(15.2% + 20px)", radius: "1.5rem", bottomRadius: "3.8rem" },
-  "iphone-17-pro": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem" },
-  "iphone-17-pro-max": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem" },
-  "iphone-17-air": { insetX: "8.8%", top: "3.5%", height: "calc(8.5% + 5px)", radius: "2.2rem", bottomRadius: "2.2rem" },
+  "iphone-17-pro": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem", mobileRadius: "1.45rem", mobileBottomRadius: "1.45rem" },
+  "iphone-17-pro-max": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem", mobileRadius: "1.45rem", mobileBottomRadius: "1.45rem" },
+  "iphone-17-air": { insetX: "8.8%", top: "3.5%", height: "calc(8.5% + 5px)", radius: "2.2rem", bottomRadius: "2.2rem", mobileRadius: "1.45rem", mobileBottomRadius: "1.45rem" },
 };
 
 const DEFAULT_SAFE_ZONE_PRESET: SafeZonePreset = { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 20px)", radius: "1.5rem", bottomRadius: "3.5rem" };
@@ -43,6 +52,9 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSnapping, setIsSnapping] = useState(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : false
+  );
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
 
@@ -65,6 +77,17 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
     const t = setTimeout(() => setPrevImage(null), CROSSFADE_MS + 50);
     return () => clearTimeout(t);
   }, [image]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(min-width: 1024px)");
+    const handleChange = (event: MediaQueryListEvent) => setIsDesktopViewport(event.matches);
+
+    setIsDesktopViewport(media.matches);
+    media.addEventListener("change", handleChange);
+
+    return () => media.removeEventListener("change", handleChange);
+  }, []);
 
   // Pinch refs
   const isPinching = useRef(false);
@@ -199,6 +222,8 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
   const oversize = Math.max(150, scale * 1.25);
   const offset = -(oversize - 100) / 2;
   const safeZonePreset = (deviceSlug && SAFE_ZONE_PRESETS[deviceSlug]) || DEFAULT_SAFE_ZONE_PRESET;
+  const safeZoneRadius = isDesktopViewport ? safeZonePreset.radius : safeZonePreset.mobileRadius ?? safeZonePreset.radius;
+  const safeZoneBottomRadius = isDesktopViewport ? safeZonePreset.bottomRadius : safeZonePreset.mobileBottomRadius ?? safeZonePreset.bottomRadius;
   const isUploadBusy = uploadState === "preparing" || uploadState === "optimizing";
   const showUploadReady = uploadState === "ready";
   const showStatusOverlay = isProcessing || isUploadBusy || showUploadReady;
@@ -296,10 +321,10 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
                   width: safeZonePreset.width,
                   top: safeZonePreset.top,
                   height: safeZonePreset.height,
-                  borderTopLeftRadius: safeZonePreset.radius,
-                  borderTopRightRadius: safeZonePreset.radius,
-                  borderBottomLeftRadius: safeZonePreset.width ? safeZonePreset.radius : safeZonePreset.bottomRadius,
-                  borderBottomRightRadius: safeZonePreset.width ? safeZonePreset.radius : safeZonePreset.bottomRadius,
+                  borderTopLeftRadius: safeZoneRadius,
+                  borderTopRightRadius: safeZoneRadius,
+                  borderBottomLeftRadius: safeZonePreset.width ? safeZoneRadius : safeZoneBottomRadius,
+                  borderBottomRightRadius: safeZonePreset.width ? safeZoneRadius : safeZoneBottomRadius,
                 }}
               />
             )}

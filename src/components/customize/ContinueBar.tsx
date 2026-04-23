@@ -53,7 +53,7 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
       <><Loader2 className="w-4 h-4 animate-spin" /> Processando compra...</>
     ) : (
       <>
-        Finalizar
+        Comprar agora
         <ArrowRight className="w-4 h-4" />
       </>
     );
