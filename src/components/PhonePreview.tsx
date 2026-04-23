@@ -6,6 +6,7 @@ interface PhonePreviewProps {
   scale: number;
   position: { x: number; y: number };
   rotation?: number;
+  previewMode?: "front" | "rear";
   onPositionChange: (pos: { x: number; y: number }) => void;
   onScaleChange?: (scale: number) => void;
   onImageUpload: (file: File) => void;
@@ -21,7 +22,7 @@ interface PhonePreviewProps {
 
 const CROSSFADE_MS = 200;
 
-const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
+const PhonePreview = ({ image, scale, position, rotation = 0, previewMode = "rear", onPositionChange, onScaleChange, onImageUpload, imageResolution, isProcessing, processingMessage, onUpscaleClick, previewImageUrl, onGalleryClick, disabled }: PhonePreviewProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -182,6 +183,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
 
   const oversize = Math.max(150, scale * 1.25);
   const offset = -(oversize - 100) / 2;
+  const shouldShowMainFade = previewMode === "rear" || showSafeAreaOverlay;
 
   const buildImageStyle = (src: string) => ({
     backgroundImage: `url("${src}")`,
@@ -241,9 +243,9 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
-            {showSafeAreaOverlay && (
+            {shouldShowMainFade && (
               <>
-                <div className="pointer-events-none absolute left-[9%] right-[9%] top-[3%] h-[17%] rounded-b-[2.8rem] bg-gradient-to-b from-foreground/48 via-foreground/22 to-transparent" />
+                <div className="pointer-events-none absolute left-[8%] right-[8%] top-[4.2%] h-[19%] rounded-b-[3rem] bg-gradient-to-b from-foreground/46 via-foreground/20 to-transparent" />
               </>
             )}
             {image && !isDragging && (
