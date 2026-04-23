@@ -150,6 +150,11 @@ Deno.serve(async (req) => {
     )
   }
 
+  console.log('Resolved send-transactional-email request context', {
+    mode: requestContext.mode,
+    userId: requestContext.mode === 'user' ? requestContext.userId : null,
+  })
+
   // Parse request body
   let templateName: string
   let recipientEmail: string
@@ -204,7 +209,7 @@ Deno.serve(async (req) => {
   if (requestContext.mode === 'user') {
     if (templateName !== 'welcome-email') {
       return new Response(
-        JSON.stringify({ error: 'Forbidden' }),
+        JSON.stringify({ error: 'Forbidden: only welcome-email is allowed for authenticated users' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
