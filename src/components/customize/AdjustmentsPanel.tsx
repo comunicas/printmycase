@@ -2,18 +2,21 @@ import { forwardRef } from "react";
 import { Maximize, RotateCw, Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 
 interface AdjustmentsPanelProps {
   scale: number;
   rotation: number;
+  showSafeZone: boolean;
   onScaleChange: (v: number) => void;
   onRotate: () => void;
   onExpand: () => void;
+  onShowSafeZoneChange: (checked: boolean) => void;
   disabled: boolean;
 }
 
 const AdjustmentsPanel = forwardRef<HTMLDivElement, AdjustmentsPanelProps>(({
-  scale, rotation, onScaleChange, onRotate, onExpand, disabled,
+  scale, rotation, showSafeZone, onScaleChange, onRotate, onExpand, onShowSafeZoneChange, disabled,
 }, ref) => (
   <div ref={ref} className="space-y-3">
     <div className="space-y-1">
@@ -42,6 +45,14 @@ const AdjustmentsPanel = forwardRef<HTMLDivElement, AdjustmentsPanelProps>(({
         <Expand className="w-3.5 h-3.5" />
         <span className="text-xs">Expandir</span>
       </Button>
+    </div>
+
+    <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2">
+      <div className="space-y-0.5">
+        <p className="text-xs font-medium text-foreground">Safe zone da câmera</p>
+        <p className="text-[10px] text-muted-foreground">Mostrar a área segura no topo do aparelho</p>
+      </div>
+      <Switch checked={showSafeZone} onCheckedChange={onShowSafeZoneChange} disabled={disabled} />
     </div>
   </div>
 ));
