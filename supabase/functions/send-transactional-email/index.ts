@@ -320,7 +320,7 @@ Deno.serve(async (req) => {
 
   if (suppressed) {
     // Log the suppressed attempt
-    await supabase.from('email_send_log').insert({
+    await insertEmailLog(supabase, {
       message_id: messageId,
       template_name: templateName,
       recipient_email: effectiveRecipient,
@@ -353,7 +353,7 @@ Deno.serve(async (req) => {
       error: tokenLookupError,
       email: normalizedEmail,
     })
-    await supabase.from('email_send_log').insert({
+    await insertEmailLog(supabase, {
       message_id: messageId,
       template_name: templateName,
       recipient_email: effectiveRecipient,
@@ -386,7 +386,7 @@ Deno.serve(async (req) => {
       console.error('Failed to create unsubscribe token', {
         error: tokenError,
       })
-      await supabase.from('email_send_log').insert({
+      await insertEmailLog(supabase, {
         message_id: messageId,
         template_name: templateName,
         recipient_email: effectiveRecipient,
@@ -415,7 +415,7 @@ Deno.serve(async (req) => {
         error: reReadError,
         email: normalizedEmail,
       })
-      await supabase.from('email_send_log').insert({
+      await insertEmailLog(supabase, {
         message_id: messageId,
         template_name: templateName,
         recipient_email: effectiveRecipient,
@@ -437,7 +437,7 @@ Deno.serve(async (req) => {
     console.warn('Unsubscribe token already used but email not suppressed', {
       email: normalizedEmail,
     })
-    await supabase.from('email_send_log').insert({
+    await insertEmailLog(supabase, {
       message_id: messageId,
       template_name: templateName,
       recipient_email: effectiveRecipient,
@@ -470,7 +470,7 @@ Deno.serve(async (req) => {
       : template.subject
 
   // 5. Enviar via Resend e manter log mínimo local
-  await supabase.from('email_send_log').insert({
+  await insertEmailLog(supabase, {
     message_id: messageId,
     template_name: templateName,
     recipient_email: effectiveRecipient,
@@ -492,7 +492,7 @@ Deno.serve(async (req) => {
       ],
     })
 
-    await supabase.from('email_send_log').insert({
+    await insertEmailLog(supabase, {
       message_id: messageId,
       template_name: templateName,
       recipient_email: effectiveRecipient,
@@ -522,7 +522,7 @@ Deno.serve(async (req) => {
       effectiveRecipient,
     })
 
-    await supabase.from('email_send_log').insert({
+    await insertEmailLog(supabase, {
       message_id: messageId,
       template_name: templateName,
       recipient_email: effectiveRecipient,
