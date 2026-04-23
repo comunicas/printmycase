@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import AppHeader from "@/components/AppHeader";
+import PromoBanner from "@/components/PromoBanner";
 import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { extractBrand } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +14,7 @@ import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo"
 const PAGE_SIZE = 12;
 
 const Catalog = () => {
+  const { user } = useAuthContext();
   const { products, loading } = useProducts();
   const [selectedBrand, setSelectedBrand] = useState("Todos");
   const [search, setSearch] = useState("");
@@ -110,6 +113,7 @@ const Catalog = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {!user && <PromoBanner />}
       <AppHeader breadcrumbs={[{ label: "Catálogo" }]} />
 
       <main className="flex-1 w-full max-w-6xl mx-auto p-5 lg:p-10">

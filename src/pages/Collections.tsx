@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Search, ArrowRight, Smartphone, Sparkles } from "lucide-react";
 import DesignCardSkeleton from "@/components/DesignCardSkeleton";
 import AppHeader from "@/components/AppHeader";
+import PromoBanner from "@/components/PromoBanner";
 import { useDesignsGroupedByCollection } from "@/hooks/useCollectionDesigns";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer, defaultAggregateRating } from "@/lib/merchant-jsonld";
 import { setPageSeo, SITE_URL, injectJsonLd, breadcrumbJsonLd } from "@/lib/seo";
@@ -16,6 +18,7 @@ const TITLE = "Capinhas Exclusivas para Celular | Studio PrintMyCase";
 const DESC = "Explore nossas coleções de capinhas exclusivas para celular. Designs únicos, proteção premium e acabamento soft-touch. Encontre a capa perfeita ou personalize a sua.";
 
 const Collections = () => {
+  const { user } = useAuthContext();
   const { collections, allDesigns, loading } = useDesignsGroupedByCollection();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -169,6 +172,7 @@ const Collections = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {!user && <PromoBanner />}
       <AppHeader breadcrumbs={[{ label: "Coleções" }]} />
 
       {/* Hero */}
