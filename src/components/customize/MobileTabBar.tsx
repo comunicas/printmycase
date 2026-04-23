@@ -11,9 +11,9 @@ interface MobileTabBarProps {
 
 const MobileTabBar = ({ activeTab, onTabClick, hasFilters, disabled }: MobileTabBarProps) => {
   const tabs: { id: MobileTab; label: string; icon: typeof SlidersHorizontal; hidden?: boolean }[] = [
-    { id: "ajustes", label: "Ajustes", icon: SlidersHorizontal },
-    { id: "info", label: "Info", icon: CircleHelp },
     { id: "filtros", label: "Filtros IA", icon: Wand2, hidden: !hasFilters },
+    { id: "ajustes", label: "Ajustes", icon: SlidersHorizontal },
+    { id: "info", label: "Detalhes", icon: CircleHelp },
   ];
 
   const visibleTabs = tabs.filter((t) => !t.hidden);
