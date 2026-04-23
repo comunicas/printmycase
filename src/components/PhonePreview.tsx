@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, Move, Loader2, Sparkles } from "lucide-react";
+import { Camera, Move, Loader2, Sparkles, Eye, EyeOff } from "lucide-react";
 
 interface PhonePreviewProps {
   image: string | null;
@@ -33,6 +33,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
   const [displayImage, setDisplayImage] = useState<string | null>(image);
   const [prevImage, setPrevImage] = useState<string | null>(null);
   const [fadeIn, setFadeIn] = useState(false);
+  const [showSafeAreaOverlay, setShowSafeAreaOverlay] = useState(true);
 
   useEffect(() => {
     if (image === displayImage) return;
@@ -240,13 +241,26 @@ const PhonePreview = ({ image, scale, position, rotation = 0, onPositionChange, 
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
-            <div className="pointer-events-none absolute left-[10%] right-[10%] top-[3%] h-[20%] rounded-b-[2rem] bg-gradient-to-b from-foreground/40 via-foreground/18 to-transparent" />
-            <div className="pointer-events-none absolute left-[27%] right-[27%] top-[3.6%] h-[6.4%] rounded-b-[1.4rem] border-x border-b border-foreground/15 bg-foreground/20 shadow-sm" />
+            {showSafeAreaOverlay && (
+              <>
+                <div className="pointer-events-none absolute left-[10%] right-[10%] top-[3%] h-[20%] rounded-b-[2rem] bg-gradient-to-b from-foreground/40 via-foreground/18 to-transparent" />
+                <div className="pointer-events-none absolute left-[27%] right-[27%] top-[3.6%] h-[6.4%] rounded-b-[1.4rem] border-x border-b border-foreground/15 bg-foreground/20 shadow-sm" />
+              </>
+            )}
             {image && !isDragging && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/drag:opacity-100 transition-opacity">
                 <Move className="w-6 h-6 text-white/60 drop-shadow-md" />
               </div>
             )}
+            <button
+              type="button"
+              onClick={() => setShowSafeAreaOverlay((current) => !current)}
+              className="absolute bottom-3 left-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-background/85 text-foreground shadow-lg transition-colors hover:bg-background"
+              aria-label={showSafeAreaOverlay ? "Ocultar área segura da câmera" : "Mostrar área segura da câmera"}
+              title={showSafeAreaOverlay ? "Ocultar área segura da câmera" : "Mostrar área segura da câmera"}
+            >
+              {showSafeAreaOverlay ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
           {isProcessing && (
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-[2rem] lg:rounded-[2.4rem]">
