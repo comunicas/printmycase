@@ -30,6 +30,22 @@ function generateToken(): string {
     .join('')
 }
 
+function parseJwtClaims(token: string): Record<string, unknown> | null {
+  const parts = token.split('.')
+  if (parts.length !== 3) return null
+
+  try {
+    const payload = parts[1]
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(parts[1].length / 4) * 4, '=')
+
+    return JSON.parse(atob(payload)) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
 // Auth: this function requires service_role authentication. The Supabase gateway
 // validates the JWT (verify_jwt = true), and we additionally check that the
 // caller has the service_role claim to prevent abuse via the public anon key
@@ -70,15 +86,18 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: `Bearer ${token}` } },
     })
     const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token)
+    const fallbackClaims = parseJwtClaims(token)
 
-    if (claimsError) {
+    if (claimsError && fallbackClaims?.role !== 'service_role') {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    if (claimsData?.claims?.role !== 'service_role') {
+    const resolvedRole = claimsData?.claims?.role ?? fallbackClaims?.role
+
+    if (resolvedRole !== 'service_role') {
       return new Response(
         JSON.stringify({ error: 'Forbidden: service_role required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
