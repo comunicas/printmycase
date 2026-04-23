@@ -25,6 +25,7 @@ const Customize = () => {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab | null>(null);
+  const [showSafeZone, setShowSafeZone] = useState(true);
   const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
   const spotlightInputRef = useRef<HTMLInputElement>(null);
 
@@ -68,6 +69,7 @@ const Customize = () => {
             position={c.position}
             rotation={c.rotation}
             deviceSlug={c.product?.slug}
+            showSafeZone={showSafeZone}
             onPositionChange={c.setPosition}
             onScaleChange={c.setScale}
             onImageUpload={c.handleImageUpload}
@@ -103,9 +105,11 @@ const Customize = () => {
             hasImage={!!c.image}
             scale={c.scale}
             rotation={c.rotation}
+            showSafeZone={showSafeZone}
             onScaleChange={c.setScale}
             onRotate={c.handleRotate}
             onExpand={c.handleExpand}
+            onShowSafeZoneChange={setShowSafeZone}
             filters={c.filters}
             filterCategories={c.filterCategories}
             activeFilterId={c.activeFilterId}
@@ -146,9 +150,11 @@ const Customize = () => {
           hasImage={!!c.image}
           scale={c.scale}
           rotation={c.rotation}
+          showSafeZone={showSafeZone}
           onScaleChange={c.setScale}
           onRotate={c.handleRotate}
           onExpand={c.handleExpand}
+          onShowSafeZoneChange={setShowSafeZone}
           filters={c.filters}
           filterCategories={c.filterCategories}
           activeFilterId={c.activeFilterId}

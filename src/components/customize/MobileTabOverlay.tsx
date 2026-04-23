@@ -12,9 +12,11 @@ interface MobileTabOverlayProps {
   hasImage: boolean;
   scale: number;
   rotation: number;
+  showSafeZone: boolean;
   onScaleChange: (v: number) => void;
   onRotate: () => void;
   onExpand: () => void;
+  onShowSafeZoneChange: (checked: boolean) => void;
   filters: AiFilter[];
   filterCategories: AiFilterCategory[];
   activeFilterId: string | null;
@@ -39,7 +41,7 @@ const tabTitles: Record<MobileTab, string> = {
 
 const MobileTabOverlay = ({
   activeTab, onClose, hasImage,
-  scale, rotation, onScaleChange, onRotate, onExpand,
+  scale, rotation, showSafeZone, onScaleChange, onRotate, onExpand, onShowSafeZoneChange,
   filters, filterCategories, activeFilterId, applyingFilterId, filterCost, filterHistory,
   onFilterClick, onCompareStart, onCompareEnd, onRemoveFilter, onUndoLastFilter,
   onPreviewStart, onPreviewEnd,
@@ -134,9 +136,11 @@ const MobileTabOverlay = ({
               <AdjustmentsPanel
                 scale={scale}
                 rotation={rotation}
+                showSafeZone={showSafeZone}
                 onScaleChange={onScaleChange}
                 onRotate={onRotate}
                 onExpand={onExpand}
+                onShowSafeZoneChange={onShowSafeZoneChange}
                 disabled={!hasImage}
               />
             </div>
