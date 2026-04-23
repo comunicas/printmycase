@@ -1,234 +1,141 @@
 
-Objetivo: melhorar `/customize/:slug` em três frentes integradas: feedback claro durante upload/processamento da imagem, acessibilidade real nas abas mobile para teclado/leitor de tela, e animações de entrada/saída mais consistentes em modais e painéis sem quebrar a hierarquia atual.
+Objetivo: ampliar o plano anterior do `TermsDialog` para não só corrigir fullscreen e z-index no mobile, mas também refinar a UX da modal, reduzir a densidade de texto e tornar a leitura/decisão mais rápida sem perder a proteção jurídica essencial.
 
-## Diagnóstico atual
+## O que será alterado
 
-### Upload de imagem
-Hoje o usuário só recebe feedback indireto:
-- `useCustomize.tsx` controla `isCompressing`, `isRendering`, `processingMsg` e outros estados
-- `PhonePreview.tsx` mostra apenas um overlay genérico com spinner e texto curto quando `isProcessing` está ativo
-- não existe distinção visual clara entre:
-  - imagem selecionada
-  - leitura/otimização da imagem
-  - imagem pronta para edição
-- também não há anúncio acessível de status para leitores de tela
+### 1) Corrigir fullscreen real e hierarquia de camadas
+A base do dialog será ajustada para que a modal de termos fique acima de toda a UI fixa do mobile.
 
-### Abas mobile
-Hoje `MobileTabBar.tsx` funciona visualmente, mas ainda está fraco em acessibilidade:
-- sem `aria-label` contextual por aba
-- sem `aria-controls`, `aria-selected`, `role="tablist"` e `role="tab"`
-- foco visível não está explícito o suficiente
-- a interação depende muito do visual ativo
-- `MobileTabOverlay.tsx` não expõe uma relação semântica clara entre aba e painel
+Implementação:
+- elevar `DialogOverlay` e `DialogContent` acima do bloco mobile com `z-[60]`
+- garantir overlay cobrindo toda a viewport
+- manter content acima do overlay
+- preservar o padrão do projeto:
+  - mobile = fullscreen, cantos retos
+  - desktop = card central arredondado
 
-### Modais e elementos com transição
-Há base parcial de animação:
-- `Dialog` já usa `animate-in/animate-out`
-- `MobileTabOverlay` faz fechamento manual com `isClosing`
-- `IntroDialog` usa transição própria
-- Tailwind já tem keyframes e `tailwindcss-animate`
+Arquivos:
+- `src/components/ui/dialog.tsx`
+- `src/components/customize/TermsDialog.tsx`
 
-Mas ainda falta consistência:
-- bottom sheet mobile não entra com o mesmo refinamento do restante
-- backdrop/header/content poderiam animar separadamente
-- alguns diálogos dependem só do comportamento padrão do `DialogContent`
-- não há estratégia unificada para reduzir movimento quando o usuário prefere menos animação
+### 2) Transformar a modal em tela full screen de verdade no mobile
+O `TermsDialog` deixará de parecer um card esticado e passará a funcionar como uma tela mobile dedicada.
 
-## O que será implementado
+Estrutura:
+```text
+[topo fixo]
+- título
+- subtítulo curto
+- fechar
 
-### 1) Indicador de progresso/estado no upload da imagem
-Será refinado o fluxo em `useCustomize.tsx` e `PhonePreview.tsx` para comunicar melhor o estado do upload.
+[conteúdo rolável]
+- aviso curto
+- lista resumida de proibições
+- bloco final de responsabilidade
 
-Direção:
-- separar o status de upload/otimização em etapas legíveis
-- exibir mensagens mais específicas no preview, por exemplo:
-  - “Preparando imagem…”
-  - “Otimizando para personalização…”
-  - “Imagem pronta”
-- manter o overlay atual como base, mas com tratamento mais informativo e mais claro para o usuário
-- opcionalmente mostrar confirmação breve quando o upload termina, antes de sumir
-
-Estrutura planejada:
-- criar um estado derivado de “fase de upload” dentro de `useCustomize.tsx`
-- expor esse estado ao `Customize.tsx`
-- passar para `PhonePreview.tsx` props como:
-  - `uploadState`
-  - `uploadStatusLabel`
-  - eventualmente `showReadyState`
-- manter compatibilidade com `isProcessing` já usado por filtros/renderização
-
-A intenção não é fingir progresso percentual exato onde ele não existe, e sim comunicar estado real de forma confiável.
-
-### 2) Feedback acessível do estado de upload
-Além do visual, o estado será anunciado corretamente para tecnologias assistivas.
-
-Implementação planejada:
-- adicionar região `aria-live="polite"` para mensagens de status
-- marcar o preview/área de upload com `aria-busy` durante compressão/processamento
-- garantir que o botão principal de upload tenha nome acessível claro
-- manter mensagens curtas e compreensíveis para leitores de tela
+[rodapé fixo]
+- cancelar
+- aceitar
+```
 
 Resultado:
-- usuário com leitor de tela entende quando a imagem está sendo processada e quando terminou
+- leitura mais escaneável
+- botões sempre visíveis
+- sem competição com footer/continue bar do app
 
-### 3) Acessibilidade completa nas abas mobile
-`MobileTabBar.tsx` e `MobileTabOverlay.tsx` serão ajustados para seguir o padrão semântico de tabs.
+### 3) Refinar a copy e reduzir a quantidade de texto
+O conteúdo atual será resumido para uma versão mais objetiva, mantendo as regras centrais.
 
-Melhorias:
-- `role="tablist"` no container das abas
-- `role="tab"` em cada botão
-- `aria-selected` com base na aba ativa
-- `aria-controls` conectando aba ao painel
-- `id` estável para cada aba e painel
-- `role="tabpanel"` no conteúdo do overlay
-- `aria-labelledby` no painel apontando para a aba ativa
-- `aria-label`s mais descritivos, por exemplo:
-  - “Abrir filtros IA”
-  - “Abrir ajustes da imagem”
-  - “Abrir detalhes do produto”
+Direção de copy:
+- trocar parágrafos longos por bullets curtos
+- remover repetições
+- manter tom claro, firme e confiável
+- destacar só o que importa para decisão rápida
 
-Também será incluída navegação por teclado:
-- Enter/Espaço continuam acionando naturalmente
-- setas esquerda/direita poderão navegar entre abas visíveis
-- Home/End poderão ir para primeira/última aba
-- foco inicial coerente ao abrir o painel
-- foco visível reforçado com `focus-visible:ring-*`
+Estrutura sugerida:
+- introdução curta: “Antes de enviar sua imagem, confirme que o conteúdo é permitido.”
+- 3 regras principais em lista:
+  - marcas/logos apenas se forem seus
+  - proibido usar famosos, times, filmes, séries, músicas e obras protegidas
+  - proibido conteúdo ofensivo, violento, pornográfico ou discriminatório
+- bloco final resumido:
+  - “Você é responsável pelo conteúdo enviado. Personalizações fora das regras podem ser canceladas.”
 
-### 4) Melhor foco visível e estados interativos
-Os botões das tabs e elementos relevantes do mobile serão ajustados visualmente para acessibilidade sem pesar no layout.
+Isso preserva o requisito legal da memória do projeto, mas melhora bastante a UX.
+
+### 4) Melhorar hierarquia visual e legibilidade
+A modal será refinada para parecer mais premium e mais rápida de entender.
+
+Ajustes previstos:
+- título forte + subtítulo curto
+- ícone menor e menos dominante
+- espaçamento mais controlado
+- uso de lista com ícones/checks/alertas discretos
+- bloco final de responsabilidade destacado visualmente
+- largura de leitura confortável no desktop
+- área de rolagem só no conteúdo, não no modal inteiro
+
+### 5) Refinar microinterações e ações
+As ações finais também serão melhoradas para clareza.
 
 Direção:
-- adicionar ring de foco visível consistente com o design system
-- reforçar contraste entre estado ativo, hover e foco
-- manter aparência clean, sem parecer interface “pesada”
-- aplicar o mesmo cuidado ao botão de fechar do overlay e CTA de upload
+- CTA principal mais direto, por exemplo:
+  - `Entendi e continuar`
+- ação secundária:
+  - `Cancelar`
+- foco visível claro
+- animação de entrada/saída consistente com o restante dos dialogs
+- fechamento por toque fora permanece apenas se isso não conflitar com a intenção jurídica atual; se necessário, manter fechamento explícito por cancelar/close
 
-### 5) Animar entrada e saída de modais e painéis com consistência
-Será feito um refinamento transversal nas animações de:
-- `MobileTabOverlay`
-- diálogos de customização (`FilterConfirmDialog`, `LowResolutionDialog`, `TermsDialog`, `LoginDialog`, `IntroDialog`)
-- eventuais elementos auxiliares de estado no preview
+### 6) Melhorar a percepção de segurança sem assustar
+A modal deve comunicar responsabilidade sem parecer excessivamente burocrática.
 
-Abordagem:
-- aproveitar as animações já disponíveis no Tailwind + `tailwindcss-animate`
-- padronizar backdrop com fade
-- padronizar painéis/cards com combinação leve de fade + scale ou slide
-- no mobile, manter o bottom sheet com slide vertical mais suave
-- reduzir inconsistências entre componentes que hoje usam lógica manual e componentes Radix
-
-Arquivos principais:
-- `src/components/customize/MobileTabOverlay.tsx`
-- `src/components/ui/dialog.tsx`
-- `src/components/customize/PhonePreview.tsx`
-- possivelmente `src/index.css` e/ou `tailwind.config.ts` para classes utilitárias extras
-
-### 6) Respeitar preferência de movimento reduzido
-As animações novas serão planejadas com fallback para `prefers-reduced-motion`.
-
-Isso inclui:
-- reduzir ou remover slide/scale quando o usuário prefere menos movimento
-- preservar apenas mudanças discretas de opacidade quando necessário
-- evitar animações longas no fluxo de upload
+Ajustes de UX:
+- reduzir caixa alta e blocos densos
+- trocar “IMPORTANTE” longo por card/resumo objetivo
+- manter linguagem simples
+- priorizar leitura em menos de 10 segundos
 
 ## Arquivos impactados
 
-### `src/hooks/useCustomize.tsx`
-Será ajustado para:
-- modelar melhor o estado de upload/otimização
-- derivar labels de status mais claras
-- expor essas informações ao componente da página
-
-### `src/pages/Customize.tsx`
-Será ajustado para:
-- passar os novos estados de upload para `PhonePreview`
-- manter o restante do fluxo intacto
-
-### `src/components/PhonePreview.tsx`
-Será ajustado para:
-- exibir indicador de estado mais claro durante upload/processamento
-- adicionar `aria-live`, `aria-busy` e mensagens acessíveis
-- possivelmente mostrar estado curto de sucesso ao concluir
-- refinar transições do overlay/feedback visual
-
-### `src/components/customize/MobileTabBar.tsx`
-Será ajustado para:
-- estrutura semântica de tabs
-- labels acessíveis
-- foco visível
-- navegação por teclado entre abas
-
-### `src/components/customize/MobileTabOverlay.tsx`
-Será ajustado para:
-- expor painel com `role="tabpanel"`
-- conectar aba e conteúdo por ids/aria
-- melhorar animações de entrada/saída
-- manter comportamento atual de arrastar para fechar
-
 ### `src/components/ui/dialog.tsx`
-Será refinado para:
-- padronizar melhor as animações open/close em mobile e desktop
-- manter a regra do projeto: mobile fullscreen com cantos retos, desktop card central com cantos arredondados
+Será ajustado para:
+- subir z-index global do overlay e content
+- manter animações consistentes e fullscreen mobile estável
 
-### Diálogos de customização
-Serão revisados ao menos:
-- `src/components/customize/FilterConfirmDialog.tsx`
-- `src/components/customize/LowResolutionDialog.tsx`
-- `src/components/customize/TermsDialog.tsx`
-- `src/components/customize/LoginDialog.tsx`
-- `src/components/customize/IntroDialog.tsx`
-
-Para garantir:
-- transições coerentes
-- foco visível
-- sem regressão de layout
-
-### `src/index.css` e/ou `tailwind.config.ts`
-Se necessário, serão ajustados para:
-- criar/reusar keyframes utilitários de fade/slide/scale
-- centralizar comportamento de motion-safe / reduced-motion
+### `src/components/customize/TermsDialog.tsx`
+Será ajustado para:
+- layout fullscreen real no mobile
+- header/body/footer bem definidos
+- texto resumido e reorganizado
+- melhor hierarquia visual e botões fixos no rodapé
 
 ## Abordagem de implementação
-1. Estruturar um estado de upload mais explícito no hook de customização.
-2. Conectar esse estado ao preview com feedback visual e acessível.
-3. Semantizar a tab bar mobile como tabs reais com suporte a teclado.
-4. Adicionar foco visível consistente nas tabs e controles relacionados.
-5. Padronizar animações de open/close em overlay mobile e diálogos.
-6. Revisar `prefers-reduced-motion` para evitar animação excessiva.
-7. Validar que upload, filtros, preview, drag/pinch e finalização continuam intactos.
-
-## Regras que serão respeitadas
-- não alterar o fluxo funcional de upload
-- CTA do frame continua sendo o principal ponto de entrada
-- botão “Finalizar” continua sem nome/preço do produto
-- tabs mobile mantêm a ordem já aprovada: `Filtros IA`, `Ajustes`, `Detalhes`
-- modal mobile continua fullscreen quando aplicável, desktop continua centralizado
-- animações devem ser discretas, clean e premium, não chamativas
+1. Corrigir a camada do dialog para vencer toda a UI fixa mobile.
+2. Reestruturar o `TermsDialog` como tela fullscreen no mobile.
+3. Reescrever a copy em formato mais curto e escaneável.
+4. Destacar responsabilidade final em um bloco visual simples.
+5. Refinar espaçamento, foco visível e CTA principal.
+6. Manter desktop intacto como card central.
+7. Validar no viewport mobile atual para garantir cobertura total e melhor leitura.
 
 ## Check final documentado
 
-### Upload
-- usuário entende quando a imagem começou a ser processada
-- usuário entende quando terminou
-- mensagens de status ficam mais claras que o “Processando...” genérico
-- leitor de tela recebe anúncio de estado
+### Fullscreen e camadas
+- modal cobre 100% da tela no mobile
+- footer/tab bar não aparece por cima
+- z-index está correto em overlay e content
 
-### Acessibilidade
-- tabs mobile funcionam com teclado
-- foco visível está claro
-- roles e aria relationships entre abas e painéis estão corretos
-- aba “Detalhes” continua acessível mesmo sem imagem
+### UX e conteúdo
+- texto ficou mais curto e mais claro
+- regras principais podem ser entendidas rapidamente
+- responsabilidade final continua explícita
+- botões ficam sempre acessíveis
 
-### Animações
-- modais entram e saem com consistência visual
-- bottom sheet mobile anima de forma mais refinada
-- backdrop e conteúdo têm transição suave
-- `prefers-reduced-motion` é respeitado
-
-### Regressão funcional
-- upload continua funcionando
-- safe zone, arraste, zoom e rotação continuam intactos
-- filtros, compare, undo e remove continuam intactos
-- diálogos continuam abrindo/fechando corretamente
+### Visual
+- modal parece tela dedicada no mobile
+- desktop continua como card central refinado
+- animações e foco visível permanecem consistentes
 
 ## Resultado esperado
-Depois da implementação, o fluxo de customização ficará mais claro, acessível e polido: o usuário passa a entender melhor o status do upload da imagem, as abas mobile ficam realmente navegáveis por teclado e leitor de tela, e os modais/painéis ganham animações de entrada e saída mais consistentes com a proposta premium da interface.
+Depois do ajuste, a modal de termos ficará realmente fullscreen no mobile, visualmente mais limpa e hierarquizada, com texto resumido e mais fácil de entender. O usuário conseguirá ler rapidamente as regras, entender sua responsabilidade e concluir a ação sem fricção desnecessária.
