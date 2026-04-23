@@ -63,6 +63,17 @@ async function insertEmailLog(
   return error
 }
 
+function isUniqueViolation(error: unknown, constraintName?: string) {
+  if (!error || typeof error !== 'object') return false
+
+  const code = 'code' in error ? String(error.code ?? '') : ''
+  const message = 'message' in error ? String(error.message ?? '') : ''
+  const details = 'details' in error ? String(error.details ?? '') : ''
+  const haystack = `${message} ${details}`
+
+  return code === '23505' && (!constraintName || haystack.includes(constraintName))
+}
+
 async function resolveRequestContext(
   token: string,
   supabaseUrl: string,
@@ -459,6 +470,38 @@ Deno.serve(async (req) => {
     )
   }
 
+  const pendingLogError = await insertEmailLog(supabase, {
+    message_id: messageId,
+    template_name: templateName,
+    recipient_email: effectiveRecipient,
+    status: 'pending',
+  })
+
+  if (isUniqueViolation(pendingLogError, 'idx_email_send_log_message_pending_unique')) {
+    console.log('Transactional email already in progress, skipping duplicate send', {
+      messageId,
+      templateName,
+      effectiveRecipient,
+    })
+    return new Response(
+      JSON.stringify({ success: true, sent: false, duplicate: true }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
+
+  if (pendingLogError) {
+    return new Response(
+      JSON.stringify({ error: 'Failed to persist email state' }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
+
   // 4. Render React Email template to HTML and plain text
   const html = await renderAsync(
     React.createElement(template.component, templateData)
@@ -473,14 +516,6 @@ Deno.serve(async (req) => {
     typeof template.subject === 'function'
       ? template.subject(templateData)
       : template.subject
-
-  // 5. Enviar via Resend e manter log mínimo local
-  await insertEmailLog(supabase, {
-    message_id: messageId,
-    template_name: templateName,
-    recipient_email: effectiveRecipient,
-    status: 'pending',
-  })
 
   try {
     const resendResult = await sendWithResend({
@@ -497,7 +532,7 @@ Deno.serve(async (req) => {
       ],
     })
 
-    await insertEmailLog(supabase, {
+    const sentLogError = await insertEmailLog(supabase, {
       message_id: messageId,
       template_name: templateName,
       recipient_email: effectiveRecipient,
@@ -510,6 +545,21 @@ Deno.serve(async (req) => {
         template_name: templateName,
       },
     })
+
+    if (isUniqueViolation(sentLogError, 'idx_email_send_log_message_sent_unique')) {
+      console.log('Transactional email already marked as sent, skipping duplicate completion', {
+        messageId,
+        templateName,
+        effectiveRecipient,
+      })
+      return new Response(
+        JSON.stringify({ success: true, sent: false, duplicate: true }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
 
     console.log('Transactional email sent via Resend', { templateName, effectiveRecipient })
 
