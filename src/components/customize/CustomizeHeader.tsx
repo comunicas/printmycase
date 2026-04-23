@@ -1,6 +1,7 @@
-import { ArrowLeft, Check, HelpCircle } from "lucide-react";
+import { ArrowLeft, Check, HelpCircle, MessageCircleMore } from "lucide-react";
 import CoinBalance from "@/components/CoinBalance";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import ModelSelector from "./ModelSelector";
 
 interface CustomizeHeaderProps {
@@ -40,6 +41,18 @@ const CustomizeHeader = ({ productName, onBack, productImage, draftSaved, curren
           <HelpCircle className="w-4 h-4" />
         </Button>
       )}
+      <Button
+        asChild
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-muted-foreground"
+        aria-label="Abrir contato"
+        title="Abrir contato"
+      >
+        <Link to="/contato">
+          <MessageCircleMore className="w-4 h-4" />
+        </Link>
+      </Button>
       <CoinBalance />
     </div>
   </div>

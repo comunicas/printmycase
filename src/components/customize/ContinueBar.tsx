@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { ArrowRight, Check, Download, Loader2, RotateCcw } from "lucide-react";
+import { ArrowRight, Check, Download, Loader2, MessageCircleMore, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -49,6 +49,21 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
     </Button>
   );
 
+  const contactButton = (
+    <Button
+      asChild
+      variant="ghost"
+      size="icon"
+      className="h-10 w-10 shrink-0 text-muted-foreground"
+      aria-label="Abrir contato"
+      title="Abrir contato"
+    >
+      <Link to="/contato">
+        <MessageCircleMore className="w-4 h-4" />
+      </Link>
+    </Button>
+  );
+
   const renderButtonContent = () =>
     isRendering ? (
       <><Loader2 className="w-4 h-4 animate-spin" /> Processando compra...</>
@@ -61,17 +76,15 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
 
   if (inline) {
     return (
-      <div className="w-full py-3 space-y-2">
+      <div className="w-full py-3">
         <div className="flex items-center gap-2 w-full">
           {resetButton}
           {downloadButton}
+          {contactButton}
           <Button className="flex-1 gap-1.5" onClick={onContinue} disabled={disabled}>
             {renderButtonContent()}
           </Button>
         </div>
-        <Link to="/contato" className="block text-center text-sm text-primary hover:text-primary/80 transition-colors">
-          Precisando de ajuda? Fale Conosco
-        </Link>
       </div>
     );
   }
@@ -85,13 +98,11 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
             {resetButton}
             {downloadButton}
             <div className="flex-1" />
+            {contactButton}
             <Button className="gap-1.5 shrink-0" onClick={onContinue} disabled={disabled}>
               {renderButtonContent()}
             </Button>
           </div>
-          <Link to="/contato" className="block text-center text-sm text-primary hover:text-primary/80 transition-colors">
-            Precisando de ajuda? Fale Conosco
-          </Link>
         </div>
       </div>
     </>
