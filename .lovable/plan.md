@@ -1,128 +1,131 @@
 
-Objetivo: revisar a experiência mobile de `/customize/:slug` para que o CTA principal de upload e a copy do produto também funcionem bem no celular, com hierarquia clara, layout limpo e sem competir com o fluxo principal de personalização.
+Objetivo: mover a copy mobile do produto para dentro da navegação por abas da página `/customize/:slug`, criando uma nova aba de informações que concentre o resumo do produto e os highlights com a mesma copy do desktop, em vez de deixá-los soltos abaixo do preview.
 
-## O que será construído
+## O que será alterado
 
-### 1) Levar a copy do produto para o mobile no ponto certo da jornada
-Hoje os highlights do produto existem só no `aside` desktop em `src/pages/Customize.tsx`. No mobile, essa camada de contexto praticamente some.
+### 1) Criar uma nova aba mobile de informações
+A navegação mobile hoje tem:
+- `Ajustes`
+- `Filtros IA`
 
-Será adicionada uma versão mobile do resumo do produto, reaproveitando a mesma copy já validada:
+Ela passará a incluir uma terceira aba:
+- `Info`
+
+Essa nova aba será usada para exibir:
+- imagem do produto
+- nome do produto
+- preço
+- lista de highlights com a mesma copy do desktop
+
+Direção:
+```text
+[Ajustes] [Info] [Filtros IA]
+```
+
+### 2) Levar a copy para junto das informações do produto
+O bloco mobile que hoje fica abaixo do preview em `src/pages/Customize.tsx` será removido dessa posição.
+
+Em vez disso, o conteúdo será consolidado dentro da nova aba `Info`, reunindo:
+- thumbnail
+- nome
+- preço
+- highlights reaproveitados via `ProductHighlightsList`
+
+Isso resolve o ponto principal pedido por você:
+- a copy fica junto com as informações do produto
+- a experiência mobile fica mais organizada
+- o preview continua mais limpo visualmente
+
+### 3) Manter a copy exatamente igual ao desktop
+A aba `Info` vai reutilizar a mesma fonte de dados já extraída para os highlights, preservando a copy 1:1:
+
 - `Policarbonato + TPU — proteção contra impactos e encaixe seguro`
 - `Impressão UV LED — cores vivas, alta nitidez e ótima durabilidade`
 - `Acabamento premium — fosco ou brilho, resistente`
 
-Direção:
-- posicionar esse bloco no mobile logo abaixo do preview, acima das barras fixas inferiores
-- manter leitura compacta e discreta
-- preservar a mesma copy 1:1 já aprovada
-- evitar duplicação visual exagerada quando a imagem já estiver carregada
+Sem duplicar textos manualmente em dois lugares.
 
-### 2) Revisar o CTA dentro do frame no mobile
-O CTA atual em `src/components/PhonePreview.tsx` já existe, mas foi pensado com uma base compartilhada entre desktop e mobile.
+### 4) Ajustar o overlay mobile para suportar a nova aba
+O `MobileTabOverlay` hoje renderiza apenas:
+- painel de ajustes
+- lista de filtros
 
-A implementação será refinada para o mobile com foco em:
-- melhor proporção dentro do frame menor
-- menos peso visual excessivo
-- leitura mais imediata no viewport 390x844
-- toque confortável sem parecer um card grande demais
+Ele será ampliado para também renderizar a aba `Info`, com um layout compacto e consistente com o restante da UI mobile:
+- topo com thumbnail + nome + preço
+- highlights abaixo
+- visual clean, discreto e informativo
+- sem competir com o CTA principal do frame
 
-Ajustes previstos:
-- reduzir levemente padding, tamanhos de ícone e tipografia no estado mobile
-- manter o CTA centralizado no frame vazio
-- garantir que o botão continue claramente clicável
-- preservar a hierarquia: título forte + linha de apoio curta
-- validar que o CTA continua harmonioso com safe zone, borda do aparelho e overlay de processamento
-
-### 3) Separar melhor responsabilidades desktop/mobile
-Hoje o desktop tem:
-- resumo do produto na sidebar
-- controles completos no `aside`
-
-E o mobile tem:
-- preview
-- barra de abas
-- barra de finalizar
-
-A revisão vai organizar isso melhor:
-- desktop continua com o bloco atual no topo da sidebar
-- mobile ganha seu próprio bloco enxuto de informações do produto
-- evitar que o usuário mobile dependa só do header/model selector para entender o valor do produto
-
-### 4) Reaproveitar a estrutura de highlights sem inconsistência
-Para não manter duas versões divergentes da mesma copy:
-- extrair a estrutura de dados dos highlights para reaproveitamento interno
-- usar o mesmo conteúdo em desktop e mobile
-- permitir apenas pequenas diferenças visuais de spacing/tamanho entre breakpoints
-
-Isso reduz risco de:
-- copy divergente entre desktop e mobile
-- futuras alterações feitas em apenas um lugar
-- quebra de fidelidade com a referência já aprovada
-
-### 5) Refinar a hierarquia visual mobile sem competir com o CTA principal
-A regra será:
-- CTA no frame continua sendo o principal convite à ação
-- bloco de produto no mobile atua como apoio informativo
-- `ContinueBar` continua simples, sem reintroduzir nome/preço no botão
-- barras fixas inferiores não devem sufocar o conteúdo acima
-
-Direção visual para o mobile:
+### 5) Preservar a hierarquia da jornada mobile
+A organização final ficará assim:
 ```text
 [Header]
-[Preview com CTA quando vazio]
-[Resumo do produto / highlights discretos]
+[Preview com CTA principal]
 [Histórico de filtros]
-[Tab bar]
+[Tab bar: Ajustes / Info / Filtros]
 [Continue bar]
 ```
 
+Quando o usuário tocar em `Info`, abre o bottom sheet com os detalhes do produto.
+Assim:
+- o CTA no frame continua sendo a ação principal
+- a copy do produto continua acessível
+- o conteúdo informativo não ocupa espaço fixo abaixo do preview
+
 ## Arquivos impactados
+
+### `src/components/customize/MobileTabBar.tsx`
+Será ajustado para:
+- adicionar o tipo/aba `info`
+- incluir ícone e rótulo da nova aba
+- manter a lógica de tabs visíveis estável
+
+### `src/components/customize/MobileTabOverlay.tsx`
+Será ajustado para:
+- suportar `activeTab === "info"`
+- receber props do produto necessárias para renderizar resumo + highlights
+- exibir a copy do produto no mesmo padrão do desktop
 
 ### `src/pages/Customize.tsx`
 Será ajustado para:
-- reaproveitar os highlights também no mobile
-- inserir um bloco de resumo mobile em posição estratégica abaixo do preview
-- manter o resumo desktop no local atual
-
-### `src/components/PhonePreview.tsx`
-Será refinado para:
-- ajustar sizing e spacing do CTA no frame para mobile
-- calibrar melhor a presença visual do botão vazio sem perder destaque
-- manter upload, processing overlay, preview de filtro e badge de resolução intactos
+- parar de renderizar o card mobile solto abaixo do preview
+- passar nome, preço e imagem do produto para o `MobileTabOverlay`
+- manter o resumo desktop no local atual, sem mudanças estruturais
 
 ## Abordagem de implementação
-1. Reaproveitar a mesma copy dos highlights já aprovada.
-2. Criar uma apresentação mobile compacta do resumo do produto.
-3. Ajustar o CTA do frame com classes responsivas mais refinadas para mobile.
-4. Preservar o comportamento atual de upload, drag, pinch, overlay e processing state.
-5. Validar que desktop não regrediu visualmente.
+1. Estender o tipo `MobileTab` com a nova opção `info`.
+2. Adicionar a aba `Info` na barra inferior mobile.
+3. Passar dados do produto para o overlay mobile.
+4. Renderizar dentro do overlay um bloco de informações reutilizando `ProductHighlightsList compact`.
+5. Remover o card informativo fixo que hoje fica abaixo do preview no mobile.
+6. Garantir que desktop continue intacto.
 
 ## Regras que serão respeitadas
-- não mudar o fluxo funcional de upload
-- não mover o resumo desktop de lugar
-- não poluir o mobile com um card pesado
-- não adicionar preço/nome ao botão “Finalizar”
-- manter o CTA do frame como principal ponto de entrada da jornada
-- manter a copy dos highlights fiel à referência já aprovada
+- não mover o bloco desktop de lugar
+- manter a copy dos highlights idêntica à já aprovada
+- não alterar o fluxo funcional de upload/customização
+- manter o CTA do frame como principal ponto de atenção
+- não adicionar nome/preço no botão “Finalizar”
 
 ## Check final documentado
 
 ### Mobile
-- o CTA dentro do frame fica melhor dimensionado e mais natural no celular
-- o resumo do produto aparece também no mobile
-- os highlights continuam discretos e legíveis
-- o conteúdo não conflita com as barras fixas inferiores
+- existe nova aba `Info`
+- a copy ficou junto das informações do produto
+- o card solto abaixo do preview foi removido
+- a aba mostra nome, preço, imagem e highlights com a mesma copy do desktop
+- o layout continua limpo e compacto
 
 ### Desktop
-- o bloco atual continua no topo da sidebar
-- a copy permanece igual à versão aprovada
-- não há regressão no layout existente
+- o resumo do produto permanece no topo da sidebar
+- highlights continuam iguais
+- nenhuma regressão visual ou estrutural
 
 ### Regressão funcional
-- upload continua funcionando pelo frame e pelo botão secundário
-- overlay de processamento continua cobrindo corretamente o preview
-- safe zone, arraste, zoom e rotação continuam intactos
-- dialogs e fluxo de customização não mudam
+- tabs mobile continuam abrindo/fechando normalmente
+- ajustes e filtros continuam funcionando
+- CTA do preview continua intacto
+- barra de finalizar continua sem mudanças indevidas
 
 ## Resultado esperado
-Depois da implementação, o mobile passa a comunicar melhor o produto e o próximo passo da jornada: o CTA dentro do frame fica mais bem resolvido para tela pequena e a copy do produto também aparece no celular de forma compacta, clean e informativa, sem competir com a ação principal de enviar imagem.
+Depois da implementação, o mobile deixa de exibir a copy como um bloco separado sob o preview e passa a concentrar as informações do produto em uma nova aba `Info`, com a mesma copy do desktop, deixando a interface mais organizada, limpa e coerente com a navegação por abas.
