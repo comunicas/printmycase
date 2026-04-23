@@ -1,100 +1,140 @@
 
-Objetivo: simplificar a jornada de customização removendo a modal inicial de upload e eliminando o módulo de galeria da página `/customize`, deixando o fluxo começar direto no preview/upload padrão.
+Objetivo: transformar o frame do celular no principal ponto de entrada para upload, com um CTA visualmente evidente, suave e intuitivo, reforçando que o primeiro passo obrigatório para personalizar a capinha é enviar uma imagem.
 
-## O que será removido
+## O que será construído
 
-### 1) Modal inicial da jornada
-Remover o uso de `UploadSpotlight` em `src/pages/Customize.tsx` para que a tela não abra mais com o bloqueio/modal “Sua foto vira capa para...”.
+### 1) CTA de upload dentro do frame quando ainda não houver imagem
+Adicionar um estado vazio mais forte em `src/components/PhonePreview.tsx`, exibido somente quando `image` for `null`:
 
-Resultado esperado:
-- a página abre direto na interface de customização
-- o usuário usa o upload normal já existente no preview
-- não existe mais CTA inicial “Escolher foto / Ou escolha da galeria”
-
-### 2) Módulo Galeria da página Customize
-Remover a galeria de toda a jornada de customização:
-
-- aba `Galeria` do desktop em `src/components/customize/ImageControls.tsx`
-- aba `Galeria` do mobile em `src/components/customize/MobileTabBar.tsx`
-- conteúdo `GalleryTab` no overlay mobile em `src/components/customize/MobileTabOverlay.tsx`
-- modal `GalleryPicker` montada em `src/pages/Customize.tsx`
+- área clicável centralizada dentro do frame
+- ícone de câmera/upload com destaque
+- título curto e direto, por exemplo:
+  - `Envie sua imagem`
+- microcopy de apoio, por exemplo:
+  - `Toque aqui para começar sua capinha`
+- reforço visual de ação primária com glow sutil e animação suave
+- clique em qualquer parte do CTA abre o seletor de arquivo já existente
 
 Resultado esperado:
-- desktop fica só com `Ajustes` e `Filtros IA` (quando existirem filtros)
-- mobile fica só com tabs de `Ajustes` e `Filtros IA`
-- não há mais fluxo paralelo de escolher imagem pela galeria
+- o frame deixa claro que ele é interativo
+- o upload vira o primeiro passo mais óbvio da jornada
+- o usuário entende imediatamente o que fazer
 
-## Ajustes de integração
+### 2) Hierarquia visual orientada à ação
+O CTA será desenhado para chamar atenção sem parecer agressivo:
 
-### `src/pages/Customize.tsx`
-Vou limpar toda a cola de estado e handlers que hoje servem apenas para modal/galeria:
-- remover imports de `GalleryPicker` e `UploadSpotlight`
-- remover `showGalleryPicker`
-- remover `spotlightInputRef`
-- remover `handleSpotlightUpload`
-- remover `handleSpotlightFile`
-- remover `handleSpotlightGallery`
-- parar de passar `onGalleryClick` para o preview
-- remover a renderização de `GalleryPicker`
-- remover a renderização de `UploadSpotlight`
-- remover o input escondido ligado ao spotlight
+- glow primário usando a linguagem visual já existente
+- animação suave de “respiração”/pulse leve, sem distração
+- leve destaque no ícone
+- texto curto e escaneável
+- contraste suficiente sobre o frame vazio
 
-### `src/components/customize/ImageControls.tsx`
-Padronizar os controles sem galeria:
-- remover import de `GalleryTab`
-- remover prop `onGallerySelect`
-- recalcular o grid das tabs para 1 ou 2 colunas conforme haja filtros
-- manter apenas `Ajustes` e `Filtros IA`
-
-### `src/components/customize/MobileTabBar.tsx`
-Padronizar o menu mobile:
-- remover tipo/tab `galeria`
-- remover ícone e label de galeria
-- manter somente tabs realmente disponíveis
-
-### `src/components/customize/MobileTabOverlay.tsx`
-Remover o painel de galeria:
-- remover import de `GalleryTab`
-- remover `onGallerySelect`
-- remover título `Galeria`
-- remover branch `activeTab === "galeria"`
-
-### `src/components/PhonePreview.tsx`
-Como a galeria sai da jornada:
-- remover prop opcional `onGalleryClick` se estiver órfã
-- manter apenas o upload pelo botão de câmera já existente
-
-## Efeito visual esperado
-A página ficará assim:
-
+Direção visual:
 ```text
-Sem imagem:
-- preview do aparelho visível
-- botão de upload/câmera como entrada principal
-- sidebar/rodapé mais enxutos
-- sem modal de entrada
-- sem aba de galeria
+[ ícone ]
+Envie sua imagem
+Toque aqui para começar sua capinha
 ```
 
+### 3) Feedback de hover/tap e acessibilidade
+Melhorar a sensação de interação no CTA:
+
+- hover suave no desktop
+- active/tap feedback no mobile
+- cursor pointer quando não houver imagem
+- foco visível para navegação por teclado
+- label acessível no input/trigger de upload
+
+### 4) Preservar o comportamento atual após upload
+Quando houver imagem carregada:
+
+- o CTA some completamente
+- permanece o comportamento atual de arraste/zoom
+- continua existindo o botão flutuante de câmera para trocar a imagem
+- processamento, safe zone, preview de filtros e badge de resolução seguem intactos
+
 ## Arquivos impactados
-- `src/pages/Customize.tsx`
-- `src/components/customize/ImageControls.tsx`
-- `src/components/customize/MobileTabBar.tsx`
-- `src/components/customize/MobileTabOverlay.tsx`
-- `src/components/PhonePreview.tsx`
 
-Possivelmente ficarão sem uso depois da limpeza:
-- `src/components/customize/UploadSpotlight.tsx`
-- `src/components/customize/GalleryPicker.tsx`
-- `src/components/customize/GalleryTab.tsx`
+### `src/components/PhonePreview.tsx`
+Mudanças principais:
+- adicionar o bloco visual do estado vazio dentro do frame
+- conectar esse bloco ao `inputRef.current?.click()`
+- aplicar classes de animação/glow somente quando `!image`
+- ajustar cursor e affordance do container no estado vazio
+- manter intacta a lógica de drag/pinch quando existir imagem
 
-## Critérios de aceite
-- a página `/customize/:slug` não abre mais com modal inicial
-- não existe mais botão/link “Ou escolha da galeria”
-- não existe mais aba “Galeria” no desktop
-- não existe mais aba “Galeria” no mobile
-- o upload continua funcionando pelo preview
-- o layout continua respeitando o padrão atual desktop/mobile
+### `src/index.css`
+Adicionar utilitários leves para o CTA, reaproveitando o sistema visual atual:
+- keyframe sutil de glow/pulse
+- classe utilitária para halo suave
+- fallback respeitando `prefers-reduced-motion`
 
-## Observação técnica
-O erro de deploy informado (`failed to upload legacy files to R2 ... InternalError`) aparenta ser de infraestrutura/publicação e não do código dessa mudança. Depois da implementação, o ideal é publicar novamente para confirmar se foi apenas uma falha transitória do storage de deploy.
+Exemplo de intenção:
+```text
+upload-cta-glow
+upload-cta-float/pulse-soft
+```
+
+## Comportamento proposto
+
+### Estado sem imagem
+- frame mostra CTA central
+- CTA pulsa levemente
+- glow primário destaca a ação
+- clique/toque abre seletor de arquivo
+- foco acessível também abre o upload
+
+### Estado com imagem
+- CTA desaparece
+- interface volta ao modo de edição normal
+- botão flutuante de câmera continua servindo para troca de imagem
+
+## Regras de UX que serão respeitadas
+- manter a experiência simples e direta
+- não adicionar preço/nome ao CTA principal
+- não interferir na lógica atual do preview
+- não reintroduzir modal inicial nem galeria
+- animação discreta, não chamativa demais
+- mobile continua priorizando clareza e toque fácil
+
+## Abordagem de implementação
+1. Reforçar o estado vazio do `PhonePreview` como “dropzone visual” clicável.
+2. Inserir ícone + título + microcopy dentro do frame.
+3. Aplicar glow e animação suave com utilitários CSS globais.
+4. Garantir que o CTA não conflite com overlays de processamento.
+5. Manter a troca de imagem atual no estado preenchido.
+6. Ajustar acessibilidade e redução de movimento.
+
+## Check final documentado
+Ao finalizar a implementação, validar estes pontos:
+
+### Visual
+- o CTA aparece apenas quando ainda não existe imagem
+- o CTA fica claramente visível dentro do frame do celular
+- ícone, glow e animação estão suaves e coerentes com a marca
+- não há poluição visual no desktop nem no mobile
+
+### Interação
+- clicar/toque no CTA abre o seletor de imagem
+- após selecionar uma imagem, o CTA desaparece
+- com imagem carregada, drag/zoom continuam funcionando
+- o botão flutuante de câmera continua permitindo trocar a imagem
+
+### Responsividade
+- CTA fica bem centralizado no desktop
+- CTA continua legível e fácil de tocar no mobile
+- não invade header, footer ou controles inferiores
+
+### Acessibilidade
+- trigger é navegável por teclado
+- possui foco visível
+- respeita `prefers-reduced-motion`
+
+### Regressão
+- safe zone continua renderizando
+- overlay de processamento continua cobrindo corretamente o frame
+- preview de filtro e badge de resolução continuam funcionando
+- nenhum comportamento da página `/customize/:slug` é quebrado
+
+## Resultado esperado
+Depois da mudança, a tela de customização abre já explicando o próximo passo dentro do próprio produto: o frame do celular passa a convidar o usuário a enviar sua imagem com um CTA mais claro, bonito e intuitivo, reduzindo fricção no primeiro passo da jornada.
