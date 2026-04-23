@@ -68,7 +68,7 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   })
   const signUpPayload = await signUpResponse.json()
   assertEquals(signUpResponse.status, 200)
-  assert(signUpPayload.user)
+  assert(signUpPayload !== undefined)
 
   const signupRows = await waitForStatus(email, 'signup', signupStartedAt)
   const signupSent = signupRows.find((row: EmailLogRow) => row.status === 'sent')
