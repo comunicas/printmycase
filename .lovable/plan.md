@@ -1,36 +1,38 @@
 
-Objetivo: adicionar um fade no topo do preview do celular, com 10% de altura e transparência máxima de 40%, aplicado sobre a área interna da div selecionada em `PhonePreview`.
+Atualizar a safe zone do preview para crescer mais 10px em todos os aparelhos, sem perder o alinhamento com o contorno do frame.
 
-### Implementação
-1. Atualizar `src/components/PhonePreview.tsx` no container interativo (`absolute inset-0 z-10`) para incluir uma camada visual no topo.
-2. Inserir uma `div` absoluta, não-interativa, posicionada no topo:
-   - `top: 0`
-   - `left: 0`
-   - `right: 0`
-   - `height: 10%`
-   - `pointer-events: none`
-3. Aplicar um gradiente com fade vertical:
-   - início no topo com 40% de opacidade
-   - transição para transparente ao final dos 10%
-4. Garantir que a camada fique acima da imagem do preview, mas sem bloquear drag, pinch, upload ou hover do ícone de mover.
+1. Ajustar a base global da safe zone
+- Em `src/components/PhonePreview.tsx`, aumentar o `height` do `DEFAULT_SAFE_ZONE_PRESET` em mais `10px`.
+- Como o pedido é “aplicar para todos os modelos”, a base global passará a incorporar esse acréscimo extra para qualquer aparelho sem preset específico.
 
-### Detalhe técnico sugerido
-Usar classes Tailwind equivalentes a algo como:
-- `absolute top-0 left-0 right-0 h-[10%] pointer-events-none`
-- gradiente: `bg-gradient-to-b from-black/40 to-transparent`
+2. Ajustar todos os presets já mapeados
+- No objeto `SAFE_ZONE_PRESETS`, somar mais `10px` ao `height` de cada modelo específico já configurado:
+  - `iphone-12-pro-max`
+  - `iphone-15-pro-max`
+  - `iphone-17-pro`
+- Onde hoje houver valores percentuais puros, converter para `calc(...)` para preservar a proporção original e acrescentar o deslocamento fixo adicional.
 
-Se o visual precisar ficar mais suave sobre diferentes imagens, a cor base do fade pode ser ajustada para `from-background/40` em vez de preto, mas a primeira opção tende a ficar mais visível no mockup.
+3. Preservar o encaixe visual nas bordas
+- Manter `insetX`, `top`, `radius` e `bottomRadius` como estão inicialmente, mudando apenas a altura.
+- Se algum modelo perder o contorno visual após o aumento, fazer microajustes somente no próprio preset desse aparelho, sem alterar a lógica geral do componente.
 
-### Resultado esperado
-- O topo do preview terá uma sobreposição sutil.
-- A opacidade começa em 40% e desaparece gradualmente.
-- O fade ocupa exatamente os 10% superiores da área interna.
-- Nenhuma interação do preview será afetada.
+4. Validar o comportamento do toggle existente
+- Garantir que o aumento respeite o toggle `showSafeZone`, sem alterar a interação atual.
+- Confirmar que o overlay continua aparecendo e desaparecendo corretamente tanto no desktop quanto no mobile.
 
-### Arquivo
-- `src/components/PhonePreview.tsx`
-
-### Validação
-- Confirmar no preview da rota `/customize/iphone-17-pro` que o fade aparece somente no topo.
-- Verificar que drag, zoom e clique para trocar imagem continuam funcionando normalmente.
-- Conferir desktop e mobile para garantir que o efeito acompanha o tamanho do preview sem distorção.
+Detalhes técnicos
+- Arquivo principal: `src/components/PhonePreview.tsx`
+- Mudança esperada:
+```ts
+const DEFAULT_SAFE_ZONE_PRESET = {
+  ...
+  height: "calc(17% + 20px)",
+};
+```
+- E, para os presets específicos, seguir o mesmo padrão:
+```ts
+height: "calc(valor-atual + 10px)"
+```
+- Exemplo:
+  - se estiver `calc(17% + 10px)`, passará para `calc(17% + 20px)`
+  - se estiver `15.2%`, passará para `calc(15.2% + 10px)`
