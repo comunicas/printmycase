@@ -9,6 +9,7 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
+import { DEFAULT_FROM_EMAIL, DEFAULT_FROM_NAME } from '../_shared/resend.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,10 +37,10 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = 'PrintMyCase'
+const SITE_NAME = DEFAULT_FROM_NAME
 const SENDER_DOMAIN = "notify.printmycase.com.br"
 const ROOT_DOMAIN = 'studio.printmycase.com.br'
-const FROM_DOMAIN = "notify.printmycase.com.br" // Domain shown in From address (may be root or sender subdomain)
+const FROM_EMAIL = DEFAULT_FROM_EMAIL
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
@@ -248,6 +249,11 @@ async function handleWebhook(req: Request): Promise<Response> {
     template_name: emailType,
     recipient_email: payload.data.email,
     status: 'pending',
+    metadata: {
+      provider: 'resend',
+      queue: 'auth_emails',
+      idempotency_key: messageId,
+    },
   })
 
   const { error: enqueueError } = await supabase.rpc('enqueue_email', {
@@ -256,13 +262,15 @@ async function handleWebhook(req: Request): Promise<Response> {
       run_id,
       message_id: messageId,
       to: payload.data.email,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+        from: `${SITE_NAME} <${FROM_EMAIL}>`,
       sender_domain: SENDER_DOMAIN,
       subject: EMAIL_SUBJECTS[emailType] || 'Notification',
       html,
       text,
       purpose: 'transactional',
       label: emailType,
+        idempotency_key: messageId,
+        reply_to: 'sac@printmycase.com.br',
       queued_at: new Date().toISOString(),
     },
   })

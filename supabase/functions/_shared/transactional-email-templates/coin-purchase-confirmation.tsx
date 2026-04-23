@@ -43,6 +43,9 @@ const CoinPurchaseConfirmationEmail = ({
           <Text style={text}>
             Seu pagamento foi aprovado e as moedas já foram creditadas para usar em filtros IA, upscale e outras criações da sua capinha.
           </Text>
+          <Text style={mutedText}>
+            Todo o saldo já está disponível na sua conta e você pode começar a usar agora mesmo.
+          </Text>
 
           <Section style={highlightCard}>
             <Text style={highlightLabel}>Moedas creditadas</Text>
@@ -108,6 +111,7 @@ const highlightValue = {
   color: '#19191d',
   margin: '0 0 10px',
 }
+const mutedText = { fontSize: '13px', color: '#6b7280', lineHeight: '1.6', margin: '0 0 20px' }
 const infoCard = {
   backgroundColor: '#f8fafc',
   borderRadius: '16px',

@@ -1,13 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.8";
-import { dispatchCoinPurchaseConfirmation } from "../_shared/transactional-email.ts";
+import { dispatchCoinPurchaseConfirmation, dispatchOrderStatusEmail } from "../_shared/transactional-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-const INTERNAL_FUNCTIONS_BASE = `${Deno.env.get("SUPABASE_URL")}/functions/v1`;
 
 const statusLabels: Record<string, string> = {
   pending: "Pagamento Pendente",
@@ -101,54 +99,6 @@ function buildEmailHtml(params: {
 </table>
 </body>
 </html>`;
-}
-
-async function enqueueOrderEmail(
-  supabaseAdmin: ReturnType<typeof createClient>,
-  params: {
-    userEmail: string;
-    userName: string;
-    orderId: string;
-    productName: string;
-    newStatus: string;
-    totalCents: number;
-    trackingCode?: string | null;
-    extraMessage?: string;
-    templateName: string;
-  },
-) {
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-  if (!serviceRoleKey || !Deno.env.get("SUPABASE_URL")) {
-    console.error(`[email] Missing email dispatch configuration (${params.templateName})`);
-    return;
-  }
-
-  const templateName = params.newStatus === "cancelled" ? "order-status-update" : "order-status-update";
-  const { error } = await supabaseAdmin.functions.invoke("send-transactional-email", {
-    headers: { Authorization: `Bearer ${serviceRoleKey}` },
-    body: {
-      templateName,
-      recipientEmail: params.userEmail,
-      idempotencyKey: `${params.templateName}-${params.orderId}`,
-      templateData: {
-        userName: params.userName,
-        orderId: params.orderId,
-        productName: params.productName,
-        newStatus: params.newStatus,
-        totalCents: params.totalCents,
-        trackingCode: params.trackingCode ?? null,
-        rejectionReason: params.extraMessage ?? null,
-      },
-    },
-  });
-
-  if (error) {
-    console.error(`[email] Dispatch failed (${params.templateName}):`, error.message);
-    return;
-  }
-
-  console.log(`[email] Dispatched ${params.templateName}:`, JSON.stringify({ to: params.userEmail, orderId: params.orderId }));
 }
 
 async function registerWebhookEvent(
@@ -334,7 +284,7 @@ Deno.serve(async (req) => {
 
             const userEmail = userRes.data?.user?.email;
             if (userEmail) {
-              await enqueueOrderEmail(supabaseAdmin, {
+              await dispatchOrderStatusEmail(supabaseAdmin, {
                 userEmail,
                 userName: profileRes.data?.full_name || userEmail.split("@")[0],
                 orderId: order.order_id,
@@ -342,7 +292,7 @@ Deno.serve(async (req) => {
                 newStatus: "analyzing",
                 totalCents: order.total_cents,
                 extraMessage: "Recebemos seu pagamento e seu pedido está sendo analisado. Em breve começaremos a produção!",
-                templateName: "order_confirmed",
+                idempotencyKey: `order_confirmed-${order.order_id}`,
               });
             }
           } catch (emailErr) {
@@ -404,7 +354,7 @@ Deno.serve(async (req) => {
 
           const userEmail = userRes.data?.user?.email;
           if (userEmail) {
-            await enqueueOrderEmail(supabaseAdmin, {
+            await dispatchOrderStatusEmail(supabaseAdmin, {
               userEmail,
               userName: profileRes.data?.full_name || userEmail.split("@")[0],
               orderId: order.id,
@@ -412,7 +362,7 @@ Deno.serve(async (req) => {
               newStatus: "cancelled",
               totalCents: order.total_cents,
               extraMessage: "O prazo de pagamento expirou e seu pedido foi cancelado automaticamente. Você pode fazer um novo pedido a qualquer momento.",
-              templateName: "order_cancelled",
+              idempotencyKey: `order_cancelled-${order.id}`,
             });
           }
         }
