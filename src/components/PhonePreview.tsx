@@ -30,7 +30,7 @@ const SAFE_ZONE_PRESETS: Record<string, SafeZonePreset> = {
   "iphone-15-pro-max": { insetX: "5%", width: "40%", top: "3.05%", height: "calc(15.2% + 20px)", radius: "1.5rem", bottomRadius: "3.8rem" },
   "iphone-17-pro": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem" },
   "iphone-17-pro-max": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem" },
-  "iphone-17-air": { insetX: "8.8%", top: "3.5%", height: "calc(17% + 10px)", radius: "2.2rem", bottomRadius: "2.2rem" },
+  "iphone-17-air": { insetX: "8.8%", top: "3.5%", height: "calc(8.5% + 5px)", radius: "2.2rem", bottomRadius: "2.2rem" },
 };
 
 const DEFAULT_SAFE_ZONE_PRESET: SafeZonePreset = { insetX: "5%", width: "40%", top: "3.5%", height: "calc(17% + 20px)", radius: "1.5rem", bottomRadius: "3.5rem" };
