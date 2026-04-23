@@ -253,6 +253,9 @@ async function handleWebhook(req: Request): Promise<Response> {
       provider: 'resend',
       queue: 'auth_emails',
       idempotency_key: messageId,
+      from_email: FROM_EMAIL,
+      from_name: SITE_NAME,
+      from: `${SITE_NAME} <${FROM_EMAIL}>`,
     },
   })
 
@@ -283,6 +286,14 @@ async function handleWebhook(req: Request): Promise<Response> {
       recipient_email: payload.data.email,
       status: 'failed',
       error_message: 'Failed to enqueue email',
+      metadata: {
+        provider: 'resend',
+        queue: 'auth_emails',
+        idempotency_key: messageId,
+        from_email: FROM_EMAIL,
+        from_name: SITE_NAME,
+        from: `${SITE_NAME} <${FROM_EMAIL}>`,
+      },
     })
     return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
       status: 500,

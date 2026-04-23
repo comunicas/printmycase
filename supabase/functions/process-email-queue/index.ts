@@ -283,6 +283,15 @@ Deno.serve(async (req) => {
             provider_message_id: resendResult?.id ?? null,
             idempotency_key: payload.idempotency_key ?? null,
             queue,
+            from_email:
+              typeof payload.from === 'string'
+                ? payload.from.match(/<([^>]+)>/)?.[1] ?? payload.from
+                : null,
+            from_name:
+              typeof payload.from === 'string'
+                ? payload.from.replace(/\s*<[^>]+>\s*$/, '')
+                : null,
+            from: typeof payload.from === 'string' ? payload.from : null,
           },
         })
 
