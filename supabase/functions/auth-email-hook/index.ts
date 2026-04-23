@@ -42,6 +42,31 @@ const SENDER_DOMAIN = "notify.printmycase.com.br"
 const ROOT_DOMAIN = 'studio.printmycase.com.br'
 const FROM_EMAIL = DEFAULT_FROM_EMAIL
 
+type AuthTraceContext = {
+  run_id: string
+  hook_event_type: string
+  action_type: string
+  recipient_email: string
+  message_id: string
+  idempotency_key: string
+  queue: 'auth_emails'
+}
+
+function buildTraceContext(payload: any): AuthTraceContext {
+  const actionType = payload.data.action_type
+  const runId = payload.run_id
+
+  return {
+    run_id: runId,
+    hook_event_type: payload.type,
+    action_type: actionType,
+    recipient_email: payload.data.email,
+    message_id: `auth-${actionType}-${runId}`,
+    idempotency_key: `auth:${actionType}:${runId}`,
+    queue: 'auth_emails',
+  }
+}
+
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
 // The sample email uses a fixed placeholder (RFC 6761 .test TLD) so the Go backend
@@ -206,8 +231,12 @@ async function handleWebhook(req: Request): Promise<Response> {
 
   // The email action type is in payload.data.action_type (e.g., "signup", "recovery")
   // payload.type is the hook event type ("auth")
-  const emailType = payload.data.action_type
-  console.log('Received auth event', { emailType, email: payload.data.email, run_id })
+  const trace = buildTraceContext(payload)
+  const emailType = trace.action_type
+  console.log('Auth email hook received event', {
+    trace_stage: 'hook_received',
+    ...trace,
+  })
 
   const EmailTemplate = EMAIL_TEMPLATES[emailType]
   if (!EmailTemplate) {
@@ -229,6 +258,11 @@ async function handleWebhook(req: Request): Promise<Response> {
     newEmail: payload.data.new_email,
   }
 
+  console.log('Auth email template resolved', {
+    trace_stage: 'template_resolved',
+    ...trace,
+  })
+
   // Render React Email to HTML and plain text
   const html = await renderAsync(React.createElement(EmailTemplate, templateProps))
   const text = await renderAsync(React.createElement(EmailTemplate, templateProps), {
@@ -241,30 +275,81 @@ async function handleWebhook(req: Request): Promise<Response> {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
 
-  const messageId = crypto.randomUUID()
+  const { data: existingTraceRow, error: existingTraceError } = await supabase
+    .from('email_send_log')
+    .select('id, status')
+    .eq('message_id', trace.message_id)
+    .in('status', ['pending', 'sent'])
+    .limit(1)
+    .maybeSingle()
 
-  // Log pending BEFORE enqueue so we have a record even if enqueue crashes
-  await supabase.from('email_send_log').insert({
-    message_id: messageId,
+  if (existingTraceError) {
+    console.error('Failed to check auth email existing trace', {
+      trace_stage: 'trace_lookup_failed',
+      ...trace,
+      error: existingTraceError,
+    })
+  }
+
+  if (existingTraceRow) {
+    console.log('Auth email trace already exists, skipping duplicate hook processing', {
+      trace_stage: 'duplicate_skipped',
+      ...trace,
+      existing_status: existingTraceRow.status,
+    })
+
+    return new Response(
+      JSON.stringify({ success: true, duplicate: true, message_id: trace.message_id, idempotency_key: trace.idempotency_key }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
+  const pendingLog = {
+    message_id: trace.message_id,
     template_name: emailType,
-    recipient_email: payload.data.email,
+    recipient_email: trace.recipient_email,
     status: 'pending',
     metadata: {
       provider: 'resend',
-      queue: 'auth_emails',
-      idempotency_key: messageId,
+      queue: trace.queue,
+      idempotency_key: trace.idempotency_key,
       from_email: FROM_EMAIL,
       from_name: SITE_NAME,
       from: `${SITE_NAME} <${FROM_EMAIL}>`,
+      run_id: trace.run_id,
+      hook_event_type: trace.hook_event_type,
+      action_type: trace.action_type,
+      trace_stage: 'hook_pending_logged',
+      trace,
     },
+  }
+
+  const { error: pendingInsertError } = await supabase.from('email_send_log').insert(pendingLog)
+
+  if (pendingInsertError) {
+    console.error('Failed to persist auth email pending log', {
+      trace_stage: 'pending_persist_failed',
+      ...trace,
+      error: pendingInsertError,
+    })
+
+    return new Response(JSON.stringify({ error: 'Failed to persist auth email trace' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  console.log('Auth email pending log persisted', {
+    trace_stage: 'pending_persisted',
+    ...trace,
   })
 
   const { error: enqueueError } = await supabase.rpc('enqueue_email', {
     queue_name: 'auth_emails',
     payload: {
-      run_id,
-      message_id: messageId,
-      to: payload.data.email,
+       run_id,
+       message_id: trace.message_id,
+       to: trace.recipient_email,
         from: `${SITE_NAME} <${FROM_EMAIL}>`,
       sender_domain: SENDER_DOMAIN,
       subject: EMAIL_SUBJECTS[emailType] || 'Notification',
@@ -272,27 +357,39 @@ async function handleWebhook(req: Request): Promise<Response> {
       text,
       purpose: 'transactional',
       label: emailType,
-        idempotency_key: messageId,
+        idempotency_key: trace.idempotency_key,
+        action_type: trace.action_type,
+        hook_event_type: trace.hook_event_type,
+        trace,
         reply_to: 'sac@printmycase.com.br',
       queued_at: new Date().toISOString(),
     },
   })
 
   if (enqueueError) {
-    console.error('Failed to enqueue auth email', { error: enqueueError, run_id, emailType })
+    console.error('Failed to enqueue auth email', {
+      trace_stage: 'enqueue_failed',
+      ...trace,
+      error: enqueueError,
+    })
     await supabase.from('email_send_log').insert({
-      message_id: messageId,
+      message_id: trace.message_id,
       template_name: emailType,
-      recipient_email: payload.data.email,
+      recipient_email: trace.recipient_email,
       status: 'failed',
       error_message: 'Failed to enqueue email',
       metadata: {
         provider: 'resend',
-        queue: 'auth_emails',
-        idempotency_key: messageId,
+        queue: trace.queue,
+        idempotency_key: trace.idempotency_key,
         from_email: FROM_EMAIL,
         from_name: SITE_NAME,
         from: `${SITE_NAME} <${FROM_EMAIL}>`,
+        run_id: trace.run_id,
+        hook_event_type: trace.hook_event_type,
+        action_type: trace.action_type,
+        trace_stage: 'hook_enqueue_failed',
+        trace,
       },
     })
     return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
@@ -301,10 +398,13 @@ async function handleWebhook(req: Request): Promise<Response> {
     })
   }
 
-  console.log('Auth email enqueued', { emailType, email: payload.data.email, run_id })
+  console.log('Auth email enqueued', {
+    trace_stage: 'enqueue_completed',
+    ...trace,
+  })
 
   return new Response(
-    JSON.stringify({ success: true, queued: true }),
+    JSON.stringify({ success: true, queued: true, message_id: trace.message_id, idempotency_key: trace.idempotency_key }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
 }
