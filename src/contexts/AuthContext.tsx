@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { clarityIdentify, clarityTag } from "@/lib/clarity";
 
+const getWelcomeEmailKey = (userId: string) => `welcome-email-sent:${userId}`;
+
 interface Profile {
   id: string;
   full_name: string;
@@ -25,6 +27,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id || !user.email_confirmed_at || !user.email) return;
+
+    const welcomeKey = getWelcomeEmailKey(user.id);
+    if (window.sessionStorage.getItem(welcomeKey) === "1") return;
+
+    let cancelled = false;
+
+    const sendWelcomeEmail = async () => {
+      const messageId = `welcome-${user.id}`;
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "welcome-email",
+          recipientEmail: user.email,
+          messageId,
+          idempotencyKey: messageId,
+        },
+      });
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Failed to trigger welcome email", error);
+        return;
+      }
+
+      window.sessionStorage.setItem(welcomeKey, "1");
+    };
+
+    void sendWelcomeEmail();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.email, user?.email_confirmed_at]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
