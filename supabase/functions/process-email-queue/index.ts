@@ -52,6 +52,31 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
   }
 }
 
+function buildTraceMetadata(payload: Record<string, unknown>, queue: string, traceStage: string, providerMessageId: string | null = null) {
+  const trace = payload.trace && typeof payload.trace === 'object' ? payload.trace : null
+
+  return {
+    provider: 'resend',
+    provider_message_id: providerMessageId,
+    idempotency_key: payload.idempotency_key ?? null,
+    queue,
+    from_email:
+      typeof payload.from === 'string'
+        ? payload.from.match(/<([^>]+)>/)?.[1] ?? payload.from
+        : null,
+    from_name:
+      typeof payload.from === 'string'
+        ? payload.from.replace(/\s*<[^>]+>\s*$/, '')
+        : null,
+    from: typeof payload.from === 'string' ? payload.from : null,
+    run_id: typeof payload.run_id === 'string' ? payload.run_id : null,
+    hook_event_type: typeof payload.hook_event_type === 'string' ? payload.hook_event_type : null,
+    action_type: typeof payload.action_type === 'string' ? payload.action_type : null,
+    trace_stage: traceStage,
+    trace,
+  }
+}
+
 // Move a message to the dead letter queue and log the reason.
 async function moveToDlq(
   supabase: ReturnType<typeof createClient>,
@@ -248,6 +273,16 @@ Deno.serve(async (req) => {
       }
 
       try {
+        console.log('Processing queued email message', {
+          trace_stage: 'dispatcher_claimed',
+          queue,
+          msg_id: msg.msg_id,
+          message_id: payload.message_id,
+          idempotency_key: payload.idempotency_key,
+          run_id: payload.run_id,
+          action_type: payload.action_type,
+        })
+
         const resendResult = await sendWithResend({
           to: typeof payload.to === 'string' ? payload.to : String(payload.to ?? ''),
           from: typeof payload.from === 'string' ? payload.from : undefined,
@@ -278,21 +313,18 @@ Deno.serve(async (req) => {
           template_name: payload.label || queue,
           recipient_email: payload.to,
           status: 'sent',
-          metadata: {
-            provider: 'resend',
-            provider_message_id: resendResult?.id ?? null,
-            idempotency_key: payload.idempotency_key ?? null,
-            queue,
-            from_email:
-              typeof payload.from === 'string'
-                ? payload.from.match(/<([^>]+)>/)?.[1] ?? payload.from
-                : null,
-            from_name:
-              typeof payload.from === 'string'
-                ? payload.from.replace(/\s*<[^>]+>\s*$/, '')
-                : null,
-            from: typeof payload.from === 'string' ? payload.from : null,
-          },
+          metadata: buildTraceMetadata(payload, queue, 'dispatcher_sent', resendResult?.id ?? null),
+        })
+
+        console.log('Queued email sent successfully', {
+          trace_stage: 'dispatcher_sent',
+          queue,
+          msg_id: msg.msg_id,
+          message_id: payload.message_id,
+          idempotency_key: payload.idempotency_key,
+          run_id: payload.run_id,
+          action_type: payload.action_type,
+          provider_message_id: resendResult?.id ?? null,
         })
 
         // Delete from queue
@@ -321,6 +353,17 @@ Deno.serve(async (req) => {
             recipient_email: payload.to,
             status: 'rate_limited',
             error_message: errorMsg.slice(0, 1000),
+            metadata: buildTraceMetadata(payload, queue, 'dispatcher_rate_limited'),
+          })
+
+          console.warn('Queued email hit rate limit', {
+            trace_stage: 'dispatcher_rate_limited',
+            queue,
+            msg_id: msg.msg_id,
+            message_id: payload.message_id,
+            idempotency_key: payload.idempotency_key,
+            run_id: payload.run_id,
+            action_type: payload.action_type,
           })
 
           const retryAfterSecs = getRetryAfterSeconds(error)
@@ -358,6 +401,18 @@ Deno.serve(async (req) => {
           recipient_email: payload.to,
           status: 'failed',
           error_message: errorMsg.slice(0, 1000),
+          metadata: buildTraceMetadata(payload, queue, 'dispatcher_failed'),
+        })
+
+        console.error('Queued email failed after dispatcher attempt', {
+          trace_stage: 'dispatcher_failed',
+          queue,
+          msg_id: msg.msg_id,
+          message_id: payload.message_id,
+          idempotency_key: payload.idempotency_key,
+          run_id: payload.run_id,
+          action_type: payload.action_type,
+          error: errorMsg,
         })
         if (payload?.message_id && typeof payload.message_id === 'string') {
           failedAttemptsByMessageId.set(payload.message_id, failedAttempts + 1)

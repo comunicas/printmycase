@@ -15,6 +15,18 @@ interface EmailLogRow {
   created_at: string
 }
 
+type AuthTemplateName = 'signup' | 'recovery'
+
+type AuthTrace = {
+  run_id?: string
+  hook_event_type?: string
+  action_type?: string
+  recipient_email?: string
+  message_id?: string
+  idempotency_key?: string
+  queue?: string
+}
+
 interface FunctionResponse {
   success?: boolean
   sent?: boolean
@@ -52,6 +64,48 @@ async function waitForStatus(recipientEmail: string, templateName: 'signup' | 'r
   }
 
   throw new Error(`Timeout waiting for pending/sent logs for ${templateName}`)
+}
+
+function asTrace(row: EmailLogRow): AuthTrace {
+  const trace = row.metadata?.trace
+  return trace && typeof trace === 'object' ? (trace as AuthTrace) : {}
+}
+
+function assertAuthTrace(rows: EmailLogRow[], templateName: AuthTemplateName, email: string) {
+  const pendingRow = rows.find((row) => row.status === 'pending')
+  const sentRow = rows.find((row) => row.status === 'sent')
+
+  assert(pendingRow)
+  assert(sentRow)
+  assertEquals(pendingRow.recipient_email, email)
+  assertEquals(sentRow.recipient_email, email)
+  assertEquals(pendingRow.message_id, sentRow.message_id)
+
+  const pendingTrace = asTrace(pendingRow)
+  const sentTrace = asTrace(sentRow)
+  const expectedMessageId = pendingRow.message_id
+  const expectedIdempotencyKey = pendingRow.metadata?.idempotency_key
+
+  assert(typeof expectedMessageId === 'string' && expectedMessageId.startsWith(`auth-${templateName}-`))
+  assert(typeof expectedIdempotencyKey === 'string' && expectedIdempotencyKey.startsWith(`auth:${templateName}:`))
+  assertEquals(sentRow.metadata?.idempotency_key, expectedIdempotencyKey)
+  assertEquals(pendingTrace.message_id, expectedMessageId)
+  assertEquals(sentTrace.message_id, expectedMessageId)
+  assertEquals(pendingTrace.idempotency_key, expectedIdempotencyKey)
+  assertEquals(sentTrace.idempotency_key, expectedIdempotencyKey)
+  assertEquals(pendingTrace.action_type, templateName)
+  assertEquals(sentTrace.action_type, templateName)
+  assertEquals(pendingTrace.recipient_email, email)
+  assertEquals(sentTrace.recipient_email, email)
+  assertEquals(pendingTrace.queue, 'auth_emails')
+  assertEquals(sentTrace.queue, 'auth_emails')
+  assertEquals(pendingRow.metadata?.trace_stage, 'hook_pending_logged')
+  assertEquals(sentRow.metadata?.trace_stage, 'dispatcher_sent')
+  assertEquals(pendingRow.metadata?.hook_event_type, 'auth')
+  assertEquals(sentRow.metadata?.hook_event_type, 'auth')
+  assert(typeof pendingRow.metadata?.run_id === 'string' && pendingRow.metadata.run_id.length > 0)
+  assertEquals(sentRow.metadata?.run_id, pendingRow.metadata?.run_id)
+  assertEquals(sentTrace.run_id, pendingTrace.run_id)
 }
 
 async function fetchEmailLogs(messageId: string): Promise<EmailLogRow[]> {
@@ -132,6 +186,7 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   const signupRows = await waitForStatus(email, 'signup', signupStartedAt)
   const signupSent = signupRows.find((row: EmailLogRow) => row.status === 'sent')
   assert(signupSent)
+  assertAuthTrace(signupRows, 'signup', email)
   assertEquals(signupSent.recipient_email, email)
   assertEquals(signupSent.metadata?.provider, 'resend')
   assertEquals(signupSent.metadata?.from_email, EXPECTED_FROM_EMAIL)
@@ -159,6 +214,7 @@ Deno.test('signup e recovery gravam pending/sent com remetente correto', async (
   const recoveryRows = await waitForStatus(email, 'recovery', recoveryStartedAt)
   const recoverySent = recoveryRows.find((row: EmailLogRow) => row.status === 'sent')
   assert(recoverySent)
+  assertAuthTrace(recoveryRows, 'recovery', email)
   assertEquals(recoverySent.recipient_email, email)
   assertEquals(recoverySent.metadata?.provider, 'resend')
   assertEquals(recoverySent.metadata?.from_email, EXPECTED_FROM_EMAIL)
