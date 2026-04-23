@@ -129,6 +129,9 @@ const Customize = () => {
         <MobileTabOverlay
           activeTab={mobileTab}
           onClose={() => setMobileTab(null)}
+          productName={c.productName}
+          productPrice={c.product?.price_cents ? formatPrice(c.product.price_cents / 100) : ""}
+          productImage={c.product?.device_image || c.product?.images?.[0] || "/placeholder.svg"}
           hasImage={!!c.image}
           scale={c.scale}
           rotation={c.rotation}
@@ -153,26 +156,7 @@ const Customize = () => {
         />
       )}
 
-        <section className="lg:hidden w-full max-w-[360px] space-y-2 px-1 pb-2">
-          <div className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2.5">
-            <div className="mb-1.5 flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-[13px] font-medium leading-tight text-foreground">{c.productName}</p>
-                <p className="text-[13px] font-semibold text-primary">
-                  {c.product?.price_cents ? formatPrice(c.product.price_cents / 100) : ""}
-                </p>
-              </div>
-              <img
-                src={c.product?.device_image || c.product?.images?.[0] || "/placeholder.svg"}
-                alt={c.productName}
-                className="h-11 w-11 flex-shrink-0 rounded-md object-contain bg-background"
-              />
-            </div>
-            <ProductHighlightsList compact />
-          </div>
-        </section>
-
-        {/* Mobile fixed footer: TabBar + ContinueBar */}
+      {/* Mobile fixed footer: TabBar + ContinueBar */}
       <div className="lg:hidden flex-shrink-0 relative z-[60]">
         <FilterHistoryBar
           filterHistory={c.filterHistory}
