@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { clarityIdentify, clarityTag } from "@/lib/clarity";
@@ -27,14 +27,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const welcomeSentRef = useRef<Set<string>>(new Set());
+  const welcomeInFlightRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user?.id || !user.email_confirmed_at || !user.email) return;
 
     const welcomeKey = getWelcomeEmailKey(user.id);
-    if (window.sessionStorage.getItem(welcomeKey) === "1") return;
+    if (
+      window.sessionStorage.getItem(welcomeKey) === "1" ||
+      welcomeSentRef.current.has(user.id) ||
+      welcomeInFlightRef.current.has(user.id)
+    ) {
+      return;
+    }
 
     let cancelled = false;
+    welcomeInFlightRef.current.add(user.id);
 
     const sendWelcomeEmail = async () => {
       const messageId = `welcome-${user.id}`;
@@ -51,9 +60,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error("Failed to trigger welcome email", error);
+        welcomeInFlightRef.current.delete(user.id);
         return;
       }
 
+      welcomeSentRef.current.add(user.id);
+      welcomeInFlightRef.current.delete(user.id);
       window.sessionStorage.setItem(welcomeKey, "1");
     };
 
@@ -126,6 +138,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+    welcomeSentRef.current.clear();
+    welcomeInFlightRef.current.clear();
   };
 
   return (
