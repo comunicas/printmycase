@@ -1,5 +1,6 @@
 import Stripe from "npm:stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.49.8";
+import { dispatchCoinPurchaseConfirmation } from "../_shared/transactional-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,8 +54,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
     // Check idempotency — already credited?
     const { data: existing } = await supabaseAdmin
       .from("coin_transactions")
@@ -140,31 +139,13 @@ Deno.serve(async (req) => {
 
     console.log("[verify-coin] Coins credited:", coinAmount, "to user:", userId);
 
-    const [{ data: profileData }, { data: balanceAfter }] = await Promise.all([
-      supabaseAdmin.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
-      supabaseAdmin.rpc("get_coin_balance", { _user_id: userId }),
-    ]);
-
-    const { error: emailError } = await supabaseAdmin.functions.invoke("send-transactional-email", {
-      headers: { Authorization: `Bearer ${serviceRoleKey}` },
-      body: {
-        templateName: "coin-purchase-confirmation",
-        recipientEmail: userEmail,
-        messageId: `coin-purchase-${sessionId}`,
-        idempotencyKey: `coin-purchase-${sessionId}`,
-        templateData: {
-          userName: profileData?.full_name || userEmail.split("@")[0],
-          coinsPurchased: coinAmount,
-          balanceAfter: typeof balanceAfter === "number" ? balanceAfter : null,
-          expiresAt,
-          orderReference: sessionId,
-        },
-      },
+    await dispatchCoinPurchaseConfirmation(supabaseAdmin, {
+      userId,
+      userEmail,
+      coinsPurchased: coinAmount,
+      sessionId,
+      expiresAt,
     });
-
-    if (emailError) {
-      console.error("[verify-coin] Coin email dispatch failed:", emailError.message);
-    }
 
     return new Response(JSON.stringify({ status: "credited", coins: coinAmount }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
