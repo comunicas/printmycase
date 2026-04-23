@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (token === supabaseServiceKey) {
+      // Internal edge-to-edge invocation using the service role secret.
+    } else {
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     })
@@ -94,6 +97,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Forbidden: service_role required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
     }
   } catch {
     return new Response(
