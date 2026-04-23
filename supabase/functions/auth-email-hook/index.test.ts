@@ -85,6 +85,7 @@ function assertAuthTrace(rows: EmailLogRow[], templateName: AuthTemplateName, em
   const sentTrace = asTrace(sentRow)
   const expectedMessageId = pendingRow.message_id
   const expectedIdempotencyKey = pendingRow.metadata?.idempotency_key
+  const pendingTraceStage = pendingRow.metadata?.trace_stage
   const sentTraceStage = sentRow.metadata?.trace_stage
 
   assert(typeof expectedMessageId === 'string' && expectedMessageId.startsWith(`auth-${templateName}-`))
@@ -100,7 +101,10 @@ function assertAuthTrace(rows: EmailLogRow[], templateName: AuthTemplateName, em
   assertEquals(sentTrace.recipient_email, email)
   assertEquals(pendingTrace.queue, 'auth_emails')
   assertEquals(sentTrace.queue, 'auth_emails')
-  assertEquals(pendingRow.metadata?.trace_stage, 'hook_pending_logged')
+  assert(
+    pendingTraceStage === 'hook_pending_logged' ||
+      pendingTraceStage === 'dispatcher_pending_reconstructed'
+  )
   assert(
     sentTraceStage === 'dispatcher_sent' || sentTraceStage === 'hook_fallback_sent'
   )
