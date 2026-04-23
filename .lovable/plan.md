@@ -1,94 +1,143 @@
 
-Objetivo: substituir o CTA textual de contato na experiência de customização por um ícone pequeno, nos pontos destacados nas imagens, deixando a interface mais limpa sem perder acesso rápido à página `/contato`.
+Objetivo: corrigir a customização para remover o CTA de contato do rodapé, restaurar o foco de conversão do footer como antes, e trocar o contato do header por uma modal simples dentro do fluxo, sem tirar o usuário da navegação de `/customize/:slug`.
 
 ## O que será alterado
 
-### 1) Trocar o CTA textual do rodapé por ícone pequeno
-Hoje o `ContinueBar` exibe o texto:
-- `Precisando de ajuda? Fale Conosco`
+### 1) Remover o CTA de contato do rodapé
+O ícone de contato será retirado do `ContinueBar` em todas as variações.
 
-Esse trecho será substituído por um CTA compacto em formato de ícone clicável.
+Resultado:
+- o rodapé volta a priorizar conversão
+- some a distração lateral perto do botão `Finalizar`
+- o layout retorna ao padrão anterior, mantendo reset/download/finalizar
 
-Direção:
-- remover a linha textual abaixo do botão `Finalizar`
-- inserir um botão/link pequeno com ícone de ajuda/contato
-- manter navegação para `/contato`
-- preservar acessibilidade com `aria-label` e tooltip/título quando fizer sentido
-
-Arquivo principal:
+Arquivo:
 - `src/components/customize/ContinueBar.tsx`
 
-### 2) Adicionar o mesmo CTA no topo da customização
-No header da tela de customização será incluído um ícone pequeno de contato no lado direito, na área indicada nas imagens.
+### 2) Restaurar o footer com foco em conversão
+O `ContinueBar` será reequilibrado para ficar visualmente centrado na ação principal.
 
 Direção:
-- posicionar o ícone junto ao grupo atual do topo, sem competir com o botão de ajuda/tutorial e saldo
-- manter tamanho discreto e alinhado ao visual existente
-- usar comportamento consistente entre mobile e desktop
-- linkar para `/contato`
+- preservar o botão `Finalizar` como ação dominante
+- manter o reset como ação secundária apenas quando houver modificação
+- manter download apenas quando aplicável
+- remover qualquer elemento que concorra com a decisão de compra/continuidade
 
-Arquivo principal:
+Observação:
+- isso respeita a memória do projeto de manter o botão `Finalizar` simples, direto e sem ruído extra
+
+### 3) Trocar o contato do header por modal simples
+O botão de contato no topo deixará de navegar para `/contato` e passará a abrir uma modal leve dentro da própria tela de customização.
+
+Objetivo da modal:
+- evitar saída de contexto
+- permitir contato rápido sem interromper o fluxo
+- manter UX discreta e direta
+
+Arquivos:
 - `src/components/customize/CustomizeHeader.tsx`
+- novo componente dedicado, seguindo o padrão existente de dialogs da customização
 
-### 3) Refinar o padrão visual do ícone
-O CTA será tratado como ação secundária, não como destaque principal.
+### 4) Criar uma modal de contato enxuta
+A modal será propositalmente simples e rápida de preencher, inspirada no formulário atual de `/contato`, mas adaptada para uso contextual.
+
+Estrutura sugerida:
+```text
+[título curto]
+[descrição curta]
+
+[nome]
+[email]
+[mensagem]
+
+[cancelar] [enviar]
+```
+
+Campos:
+- Nome
+- Email
+- Mensagem
+- honeypot invisível `website` preservado para anti-spam
+
+Comportamento:
+- envio usando a mesma function já usada na página de contato
+- feedback claro de loading, sucesso e erro
+- fechamento simples após envio com confirmação curta
+
+Arquivos:
+- novo componente de modal de contato em `src/components/customize/`
+- reutilização da integração já existente de `submit-contact`
+
+### 5) Manter a modal consistente com o padrão visual atual
+A modal de contato seguirá a linguagem já usada na customização.
 
 Direção visual:
-- usar botão `ghost`/ícone pequeno
-- cor neutra com hover sutil
-- foco visível consistente
-- área clicável confortável, mas sem “peso” visual
-- manter estética clean e premium da customização
+- mobile fullscreen
+- desktop também fullscreen, acompanhando o padrão recente dos dialogs
+- header/body/footer bem definidos
+- animações e foco visível consistentes com `Dialog`
+- copy curta e objetiva para não competir com o fluxo principal
 
-### 4) Garantir acessibilidade
-Como o texto visível será removido, o CTA precisa continuar claro para teclado e leitores de tela.
+### 6) Preservar acessibilidade e fluxo
+A nova solução precisa continuar funcional para teclado e leitores de tela.
 
-Implementação planejada:
-- `aria-label` descritivo, como `Falar com o suporte` ou `Abrir contato`
-- `title`/tooltip opcional para reforçar entendimento visual
-- foco visível com `focus-visible`
-- manter como link real para `/contato`
+Implementação prevista:
+- botão do header com `aria-label` claro
+- foco inicial no conteúdo da modal
+- labels adequados nos campos
+- mensagens de erro/sucesso compreensíveis
+- fechamento por botão explícito e comportamento padrão de dialog
 
 ## Arquivos impactados
 
 ### `src/components/customize/ContinueBar.tsx`
 Será ajustado para:
-- remover o texto “Precisando de ajuda? Fale Conosco”
-- inserir CTA de contato por ícone no bloco inferior/mobile e versão inline/desktop
-- preservar espaçamento do footer sem criar buracos visuais
+- remover o ícone/link de contato
+- restaurar o arranjo anterior com foco no CTA principal
 
 ### `src/components/customize/CustomizeHeader.tsx`
 Será ajustado para:
-- incluir ícone pequeno de contato no grupo de ações do topo
-- equilibrar espaçamento com botão de ajuda e saldo de moedas
+- substituir navegação para `/contato` por abertura de modal local
+- controlar estado `open` da modal de contato
 
-### `src/components/ui/tooltip.tsx`
-Provavelmente não exigirá mudança estrutural, mas poderá ser reutilizado se o ícone receber tooltip.
+### Novo componente de contato da customização
+Será criado para:
+- renderizar a modal simples
+- conter o formulário enxuto
+- reaproveitar a lógica de envio para `submit-contact`
+
+### Possível reutilização de:
+- `src/components/ui/dialog.tsx`
+- `src/components/ui/form-field.tsx`
+- `src/components/ui/input.tsx`
+- `src/components/forms/SubmitButton.tsx`
+- `src/hooks/use-toast.ts`
 
 ## Abordagem de implementação
-1. Criar um padrão compacto de link de contato por ícone.
-2. Aplicar esse padrão no `ContinueBar` em vez do texto atual.
-3. Aplicar o mesmo padrão no `CustomizeHeader`, nos locais indicados.
-4. Ajustar espaçamento para evitar desalinhamento em mobile e desktop.
-5. Garantir `aria-label`, foco visível e clique confortável.
-6. Validar que o resultado fique discreto e claramente acionável.
+1. Remover o CTA de contato do `ContinueBar`.
+2. Restaurar o layout do rodapé para priorizar `Finalizar`.
+3. Adicionar estado local de abertura da modal no header.
+4. Criar a modal simples de contato com formulário enxuto.
+5. Integrar o envio com a mesma function usada em `/contato`.
+6. Exibir feedback de loading, sucesso e erro sem sair da página.
+7. Validar responsividade, acessibilidade e ausência de conflito com z-index/dialogs existentes.
 
 ## Check final documentado
 
-### UX
-- texto longo de contato sai do rodapé
-- CTA fica mais limpo e menos intrusivo
-- acesso ao contato continua rápido
+### Rodapé
+- contato removido do footer
+- conversão volta a ser a prioridade visual
+- reset/download/finalizar continuam corretos
 
-### Posicionamento
-- ícone aparece nos pontos indicados nas imagens
-- não conflita com `Finalizar`, ajuda ou saldo
-- layout continua equilibrado em mobile e desktop
+### Header
+- botão de contato não navega mais para outra página
+- abre modal simples dentro da customização
 
-### Acessibilidade
-- ícone tem nome acessível
-- foco visível funciona
-- navegação por teclado continua correta
+### Modal
+- formulário é curto e claro
+- envio funciona sem sair do fluxo
+- sucesso/erro ficam compreensíveis
+- mobile e desktop respeitam o padrão fullscreen atual
 
 ## Resultado esperado
-Depois do ajuste, o contato na tela de customização deixará de ocupar uma linha textual no rodapé e passará a aparecer como um ícone pequeno e discreto, também presente no topo da interface, mantendo acesso rápido ao contato com uma UI mais limpa e refinada.
+Depois do ajuste, o rodapé da customização volta a ficar limpo e orientado à conversão, enquanto o contato permanece acessível no topo através de uma modal simples e contextual, sem tirar o usuário da navegação principal.
