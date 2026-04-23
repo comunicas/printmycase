@@ -313,7 +313,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
             )}
             {showSafeZone && (
               <div
-                className="pointer-events-none absolute z-10 overflow-hidden border-[3px] border-foreground bg-foreground/40 box-border"
+                className="pointer-events-none absolute z-10 overflow-hidden border border-foreground bg-foreground/40 box-border"
                 aria-hidden="true"
                 style={{
                   left: safeZonePreset.width ? (safeZonePreset.insetX ?? "5%") : safeZonePreset.insetX,
