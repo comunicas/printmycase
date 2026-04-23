@@ -245,7 +245,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, previewMode = "rea
           >
             {shouldShowMainFade && (
               <>
-                <div className="pointer-events-none absolute left-[8%] right-[8%] top-[4.2%] h-[19%] rounded-b-[3rem] bg-gradient-to-b from-foreground/46 via-foreground/20 to-transparent" />
+                <div className="pointer-events-none absolute left-[11%] right-[11%] top-[5%] h-[20%] rounded-b-[3.2rem] bg-gradient-to-b from-foreground/46 via-foreground/20 to-transparent" />
               </>
             )}
             {image && !isDragging && (
