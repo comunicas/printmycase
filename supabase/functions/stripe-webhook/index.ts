@@ -150,6 +150,49 @@ async function enqueueOrderEmail(
   console.log(`[email] Dispatched ${params.templateName}:`, JSON.stringify({ to: params.userEmail, orderId: params.orderId }));
 }
 
+async function enqueueCoinPurchaseEmail(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  params: {
+    userId: string;
+    userEmail: string;
+    coinsPurchased: number;
+    sessionId: string;
+    expiresAt: string;
+  },
+) {
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!serviceRoleKey) {
+    console.error("[email] Missing service role for coin purchase email");
+    return;
+  }
+
+  const [{ data: profileRes }, { data: balanceAfterRes }] = await Promise.all([
+    supabaseAdmin.from("profiles").select("full_name").eq("id", params.userId).maybeSingle(),
+    supabaseAdmin.rpc("get_coin_balance", { _user_id: params.userId }),
+  ]);
+
+  const { error } = await supabaseAdmin.functions.invoke("send-transactional-email", {
+    headers: { Authorization: `Bearer ${serviceRoleKey}` },
+    body: {
+      templateName: "coin-purchase-confirmation",
+      recipientEmail: params.userEmail,
+      messageId: `coin-purchase-${params.sessionId}`,
+      idempotencyKey: `coin-purchase-${params.sessionId}`,
+      templateData: {
+        userName: profileRes?.full_name || params.userEmail.split("@")[0],
+        coinsPurchased: params.coinsPurchased,
+        balanceAfter: typeof balanceAfterRes === "number" ? balanceAfterRes : null,
+        expiresAt: params.expiresAt,
+        orderReference: params.sessionId,
+      },
+    },
+  });
+
+  if (error) {
+    console.error("[email] Coin purchase dispatch failed:", error.message);
+  }
+}
+
 async function registerWebhookEvent(
   supabaseAdmin: ReturnType<typeof createClient>,
   event: { id?: string; type?: string; data?: { object?: { id?: string } } },
@@ -277,19 +320,36 @@ Deno.serve(async (req) => {
       const metadata = session.metadata || {};
 
       if (metadata.type === "coin_purchase" && metadata.user_id && metadata.coin_amount) {
+        const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
         const { error: coinError } = await supabaseAdmin
           .from("coin_transactions")
           .insert({
             user_id: metadata.user_id,
             amount: parseInt(metadata.coin_amount),
             type: "coin_purchase",
-            expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+            expires_at: expiresAt,
             description: `Compra de ${metadata.coin_amount} moedas`,
             stripe_session_id: session.id,
           });
 
         if (coinError && coinError.code !== "23505") {
           console.error("[webhook] CRITICAL: coin_transactions insert failed:", coinError.message);
+        } else {
+          try {
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(metadata.user_id);
+            const userEmail = userData?.user?.email;
+            if (userEmail) {
+              await enqueueCoinPurchaseEmail(supabaseAdmin, {
+                userId: metadata.user_id,
+                userEmail,
+                coinsPurchased: parseInt(metadata.coin_amount),
+                sessionId: session.id,
+                expiresAt,
+              });
+            }
+          } catch (emailErr) {
+            console.error("[email] Coin purchase email error (non-blocking):", (emailErr as Error).message);
+          }
         }
       } else {
         const { data: bonusAmountRow } = await supabaseAdmin.from("coin_settings").select("value").eq("key", "purchase_bonus_amount").single();

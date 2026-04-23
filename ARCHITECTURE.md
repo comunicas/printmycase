@@ -287,6 +287,44 @@ Páginas pesadas usam `React.lazy()` com `Suspense` + `LoadingSpinner`:
 - **Lazy**: `Admin`, `Catalog`, `Product`, `Customize`, `Checkout`, `Orders`, `Profile`, `Collections`, `CollectionPage`, `DesignPage`, `Coins`, `KnowledgeBase`, `KbCategory`, `KbArticle`, `MyGenerations`
 - **Estáticas**: `Landing`, `Login`, `Signup`, `ResetPassword`, `CheckoutSuccess`, `NotFound`, `RequestModel`, `LegalDocument`, `Unsubscribe`
 
+### Matriz de Emails do Produto
+
+#### Emails de autenticação
+
+- `signup` — confirmação de cadastro
+- `recovery` — recuperação de senha
+- `magiclink` — acesso por link mágico
+- `email_change` — confirmação de troca de email
+- `reauthentication` — código de verificação
+- `invite` — convite administrativo, quando usado
+
+Todos passam por `auth-email-hook`, usam remetente centralizado e registram trilha em `email_send_log` com estados append-only (`pending`, `sent`, `failed`).
+
+#### Emails do app
+
+- `welcome-email` — disparado após a conta estar confirmada e a sessão autenticada; o próprio usuário só pode acionar o envio do seu email de boas-vindas, com idempotência `welcome-{userId}`
+- `contact-confirmation` — confirmação do formulário de contato
+- `contact-notification` — notificação interna do formulário de contato
+- `coin-purchase-confirmation` — confirmação de compra/crédito de moedas após compensação efetiva
+- `order-status-update` — email único para compra/pedido e atualizações operacionais (`analyzing`, `rejected`, `shipped`, `delivered`, `cancelled`)
+
+#### Gatilhos principais
+
+- `AuthProvider` dispara `welcome-email` somente após `email_confirmed_at` existir na sessão
+- `stripe-webhook` envia:
+  - confirmação inicial do pedido quando o pagamento do checkout principal é concluído
+  - confirmação de compra de moedas para sessões `coin_purchase`
+  - cancelamento quando a sessão expira
+- `verify-coin-purchase` reenvia a confirmação de moedas com a mesma chave idempotente, cobrindo o fluxo de validação manual sem duplicar email
+- `notify-order-status` usa `order-status-update` para mudanças administrativas de status
+
+#### Observabilidade
+
+- `email_send_log` é a fonte única de auditoria para auth e emails do app
+- `message_id` correlaciona a trilha completa de cada envio
+- `provider_message_id` do Resend é persistido em `metadata` nos eventos `sent`
+- `auth-email-hook` e `send-transactional-email` agora registram falhas explícitas de persistência no console para evitar falso positivo operacional
+
 ### Onboarding da Customização
 
 Quando o usuário entra em `/customize/:slug` sem imagem carregada, o `UploadSpotlight` (overlay fullscreen, `z-40`) cobre o `PhonePreview` exibindo CTAs "Escolher foto" e "Ou escolha da galeria". Enquanto o spotlight está ativo:
