@@ -1,138 +1,194 @@
 
-Objetivo: revisar e estabilizar a estrutura de emails em etapas pequenas, isoladas e reversíveis, priorizando primeiro a ativação real do envio antes de expandir novos gatilhos.
+Objetivo refatorado: abandonar a infraestrutura atual de envio e migrar para Resend com o menor risco possível, preservando apenas os gatilhos de negócio já existentes.
 
-1. Etapa 1 — Confirmar e destravar a base de envio
-- Revisar o domínio de envio já configurado no projeto: `notify.printmycase.com.br`.
-- O estado atual continua bloqueando o envio real: o domínio está com falha de provisionamento por timeout.
-- Antes de qualquer mudança em templates ou novos fluxos, corrigir essa base no painel de emails do projeto e revalidar o domínio.
-- Manter o subdomínio atual, sem trocar arquitetura nem provedor, para evitar introduzir nova variabilidade.
+## Diagnóstico do estado atual
+- O projeto hoje está acoplado à infraestrutura nativa de emails em vários pontos:
+  - emails de autenticação
+  - sender central de app emails
+  - fila/processador
+  - unsubscribe e suppression
+  - logs de envio
+- O domínio `notify.printmycase.com.br` ainda está pendente nessa infraestrutura atual.
+- Isso importa porque, se o mesmo subdomínio for reaproveitado no Resend, pode haver conflito de DNS.
+- Hoje o contato e o status de pedido já dependem do sender central atual.
+- Não há conexão Resend já disponível no workspace neste momento, então a integração por connector ainda precisará ser criada antes da implementação.
 
-Resultado esperado
-- O projeto volta a ter um domínio de envio operacional.
-- A fila existente poderá entregar emails de fato, em vez de apenas enfileirar/logar eventos.
+## Melhor caminho recomendado
+Melhor caminho: usar Resend em um subdomínio separado do fluxo atual.
 
-2. Etapa 2 — Auditar a infraestrutura já existente sem alterar comportamento
-- Validar a coerência do pipeline já implementado:
-  - hook de emails de autenticação
-  - sender de emails da aplicação
-  - processador de fila
-  - unsubscribe
-  - suppression
-  - log de envio
-- Conferir se os pontos críticos estão alinhados:
-  - domínio de envio baked-in nas functions
-  - fila `auth_emails` e `transactional_emails`
-  - uso de `message_id` e idempotência
-  - consistência entre templates registrados e templates realmente usados
-- Corrigir apenas desvios estruturais detectados, sem adicionar novos fluxos ainda.
+Recomendação prática:
+- manter o domínio atual fora da migração imediata
+- configurar o Resend em um subdomínio dedicado, por exemplo:
+  - `mail.printmycase.com.br`, ou
+  - `notify2.printmycase.com.br`
+- só usar `notify.printmycase.com.br` no Resend se você realmente quiser aposentar o arranjo atual e remover a delegação DNS anterior no provedor de domínio
 
-Resultado esperado
-- Infraestrutura existente documentada e consistente.
-- Risco reduzido de corrigir um problema e abrir outro em auth ou pedidos.
+Por que esse caminho é melhor:
+- reduz risco de conflito DNS
+- evita ficar bloqueado pela configuração pendente atual
+- permite migração gradual
+- facilita rollback
 
-3. Etapa 3 — Corrigir a divergência de documentação
-- Atualizar a documentação interna para refletir a arquitetura real de emails.
-- Remover a referência incorreta a envio via Resend onde o projeto hoje usa a infraestrutura nativa já implementada.
-- Documentar claramente:
-  - quais emails já existem
-  - quais funções participam do envio
-  - quais lacunas ainda existem
+## Resposta direta às suas perguntas
 
-Resultado esperado
-- Fonte única de verdade para manutenção futura.
-- Menor chance de regressão por decisões baseadas em documentação desatualizada.
+### 1) “Preciso fazer algo lá?”
+Sim, provavelmente no painel do Resend e no provedor DNS do domínio.
 
-4. Etapa 4 — Validar os fluxos já existentes, um por vez
-- Testar primeiro apenas os emails de autenticação.
-- Depois testar apenas o fluxo de atualização de status de pedido.
-- Em cada fluxo, validar:
-  - geração do evento
-  - entrada no log
-  - passagem pela fila
-  - envio final
-  - comportamento em suppression/unsubscribe quando aplicável
-- Não introduzir novos templates nem novos triggers antes de confirmar que os fluxos atuais estão saudáveis.
+Se for usar um subdomínio novo no Resend:
+- adicionar o domínio/subdomínio no Resend
+- copiar os registros DNS que o Resend pedir
+- publicar esses registros no seu provedor DNS
+- aguardar validação no Resend
 
-Resultado esperado
-- Saber exatamente o que já funciona e o que ainda falha.
-- Evitar misturar correção estrutural com expansão funcional.
+Se quiser usar exatamente `notify.printmycase.com.br`:
+- antes precisa desligar o uso atual desse subdomínio na infraestrutura antiga
+- depois remover no provedor DNS qualquer delegação/NS antiga desse subdomínio
+- só então validar esse mesmo subdomínio no Resend
 
-5. Etapa 5 — Fechar a lacuna do formulário de contato
-- Só após estabilizar o envio base, integrar a página `/contato` ao sistema de emails.
-- Implementar em duas partes:
-  - email de confirmação para quem enviou a mensagem
-  - email interno de notificação para atendimento
-- Preservar o fluxo atual de gravação em `contact_messages` e o honeypot existente.
-- Fazer essa integração de forma idempotente para evitar duplicidade em reenvios/retries.
+### 2) “Você conecta via API no Resend?”
+Sim, o plano refatorado é integrar o backend com a API do Resend.
+Como você escolheu usar connector, o fluxo ideal é:
+- conectar a conta Resend ao projeto
+- usar essa conexão no backend para enviar os emails
+- substituir os pontos atuais de envio por chamadas ao Resend
 
-Resultado esperado
-- O contato deixa de ser apenas persistência no banco e passa a ter retorno operacional real.
-- Atendimento recebe aviso sem depender apenas do painel admin.
+## O que muda no plano original
+O plano anterior partia da premissa de estabilizar a infraestrutura atual.
+Isso deixa de ser o melhor caminho se a decisão é usar Resend.
 
-6. Etapa 6 — Adicionar templates novos de forma mínima
-- Criar somente os templates estritamente necessários para o contato:
-  - confirmação de recebimento
-  - notificação interna
-- Seguir o estilo visual já usado no email de status de pedido e nos templates de auth.
-- Não expandir para emails promocionais nem automações extras nesta fase.
+Portanto:
+- sai a etapa de “destravar domínio atual”
+- sai a etapa de “estabilizar fila atual como base definitiva”
+- entra a etapa de “desacoplar gatilhos do provedor atual”
+- entra a etapa de “validar DNS e envio real no Resend”
+- a fila/logs/unsubscribe atuais passam a ser reavaliados: ou são removidos da responsabilidade de envio, ou ficam apenas como legado temporário durante a transição
 
-Resultado esperado
-- Incremento pequeno, seguro e fácil de validar.
-- Padronização visual entre emails já existentes e novos.
+## Plano refatorado para Resend
 
-7. Etapa 7 — Observabilidade e checagens finais
-- Verificar os registros em `email_send_log` com foco em:
-  - pendentes que nunca avançam
-  - falhas recorrentes
-  - suppressions inesperadas
-  - duplicidades por `message_id`
-- Confirmar o comportamento de ponta a ponta nos cenários principais:
-  - auth
-  - atualização de status
-  - contato
-  - unsubscribe
-- Se necessário, só então propor melhorias secundárias, como dashboard de acompanhamento ou novos triggers.
+### Etapa 1 — Decisão de domínio de envio
+Definir uma das duas estratégias:
+
+Opção A — recomendada
+- usar novo subdomínio no Resend
+
+Opção B — mais arriscada
+- reaproveitar `notify.printmycase.com.br`
+- exige desmontar a configuração anterior antes
 
 Resultado esperado
-- Estrutura estabilizada com trilha de auditoria clara.
-- Base pronta para futuras automações com baixo risco.
+- domínio de envio da nova arquitetura definido sem ambiguidade
 
-Análise revisada do estado atual
-- A arquitetura principal de emails já existe e é madura o suficiente para reaproveitamento.
-- O bloqueio mais importante não está no frontend nem nos templates: está na ativação real do domínio de envio.
-- Auth emails já usam fila.
-- App emails já têm sender genérico e ao menos um template ativo (`order-status-update`).
-- O formulário `/contato` ainda não está conectado ao envio de email; hoje ele apenas grava na tabela `contact_messages`.
-- A documentação interna ainda mistura a arquitetura atual com uma referência antiga/incompatível.
+### Etapa 2 — Habilitar acesso ao Resend no projeto
+- criar/vincular a conexão Resend no projeto
+- confirmar que o backend consegue autenticar no Resend
+- padronizar a estratégia de envio por connector
 
-Sequência recomendada de implementação segura
-1. Regularizar domínio de envio
-2. Auditar infraestrutura existente
-3. Corrigir documentação
-4. Validar auth
-5. Validar status de pedido
-6. Integrar contato
-7. Validar logs e retry/suppression
+Resultado esperado
+- projeto apto a falar com a API do Resend
 
-Detalhes técnicos
-- Arquivos principais a revisar/ajustar:
-  - `supabase/functions/auth-email-hook/index.ts`
-  - `supabase/functions/send-transactional-email/index.ts`
-  - `supabase/functions/process-email-queue/index.ts`
-  - `supabase/functions/handle-email-unsubscribe/index.ts`
-  - `supabase/functions/handle-email-suppression/index.ts`
-  - `supabase/functions/notify-order-status/index.ts`
-  - `supabase/functions/_shared/transactional-email-templates/registry.ts`
-  - `src/pages/Contact.tsx`
-  - `src/components/admin/ContactMessagesManager.tsx`
-  - `ARCHITECTURE.md`
-- Tabelas já existentes relevantes:
-  - `email_send_log`
-  - `email_send_state`
-  - `email_unsubscribe_tokens`
-  - `suppressed_emails`
-  - `contact_messages`
-- Estado do domínio no momento da revisão:
-  - `notify.printmycase.com.br` com falha de provisionamento por timeout
-- Risco principal a evitar:
-  - adicionar novos fluxos antes de resolver a camada base de entrega
+### Etapa 3 — Desenhar a nova arquitetura mínima
+Substituir a infraestrutura atual de envio por uma arquitetura mais simples:
+- auth emails via Resend
+- app emails via Resend
+- manter templates React/HTML onde fizer sentido
+- remover dependência operacional da fila atual para os fluxos principais
+
+Resultado esperado
+- definição clara do que será mantido, adaptado ou aposentado
+
+### Etapa 4 — Migrar primeiro os app emails
+Ordem segura:
+1. contato
+2. status de pedido
+
+Por quê:
+- são fluxos controlados e fáceis de validar
+- geram menos risco que auth
+
+Resultado esperado
+- contato e pedidos enviando por Resend sem depender do sender atual
+
+### Etapa 5 — Migrar os auth emails
+- revisar hook atual de auth
+- substituir o mecanismo de entrega para Resend
+- validar:
+  - confirmação de conta
+  - recuperação de senha
+  - magic link
+  - troca de email
+  - reauthentication
+
+Resultado esperado
+- autenticação inteira usando Resend com branding consistente
+
+### Etapa 6 — Revisar unsubscribe/suppression/logs
+Aqui há uma decisão de arquitetura:
+- manter tabelas locais apenas como auditoria interna, ou
+- simplificar e deixar o Resend concentrar a telemetria principal
+
+Recomendação:
+- manter logs mínimos locais só para rastreabilidade dos fluxos críticos
+- não tentar replicar toda a complexidade atual se ela não for necessária
+
+Resultado esperado
+- observabilidade suficiente sem reimplementar uma infraestrutura pesada
+
+### Etapa 7 — Limpeza da infraestrutura antiga
+Depois que tudo estiver validado:
+- remover acoplamentos ao sender atual
+- remover dependência do processador de fila atual
+- revisar documentação
+- deixar claro quais funções ainda existem por compatibilidade e quais saem de operação
+
+Resultado esperado
+- arquitetura final coerente, sem dois provedores “meio ativos”
+
+## Checklist de migração segura
+
+### Pode começar agora
+- [x] decisão de trocar de provedor foi tomada
+- [x] já existem gatilhos principais mapeados
+- [x] contato e status de pedido já estão identificados no código
+
+### Falta antes de implementar
+- [ ] escolher se o Resend usará subdomínio novo ou o `notify.printmycase.com.br`
+- [ ] conectar o Resend ao projeto
+- [ ] confirmar o domínio validado no Resend
+- [ ] definir como tratar auth emails na nova arquitetura
+
+### Falta para concluir de fato
+- [ ] migrar contato para Resend
+- [ ] migrar status de pedido para Resend
+- [ ] migrar auth emails para Resend
+- [ ] validar envios reais ponta a ponta
+- [ ] revisar documentação
+- [ ] desativar dependência operacional do fluxo antigo
+
+## Recomendação final
+O melhor caminho não é “consertar primeiro a estrutura atual”.
+O melhor caminho, dado seu objetivo, é:
+
+1. configurar Resend em um subdomínio novo
+2. integrar o projeto ao Resend
+3. migrar primeiro contato e status de pedido
+4. migrar auth emails depois
+5. só no final aposentar a infraestrutura atual
+
+Isso reduz risco, evita conflito DNS e acelera a entrada em produção.
+
+## Detalhes técnicos
+Arquivos mais impactados no plano refatorado:
+- `supabase/functions/auth-email-hook/index.ts`
+- `supabase/functions/send-transactional-email/index.ts`
+- `supabase/functions/process-email-queue/index.ts`
+- `supabase/functions/submit-contact/index.ts`
+- `supabase/functions/notify-order-status/index.ts`
+- `supabase/functions/handle-email-unsubscribe/index.ts`
+- `supabase/functions/handle-email-suppression/index.ts`
+- `supabase/functions/_shared/transactional-email-templates/registry.ts`
+- `ARCHITECTURE.md`
+
+Pontos de atenção:
+- o subdomínio `notify.printmycase.com.br` está pendente na estrutura atual
+- não há conexão Resend disponível ainda no projeto
+- se o mesmo subdomínio for reutilizado, será necessário ajustar DNS no provedor antes da validação no Resend
