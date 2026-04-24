@@ -70,6 +70,7 @@ const OrdersManager = () => {
         ...o,
         product_name: nameMap.get(o.product_id)?.name ?? o.product_id,
         product_image: nameMap.get(o.product_id)?.image,
+        product_slug: nameMap.get(o.product_id)?.slug,
         design_name: o.design_id ? designMap.get(o.design_id)?.name : undefined,
         design_image: o.design_id ? designMap.get(o.design_id)?.image : undefined,
         customer_name: profileMap.get(o.user_id) || undefined,
