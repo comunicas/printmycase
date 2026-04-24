@@ -200,8 +200,7 @@ export default function HeroPhoneCarousel({ onAccentChange }: CarouselProps) {
                 height: '6px',
                 background: `rgba(${scanAccent},0.95)`,
                 boxShadow: `0 0 10px rgba(${scanAccent},0.9)`,
-                animation: `particle-blink ${SCAN_MS}ms ease-in-out ${p.delay} forwards`,
-                opacity: 0,
+                animation: `particle-blink ${SCAN_MS}ms ease-in-out ${p.delay} both`,
               }}
             />
           ))}
