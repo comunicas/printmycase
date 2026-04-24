@@ -1,47 +1,64 @@
-import { Coins } from 'lucide-react';
+import { Coins, Sparkles } from 'lucide-react';
+
+type BannerVariant = 'signup' | 'login';
 
 interface AuthCardProps {
   children: React.ReactNode;
-  /** Exibe o banner laranja de incentivo (50 moedas). Default: true */
   showBanner?: boolean;
+  bannerVariant?: BannerVariant;
 }
 
-/**
- * Card container para formulários de auth.
- * Aplica shadow-elevated, border e radius do DS.
- * Inclui o banner de incentivo de moedas.
- */
-export default function AuthCard({ children, showBanner = true }: AuthCardProps) {
+export default function AuthCard({
+  children,
+  showBanner = true,
+  bannerVariant = 'signup',
+}: AuthCardProps) {
   return (
     <div
       className="w-full max-w-md rounded-2xl border border-border bg-card overflow-hidden"
       style={{ boxShadow: 'var(--shadow-elevated)' }}
     >
-      {/* Banner de incentivo — moedas grátis */}
       {showBanner && (
         <div
           className="px-5 py-4 text-white"
           style={{
-            background: 'linear-gradient(135deg, hsl(38 92% 50%), hsl(25 95% 55%))',
+            background:
+              bannerVariant === 'signup'
+                ? 'linear-gradient(135deg, hsl(38 92% 50%), hsl(25 95% 55%))'
+                : 'linear-gradient(135deg, hsl(265 83% 52%), hsl(265 83% 42%))',
           }}
         >
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              <Coins className="w-5 h-5" />
+              {bannerVariant === 'signup'
+                ? <Coins className="w-5 h-5" />
+                : <Sparkles className="w-5 h-5" />}
             </div>
             <div>
-              <p className="font-display font-bold text-sm leading-tight">
-                🎁 Ganhe 50 moedas grátis!
-              </p>
-              <p className="text-xs text-white/85 leading-tight mt-0.5">
-                Crie sua conta e use em filtros IA, upscale e mais
-              </p>
+              {bannerVariant === 'signup' ? (
+                <>
+                  <p className="font-display font-bold text-sm leading-tight">
+                    ✨ 50 moedas IA de boas-vindas
+                  </p>
+                  <p className="text-xs text-white/90 leading-tight mt-0.5">
+                    = 3 transformações grátis: Cyberpunk, Cartoon 3D, Pixel Art e mais
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-display font-bold text-sm leading-tight">
+                    👋 Bem-vindo de volta!
+                  </p>
+                  <p className="text-xs text-white/90 leading-tight mt-0.5">
+                    Suas moedas IA e capas personalizadas estão te esperando
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Conteúdo do card */}
       <div className="p-7 space-y-5">
         {children}
       </div>
