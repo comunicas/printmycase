@@ -1,10 +1,6 @@
 import { lazy, Suspense } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  Smartphone, Upload, Package, ArrowRight, ChevronRight, Sparkles } from
-"lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Smartphone, Upload, Package, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useAllDesigns } from "@/hooks/useCollectionDesigns";
 import { formatPrice } from "@/lib/types";
