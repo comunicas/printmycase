@@ -20,8 +20,6 @@ import TechQualitySection from "@/components/home/TechQualitySection";
 // Lazy-load below-the-fold sections to reduce initial JS bundle (improves FCP/LCP)
 const AiCoinsSection = lazy(() => import("@/components/AiCoinsSection"));
 const FaqSection = lazy(() => import("@/components/FaqSection"));
-const StoreLocator = lazy(() => import("@/components/StoreLocator"));
-const InstagramShowcase = lazy(() => import("@/components/InstagramShowcase"));
 
 
 
@@ -321,14 +319,6 @@ const Landing = () => {
             <AiCoinsSection />
           </Suspense>
 
-          {/* Store Locator */}
-          <Suspense fallback={<div className="min-h-[400px]" />}>
-            <StoreLocator />
-          </Suspense>
-
-          <Suspense fallback={<div className="min-h-[300px]" />}>
-            <InstagramShowcase />
-          </Suspense>
 
 
           {/* Testimonials — DS v2 */}
