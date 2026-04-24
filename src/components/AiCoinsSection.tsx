@@ -50,7 +50,7 @@ const AiCoinsSection = ({ headingless = false }: AiCoinsSectionProps) => {
 
   return (
     <>
-      <section className="relative overflow-hidden">
+      <div className="relative overflow-hidden">
         <div className="relative z-10 max-w-5xl mx-auto space-y-12">
           {!headingless && (
             <ScrollReveal>
@@ -139,7 +139,7 @@ const AiCoinsSection = ({ headingless = false }: AiCoinsSectionProps) => {
             </ScrollReveal>
           )}
         </div>
-      </section>
+      </div>
 
       <AiGalleryModal
         open={galleryOpen}
