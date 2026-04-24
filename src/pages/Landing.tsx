@@ -12,6 +12,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import PaymentBadges from "@/components/PaymentBadges";
 import { DsButton, SectionLabel, FloatingBadge, Ticker, StepCard, TestimonialCard } from "@/components/ds";
 import TechQualitySection from "@/components/home/TechQualitySection";
+import HeroPhoneCarousel from "@/components/home/HeroPhoneCarousel";
 
 // Lazy-load below-the-fold sections to reduce initial JS bundle (improves FCP/LCP)
 const AiCoinsSection = lazy(() => import("@/components/AiCoinsSection"));
@@ -130,15 +131,18 @@ const Landing = () => {
 
               {/* Painel direito — mockup */}
               <div className="relative flex justify-center items-center">
-                {/* Frame do celular */}
+                {/* Frame do celular — carrossel de capas IA */}
                 <div
                   className="relative w-[280px] h-[560px] rounded-[3rem] border-8 border-foreground/90 bg-card overflow-hidden"
                   style={{ boxShadow: "var(--shadow-elevated)" }}
                 >
+                  {/* Fallback gradient — visível enquanto imagens carregam */}
                   <div
                     className="absolute inset-0"
                     style={{ background: "var(--gradient-brand)" }}
                   />
+                  {/* Carrossel de capas geradas por IA */}
+                  <HeroPhoneCarousel />
                 </div>
 
                 {/* Badges flutuantes */}
