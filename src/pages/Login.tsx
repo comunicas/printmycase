@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 import { Input } from '@/components/ui/input';
 import FormField from '@/components/ui/form-field';
-import SubmitButton from '@/components/forms/SubmitButton';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import GoogleIcon from '@/components/GoogleIcon';
@@ -121,7 +120,7 @@ const Login = () => {
           </FormField>
 
           {/* CTA principal com gradient-brand do DS */}
-          <DsButton type="submit" variant="primary" className="w-full" disabled={loading}>
+          <DsButton type="submit" variant="brand" className="w-full" disabled={loading}>
             {loading ? 'Entrando...' : 'Entrar'}
           </DsButton>
         </form>
