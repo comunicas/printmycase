@@ -146,7 +146,7 @@ const OrderImagesPreviewer = ({ customizationData, deviceSlug }: Props) => {
                 <div className="relative group">
                   <button
                     onClick={() => state.url && setLightbox({ url: state.url, label })}
-                    className="block rounded-md overflow-hidden border border-border hover:border-primary/50 transition-colors"
+                    className="block rounded-md overflow-hidden border border-border hover:border-primary/50 transition-colors relative"
                   >
                     <img
                       src={state.url!}
@@ -156,6 +156,9 @@ const OrderImagesPreviewer = ({ customizationData, deviceSlug }: Props) => {
                       className="w-16 h-24 object-cover"
                       loading="lazy"
                     />
+                    {label === "Imagem Posição" && (
+                      <SafeZoneOverlay deviceSlug={deviceSlug} mobile />
+                    )}
                   </button>
                   {path && state.url && (
                     <a
@@ -181,11 +184,16 @@ const OrderImagesPreviewer = ({ customizationData, deviceSlug }: Props) => {
           {lightbox && (
             <div className="flex flex-col items-center gap-3">
               <p className="text-sm font-medium">{lightbox.label}</p>
-              <img
-                src={lightbox.url}
-                alt={lightbox.label}
-                className="max-h-[70vh] w-auto rounded-lg object-contain"
-              />
+              <div className="relative">
+                <img
+                  src={lightbox.url}
+                  alt={lightbox.label}
+                  className="max-h-[70vh] w-auto rounded-lg object-contain block"
+                />
+                {lightbox.label === "Imagem Posição" && (
+                  <SafeZoneOverlay deviceSlug={deviceSlug} />
+                )}
+              </div>
               <div className="flex gap-2">
                 <Button
                   size="sm"
