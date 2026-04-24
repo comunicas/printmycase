@@ -41,7 +41,7 @@ export default function AuthCard({
                     ✨ 50 moedas IA de boas-vindas
                   </p>
                   <p className="text-xs text-white/90 leading-tight mt-0.5">
-                    = 3 transformações grátis: Cyberpunk, Cartoon 3D, Pixel Art e mais
+                    = 3 filtros IA grátis: Cyberpunk, Cartoon 3D e mais
                   </p>
                 </>
               ) : (
