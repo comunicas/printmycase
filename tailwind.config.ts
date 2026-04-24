@@ -104,7 +104,10 @@ export default {
   			md: 'var(--shadow-md)',
   			lg: 'var(--shadow-lg)',
   			xl: 'var(--shadow-xl)',
-  			'2xl': 'var(--shadow-2xl)'
+  			'2xl': 'var(--shadow-2xl)',
+  			card: 'var(--shadow-card)',
+  			elevated: 'var(--shadow-elevated)',
+  			glow: 'var(--shadow-glow)'
   		},
   		fontFamily: {
   			sans: [
@@ -119,7 +122,9 @@ export default {
   				'Arial',
   				'Noto Sans',
   				'sans-serif'
-  			]
+  			],
+  			display: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  			body: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif']
   		}
   	}
   },
