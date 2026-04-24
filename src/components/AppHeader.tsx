@@ -101,7 +101,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
           <DsButton
             variant="brand"
             size="sm"
-            className="hidden sm:inline-flex"
+            className="hidden sm:max-md:inline-flex lg:inline-flex"
             onClick={() => navigate('/catalog')}
           >
             ✦ Criar minha capa
