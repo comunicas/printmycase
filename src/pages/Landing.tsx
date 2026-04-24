@@ -43,8 +43,8 @@ const Landing = () => {
               <PromoBanner />
             </div>
 
-            {/* AppHeader — sticky */}
-            <div className="sticky top-0 z-40">
+            {/* AppHeader — posição relativa dentro do hero */}
+            <div className="relative z-20">
               <AppHeader variant="default" />
             </div>
 
