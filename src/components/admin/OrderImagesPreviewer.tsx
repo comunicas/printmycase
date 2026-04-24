@@ -106,8 +106,100 @@ const OrderImagesPreviewer = ({ customizationData, deviceSlug }: Props) => {
     { label: "Imagem Posição", state: preview, path: previewPath },
   ];
 
+  /** Parses a CSS length (e.g. "5%", "2.2rem", "calc(17% + 10px)") into pixels
+   *  given a reference length (the image dimension along that axis). */
+  const parseCssLength = (value: string | undefined, reference: number, rootFontSize = 16): number => {
+    if (!value) return 0;
+    const v = value.trim();
+    const calcMatch = v.match(/^calc\((.+)\)$/);
+    if (calcMatch) {
+      const expr = calcMatch[1];
+      const parts = expr.split(/\s*([+-])\s*/);
+      let total = parseCssLength(parts[0], reference, rootFontSize);
+      for (let i = 1; i < parts.length; i += 2) {
+        const op = parts[i];
+        const next = parseCssLength(parts[i + 1], reference, rootFontSize);
+        total = op === "+" ? total + next : total - next;
+      }
+      return total;
+    }
+    if (v.endsWith("%")) return (parseFloat(v) / 100) * reference;
+    if (v.endsWith("rem")) return parseFloat(v) * rootFontSize;
+    if (v.endsWith("px")) return parseFloat(v);
+    return parseFloat(v) || 0;
+  };
+
+  const drawSafeZoneOnCanvas = (ctx: CanvasRenderingContext2D, w: number, h: number, slug?: string) => {
+    const preset = getSafeZonePreset(slug);
+    const left = parseCssLength(preset.insetX, w);
+    const width = preset.width
+      ? parseCssLength(preset.width, w)
+      : w - 2 * left;
+    const top = parseCssLength(preset.top, h);
+    const height = parseCssLength(preset.height, h);
+    const rTop = parseCssLength(preset.radius, w);
+    const rBottom = preset.width
+      ? rTop
+      : parseCssLength(preset.bottomRadius, w);
+
+    const x = left;
+    const y = top;
+    ctx.beginPath();
+    ctx.moveTo(x + rTop, y);
+    ctx.lineTo(x + width - rTop, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + rTop);
+    ctx.lineTo(x + width, y + height - rBottom);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - rBottom, y + height);
+    ctx.lineTo(x + rBottom, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - rBottom);
+    ctx.lineTo(x, y + rTop);
+    ctx.quadraticCurveTo(x, y, x + rTop, y);
+    ctx.closePath();
+
+    // Fill semi-transparent
+    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.fill();
+    // Border
+    ctx.lineWidth = Math.max(2, w * 0.005);
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.95)";
+    ctx.stroke();
+  };
+
   const handleDownload = async (url: string, label: string) => {
     try {
+      const withSafeZone = label === "Imagem Posição";
+
+      if (withSafeZone) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("Falha ao carregar imagem"));
+          img.src = url;
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas indisponível");
+        ctx.drawImage(img, 0, 0);
+        drawSafeZoneOnCanvas(ctx, canvas.width, canvas.height, deviceSlug);
+
+        const blob: Blob = await new Promise((resolve, reject) =>
+          canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Falha ao exportar"))), "image/png")
+        );
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `pedido-${label.toLowerCase().replace(/\s+/g, "-")}-safezone.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        return;
+      }
+
       const res = await fetch(url);
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
