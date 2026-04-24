@@ -7,6 +7,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { faqPageJsonLd } from "@/lib/merchant-jsonld";
 import { injectJsonLd } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
+import { SectionLabel } from "@/components/ds";
 
 interface Faq {
   id: string;
@@ -52,9 +53,18 @@ const FaqSection = () => {
     <section id="faq" className="py-16 px-5 bg-background">
       <div className="max-w-3xl mx-auto">
         <ScrollReveal>
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
-            Perguntas Frequentes
-          </h2>
+          <div className="text-center space-y-4 mb-12">
+            <SectionLabel>SUPORTE</SectionLabel>
+            <h2 className="font-display font-black text-4xl md:text-5xl tracking-tight text-foreground">
+              Perguntas{' '}
+              <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: 'var(--gradient-brand)' }}
+              >
+                frequentes
+              </span>
+            </h2>
+          </div>
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
@@ -66,7 +76,7 @@ const FaqSection = () => {
                 className="rounded-xl border bg-card overflow-hidden"
               >
                 <Accordion.Header>
-                  <Accordion.Trigger className="flex w-full items-center justify-between px-5 py-5 text-left text-base font-medium text-foreground hover:bg-muted/50 transition-colors data-[state=open]:bg-muted/50 group">
+                  <Accordion.Trigger className="flex w-full items-center justify-between px-5 py-5 text-left font-semibold text-base text-foreground hover:bg-muted/50 transition-colors data-[state=open]:bg-muted/50 group">
                     {faq.question}
                     <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 ml-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </Accordion.Trigger>
