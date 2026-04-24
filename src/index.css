@@ -64,6 +64,21 @@
     --tracking-normal: 0em;
 
     --spacing: 0.25rem;
+
+    /* === DS v2 — Gradientes === */
+    --gradient-brand: linear-gradient(135deg, hsl(265 83% 57%), hsl(25 95% 60%));
+    --gradient-glow: radial-gradient(circle, hsl(265 83% 57% / 0.25), transparent 70%);
+    --gradient-surface: linear-gradient(180deg, hsl(240 4% 97%), hsl(240 4% 95%));
+
+    /* === DS v2 — Sombras (nomes distintos dos existentes shadow-sm..shadow-2xl) === */
+    --shadow-card: 0 4px 16px -4px hsl(0 0% 0% / 0.08);
+    --shadow-elevated: 0 20px 50px -12px hsl(265 83% 57% / 0.2);
+    --shadow-glow: 0 0 40px hsl(265 83% 57% / 0.3);
+
+    /* === DS v2 — Superfícies === */
+    --surface-1: hsl(240 4% 97%);
+    --surface-2: hsl(240 4% 94%);
+    --surface-3: hsl(240 4% 91%);
   }
 
   .dark {
