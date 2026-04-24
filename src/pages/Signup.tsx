@@ -1,34 +1,34 @@
-import { useState, useEffect } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import FormField from "@/components/ui/form-field";
-import SubmitButton from "@/components/forms/SubmitButton";
-import AppHeader from "@/components/AppHeader";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import GoogleIcon from "@/components/GoogleIcon";
-import { clarityEvent } from "@/lib/clarity";
-import { pixelEvent } from "@/lib/meta-pixel";
-import { Coins } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable/index';
+import { Input } from '@/components/ui/input';
+import FormField from '@/components/ui/form-field';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import GoogleIcon from '@/components/GoogleIcon';
+import { clarityEvent } from '@/lib/clarity';
+import { pixelEvent } from '@/lib/meta-pixel';
+import { Check } from 'lucide-react';
+import AuthLayout from '@/components/auth/AuthLayout';
+import AuthCard from '@/components/auth/AuthCard';
+import { DsButton } from '@/components/ds';
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
-  const refCode = searchParams.get("ref");
+  const refCode = searchParams.get('ref');
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/", { replace: true });
+      navigate('/', { replace: true });
     }
   }, [user, authLoading, navigate]);
 
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -46,152 +46,179 @@ const Signup = () => {
       },
     });
     if (error) {
-      toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
+      toast({ title: 'Erro ao criar conta', description: error.message, variant: 'destructive' });
     } else {
-      clarityEvent("auth_signup");
-      pixelEvent("CompleteRegistration");
+      clarityEvent('auth_signup');
+      pixelEvent('CompleteRegistration');
       setSent(true);
     }
     setLoading(false);
   };
 
   const handleGoogleSignup = async () => {
-    const { error } = await lovable.auth.signInWithOAuth("google", {
+    const { error } = await lovable.auth.signInWithOAuth('google', {
       redirect_uri: window.location.origin,
     });
     if (error) {
-      toast({ title: "Erro ao criar com Google", description: String(error), variant: "destructive" });
+      toast({ title: 'Erro ao criar com Google', description: String(error), variant: 'destructive' });
     }
   };
 
+  // Estado de sucesso — email de verificação enviado
   if (sent) {
     return (
-      <div className="min-h-screen bg-muted/30 flex flex-col">
-        <AppHeader />
-        <main className="flex-1 flex items-center justify-center p-5">
-          <div className="w-full max-w-md">
-            <div className="rounded-xl border bg-card text-card-foreground shadow-lg overflow-hidden">
-              <div className="p-6 text-center space-y-4">
-                <h1 className="text-2xl font-bold tracking-tight">Verifique seu email</h1>
-                <p className="text-sm text-muted-foreground">
-                  Enviamos um link de confirmação para <strong>{email}</strong>. Clique no link para ativar sua conta.
-                </p>
-                <Link to="/login">
-                  <Button variant="outline" className="mt-4">Voltar ao login</Button>
-                </Link>
-              </div>
+      <AuthLayout>
+        <AuthCard showBanner={false}>
+          <div className="text-center space-y-5 py-2">
+            {/* Ícone de sucesso com gradient-brand */}
+            <div
+              className="mx-auto w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--gradient-brand)', boxShadow: 'var(--shadow-elevated)' }}
+            >
+              <Check className="w-8 h-8 text-white" strokeWidth={3} />
             </div>
+
+            <div className="space-y-2">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+                Verifique seu email
+              </h1>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Enviamos um link de confirmação para{' '}
+                <strong className="text-foreground">{email}</strong>.
+                <br />
+                Clique no link para ativar sua conta.
+              </p>
+            </div>
+
+            <DsButton href="/login" variant="outline" className="w-full">
+              Voltar ao login
+            </DsButton>
           </div>
-        </main>
-      </div>
+        </AuthCard>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 flex flex-col">
-      <AppHeader />
-      <main className="flex-1 flex items-center justify-center p-5">
-        <div className="w-full max-w-md">
-          <div className="rounded-xl border bg-card text-card-foreground shadow-lg overflow-hidden">
-            {/* Incentive banner */}
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-white">
-              <div className="flex items-center gap-2.5">
-                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
-                  <Coins className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm leading-tight">🎁 Ganhe 50 moedas grátis!</p>
-                  <p className="text-xs text-white/85 leading-tight mt-0.5">Crie sua conta e use em filtros IA, upscale e mais</p>
-                </div>
-              </div>
-            </div>
+    <AuthLayout>
+      <AuthCard>
+        {/* Heading */}
+        <div className="text-center space-y-1.5">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+            Criar conta grátis
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Cadastre-se para personalizar sua capa
+          </p>
+        </div>
 
-            <div className="p-6 space-y-5">
-              <div className="text-center space-y-1">
-                <h1 className="text-2xl font-bold tracking-tight">Criar conta grátis</h1>
-                <p className="text-sm text-muted-foreground">Cadastre-se para personalizar sua capa</p>
-              </div>
+        {/* Google */}
+        <button
+          type="button"
+          onClick={handleGoogleSignup}
+          className="w-full h-11 rounded-xl border border-border bg-background hover:bg-muted/50 transition-colors flex items-center justify-center gap-2 text-sm font-medium text-foreground"
+        >
+          <GoogleIcon />
+          Criar com Google
+        </button>
 
-              <Button variant="outline" className="w-full" onClick={handleGoogleSignup}>
-                <GoogleIcon />
-                Criar com Google
-              </Button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">ou</span>
-                </div>
-              </div>
-
-              <form onSubmit={handleSignup} className="space-y-4">
-                <FormField label="Nome completo" id="name" required>
-                  <Input
-                    id="name"
-                    placeholder="Seu nome"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    autoComplete="name"
-                    required
-                  />
-                </FormField>
-                <FormField label="Email" id="email" required>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    required
-                  />
-                </FormField>
-                <FormField label="Senha" id="password" required>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Mínimo 6 caracteres"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                    minLength={6}
-                    required
-                  />
-                </FormField>
-                <label className="flex items-start gap-2 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-0.5 rounded border-input"
-                  />
-                  <span className="text-muted-foreground leading-tight text-xs">
-                    Li e aceito os{" "}
-                    <Link to="/termos" target="_blank" className="text-primary hover:underline">Termos de Uso</Link>
-                    , a{" "}
-                    <Link to="/privacidade" target="_blank" className="text-primary hover:underline">Política de Privacidade</Link>
-                    {" "}e a{" "}
-                    <Link to="/compras" target="_blank" className="text-primary hover:underline">Política de Compra e Devolução</Link>
-                  </span>
-                </label>
-                <SubmitButton loading={loading} className="w-full" disabled={!acceptedTerms}>
-                  Criar conta grátis
-                </SubmitButton>
-              </form>
-
-              <p className="text-center text-sm text-muted-foreground">
-                Já tem conta?{" "}
-                <Link to="/login" className="text-primary hover:underline font-medium">
-                  Entrar
-                </Link>
-              </p>
-            </div>
+        {/* Divisor */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">ou</span>
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* Formulário */}
+        <form onSubmit={handleSignup} className="space-y-4">
+          <FormField label="Nome completo" id="name" required>
+            <Input
+              id="name"
+              placeholder="Seu nome"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              autoComplete="name"
+              required
+              className="rounded-xl"
+            />
+          </FormField>
+
+          <FormField label="Email" id="email" required>
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+              className="rounded-xl"
+            />
+          </FormField>
+
+          <FormField label="Senha" id="password" required>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={6}
+              required
+              className="rounded-xl"
+            />
+          </FormField>
+
+          {/* Checkbox termos — estilo DS */}
+          <label className="flex items-start gap-2.5 cursor-pointer group">
+            <div className="relative flex-shrink-0 mt-0.5">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div
+                className="w-5 h-5 rounded-md border-2 border-border peer-checked:border-transparent flex items-center justify-center transition-all peer-checked:[background:var(--gradient-brand)]"
+              >
+                {acceptedTerms && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+              </div>
+            </div>
+            <span className="text-muted-foreground leading-snug text-xs">
+              Li e aceito os{' '}
+              <Link to="/termos" target="_blank" className="text-primary hover:underline">
+                Termos de Uso
+              </Link>
+              , a{' '}
+              <Link to="/privacidade" target="_blank" className="text-primary hover:underline">
+                Política de Privacidade
+              </Link>
+              {' '}e a{' '}
+              <Link to="/compras" target="_blank" className="text-primary hover:underline">
+                Política de Compra e Devolução
+              </Link>
+            </span>
+          </label>
+
+          {/* CTA principal com gradient-brand */}
+          <DsButton type="submit" variant="brand" className="w-full" disabled={loading || !acceptedTerms}>
+            {loading ? 'Criando conta...' : 'Criar conta grátis'}
+          </DsButton>
+        </form>
+
+        {/* Link login */}
+        <p className="text-center text-sm text-muted-foreground">
+          Já tem conta?{' '}
+          <Link to="/login" className="text-primary hover:underline font-medium">
+            Entrar
+          </Link>
+        </p>
+      </AuthCard>
+    </AuthLayout>
   );
 };
 
