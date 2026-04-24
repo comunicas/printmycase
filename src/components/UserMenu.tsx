@@ -20,14 +20,14 @@ const UserMenu = ({ transparent = false }: { transparent?: boolean }) => {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" className={transparent ? "text-white hover:text-white hover:bg-white/10" : ""} onClick={() => navigate("/login")}>
-          Entrar
-        </Button>
-        <Button size="sm" className={transparent ? "bg-white text-primary hover:bg-white/90" : ""} onClick={() => navigate("/signup")}>
-          Cadastre-se grátis
-        </Button>
-      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={transparent ? "text-white hover:text-white hover:bg-white/10" : ""}
+        onClick={() => navigate("/login")}
+      >
+        Entrar
+      </Button>
     );
   }
 
