@@ -1,43 +1,35 @@
 
 
-## Criar primitivos do Design System em `src/components/ds/`
+## Adicionar `StepCard` e `TestimonialCard` ao Design System
 
-Adição pura de 6 arquivos novos. Nenhum arquivo existente será tocado.
+Adição pura de 2 componentes novos em `src/components/ds/` e atualização aditiva do barrel `index.ts`.
 
-### Arquivos a criar
+### Arquivos
 
-1. **`src/components/ds/DsBadge.tsx`**
-   - Variantes: `brand`, `discount`, `new`, `top`, `outline`, `muted` (default: `brand`)
-   - Base: `rounded-full text-xs font-semibold px-2.5 py-0.5 inline-flex items-center`
-   - Composição via `cn()` de `@/lib/utils`
+1. **`src/components/ds/StepCard.tsx`** (novo)
+   - Props: `step` (1–3), `icon` (ReactNode), `title`, `description`, `className?`
+   - Container: `relative bg-card border border-border rounded-2xl p-7` + `boxShadow: var(--shadow-card)` + `transition-transform duration-300 hover:-translate-y-1`
+   - Número decorativo absoluto no canto superior direito com `font-display font-black text-6xl leading-none` e cor `hsl(var(--primary) / 0.08)`, formatado com `String(step).padStart(2, '0')`
+   - Ícone em pill `w-12 h-12 rounded-xl` com `background: var(--gradient-brand)`
+   - Título `font-display font-bold text-lg mt-4` + descrição `text-sm text-muted-foreground leading-relaxed mt-2 max-w-[240px]`
+   - Composição de classes via `cn()` de `@/lib/utils`
 
-2. **`src/components/ds/DsButton.tsx`**
-   - Variantes: `brand`, `default`, `outline`, `ghost` (default: `default`)
-   - Tamanhos: `sm`, `md`, `lg` (default: `md`)
-   - Props extras: `icon` (renderizado à esquerda com `mr-2`), `arrow` (acrescenta " →"), `href` (renderiza `<Link to={href}>` do `react-router-dom` em vez de `<button>`)
-   - Variante `brand` aplica `style={{ background: 'var(--gradient-brand)', boxShadow: 'var(--shadow-elevated)' }}` (token DS v2 já adicionado)
-   - Quando `href` está presente, repassa `className` mas ignora props nativas de `<button>`
+2. **`src/components/ds/TestimonialCard.tsx`** (novo)
+   - Props: `rating`, `text`, `name`, `product`
+   - Container: `bg-card border border-border rounded-2xl p-6 h-full flex flex-col` + `boxShadow: var(--shadow-card)` + `hover:-translate-y-1`
+   - `StarRating` reutilizado de `@/components/StarRating` com `starSize="w-4 h-4"`
+   - Texto em itálico envolto em aspas `"${text}"`, ocupando `flex-1`
+   - Rodapé com avatar circular `w-9 h-9` (gradiente brand, inicial do nome) + nome e produto
 
-3. **`src/components/ds/SectionLabel.tsx`**
-   - Pílula de seção: `rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-semibold tracking-widest uppercase px-3 py-1 inline-flex items-center gap-1.5`
-
-4. **`src/components/ds/FloatingBadge.tsx`**
-   - Badge flutuante com `icon` (emoji string) + `label`
-   - Visual: `bg-card border border-border rounded-full` + `style={{ boxShadow: 'var(--shadow-card)' }}`
-
-5. **`src/components/ds/Ticker.tsx`**
-   - Marquee horizontal usando o `@keyframes ticker` (já adicionado ao `index.css`)
-   - Container: `w-full overflow-hidden border-y border-border py-2.5` com `style={{ background: 'var(--surface-1)' }}`
-   - Track interno em `inline-flex` com `style={{ animation: \`ticker ${speed}s linear infinite\` }}`, default `speed=30`
-   - Renderiza os items duplicados (`[...items, ...items]`) para loop contínuo, separados visualmente por `" ✦ "`
-
-6. **`src/components/ds/index.ts`**
-   - Re-exports `default` dos 5 componentes acima como named exports
+3. **`src/components/ds/index.ts`** (atualizar — aditivo)
+   - Adicionar:
+     - `export { default as StepCard } from './StepCard'`
+     - `export { default as TestimonialCard } from './TestimonialCard'`
+   - Manter os 5 exports já existentes (`DsBadge`, `DsButton`, `SectionLabel`, `FloatingBadge`, `Ticker`)
 
 ### Convenções respeitadas
-- Imports via alias `@/components/...` e `@/lib/utils`
-- `cn()` de `@/lib/utils`
-- Navegação interna com `Link` do `react-router-dom` (sem `next/link`)
-- Sem alterações em arquivos existentes; nenhum componente/página é importado por estes primitivos
-- Tokens DS v2 (`--gradient-brand`, `--shadow-elevated`, `--shadow-card`, `--surface-1`, `@keyframes ticker`) já existem no projeto
+- Tokens DS v2 já disponíveis (`--gradient-brand`, `--shadow-card`, `--primary`, `font-display`)
+- Reuso direto de `StarRating` existente, sem alterá-lo
+- Nenhum arquivo existente é modificado além do barrel `index.ts` (somente adições)
+- Sem dependências de Next.js; somente React + Tailwind + `cn()`
 
