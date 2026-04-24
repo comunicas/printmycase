@@ -1,6 +1,6 @@
 import ScrollReveal from '@/components/ScrollReveal';
 import { SectionLabel, FloatingBadge } from '@/components/ds';
-import { Check, Zap, ShieldCheck, CreditCard, UserX } from 'lucide-react';
+import { Check, ShieldCheck, CreditCard, UserX } from 'lucide-react';
 
 const features = [
   'Impressão UV 1440 dpi com proteção UV',
@@ -19,7 +19,7 @@ export default function TechQualitySection() {
   return (
     <section className="py-20 px-5 bg-background">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        {/* Painel esquerdo — visual */}
+        {/* Painel esquerdo — imagem da capinha física */}
         <ScrollReveal>
           <div className="relative">
             <div
@@ -30,21 +30,23 @@ export default function TechQualitySection() {
               }}
             >
               <div
-                className="absolute inset-0 opacity-20"
+                className="absolute inset-0 opacity-[0.15]"
                 style={{
                   backgroundImage:
                     'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
                   backgroundSize: '32px 32px',
                 }}
               />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Zap className="w-32 h-32 text-white/80" strokeWidth={1.2} />
+              <div className="absolute inset-0 flex items-end justify-center p-6">
+                <img
+                  src="/tech-quality-case.webp"
+                  alt="Capinha de celular com estampa graffiti colorida impressa em alta qualidade"
+                  className="w-full h-full object-contain drop-shadow-2xl"
+                  loading="lazy"
+                />
               </div>
             </div>
 
-            <div className="absolute top-6 -left-4 md:-left-6">
-              <FloatingBadge icon="⚡" label="Pronta em 3 min" />
-            </div>
             <div className="absolute bottom-6 -right-4 md:-right-6">
               <FloatingBadge icon="🛡️" label="90 dias de garantia" />
             </div>
