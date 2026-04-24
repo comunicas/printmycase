@@ -53,6 +53,7 @@ export function getStepIndex(status: string) {
 export type AdminOrderRow = Tables<"orders"> & {
   product_name?: string;
   product_image?: string;
+  product_slug?: string;
   design_name?: string;
   design_image?: string;
   customer_name?: string;

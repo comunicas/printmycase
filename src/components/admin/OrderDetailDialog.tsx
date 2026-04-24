@@ -267,7 +267,7 @@ const OrderDetailDialog = ({ order, open, onClose, onStatusChange, onSaveTrackin
           </div>
 
           {/* Imagens */}
-          <OrderImagesPreviewer customizationData={customizationData} />
+          <OrderImagesPreviewer customizationData={customizationData} deviceSlug={order.product_slug} />
         </div>
       </DialogContent>
     </Dialog>

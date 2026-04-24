@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type ProductInfo = { name: string; image?: string };
+export type ProductInfo = { name: string; image?: string; slug?: string };
 
 /**
  * Resolves product name and first image for a list of product_ids.
@@ -31,7 +31,7 @@ export async function resolveProductInfo(
   const map = new Map<string, ProductInfo>();
   for (const p of data ?? []) {
     const img = p.device_image ?? (p.images as string[] | null)?.[0];
-    const info: ProductInfo = { name: p.name, image: img };
+    const info: ProductInfo = { name: p.name, image: img, slug: p.slug };
     map.set(p.slug, info);
     map.set(p.id, info);
   }
