@@ -14,7 +14,8 @@ import AppHeader from "@/components/AppHeader";
 import PromoBanner from "@/components/PromoBanner";
 import ScrollReveal from "@/components/ScrollReveal";
 import PaymentBadges from "@/components/PaymentBadges";
-import { DsButton, SectionLabel, FloatingBadge, Ticker, StepCard } from "@/components/ds";
+import { DsButton, SectionLabel, FloatingBadge, Ticker, StepCard, TestimonialCard } from "@/components/ds";
+import TechQualitySection from "@/components/home/TechQualitySection";
 
 // Lazy-load below-the-fold sections to reduce initial JS bundle (improves FCP/LCP)
 const AiCoinsSection = lazy(() => import("@/components/AiCoinsSection"));
@@ -23,11 +24,6 @@ const StoreLocator = lazy(() => import("@/components/StoreLocator"));
 const InstagramShowcase = lazy(() => import("@/components/InstagramShowcase"));
 
 
-
-const testimonials = [
-{ name: "Ana C.", text: "Melhor capinha que já tive! A qualidade é incrível e a personalização ficou perfeita.", rating: 5 },
-{ name: "Lucas M.", text: "Surpreendeu demais. O acabamento soft-touch é muito premium. Já pedi a segunda!", rating: 5 },
-{ name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 }];
 
 
 
@@ -243,7 +239,10 @@ const Landing = () => {
             </div>
           </section>
 
-          {/* Collections Showcase */}
+          {/* Tech & Quality */}
+          <TechQualitySection />
+
+
           <section id="destaques" className="py-16 px-5 bg-background">
             <div className="max-w-5xl mx-auto">
               <ScrollReveal>
@@ -325,28 +324,40 @@ const Landing = () => {
           </Suspense>
 
 
-          {/* Testimonials */}
-          <section id="depoimentos" className="py-16 px-5 bg-background">
-            <div className="max-w-5xl mx-auto">
+          {/* Testimonials — DS v2 */}
+          <section id="depoimentos" className="py-20 px-5 bg-background">
+            <div className="max-w-6xl mx-auto">
               <ScrollReveal>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">O que nossos clientes dizem</h2>
+                <div className="text-center mb-12 space-y-4">
+                  <SectionLabel>DEPOIMENTOS</SectionLabel>
+                  <h2 className="font-display font-black text-4xl md:text-5xl tracking-tight text-foreground">
+                    +10 mil clientes{' '}
+                    <span
+                      className="bg-clip-text text-transparent"
+                      style={{ backgroundImage: 'var(--gradient-brand)' }}
+                    >
+                      apaixonados
+                    </span>
+                  </h2>
+                </div>
               </ScrollReveal>
-              <div className="grid md:grid-cols-3 gap-6">
-                {testimonials.map((t, i) =>
-                <ScrollReveal key={t.name} delay={i * 100}>
-                    <Card className="border-0 shadow-sm h-full hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                      <CardContent className="pt-6 pb-5 px-6 space-y-3">
-                        <div className="flex gap-0.5" aria-hidden="true">
-                          {Array.from({ length: t.rating }).map((_, j) =>
-                        <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        )}
-                        </div>
-                        <p className="text-sm text-foreground italic">"{t.text}"</p>
-                        <p className="text-sm font-semibold text-muted-foreground">{t.name}</p>
-                      </CardContent>
-                    </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { rating: 5, text: 'Ficou idêntica à foto da minha cachorrinha! A qualidade da impressão é absurda.', name: 'Isabela M.', product: 'iPhone 15 Pro' },
+                  { rating: 5, text: 'Pedi a do meu time e chegou em 2 dias. As cores são vibrantes, vale cada centavo.', name: 'Rafael S.', product: 'Galaxy S24' },
+                  { rating: 5, text: 'A IA criou uma arte minimalista linda. Recebi 3 elogios no primeiro dia!', name: 'Thais R.', product: 'iPhone 14' },
+                  { rating: 5, text: 'Comprei o pack família e todo mundo amou. Atendimento via WhatsApp foi top.', name: 'Lucas O.', product: 'Galaxy A36' },
+                ].map((t, i) => (
+                  <ScrollReveal key={t.name} delay={i * 100}>
+                    <TestimonialCard
+                      rating={t.rating}
+                      text={t.text}
+                      name={t.name}
+                      product={t.product}
+                    />
                   </ScrollReveal>
-                )}
+                ))}
               </div>
             </div>
           </section>
