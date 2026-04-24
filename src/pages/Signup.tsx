@@ -70,7 +70,7 @@ const Signup = () => {
       <AuthLayout>
         <AuthCard showBanner={false}>
           <div className="text-center space-y-5 py-2">
-            {/* Ícone de sucesso com gradient-brand */}
+            {/* Ícone de sucesso */}
             <div
               className="mx-auto w-16 h-16 rounded-full flex items-center justify-center"
               style={{ background: 'var(--gradient-brand)', boxShadow: 'var(--shadow-elevated)' }}
@@ -78,20 +78,33 @@ const Signup = () => {
               <Check className="w-8 h-8 text-white" strokeWidth={3} />
             </div>
 
-            <div className="space-y-2">
-              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
-                Verifique seu email
+            <div className="space-y-3">
+              <h1 className="font-display font-black text-2xl tracking-tight text-foreground">
+                Quase lá! 🎉
               </h1>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Enviamos um link de confirmação para{' '}
+                Mandamos um link de confirmação para{' '}
                 <strong className="text-foreground">{email}</strong>.
-                <br />
-                Clique no link para ativar sua conta.
               </p>
+              <div
+                className="rounded-xl p-4 text-left space-y-2"
+                style={{ background: 'var(--surface-1)', border: '1px solid hsl(var(--border))' }}
+              >
+                <p className="text-xs font-semibold text-foreground">
+                  Após confirmar, você recebe:
+                </p>
+                {[
+                  '✨ 50 moedas IA de boas-vindas',
+                  '🎨 3 transformações grátis (Cyberpunk, Cartoon 3D...)',
+                  '🚀 Sua capa pronta em minutos',
+                ].map((item) => (
+                  <p key={item} className="text-xs text-muted-foreground">{item}</p>
+                ))}
+              </div>
             </div>
 
             <DsButton href="/login" variant="outline" className="w-full">
-              Voltar ao login
+              Já confirmei — quero entrar
             </DsButton>
           </div>
         </AuthCard>
@@ -101,16 +114,44 @@ const Signup = () => {
 
   return (
     <AuthLayout>
-      <AuthCard>
+      <AuthCard bannerVariant="signup">
         {/* Heading */}
-        <div className="text-center space-y-1.5">
-          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
-            Criar conta grátis
+        <div className="text-center space-y-2">
+          <h1 className="font-display font-black text-3xl tracking-tight text-foreground leading-tight">
+            Sua foto vira arte.{' '}
+            <span
+              className="bg-clip-text text-transparent"
+              style={{ backgroundImage: 'var(--gradient-brand)' }}
+            >
+              De graça.
+            </span>
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Cadastre-se para personalizar sua capa
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Cadastre-se, ganhe <strong className="text-foreground">50 moedas</strong> e
+            transforme sua foto em arte IA — sem precisar de cartão.
           </p>
         </div>
+
+        {/* Bullets de valor — o que o usuário ganha */}
+        <ul className="space-y-1.5">
+          {[
+            '3 filtros IA gratuitos no cadastro',
+            'Cyberpunk, Cartoon 3D, Pixel Art e mais',
+            'Impresso e entregue em todo o Brasil',
+          ].map((item) => (
+            <li key={item} className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span
+                className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center"
+                style={{ background: 'var(--gradient-brand)' }}
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M1.5 4L3 5.5L6.5 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+              {item}
+            </li>
+          ))}
+        </ul>
 
         {/* Google */}
         <button
@@ -119,7 +160,7 @@ const Signup = () => {
           className="w-full h-11 rounded-xl border border-border bg-background hover:bg-muted/50 transition-colors flex items-center justify-center gap-2 text-sm font-medium text-foreground"
         >
           <GoogleIcon />
-          Criar com Google
+          Criar com Google · mais rápido ⚡
         </button>
 
         {/* Divisor */}
@@ -206,15 +247,15 @@ const Signup = () => {
 
           {/* CTA principal com gradient-brand */}
           <DsButton type="submit" variant="brand" className="w-full" disabled={loading || !acceptedTerms}>
-            {loading ? 'Criando conta...' : 'Criar conta grátis'}
+            {loading ? 'Criando sua conta...' : 'Quero começar grátis →'}
           </DsButton>
         </form>
 
         {/* Link login */}
         <p className="text-center text-sm text-muted-foreground">
-          Já tem conta?{' '}
+          Já criou sua arte?{' '}
           <Link to="/login" className="text-primary hover:underline font-medium">
-            Entrar
+            Entrar na sua conta
           </Link>
         </p>
       </AuthCard>
