@@ -44,78 +44,145 @@ const Landing = () => {
       <SeoHead />
       <div className="min-h-screen bg-background flex flex-col">
         <main>
-          {/* Hero — Dark */}
-          <section aria-label="Banner principal" className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 z-30">
+          {/* Hero — Light DS v2 */}
+          <section aria-label="Banner principal" className="relative bg-background overflow-hidden">
+            {/* PromoBanner — flow normal */}
+            <div className="relative z-30">
               <PromoBanner />
             </div>
 
-            {/* Header inside hero */}
-            <div className="absolute top-10 sm:top-11 left-0 right-0 z-20">
-              <AppHeader variant="transparent" />
+            {/* AppHeader — sticky */}
+            <div className="sticky top-0 z-40">
+              <AppHeader variant="default" />
             </div>
 
-            {/* BG image */}
-            <div className="absolute inset-0">
-              <img
-                src={heroBg}
-                alt=""
-                fetchPriority="high"
-                decoding="async"
-                width={1920}
-                height={1080}
-                className="absolute inset-0 w-full h-full object-cover" />
-              
-            </div>
+            {/* Grid de fundo sutil */}
+            <div
+              className="absolute inset-0 opacity-[0.04] pointer-events-none"
+              style={{
+                backgroundImage:
+                  "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
+                backgroundSize: "40px 40px",
+              }}
+            />
 
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-purple-950/55 to-black/80" />
-            {/* Radial glow */}
-            <div className="absolute inset-0 opacity-40" style={{
-              background: "radial-gradient(ellipse 80% 60% at 50% 20%, hsl(265 83% 57% / 0.45), transparent 70%)"
-            }} />
+            {/* Glow decorativo roxo */}
+            <div
+              className="absolute top-0 right-0 w-[600px] h-[600px] pointer-events-none"
+              style={{ background: "var(--gradient-glow)" }}
+            />
 
-            {/* Floating shapes */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute w-72 h-72 rounded-full bg-primary/10 blur-3xl -top-20 -left-20 animate-pulse" />
-              <div className="absolute w-96 h-96 rounded-full bg-primary/5 blur-3xl -bottom-32 -right-32 animate-pulse [animation-delay:2s]" />
-            </div>
+            {/* Conteúdo hero */}
+            <div className="relative z-10 max-w-6xl mx-auto px-5 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              {/* Painel esquerdo — copy */}
+              <div className="space-y-6">
+                <SectionLabel>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  STUDIO COM IA
+                </SectionLabel>
 
-            {/* Content */}
-            <div className="relative z-10 max-w-3xl mx-auto text-center space-y-5 sm:space-y-7 px-5 pt-20 pb-16">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight opacity-0 animate-fade-in" style={{ ...fadeIn(0), textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
-                Capas únicas,&nbsp;
-                <span className="drop-shadow-[0_0_24px_hsl(265_83%_57%/0.6)] text-yellow-300">criadas com IA</span>{" "}
-                em segundos.
-              </h1>
-              <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto opacity-0 animate-fade-in whitespace-pre-line" style={fadeIn(150)}>Envie uma foto, descreva o que imagina e a nossa IA cria uma capa única pro seu celular. Impressão premium, entrega rápida em todo Brasil.{"\n\n"}</p>
+                <h1 className="font-display font-black text-5xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-foreground">
+                  Sua capa.
+                  <br />
+                  Sua arte.
+                  <br />
+                  <span
+                    className="bg-clip-text text-transparent"
+                    style={{ backgroundImage: "var(--gradient-brand)" }}
+                  >
+                    Com IA.
+                  </span>
+                </h1>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 opacity-0 animate-fade-in" style={fadeIn(300)}>
-                <Button size="lg" className="gap-2 text-base bg-orange-500 hover:bg-orange-600 text-white glow-orange" onClick={() => navigate("/customize")}>
-                  Criar Minha Case <ArrowRight className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="gap-2 text-base border-white/25 text-white hover:bg-white/10 hover:text-white bg-transparent"
-                  onClick={() => {
-                    document.getElementById("destaques")?.scrollIntoView({ behavior: "smooth" });
-                  }}>
-                  Ver Modelos
-                </Button>
+                <p className="text-lg text-muted-foreground leading-relaxed max-w-[480px]">
+                  Envie uma foto, descreva o que imagina e a nossa IA cria uma capa única
+                  pro seu celular. Impressão premium, entrega rápida em todo Brasil.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <DsButton
+                    variant="brand"
+                    size="lg"
+                    icon={<Sparkles className="w-5 h-5" />}
+                    onClick={() => navigate("/customize")}
+                  >
+                    Criar minha capa
+                  </DsButton>
+                  <DsButton
+                    variant="outline"
+                    size="lg"
+                    onClick={() => navigate("/colecoes")}
+                  >
+                    Ver galeria
+                  </DsButton>
+                </div>
+
+                {/* Trust social */}
+                <div className="flex items-center gap-3 pt-4">
+                  <div className="flex -space-x-2">
+                    {[
+                      { bg: "bg-primary", letter: "I" },
+                      { bg: "bg-orange-500", letter: "R" },
+                      { bg: "bg-green-500", letter: "T" },
+                      { bg: "bg-yellow-500", letter: "L" },
+                      { bg: "bg-pink-500", letter: "A" },
+                    ].map(({ bg, letter }) => (
+                      <div
+                        key={letter}
+                        className={`w-8 h-8 rounded-full ${bg} border-2 border-background flex items-center justify-center text-xs font-bold text-white`}
+                      >
+                        {letter}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">+10 mil clientes</span>{" "}
+                    criaram suas capas únicas
+                  </p>
+                </div>
               </div>
 
-              {/* Social proof badge */}
-              <div className="inline-flex items-center gap-2.5 glass rounded-full px-5 py-2.5 mx-auto opacity-0 animate-fade-in" style={fadeIn(450)}>
-                <div className="flex" aria-hidden="true">
-                  {Array.from({ length: 5 }).map((_, i) =>
-                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  )}
+              {/* Painel direito — mockup */}
+              <div className="relative flex justify-center items-center">
+                {/* Frame do celular */}
+                <div
+                  className="relative w-[280px] h-[560px] rounded-[3rem] border-8 border-foreground/90 bg-card overflow-hidden"
+                  style={{ boxShadow: "var(--shadow-elevated)" }}
+                >
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: "var(--gradient-brand)" }}
+                  />
                 </div>
-                <span className="text-sm text-white/80 font-medium">Mais de 10.000 Cases criadas</span>
+
+                {/* Badges flutuantes */}
+                <div className="absolute top-8 -left-4 md:-left-8">
+                  <FloatingBadge icon="✨" label="IA criativa" />
+                </div>
+                <div className="absolute bottom-12 -right-4 md:-right-8">
+                  <FloatingBadge icon="🚚" label="Entrega rápida" />
+                </div>
+
+                {/* Glow abaixo do celular */}
+                <div
+                  className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[300px] h-[80px] rounded-full blur-3xl opacity-50 pointer-events-none"
+                  style={{ background: "var(--gradient-brand)" }}
+                />
               </div>
             </div>
           </section>
+
+          {/* Ticker — abaixo do hero */}
+          <Ticker
+            items={[
+              "Frete rápido pra todo Brasil",
+              "Impressão premium",
+              "IA criativa",
+              "Garantia de qualidade",
+              "+10 mil clientes",
+            ]}
+          />
+
 
           {/* How it works */}
           <section id="como-funciona" className="py-20 px-5 bg-background">
