@@ -3,3 +3,5 @@ export { default as DsButton } from './DsButton';
 export { default as SectionLabel } from './SectionLabel';
 export { default as FloatingBadge } from './FloatingBadge';
 export { default as Ticker } from './Ticker';
+export { default as StepCard } from './StepCard';
+export { default as TestimonialCard } from './TestimonialCard';
