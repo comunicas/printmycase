@@ -115,27 +115,29 @@ const AiCoinsSection = ({ headingless = false }: AiCoinsSectionProps) => {
             </div>
           </ScrollReveal>
 
-          <ScrollReveal delay={300}>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button
-                size="lg"
-                className="gap-2 text-base glow-primary"
-                onClick={() => navigate("/customize")}
-              >
-                Crie a Sua
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="gap-2 text-base border-white/20 text-white hover:bg-white/10"
-                onClick={() => { setLightboxInitial(null); setGalleryOpen(true); }}
-              >
-                <Images className="w-4 h-4" />
-                Ver Todas
-              </Button>
-            </div>
-          </ScrollReveal>
+          {!headingless && (
+            <ScrollReveal delay={300}>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Button
+                  size="lg"
+                  className="gap-2 text-base glow-primary"
+                  onClick={() => navigate("/customize")}
+                >
+                  Crie a Sua
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 text-base border-white/20 text-white hover:bg-white/10"
+                  onClick={() => { setLightboxInitial(null); setGalleryOpen(true); }}
+                >
+                  <Images className="w-4 h-4" />
+                  Ver Todas
+                </Button>
+              </div>
+            </ScrollReveal>
+          )}
         </div>
       </section>
 
