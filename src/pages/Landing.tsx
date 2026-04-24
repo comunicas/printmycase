@@ -14,7 +14,7 @@ import AppHeader from "@/components/AppHeader";
 import PromoBanner from "@/components/PromoBanner";
 import ScrollReveal from "@/components/ScrollReveal";
 import PaymentBadges from "@/components/PaymentBadges";
-import { DsButton, SectionLabel, FloatingBadge, Ticker } from "@/components/ds";
+import { DsButton, SectionLabel, FloatingBadge, Ticker, StepCard } from "@/components/ds";
 
 // Lazy-load below-the-fold sections to reduce initial JS bundle (improves FCP/LCP)
 const AiCoinsSection = lazy(() => import("@/components/AiCoinsSection"));
@@ -29,10 +29,6 @@ const testimonials = [
 { name: "Lucas M.", text: "Surpreendeu demais. O acabamento soft-touch é muito premium. Já pedi a segunda!", rating: 5 },
 { name: "Beatriz R.", text: "Enviei minha foto e ficou exatamente como imaginei. Frete rápido e embalagem top.", rating: 5 }];
 
-const steps = [
-{ icon: Smartphone, title: "Escolha o Modelo", desc: "Mais de 70 smartphones disponíveis" },
-{ icon: Upload, title: "Envie sua Foto", desc: "Aplique filtros artísticos com IA" },
-{ icon: Package, title: "Receba em Casa", desc: "Produção em 48h e envio rápido" }];
 
 
 const Landing = () => {
@@ -184,39 +180,64 @@ const Landing = () => {
           />
 
 
-          {/* How it works */}
+          {/* How it works — DS v2 */}
           <section id="como-funciona" className="py-20 px-5 bg-background">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <ScrollReveal>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-4">Da sua ideia para o seu celular em 3 passos</h2>
-
-                <p className="text-center text-muted-foreground max-w-xl mx-auto mb-14">
-                  Sua capinha personalizada sai do zero e chega na sua porta.
-                </p>
+                <div className="text-center mb-14 space-y-4">
+                  <SectionLabel>COMO FUNCIONA</SectionLabel>
+                  <h2 className="font-display font-black text-4xl md:text-5xl tracking-tight text-foreground">
+                    Da sua ideia para o{' '}
+                    <span
+                      className="bg-clip-text text-transparent"
+                      style={{ backgroundImage: 'var(--gradient-brand)' }}
+                    >
+                      seu celular
+                    </span>
+                  </h2>
+                  <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                    Sua capinha personalizada sai do zero e chega na sua porta.
+                  </p>
+                </div>
               </ScrollReveal>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
-                {steps.map((s, i) => <ScrollReveal key={s.title} delay={i * 150}>
-                    <div className="flex flex-col items-center text-center space-y-4">
-                      {/* Number badge */}
-                      <span className="w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center">
-                        {i + 1}
-                      </span>
-                      {/* Icon */}
-                      <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <s.icon className="w-10 h-10 text-primary" strokeWidth={1.2} />
-                      </div>
-                      {/* Text */}
-                      <h3 className="text-base font-bold uppercase tracking-wide text-foreground">{s.title}</h3>
-                      <p className="text-sm text-muted-foreground max-w-[220px]">{s.desc}</p>
-                    </div>
-                  </ScrollReveal>
-                )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <ScrollReveal>
+                  <StepCard
+                    step={1}
+                    icon={<Upload className="w-6 h-6 text-white" />}
+                    title="Envie sua foto"
+                    description="Suba a imagem que quiser ou descreva sua ideia. A gente cuida do resto."
+                  />
+                </ScrollReveal>
+                <ScrollReveal delay={150}>
+                  <StepCard
+                    step={2}
+                    icon={<Sparkles className="w-6 h-6 text-white" />}
+                    title="IA transforma em arte"
+                    description="Nossa IA cria uma capa única no estilo que você escolher. Filtros artísticos com tecnologia real."
+                  />
+                </ScrollReveal>
+                <ScrollReveal delay={300}>
+                  <StepCard
+                    step={3}
+                    icon={<Package className="w-6 h-6 text-white" />}
+                    title="Receba em casa"
+                    description="Impressão premium e entrega rápida em todo o Brasil. Pix, cartão ou boleto."
+                  />
+                </ScrollReveal>
               </div>
+
               <ScrollReveal delay={500}>
                 <div className="text-center mt-12">
-                  <Button size="lg" className="gap-2 text-base bg-primary hover:bg-primary/90" onClick={() => navigate("/customize")}>
-                    Criar Minha Capinha <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <DsButton
+                    variant="brand"
+                    size="lg"
+                    icon={<Sparkles className="w-5 h-5" />}
+                    onClick={() => navigate("/customize")}
+                  >
+                    Começar agora
+                  </DsButton>
                 </div>
               </ScrollReveal>
             </div>
