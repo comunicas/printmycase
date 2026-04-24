@@ -55,7 +55,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
             />
           </Link>
           {breadcrumbs && breadcrumbs.length > 0 && (
-            <div className="hidden sm:flex md:hidden lg:flex items-center gap-1 text-sm text-muted-foreground min-w-0 lg:max-w-[220px] xl:max-w-none">
+            <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground min-w-0 lg:max-w-[220px] xl:max-w-none">
               {breadcrumbs.map((crumb, i) => (
                 <span key={i} className="flex items-center gap-1 min-w-0">
                   <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
