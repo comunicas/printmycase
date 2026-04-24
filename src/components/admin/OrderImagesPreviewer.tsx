@@ -160,17 +160,23 @@ const OrderImagesPreviewer = ({ customizationData, deviceSlug }: Props) => {
                       <SafeZoneOverlay deviceSlug={deviceSlug} mobile />
                     )}
                   </button>
-                  {path && state.url && (
-                    <a
-                      href={state.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute -top-1 -right-1 bg-background border border-border rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Abrir em nova aba"
-                    >
-                      <ExternalLink className="w-2.5 h-2.5 text-muted-foreground" />
-                    </a>
-                  )}
+                  {path && state.url && (() => {
+                    const useSafeZone = label === "Imagem Posição";
+                    const externalHref = useSafeZone
+                      ? `/admin/preview-safezone?url=${encodeURIComponent(state.url)}&slug=${encodeURIComponent(deviceSlug ?? "")}&label=${encodeURIComponent(label)}`
+                      : state.url;
+                    return (
+                      <a
+                        href={externalHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute -top-1 -right-1 bg-background border border-border rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title={useSafeZone ? "Abrir em nova aba (com safezone)" : "Abrir em nova aba"}
+                      >
+                        <ExternalLink className="w-2.5 h-2.5 text-muted-foreground" />
+                      </a>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -203,7 +209,15 @@ const OrderImagesPreviewer = ({ customizationData, deviceSlug }: Props) => {
                 >
                   <Download className="w-3.5 h-3.5" /> Baixar
                 </Button>
-                <a href={lightbox.url} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={
+                    lightbox.label === "Imagem Posição"
+                      ? `/admin/preview-safezone?url=${encodeURIComponent(lightbox.url)}&slug=${encodeURIComponent(deviceSlug ?? "")}&label=${encodeURIComponent(lightbox.label)}`
+                      : lightbox.url
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Button size="sm" variant="ghost" className="gap-1.5">
                     <ExternalLink className="w-3.5 h-3.5" /> Nova aba
                   </Button>
