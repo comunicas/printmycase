@@ -462,7 +462,9 @@ const Landing = () => {
               </p>
             </div>
             <div className="space-y-3">
-              <span className="font-display font-bold text-foreground">Links Úteis</span>
+              <p className="font-display font-bold text-sm text-foreground uppercase tracking-widest mb-1">
+                Links Úteis
+              </p>
               <nav className="flex flex-col gap-2 text-muted-foreground">
                 <Link to="/catalog" className="hover:text-foreground transition-colors w-fit">Catálogo</Link>
                 <Link to="/colecoes" className="hover:text-foreground transition-colors w-fit">Coleções</Link>
@@ -475,7 +477,9 @@ const Landing = () => {
               </nav>
             </div>
             <div className="space-y-3">
-              <span className="font-display font-bold text-foreground">Contato</span>
+              <p className="font-display font-bold text-sm text-foreground uppercase tracking-widest mb-1">
+                Contato
+              </p>
               <p className="text-muted-foreground leading-relaxed">
                 Dúvidas ou sugestões?
               </p>
@@ -487,7 +491,7 @@ const Landing = () => {
               >
                 📸 @printmycasebr
               </a>
-              <Link to="/contato" className="inline-block text-primary hover:text-primary/80 font-medium transition-colors">
+              <Link to="/contato" className="block text-primary hover:text-primary/80 font-medium transition-colors w-fit">
                 Fale Conosco
               </Link>
             </div>
@@ -495,9 +499,6 @@ const Landing = () => {
 
           <Separator className="my-6" />
           <div className="text-center space-y-3">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-              Pagamento 100% seguro
-            </p>
             <PaymentBadges />
           </div>
           <Separator className="my-6" />
