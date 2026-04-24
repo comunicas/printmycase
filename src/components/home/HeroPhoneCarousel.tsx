@@ -42,8 +42,16 @@ export default function HeroPhoneCarousel({ onAccentChange }: CarouselProps) {
   const t2Ref       = useRef<ReturnType<typeof setTimeout> | null>(null);
   const t3Ref       = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const onAccentRef = useRef(onAccentChange);
+  useEffect(() => { onAccentRef.current = onAccentChange; }, [onAccentChange]);
+
   const clearTimers = () => {
     [t1Ref, t2Ref, t3Ref].forEach(r => { if (r.current) { clearTimeout(r.current); r.current = null; } });
+  };
+
+  const clearAll = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    clearTimers();
   };
 
   const currentIndex = () => topRef.current === 'A' ? layerARef.current : layerBRef.current;
@@ -63,7 +71,7 @@ export default function HeroPhoneCarousel({ onAccentChange }: CarouselProps) {
     }
 
     const accent = SLIDES[toIndex].accent;
-    onAccentChange?.(accent, true);
+    onAccentRef.current?.(accent, true);
 
     setScanning(true);
 
@@ -80,11 +88,11 @@ export default function HeroPhoneCarousel({ onAccentChange }: CarouselProps) {
         t3Ref.current = setTimeout(() => {
           setRevealing(false);
           busyRef.current = false;
-          onAccentChange?.(accent, false);
+          onAccentRef.current?.(accent, false);
         }, REVEAL_MS);
       }, FLASH_MS);
     }, SCAN_MS);
-  }, [onAccentChange]);
+  }, []);
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
@@ -93,9 +101,10 @@ export default function HeroPhoneCarousel({ onAccentChange }: CarouselProps) {
     }, INTERVAL_MS);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      clearTimers();
     };
   }, [transition]);
+
+  useEffect(() => () => { clearAll(); }, []);
 
   const goTo = useCallback((index: number) => {
     if (busyRef.current) return;
@@ -122,27 +131,37 @@ export default function HeroPhoneCarousel({ onAccentChange }: CarouselProps) {
       {/* CAMADA A */}
       <img
         src={slideA.src}
-        alt={`Capa ${slideA.filter} gerada por IA`}
+        alt={topLayer === 'A' ? `Capa ${slideA.filter} gerada por IA PrintMyCase` : ''}
+        aria-hidden={topLayer !== 'A'}
         className="absolute inset-0 w-full h-full object-cover"
         style={{
           zIndex: topLayer === 'A' ? 2 : 1,
-          opacity: topLayer === 'A' && revealing ? 1 : 1,
-          transition: revealing && topLayer === 'A' ? `opacity ${REVEAL_MS}ms cubic-bezier(0.4,0,0.2,1)` : 'none',
+          opacity: revealing && topLayer === 'B' ? 0 : 1,
+          transition: revealing
+            ? `opacity ${REVEAL_MS}ms cubic-bezier(0.25,0.46,0.45,0.94)`
+            : 'none',
+          willChange: 'opacity',
         }}
         draggable={false}
+        loading="eager"
       />
 
       {/* CAMADA B */}
       <img
         src={slideB.src}
-        alt={`Capa ${slideB.filter} gerada por IA`}
+        alt={topLayer === 'B' ? `Capa ${slideB.filter} gerada por IA PrintMyCase` : ''}
+        aria-hidden={topLayer !== 'B'}
         className="absolute inset-0 w-full h-full object-cover"
         style={{
           zIndex: topLayer === 'B' ? 2 : 1,
-          opacity: 1,
-          transition: revealing && topLayer === 'B' ? `opacity ${REVEAL_MS}ms cubic-bezier(0.4,0,0.2,1)` : 'none',
+          opacity: revealing && topLayer === 'A' ? 0 : 1,
+          transition: revealing
+            ? `opacity ${REVEAL_MS}ms cubic-bezier(0.25,0.46,0.45,0.94)`
+            : 'none',
+          willChange: 'opacity',
         }}
         draggable={false}
+        loading="eager"
       />
 
       {/* SCAN LINE */}
