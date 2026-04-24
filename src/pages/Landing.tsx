@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Smartphone, Upload, Package, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -25,6 +25,8 @@ const FaqSection = lazy(() => import("@/components/FaqSection"));
 const Landing = () => {
   const navigate = useNavigate();
   const { designs } = useAllDesigns(7);
+  const [frameAccent, setFrameAccent] = useState("130,54,236");
+  const [frameGlowing, setFrameGlowing] = useState(false);
 
   return (
     <>
@@ -134,7 +136,12 @@ const Landing = () => {
                 {/* Frame do celular — carrossel de capas IA */}
                 <div
                   className="relative w-[280px] h-[560px] rounded-[3rem] border-8 border-foreground/90 bg-card overflow-hidden"
-                  style={{ boxShadow: "var(--shadow-elevated)" }}
+                  style={{
+                    boxShadow: frameGlowing
+                      ? `var(--shadow-elevated), 0 0 60px rgba(${frameAccent},0.55), 0 0 120px rgba(${frameAccent},0.25)`
+                      : `var(--shadow-elevated), 0 0 30px rgba(${frameAccent},0.18)`,
+                    transition: "box-shadow 500ms cubic-bezier(0.4,0,0.2,1)",
+                  }}
                 >
                   {/* Fallback gradient — visível enquanto imagens carregam */}
                   <div
@@ -142,7 +149,12 @@ const Landing = () => {
                     style={{ background: "var(--gradient-brand)" }}
                   />
                   {/* Carrossel de capas geradas por IA */}
-                  <HeroPhoneCarousel />
+                  <HeroPhoneCarousel
+                    onAccentChange={(accent, isTransitioning) => {
+                      setFrameAccent(accent);
+                      setFrameGlowing(isTransitioning);
+                    }}
+                  />
                 </div>
 
                 {/* Badges flutuantes */}
