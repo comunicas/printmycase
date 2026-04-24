@@ -38,6 +38,7 @@ const BrandPage = lazy(() => import("./pages/BrandPage"));
 const BrandModelPage = lazy(() => import("./pages/BrandModelPage"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const Contact = lazy(() => import("./pages/Contact"));
+const AdminSafeZonePreview = lazy(() => import("./pages/AdminSafeZonePreview"));
 
 const App = () => (
   <AuthProvider>
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/coins" element={<AuthGuard><Coins /></AuthGuard>} />
             <Route path="/minhas-geracoes" element={<AuthGuard><MyGenerations /></AuthGuard>} />
             <Route path="/admin" element={<AuthGuard><AdminGuard><Admin /></AdminGuard></AuthGuard>} />
+            <Route path="/admin/preview-safezone" element={<AuthGuard><AdminGuard><AdminSafeZonePreview /></AdminGuard></AuthGuard>} />
             <Route path="/solicitar-modelo" element={<RequestModel />} />
             <Route path="/colecoes" element={<Collections />} />
             <Route path="/colecao/:slug" element={<CollectionPage />} />
