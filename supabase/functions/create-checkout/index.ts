@@ -228,16 +228,11 @@ Deno.serve(async (req) => {
     params.append("mode", "payment");
     params.append("allow_promotion_codes", "true");
 
-    const stripePriceId = isCollectionPurchase ? null : product.stripe_price_id;
-
-    if (stripePriceId) {
-      params.append("line_items[0][price]", stripePriceId);
-    } else {
-      params.append("line_items[0][price_data][currency]", "brl");
-      params.append("line_items[0][price_data][unit_amount]", String(itemPriceCents));
-      params.append("line_items[0][price_data][product_data][name]", itemName);
-      params.append("line_items[0][price_data][product_data][description]", isCollectionPurchase ? ((design as any).description || "Capa com design de coleção") : (product.description || "Capa de celular personalizada"));
-    }
+    // Always use inline price_data to avoid issues with inactive Stripe products/prices
+    params.append("line_items[0][price_data][currency]", "brl");
+    params.append("line_items[0][price_data][unit_amount]", String(itemPriceCents));
+    params.append("line_items[0][price_data][product_data][name]", itemName);
+    params.append("line_items[0][price_data][product_data][description]", isCollectionPurchase ? ((design as any).description || "Capa com design de coleção") : (product.description || "Capa de celular personalizada"));
     params.append("line_items[0][quantity]", "1");
 
     if (shippingValue > 0) {
