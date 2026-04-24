@@ -330,7 +330,10 @@ const Landing = () => {
                         <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-tight">
                           {design.name}
                         </h3>
-                        <span className="inline-block mt-1.5 text-sm font-bold text-foreground bg-accent/60 px-2 py-0.5 rounded-md">
+                        <span
+                          className="inline-block mt-1.5 text-sm font-bold"
+                          style={{ color: 'hsl(var(--primary))' }}
+                        >
                           {formatPrice(design.price_cents / 100)}
                         </span>
                       </div>
