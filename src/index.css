@@ -119,6 +119,11 @@
     --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
     --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+
+    --gradient-brand: linear-gradient(135deg, hsl(265 83% 65%), hsl(25 95% 65%));
+    --surface-1: hsl(240 5% 13%);
+    --surface-2: hsl(240 5% 16%);
+    --surface-3: hsl(240 5% 19%);
   }
 }
 
