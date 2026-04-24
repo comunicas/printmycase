@@ -3,11 +3,39 @@ import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink, Download, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { getSafeZonePreset } from "@/lib/safe-zone-presets";
 import type { OrderCustomizationData } from "@/types/customization";
 
 interface Props {
   customizationData: OrderCustomizationData | null;
+  deviceSlug?: string;
 }
+
+/** Overlay matching PhonePreview's safe zone — drawn on top of an image
+ *  whose container has aspect-[260/532] so percentages line up correctly. */
+const SafeZoneOverlay = ({ deviceSlug, mobile = false }: { deviceSlug?: string; mobile?: boolean }) => {
+  const preset = getSafeZonePreset(deviceSlug);
+  const radius = mobile ? (preset.mobileRadius ?? preset.radius) : preset.radius;
+  const bottomRadius = mobile ? (preset.mobileBottomRadius ?? preset.bottomRadius) : preset.bottomRadius;
+  return (
+    <div
+      className="pointer-events-none absolute z-10 border border-foreground bg-foreground/30 box-border"
+      aria-hidden="true"
+      style={{
+        left: preset.width ? (preset.insetX ?? "5%") : preset.insetX,
+        right: preset.width ? "auto" : preset.insetX,
+        width: preset.width,
+        top: preset.top,
+        height: preset.height,
+        borderTopLeftRadius: radius,
+        borderTopRightRadius: radius,
+        borderBottomLeftRadius: preset.width ? radius : bottomRadius,
+        borderBottomRightRadius: preset.width ? radius : bottomRadius,
+        borderColor: "hsl(var(--foreground))",
+      }}
+    />
+  );
+};
 
 interface ImageState {
   url: string | null;
@@ -15,7 +43,7 @@ interface ImageState {
   error?: string | null;
 }
 
-const OrderImagesPreviewer = ({ customizationData }: Props) => {
+const OrderImagesPreviewer = ({ customizationData, deviceSlug }: Props) => {
   const [raw, setRaw] = useState<ImageState>({ url: null, loading: true });
   const [optimized, setOptimized] = useState<ImageState>({ url: null, loading: true });
   const [final_, setFinal] = useState<ImageState>({ url: null, loading: true });
