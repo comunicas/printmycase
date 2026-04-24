@@ -117,7 +117,7 @@ const Catalog = () => {
       <AppHeader breadcrumbs={[{ label: "Catálogo" }]} />
 
       <main className="flex-1 w-full max-w-6xl mx-auto p-5 lg:p-10">
-        <h2 className="text-2xl font-bold text-foreground mb-4">Nossos Modelos</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-4">Escolha um dos nossos modelos</h2>
 
         {/* Search */}
         <div className="relative mb-3">
