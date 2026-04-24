@@ -370,26 +370,56 @@ const Landing = () => {
             <FaqSection />
           </Suspense>
 
-          {/* Final CTA */}
-          <section className="py-20 px-5 bg-primary text-primary-foreground">
-            <div className="max-w-2xl mx-auto text-center space-y-6">
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Pronto para criar sua Case única?</h2>
-              <p className="text-lg text-white">
-                Escolha seu modelo, envie sua foto e receba sua capinha exclusiva na sua porta.
-                <br />
-                <span className="text-sm text-white/80">Não encontrou seu modelo? Solicite e avisaremos!</span>
+          {/* Final CTA — DS v2 */}
+          <section className="relative py-24 px-5 overflow-hidden">
+            <div
+              className="absolute inset-0"
+              style={{ background: 'var(--gradient-brand)' }}
+            />
+            <div
+              className="absolute inset-0 opacity-[0.08] pointer-events-none"
+              style={{
+                backgroundImage:
+                  'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
+                backgroundSize: '40px 40px',
+              }}
+            />
+
+            <div className="relative max-w-3xl mx-auto text-center space-y-6">
+              <SectionLabel>
+                <Sparkles className="w-3.5 h-3.5" />
+                COMECE AGORA
+              </SectionLabel>
+
+              <h2 className="font-display font-black text-4xl md:text-6xl tracking-tight text-white leading-tight">
+                Pronto pra criar{' '}
+                <span className="italic">a sua?</span>
+              </h2>
+
+              <p className="text-lg text-white/85 max-w-xl mx-auto leading-relaxed">
+                Em menos de 3 minutos sua arte personalizada está pronta.
+                Sem cadastro, sem complicação.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold" onClick={() => navigate("/customize")}>
-                  Comece Agora <ArrowRight className="w-4 h-4" />
-                </Button>
-                <Button
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <DsButton
+                  variant="default"
                   size="lg"
+                  icon={<Sparkles className="w-5 h-5" />}
+                  className="bg-white text-primary hover:bg-white/90"
+                  onClick={() => navigate('/customize')}
+                >
+                  Criar minha capa agora
+                </DsButton>
+                <DsButton
                   variant="outline"
-                  className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground bg-transparent"
-                  onClick={() => navigate("/solicitar-modelo")}>
-                  <Smartphone className="w-4 h-4" /> Solicitar Modelo
-                </Button>
+                  size="lg"
+                  icon={<Smartphone className="w-5 h-5" />}
+                  className="border-white text-white hover:bg-white hover:text-primary"
+                  onClick={() => navigate('/solicitar-modelo')}
+                >
+                  Solicitar Modelo
+                </DsButton>
               </div>
             </div>
           </section>
