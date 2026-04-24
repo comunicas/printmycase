@@ -5,6 +5,7 @@ import { ChevronRight } from "lucide-react";
 
 import UserMenu from "@/components/UserMenu";
 import CoinBalance from "@/components/CoinBalance";
+import { DsButton } from "@/components/ds";
 
 interface Breadcrumb {
   label: string;
@@ -70,23 +71,41 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        <div className={`hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 ${isTransparent && !scrolled ? "text-white" : "text-foreground"}`}>
           <Button
             variant="ghost"
             size="sm"
-            className={`hidden sm:inline-flex ${isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}`}
-            onClick={() => navigate("/colecoes")}
+            className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
+            onClick={() => navigate('/colecoes')}
           >
             Coleções
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className={`hidden sm:inline-flex ${isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}`}
-            onClick={() => navigate("/catalog")}
+            className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
+            onClick={() => { navigate('/'); setTimeout(() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' }), 100); }}
           >
-            Ver Modelos
+            Como funciona
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
+            onClick={() => navigate('/catalog')}
+          >
+            Modelos
+          </Button>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <DsButton
+            variant="brand"
+            size="sm"
+            className="hidden sm:inline-flex"
+            onClick={() => navigate('/catalog')}
+          >
+            ✦ Criar minha capa
+          </DsButton>
           <CoinBalance transparent={isTransparent && !scrolled} />
           <UserMenu transparent={isTransparent && !scrolled} />
         </div>
