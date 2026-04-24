@@ -71,7 +71,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
             </div>
           )}
         </div>
-        <div className={`hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 ${isTransparent && !scrolled ? "text-white" : "text-foreground"}`}>
+        <div className={`hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 ${isTransparent && !scrolled ? "text-white" : "text-foreground"}`}>
           <Button
             variant="ghost"
             size="sm"
@@ -101,7 +101,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
           <DsButton
             variant="brand"
             size="sm"
-            className="hidden sm:max-md:inline-flex lg:inline-flex"
+            className="hidden sm:inline-flex"
             onClick={() => navigate('/catalog')}
           >
             ✦ Criar minha capa
