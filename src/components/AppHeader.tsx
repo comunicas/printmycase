@@ -71,7 +71,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
             </div>
           )}
         </div>
-        <div className={`hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 ${isTransparent && !scrolled ? "text-white" : "text-foreground"}`}>
+        <div className={`hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 ${isTransparent && !scrolled ? "text-white" : "text-foreground"}`}>
           <Button
             variant="ghost"
             size="sm"
