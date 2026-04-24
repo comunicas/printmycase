@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Smartphone, Upload, Package, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -27,6 +27,14 @@ const Landing = () => {
   const { designs } = useAllDesigns(7);
   const [frameAccent, setFrameAccent] = useState("130,54,236");
   const [frameGlowing, setFrameGlowing] = useState(false);
+
+  const handleAccentChange = useCallback(
+    (accent: string, glowing: boolean) => {
+      setFrameAccent(accent);
+      setFrameGlowing(glowing);
+    },
+    []
+  );
 
   return (
     <>
@@ -149,12 +157,7 @@ const Landing = () => {
                     style={{ background: "var(--gradient-brand)" }}
                   />
                   {/* Carrossel de capas geradas por IA */}
-                  <HeroPhoneCarousel
-                    onAccentChange={(accent, isTransitioning) => {
-                      setFrameAccent(accent);
-                      setFrameGlowing(isTransitioning);
-                    }}
-                  />
+                  <HeroPhoneCarousel onAccentChange={handleAccentChange} />
                 </div>
 
                 {/* Badges flutuantes */}
