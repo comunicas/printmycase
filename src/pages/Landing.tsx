@@ -167,11 +167,18 @@ const Landing = () => {
           {/* Ticker — abaixo do hero */}
           <Ticker
             items={[
-              "Frete rápido pra todo Brasil",
-              "Impressão premium",
-              "IA criativa",
-              "Garantia de qualidade",
-              "+10 mil clientes",
+              "iPhone 17 Pro",
+              "iPhone 16 Pro",
+              "iPhone 16",
+              "iPhone 15 Pro",
+              "Galaxy S25",
+              "Galaxy S24",
+              "Galaxy A56",
+              "Motorola Edge 50",
+              "Xiaomi 14",
+              "Pixel 9 Pro",
+              "Redmi Note 14",
+              "Moto G85",
             ]}
           />
 
