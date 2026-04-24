@@ -248,38 +248,76 @@ const Landing = () => {
           <TechQualitySection />
 
 
-          <section id="destaques" className="py-16 px-5 bg-background">
-            <div className="max-w-5xl mx-auto">
+          {/* IA em Ação */}
+          <section id="ia-em-acao" className="py-20 px-5 bg-background">
+            <div className="max-w-6xl mx-auto">
               <ScrollReveal>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Crie uma capinha única ou encontre a sua favorita na galeria</h2>
+                <div className="text-center mb-12 space-y-4">
+                  <SectionLabel>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    IA EM AÇÃO
+                  </SectionLabel>
+                  <h2 className="font-display font-black text-4xl md:text-5xl tracking-tight text-foreground">
+                    Sua foto vira{' '}
+                    <span
+                      className="bg-clip-text text-transparent"
+                      style={{ backgroundImage: 'var(--gradient-brand)' }}
+                    >
+                      arte única
+                    </span>
+                  </h2>
+                  <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                    Nossa IA transforma suas fotos em estilos incríveis — cartoon, pixel art,
+                    3D e muito mais. Veja o que nossos clientes já criaram.
+                  </p>
+                </div>
               </ScrollReveal>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Fixed CTA Card */}
-                <ScrollReveal>
-                  <Card
-                    className="group cursor-pointer overflow-hidden border-0 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 bg-gradient-to-br from-primary to-primary/80"
-                    onClick={() => navigate("/customize")}
-                  >
-                    <div className="aspect-square flex flex-col items-center justify-center text-center p-4 space-y-3">
-                      <div className="w-14 h-14 rounded-2xl bg-primary-foreground/20 flex items-center justify-center">
-                        <Smartphone className="w-7 h-7 text-primary-foreground" strokeWidth={1.5} />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-primary-foreground leading-tight">Personalize sua Capinha</h3>
-                        <p className="text-xs text-primary-foreground/70 mt-1">Envie sua foto e crie um design único</p>
-                      </div>
-                      <Button size="sm" variant="secondary" className="gap-1 text-xs font-semibold">
-                        Começar <ArrowRight className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </Card>
-                </ScrollReveal>
 
-                {/* Design Cards */}
+              <Suspense fallback={<div className="min-h-[200px]" />}>
+                <AiCoinsSection />
+              </Suspense>
+
+              <ScrollReveal delay={200}>
+                <div className="text-center mt-12">
+                  <DsButton
+                    variant="brand"
+                    size="lg"
+                    icon={<Sparkles className="w-5 h-5" />}
+                    onClick={() => navigate('/customize')}
+                  >
+                    Criar com IA agora
+                  </DsButton>
+                </div>
+              </ScrollReveal>
+            </div>
+          </section>
+
+          {/* Coleções em Destaque */}
+          <section id="destaques" className="py-20 px-5 bg-background">
+            <div className="max-w-6xl mx-auto">
+              <ScrollReveal>
+                <div className="text-center mb-12 space-y-4">
+                  <SectionLabel>COLEÇÕES</SectionLabel>
+                  <h2 className="font-display font-black text-4xl md:text-5xl tracking-tight text-foreground">
+                    Ou escolha um{' '}
+                    <span
+                      className="bg-clip-text text-transparent"
+                      style={{ backgroundImage: 'var(--gradient-brand)' }}
+                    >
+                      design pronto
+                    </span>
+                  </h2>
+                  <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                    Capinhas com designs exclusivos, prontas para pedir. Escolha a sua favorita.
+                  </p>
+                </div>
+              </ScrollReveal>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {designs.map((design, i) => (
-                  <ScrollReveal key={design.id} delay={(i + 1) * 80}>
-                    <Card
-                      className="group cursor-pointer overflow-hidden border-0 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  <ScrollReveal key={design.id} delay={i * 80}>
+                    <div
+                      className="group cursor-pointer overflow-hidden rounded-2xl bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                       onClick={() => navigate(`/colecao/${design.collection_slug}/${design.slug}`)}
                     >
                       <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
@@ -292,32 +330,28 @@ const Landing = () => {
                           height="300"
                         />
                       </div>
-                      <CardContent className="p-2.5">
-                        <h3 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">
+                      <div className="p-3">
+                        <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-tight">
                           {design.name}
                         </h3>
                         <span className="inline-block mt-1.5 text-sm font-bold text-foreground bg-accent/60 px-2 py-0.5 rounded-md">
                           {formatPrice(design.price_cents / 100)}
                         </span>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   </ScrollReveal>
                 ))}
               </div>
+
               <ScrollReveal delay={350}>
-                <div className="text-center mt-8">
-                  <Button variant="outline" className="gap-2" onClick={() => navigate("/colecoes")}>
-                    Ver Todas as Coleções <ChevronRight className="w-4 h-4" />
-                  </Button>
+                <div className="text-center mt-12">
+                  <DsButton variant="outline" size="lg" href="/colecoes">
+                    Ver Todas as Coleções
+                  </DsButton>
                 </div>
               </ScrollReveal>
             </div>
           </section>
-
-          {/* AI Coins */}
-          <Suspense fallback={<div className="min-h-[200px]" />}>
-            <AiCoinsSection />
-          </Suspense>
 
 
 
