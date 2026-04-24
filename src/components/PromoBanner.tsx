@@ -6,7 +6,7 @@ const PromoBanner = () => {
           20% OFF
         </span>
         <span className="truncate">
-          Use o cupom <strong className="font-semibold">PRIMEIRACOMPRA</strong>
+          Use o cupom <strong className="font-semibold">PRIMEIRACASE</strong>
           <span className="hidden sm:inline"> na sua primeira compra</span>
         </span>
       </div>
