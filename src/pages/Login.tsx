@@ -52,14 +52,14 @@ const Login = () => {
 
   return (
     <AuthLayout>
-      <AuthCard>
+      <AuthCard bannerVariant="login">
         {/* Heading */}
         <div className="text-center space-y-1.5">
-          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="font-display font-black text-3xl tracking-tight text-foreground">
             Entrar no Studio
           </h1>
           <p className="text-sm text-muted-foreground">
-            Acesse sua conta para continuar
+            Suas capas e moedas IA estão te esperando. ✦
           </p>
         </div>
 
@@ -121,15 +121,15 @@ const Login = () => {
 
           {/* CTA principal com gradient-brand do DS */}
           <DsButton type="submit" variant="brand" className="w-full" disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? 'Entrando...' : 'Entrar no Studio →'}
           </DsButton>
         </form>
 
         {/* Link cadastro */}
         <p className="text-center text-sm text-muted-foreground">
-          Não tem conta?{' '}
+          Ainda não criou?{' '}
           <Link to="/signup" className="text-primary hover:underline font-medium">
-            Criar conta grátis
+            Ganhar 50 moedas IA grátis
           </Link>
         </p>
       </AuthCard>
