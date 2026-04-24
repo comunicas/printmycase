@@ -157,7 +157,7 @@ const Signup = () => {
         <button
           type="button"
           onClick={handleGoogleSignup}
-          className="w-full h-11 rounded-xl border border-border bg-background hover:bg-muted/50 transition-colors flex items-center justify-center gap-2 text-sm font-medium text-foreground"
+          className="w-full h-11 rounded-xl border border-border bg-card hover:bg-muted hover:border-primary/25 active:bg-primary/10 transition-all flex items-center justify-center gap-2 text-sm font-medium text-foreground"
         >
           <GoogleIcon />
           Criar com Google · mais rápido ⚡
