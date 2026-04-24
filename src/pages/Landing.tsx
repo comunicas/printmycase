@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
-  Smartphone, Upload, Package, Star, ArrowRight, ChevronRight } from
+  Smartphone, Upload, Package, Star, ArrowRight, ChevronRight, Sparkles } from
 "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,22 +12,9 @@ import SeoHead from "@/components/SeoHead";
 import { getOptimizedUrl } from "@/lib/image-utils";
 import AppHeader from "@/components/AppHeader";
 import PromoBanner from "@/components/PromoBanner";
-import heroBg from "@/assets/hero-bg-optimized.webp";
 import ScrollReveal from "@/components/ScrollReveal";
 import PaymentBadges from "@/components/PaymentBadges";
-
-// Inject preload for the hero LCP image as early as possible (module eval time)
-// This lets the browser fetch the hero image in parallel with the JS bundle,
-// significantly reducing LCP on the landing page.
-if (typeof document !== "undefined" && !document.querySelector(`link[rel="preload"][href="${heroBg}"]`)) {
-  const link = document.createElement("link");
-  link.rel = "preload";
-  link.as = "image";
-  link.type = "image/webp";
-  link.href = heroBg;
-  link.fetchPriority = "high";
-  document.head.appendChild(link);
-}
+import { DsButton, SectionLabel, FloatingBadge, Ticker } from "@/components/ds";
 
 // Lazy-load below-the-fold sections to reduce initial JS bundle (improves FCP/LCP)
 const AiCoinsSection = lazy(() => import("@/components/AiCoinsSection"));
@@ -47,11 +34,6 @@ const steps = [
 { icon: Upload, title: "Envie sua Foto", desc: "Aplique filtros artísticos com IA" },
 { icon: Package, title: "Receba em Casa", desc: "Produção em 48h e envio rápido" }];
 
-
-const fadeIn = (delayMs: number): React.CSSProperties => ({
-  animationDelay: `${delayMs}ms`,
-  animationFillMode: "forwards"
-});
 
 const Landing = () => {
   const navigate = useNavigate();
