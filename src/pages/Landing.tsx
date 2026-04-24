@@ -462,7 +462,7 @@ const Landing = () => {
               </p>
             </div>
             <div className="space-y-3">
-              <span className="font-semibold text-foreground">Links Úteis</span>
+              <span className="font-display font-bold text-foreground">Links Úteis</span>
               <nav className="flex flex-col gap-2 text-muted-foreground">
                 <Link to="/catalog" className="hover:text-foreground transition-colors w-fit">Catálogo</Link>
                 <Link to="/colecoes" className="hover:text-foreground transition-colors w-fit">Coleções</Link>
@@ -475,10 +475,18 @@ const Landing = () => {
               </nav>
             </div>
             <div className="space-y-3">
-              <span className="font-semibold text-foreground">Contato</span>
+              <span className="font-display font-bold text-foreground">Contato</span>
               <p className="text-muted-foreground leading-relaxed">
                 Dúvidas ou sugestões?
               </p>
+              <a
+                href="https://instagram.com/printmycasebr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors w-fit text-sm"
+              >
+                📸 @printmycasebr
+              </a>
               <Link to="/contato" className="inline-block text-primary hover:text-primary/80 font-medium transition-colors">
                 Fale Conosco
               </Link>
@@ -486,7 +494,12 @@ const Landing = () => {
           </div>
 
           <Separator className="my-6" />
-          <PaymentBadges />
+          <div className="text-center space-y-3">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              Pagamento 100% seguro
+            </p>
+            <PaymentBadges />
+          </div>
           <Separator className="my-6" />
 
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
