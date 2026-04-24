@@ -245,7 +245,7 @@ const Landing = () => {
 
 
           {/* IA em Ação */}
-          <section id="ia-em-acao" className="py-20 px-5 bg-background">
+          <section id="ia-em-acao" className="py-20 px-5" style={{ background: 'var(--surface-1)' }}>
             <div className="max-w-6xl mx-auto">
               <ScrollReveal>
                 <div className="text-center mb-12 space-y-4">
