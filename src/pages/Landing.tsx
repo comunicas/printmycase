@@ -270,7 +270,7 @@ const Landing = () => {
               </ScrollReveal>
 
               <Suspense fallback={<div className="min-h-[200px]" />}>
-                <AiCoinsSection />
+                <AiCoinsSection headingless />
               </Suspense>
 
               <ScrollReveal delay={200}>
