@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
-  Smartphone, Upload, Package, Star, ArrowRight, ChevronRight, Sparkles } from
+  Smartphone, Upload, Package, ArrowRight, ChevronRight, Sparkles } from
 "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
