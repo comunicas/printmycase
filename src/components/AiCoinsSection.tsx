@@ -16,7 +16,11 @@ interface PublicGeneration {
 
 const ASPECTS = ["aspect-[3/4]", "aspect-square", "aspect-[4/5]", "aspect-[2/3]"];
 
-const AiCoinsSection = () => {
+interface AiCoinsSectionProps {
+  headingless?: boolean;
+}
+
+const AiCoinsSection = ({ headingless = false }: AiCoinsSectionProps) => {
   const navigate = useNavigate();
   const [images, setImages] = useState<PublicGeneration[]>([]);
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -46,34 +50,27 @@ const AiCoinsSection = () => {
 
   return (
     <>
-      <section className="relative py-20 px-5 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950" />
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 50% at 50% 50%, hsl(265 83% 57% / 0.3), transparent 70%)",
-          }}
-        />
-
+      <section className="relative overflow-hidden">
         <div className="relative z-10 max-w-5xl mx-auto space-y-12">
-          <ScrollReveal>
-            <div className="text-center space-y-4">
-              <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-sm font-medium text-yellow-300">
-                <Sparkles className="w-4 h-4" />
-                Novidade — IA Artística
+          {!headingless && (
+            <ScrollReveal>
+              <div className="text-center space-y-4">
+                <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-sm font-medium text-yellow-300">
+                  <Sparkles className="w-4 h-4" />
+                  Novidade — IA Artística
+                </div>
+                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+                  Transforme qualquer foto em{" "}
+                  <span className="text-yellow-300 drop-shadow-[0_0_20px_hsl(50_100%_60%/0.4)]">
+                    arte com IA
+                  </span>
+                </h2>
+                <p className="text-base md:text-lg text-white/70 max-w-2xl mx-auto">
+                  Inspiração de quem já criou
+                </p>
               </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
-                Transforme qualquer foto em{" "}
-                <span className="text-yellow-300 drop-shadow-[0_0_20px_hsl(50_100%_60%/0.4)]">
-                  arte com IA
-                </span>
-              </h2>
-              <p className="text-base md:text-lg text-white/70 max-w-2xl mx-auto">
-                Inspiração de quem já criou
-              </p>
-            </div>
-          </ScrollReveal>
+            </ScrollReveal>
+          )}
 
           <ScrollReveal delay={100}>
             <div className="columns-2 md:columns-4 gap-3 md:gap-4 space-y-3 md:space-y-4">
