@@ -233,3 +233,8 @@
     animation: none;
   }
 }
+/* === DS v2 — Ticker animation === */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
