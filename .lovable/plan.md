@@ -1,45 +1,43 @@
 
 
-## Adicionar tokens do Design System v2 e novas fontes
+## Criar primitivos do Design System em `src/components/ds/`
 
-Alterações puramente aditivas em 3 arquivos. Nenhum token, classe, componente ou página existente será removido ou modificado.
+Adição pura de 6 arquivos novos. Nenhum arquivo existente será tocado.
 
-### 1) `src/index.css`
+### Arquivos a criar
 
-**No bloco `:root`**, após `--spacing: 0.25rem;`, adicionar:
-- Gradientes: `--gradient-brand`, `--gradient-glow`, `--gradient-surface`
-- Sombras DS v2 (nomes novos, não conflitam com os existentes): `--shadow-card`, `--shadow-elevated`, `--shadow-glow`
-- Superfícies: `--surface-1`, `--surface-2`, `--surface-3`
+1. **`src/components/ds/DsBadge.tsx`**
+   - Variantes: `brand`, `discount`, `new`, `top`, `outline`, `muted` (default: `brand`)
+   - Base: `rounded-full text-xs font-semibold px-2.5 py-0.5 inline-flex items-center`
+   - Composição via `cn()` de `@/lib/utils`
 
-**No bloco `.dark`**, após o último token, adicionar:
-- `--gradient-brand` (variação dark)
-- `--surface-1`, `--surface-2`, `--surface-3` (variações dark)
+2. **`src/components/ds/DsButton.tsx`**
+   - Variantes: `brand`, `default`, `outline`, `ghost` (default: `default`)
+   - Tamanhos: `sm`, `md`, `lg` (default: `md`)
+   - Props extras: `icon` (renderizado à esquerda com `mr-2`), `arrow` (acrescenta " →"), `href` (renderiza `<Link to={href}>` do `react-router-dom` em vez de `<button>`)
+   - Variante `brand` aplica `style={{ background: 'var(--gradient-brand)', boxShadow: 'var(--shadow-elevated)' }}` (token DS v2 já adicionado)
+   - Quando `href` está presente, repassa `className` mas ignora props nativas de `<button>`
 
-**No final do arquivo**, após o último `@keyframes toast-progress`, adicionar:
-- `@keyframes ticker` (translateX 0 → -50%)
+3. **`src/components/ds/SectionLabel.tsx`**
+   - Pílula de seção: `rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-semibold tracking-widest uppercase px-3 py-1 inline-flex items-center gap-1.5`
 
-### 2) `tailwind.config.ts`
+4. **`src/components/ds/FloatingBadge.tsx`**
+   - Badge flutuante com `icon` (emoji string) + `label`
+   - Visual: `bg-card border border-border rounded-full` + `style={{ boxShadow: 'var(--shadow-card)' }}`
 
-**Em `theme.extend.fontFamily`**, manter `sans` intacto e adicionar:
-- `display`: Outfit + fallbacks
-- `body`: Nunito + fallbacks
+5. **`src/components/ds/Ticker.tsx`**
+   - Marquee horizontal usando o `@keyframes ticker` (já adicionado ao `index.css`)
+   - Container: `w-full overflow-hidden border-y border-border py-2.5` com `style={{ background: 'var(--surface-1)' }}`
+   - Track interno em `inline-flex` com `style={{ animation: \`ticker ${speed}s linear infinite\` }}`, default `speed=30`
+   - Renderiza os items duplicados (`[...items, ...items]`) para loop contínuo, separados visualmente por `" ✦ "`
 
-**Em `theme.extend.boxShadow`**, manter as 7 chaves existentes (`2xs`, `xs`, `sm`, `md`, `lg`, `xl`, `2xl`) e adicionar:
-- `card`: `var(--shadow-card)`
-- `elevated`: `var(--shadow-elevated)`
-- `glow`: `var(--shadow-glow)`
+6. **`src/components/ds/index.ts`**
+   - Re-exports `default` dos 5 componentes acima como named exports
 
-### 3) `index.html`
-
-Sem duplicar os `preconnect` para `fonts.googleapis.com` e `fonts.gstatic.com` (já existem).
-
-Logo abaixo do `<link rel="preload" as="style" ...Inter...>` existente, adicionar:
-- `<link rel="preload" as="style" href="...Outfit:wght@700;800;900&family=Nunito:wght@400;500;600;700..." onload="this.onload=null;this.rel='stylesheet'" />`
-- `<noscript><link rel="stylesheet" href="...Outfit+Nunito..." /></noscript>` correspondente
-
-### Garantias
-- Nenhum token existente é removido ou alterado
-- Nomes dos novos tokens de sombra (`card`, `elevated`, `glow`) não colidem com os existentes
-- Nenhum componente ou página é tocado nesta etapa
-- Tailwind passa a expor as utilities `font-display`, `font-body`, `shadow-card`, `shadow-elevated`, `shadow-glow` para uso futuro
+### Convenções respeitadas
+- Imports via alias `@/components/...` e `@/lib/utils`
+- `cn()` de `@/lib/utils`
+- Navegação interna com `Link` do `react-router-dom` (sem `next/link`)
+- Sem alterações em arquivos existentes; nenhum componente/página é importado por estes primitivos
+- Tokens DS v2 (`--gradient-brand`, `--shadow-elevated`, `--shadow-card`, `--surface-1`, `@keyframes ticker`) já existem no projeto
 
