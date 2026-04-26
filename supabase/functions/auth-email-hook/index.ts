@@ -85,7 +85,7 @@ function buildEmailLogMetadata(trace: AuthTraceContext, traceStage: string, prov
 }
 
 async function insertSentFallbackLog(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   trace: AuthTraceContext,
   emailType: string,
   providerMessageId: string | null,
