@@ -39,7 +39,7 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
 }
 
 async function insertEmailLog(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   payload: {
     message_id: string
     template_name: string
