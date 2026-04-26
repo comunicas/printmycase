@@ -1,35 +1,51 @@
+## Email de Carrinho Abandonado
 
+Disparar automaticamente um email para o usuário que iniciou uma customização (registro em `pending_checkouts`) mas não finalizou a compra, incentivando-o a voltar e concluir.
 
-## Adicionar `StepCard` e `TestimonialCard` ao Design System
+### Regras de envio
 
-Adição pura de 2 componentes novos em `src/components/ds/` e atualização aditiva do barrel `index.ts`.
+- **Sequência de 3 lembretes** por checkout pendente:
+  - 1º: ~1 hora após `updated_at`
+  - 2º: ~24 horas após `updated_at`
+  - 3º: ~72 horas após `updated_at` (último)
+- Não enviar se o usuário já comprou aquele `product_id` depois do `updated_at` (verifica `orders` com `status != 'pending'`).
+- Não enviar se o `pending_checkout` foi removido (significa compra concluída ou descartado).
+- Idempotência via `email_send_log.message_id` no formato `abandoned-cart-{checkout_id}-{step}`, evitando duplicidade.
+- Respeita `suppressed_emails` (já tratado pelo sender).
 
-### Arquivos
+### Mudanças técnicas
 
-1. **`src/components/ds/StepCard.tsx`** (novo)
-   - Props: `step` (1–3), `icon` (ReactNode), `title`, `description`, `className?`
-   - Container: `relative bg-card border border-border rounded-2xl p-7` + `boxShadow: var(--shadow-card)` + `transition-transform duration-300 hover:-translate-y-1`
-   - Número decorativo absoluto no canto superior direito com `font-display font-black text-6xl leading-none` e cor `hsl(var(--primary) / 0.08)`, formatado com `String(step).padStart(2, '0')`
-   - Ícone em pill `w-12 h-12 rounded-xl` com `background: var(--gradient-brand)`
-   - Título `font-display font-bold text-lg mt-4` + descrição `text-sm text-muted-foreground leading-relaxed mt-2 max-w-[240px]`
-   - Composição de classes via `cn()` de `@/lib/utils`
+1. **Nova tabela auxiliar** `pending_checkouts` já tem o que precisamos; nenhuma coluna nova. Controle de envio fica via `email_send_log` (message_id).
 
-2. **`src/components/ds/TestimonialCard.tsx`** (novo)
-   - Props: `rating`, `text`, `name`, `product`
-   - Container: `bg-card border border-border rounded-2xl p-6 h-full flex flex-col` + `boxShadow: var(--shadow-card)` + `hover:-translate-y-1`
-   - `StarRating` reutilizado de `@/components/StarRating` com `starSize="w-4 h-4"`
-   - Texto em itálico envolto em aspas `"${text}"`, ocupando `flex-1`
-   - Rodapé com avatar circular `w-9 h-9` (gradiente brand, inicial do nome) + nome e produto
+2. **Novo template transacional** `abandoned-cart-reminder.tsx` em `supabase/functions/_shared/transactional-email-templates/`:
+   - Props: `userName`, `productName`, `productImageUrl`, `resumeUrl`, `step` (1|2|3) — assunto varia por step ("Você esqueceu algo especial 🎨", "Sua arte ainda está aqui", "Última chance de finalizar seu case").
+   - CTA "Continuar minha customização" → link para `/customize/{product-slug}` (rascunho já é restaurado pelo `useCustomizeDraft`).
+   - Visual alinhado ao layout dos outros templates (logo PrintMyCase, paleta roxa).
+   - Registrado em `registry.ts`.
 
-3. **`src/components/ds/index.ts`** (atualizar — aditivo)
-   - Adicionar:
-     - `export { default as StepCard } from './StepCard'`
-     - `export { default as TestimonialCard } from './TestimonialCard'`
-   - Manter os 5 exports já existentes (`DsBadge`, `DsButton`, `SectionLabel`, `FloatingBadge`, `Ticker`)
+3. **Nova Edge Function** `send-abandoned-cart-reminders`:
+   - Protegida por `x-cron-secret` (mesmo padrão da `cleanup-pending-checkouts`).
+   - Para cada step (1h/24h/72h):
+     - Busca `pending_checkouts` cujo `updated_at` caia na janela do step.
+     - Para cada item: valida que não existe pedido pago/posterior, busca email do usuário (auth.admin) e nome do produto (`products`), monta `resumeUrl`, e invoca `send-transactional-email` com `idempotencyKey = abandoned-cart-{id}-{step}`.
+   - Configurada com `verify_jwt = false` em `supabase/config.toml`.
 
-### Convenções respeitadas
-- Tokens DS v2 já disponíveis (`--gradient-brand`, `--shadow-card`, `--primary`, `font-display`)
-- Reuso direto de `StarRating` existente, sem alterá-lo
-- Nenhum arquivo existente é modificado além do barrel `index.ts` (somente adições)
-- Sem dependências de Next.js; somente React + Tailwind + `cn()`
+4. **Cron job** rodando a cada 30 minutos, chamando a function com header `x-cron-secret`.
 
+### Comunicação ao usuário
+
+- Apenas 3 emails máximo por carrinho, espaçados, com unsubscribe automático no rodapé (gerenciado pela infra).
+- Caracteriza-se como transacional: cada envio é disparado pela ação específica daquele usuário (ele iniciou um carrinho).
+
+### Arquivos afetados
+
+- `supabase/functions/_shared/transactional-email-templates/abandoned-cart-reminder.tsx` (novo)
+- `supabase/functions/_shared/transactional-email-templates/registry.ts` (registrar)
+- `supabase/functions/send-abandoned-cart-reminders/index.ts` (novo)
+- `supabase/config.toml` (verify_jwt=false na nova function)
+- Migração SQL para criar o cron job de 30 em 30 min
+
+### Fora de escopo
+
+- Painel admin para visualizar envios (pode ser feito depois consultando `email_send_log` filtrando por `template_name = 'abandoned-cart-reminder'`).
+- Personalização A/B de assunto/copy.
