@@ -20,3 +20,5 @@ project_id = "iqnqpwnbdqzvqssxcxgb"
     verify_jwt = false
   [functions.submit-contact]
     verify_jwt = false
+  [functions.send-abandoned-cart-reminders]
+    verify_jwt = false
