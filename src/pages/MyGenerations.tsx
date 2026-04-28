@@ -46,11 +46,12 @@ const MyGenerations = () => {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     (async () => {
       const { data, error } = await supabase
         .from("user_ai_generations")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(100);
       if (error || !data) {
