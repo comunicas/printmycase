@@ -43,7 +43,7 @@ const BrandCategoryPage = () => {
       "@graph": [
         {
           "@type": "ItemList",
-          name: "Marcas de Capas de Celular",
+          name: "Capinhas Personalizadas por Marca de Celular",
           itemListElement: brandGroups.map(([slug, data], i) => ({
             "@type": "ListItem",
             position: i + 1,
