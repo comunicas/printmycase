@@ -295,10 +295,8 @@ const Checkout = () => {
   const totalCents = productPriceCents + shippingCents;
 
   const breadcrumbs = [
-    { label: "Catálogo", to: "/catalog" },
-    ...(product ? [{ label: product.name, to: `/product/${product.slug}` }] : []),
-    ...(product ? [{ label: "Customizar", to: `/customize/${product.slug}` }] : []),
-    { label: "Checkout" },
+    ...(product ? [{ label: product.name, to: `/customize/${product.slug}` }] : []),
+    { label: "Entrega" },
   ];
 
   if (productLoading || (user && (!customization || recovering))) {
