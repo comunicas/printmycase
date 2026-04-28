@@ -17,8 +17,9 @@ const CollectionPage = () => {
 
   useEffect(() => {
     if (!collection) return;
-    const title = `${collection.name} | ${SITE_NAME}`;
-    const desc = collection.description || `Coleção ${collection.name} — designs exclusivos para capas de celular.`;
+    const title = `Capinhas ${collection.name} | Designs Exclusivos para Celular | PrintMyCase`;
+    const desc = collection.description ||
+      `Explore ${designs.length > 0 ? designs.length + " " : ""}designs exclusivos da coleção ${collection.name}. Capinhas personalizadas com impressão UV LED premium e frete grátis para todo o Brasil.`;
     const image = collection.cover_image || undefined;
     const url = `${SITE_URL}/colecao/${slug}`;
 
@@ -30,7 +31,7 @@ const CollectionPage = () => {
     const graph: any[] = [
       {
         "@type": "CollectionPage",
-        name: collection.name,
+        name: `Capinhas ${collection.name}`,
         description: desc,
         url,
         inLanguage: "pt-BR",
@@ -43,7 +44,7 @@ const CollectionPage = () => {
       graph.push({
         "@type": "ItemList",
         "@id": itemListId,
-        name: `Designs da coleção ${collection.name}`,
+        name: `Capinhas personalizadas da coleção ${collection.name}`,
         url,
         numberOfItems: designs.length,
         itemListOrder: "https://schema.org/ItemListOrderAscending",
@@ -101,9 +102,16 @@ const CollectionPage = () => {
     <div className="min-h-screen bg-background">
       <AppHeader breadcrumbs={[{ label: "Coleções", to: "/colecoes" }, { label: collection.name }]} />
       <main className="max-w-5xl mx-auto px-5 py-10">
-        <h1 className="text-3xl font-bold text-foreground mb-2">{collection.name}</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">
+          Capinhas {collection.name}
+        </h1>
         {collection.description && (
           <p className="text-muted-foreground mb-8">{collection.description}</p>
+        )}
+        {!collection.description && (
+          <p className="text-muted-foreground mb-8">
+            {designs.length > 0 ? designs.length : ""} designs exclusivos · impressão UV LED premium · frete grátis para todo o Brasil
+          </p>
         )}
 
         {designs.length === 0 ? (
@@ -119,7 +127,7 @@ const CollectionPage = () => {
                 <div className="aspect-square overflow-hidden bg-muted">
                   <img
                     src={design.image_url}
-                    alt={design.name}
+                    alt={`Capinha personalizada ${design.name} — coleção ${collection.name}`}
                     width={300}
                     height={300}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -128,7 +136,9 @@ const CollectionPage = () => {
                   />
                 </div>
                 <CardContent className="p-3">
-                  <h3 className="text-sm font-semibold text-foreground line-clamp-2">{design.name}</h3>
+                  <h3 className="text-sm font-semibold text-foreground line-clamp-2">
+                    {design.name.replace(/^capa personalizada\s*[-–]\s*/i, "")}
+                  </h3>
                   <p className="text-base font-bold text-foreground mt-1">
                     {formatPrice(design.price_cents / 100)}
                   </p>
