@@ -17,6 +17,7 @@ import PaymentBadges from "@/components/PaymentBadges";
 import { clarityEvent } from "@/lib/clarity";
 import { generateEventId, pixelTrackInitiateCheckout } from "@/lib/meta-pixel";
 import { parsePendingCustomizationData } from "@/types/customization";
+import LoginDialog from "@/components/customize/LoginDialog";
 
 interface CustomizationData {
   rawImage: string | null;
@@ -45,6 +46,15 @@ const Checkout = () => {
   const [addressData, setAddressData] = useState<AddressData | null>(null);
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(!user);
+
+  useEffect(() => {
+    if (!user && !productLoading) {
+      setShowLoginDialog(true);
+    } else if (user) {
+      setShowLoginDialog(false);
+    }
+  }, [user, productLoading]);
 
   const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
     setAddressData(data);
