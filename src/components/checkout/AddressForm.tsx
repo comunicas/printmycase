@@ -222,10 +222,13 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
               </div>
             </FormField>
 
-            {shipping && (
-              <p className="text-xs text-muted-foreground -mt-2">
-                {shipping.region} ({shipping.state}) — {formatPrice(shipping.priceCents / 100)}
-              </p>
+            {shipping && shipping.allowed && (
+              <div className="flex items-center gap-2 -mt-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <span className="text-xs text-green-700 font-medium">
+                  ✅ Entrega disponível — {formatPrice(shipping.priceCents / 100)}
+                  {shipping.deliveryDays ? ` · ${shipping.deliveryDays}` : ""}
+                </span>
+              </div>
             )}
 
             {shipping && !shipping.allowed && (

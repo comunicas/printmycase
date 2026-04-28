@@ -2,14 +2,15 @@ export interface ShippingRegion {
   name: string;
   states: string[];
   priceCents: number;
+  deliveryDays: string;
 }
 
 export const shippingRegions: ShippingRegion[] = [
-  { name: "Sudeste", states: ["SP", "RJ", "MG", "ES"], priceCents: 1290 },
-  { name: "Sul", states: ["PR", "SC", "RS"], priceCents: 1590 },
-  { name: "Centro-Oeste", states: ["GO", "MT", "MS", "DF"], priceCents: 1890 },
-  { name: "Nordeste", states: ["BA", "SE", "AL", "PE", "PB", "RN", "CE", "PI", "MA"], priceCents: 2290 },
-  { name: "Norte", states: ["AM", "PA", "AC", "RO", "RR", "AP", "TO"], priceCents: 2790 },
+  { name: "Sudeste", states: ["SP", "RJ", "MG", "ES"], priceCents: 1290, deliveryDays: "5 a 7 dias úteis" },
+  { name: "Sul", states: ["PR", "SC", "RS"], priceCents: 1590, deliveryDays: "7 a 10 dias úteis" },
+  { name: "Centro-Oeste", states: ["GO", "MT", "MS", "DF"], priceCents: 1890, deliveryDays: "8 a 12 dias úteis" },
+  { name: "Nordeste", states: ["BA", "SE", "AL", "PE", "PB", "RN", "CE", "PI", "MA"], priceCents: 2290, deliveryDays: "10 a 15 dias úteis" },
+  { name: "Norte", states: ["AM", "PA", "AC", "RO", "RR", "AP", "TO"], priceCents: 2790, deliveryDays: "12 a 18 dias úteis" },
 ];
 
 /**
@@ -113,6 +114,7 @@ export interface ShippingResult {
   state: string;
   priceCents: number;
   allowed: boolean;
+  deliveryDays?: string;
 }
 
 export function getShippingByZip(zip: string): ShippingResult | null {
@@ -127,5 +129,6 @@ export function getShippingByZip(zip: string): ShippingResult | null {
     state,
     priceCents: region.priceCents,
     allowed: ALLOWED_REGIONS.includes(region.name),
+    deliveryDays: region.deliveryDays,
   };
 }
