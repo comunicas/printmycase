@@ -54,7 +54,7 @@ function ReasonScreen({
   onCreateAccount,
   onLogin,
 }: {
-  reason: "filter" | "upscale";
+  reason: "filter" | "upscale" | "checkout";
   onCreateAccount: () => void;
   onLogin: () => void;
 }) {
