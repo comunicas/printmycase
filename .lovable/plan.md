@@ -1,96 +1,51 @@
-# Auditoria e plano de otimização de imagens
+## Situação
 
-## Diagnóstico
+Você relatou que **todas as imagens da home e cards de produtos** aparecem como **espaço em branco**, e isso começou **depois das últimas mudanças** (que foram só edições de texto no Hero).
 
-### ✅ O que já está bem
-- **Helper `getOptimizedUrl`** (`src/lib/image-utils.ts`) usa o endpoint `render/image/public` do Supabase para gerar variantes redimensionadas em WebP — em uso em `BrandPage`, `CollectionCard`, `ProductGallery`, `AiCoinsSection`, `AiGalleryModal`, `HeroPhoneCarousel` e na seção "Coleções em Destaque" da Landing.
-- **Logo do header** servido como WebP otimizado (`/logo-printmycase-sm.webp`) com `fetchPriority="high"` (memória LCP já documentada).
-- A maioria dos `<img>` em listagens já tem `loading="lazy"` + `width`/`height` explícitos.
+## O que já investiguei
 
-### ❌ Problemas encontrados
+Tenho evidências contraditórias:
 
-1. **`public/images/tech-quality-case-new.png` = 1.247 KB** (PNG não otimizado).
-   Usado na seção "Impressão" da home (`TechQualitySection`). Substitui um WebP de 54 KB que existia antes (`tech-quality-case.webp`). Impacto direto no LCP/CLS da home em scroll.
+- ✅ Replay mostra o **carrossel do Hero rodando normal** (alternando entre Cyberpunk → Cartoon 3D → Artística)
+- ✅ Requisições de imagem do Supabase Storage retornam **HTTP 200** (testei via curl)
+- ✅ Queries de `products` e `collection_designs` retornam dados com `image_url` válidos
+- ✅ Sem erros JS no dev-server
+- ⚠️ Único erro de fetch: `public_ai_generations` (afeta só o mosaico de IA, não tudo)
+- ⚠️ Erro do Supabase Auth: `Lock broken by another request with the 'steal' option` — clássico de **múltiplas abas** do mesmo app abertas competindo pelo lock de auth
 
-2. **`ProductCard`** (usado no `Catalog` e em buscas) usa `product.device_image` diretamente — **sem `getOptimizedUrl`**, baixando a imagem original do Supabase Storage (pode ser >500 KB) para um thumb de 300×300.
+Como você disse que requisições retornam 200 mas a tela está em branco, **o problema não é fetch — é renderização**. As causas mais prováveis nessa situação são cache do preview ou estado quebrado.
 
-3. **`Collections.tsx` (linha 117)** — grid de designs usa `design.image_url` cru, sem `getOptimizedUrl`, em até 12 cards por página.
+## Plano de ação
 
-4. **`CollectionPage.tsx` (linha 128)** — mesma situação: 4 colunas × N designs renderizados sem otimização.
+### Passo 1 — Validar visualmente no preview real (com browser tools)
 
-5. **`SelectModel.tsx` (linha 191)** — thumbs de modelos usam `thumb` cru, sem otimização (até 20+ itens visíveis).
+Abrir o preview com a ferramenta de browser, tirar screenshot da home, e inspecionar o DOM para confirmar exatamente o que está em branco. Isso elimina ambiguidade — vou ver o mesmo que você está vendo.
 
-6. **`ModelSelector.tsx`** — listagem do dropdown (linha 235) e botão (linha 137) usam URLs originais para thumbs de 28–36 px.
+### Passo 2 — Limpar cache do preview e forçar reload
 
-7. **`AiFiltersList.tsx` (linha 84)** — thumbs dos filtros de IA usam `filter.style_image_url` cru. Não há `loading="lazy"`, `width`/`height` nem otimização. Em customização há ~20 filtros visíveis.
+Se o screenshot confirmar imagens em branco, **a primeira ação** será verificar:
+- Se você tem **mais de uma aba do app aberta** (causa o erro do auth lock)
+- Se o problema persiste com hard reload (Ctrl+Shift+R)
 
-8. **`FilterConfirmDialog.tsx` (linha 57)** — preview do filtro sem otimização nem `loading="lazy"`.
+Se for só cache, resolve sem mudança de código.
 
-9. **`MobileTabOverlay.tsx` (linha 155)** — sem otimização verificada.
+### Passo 3 — Corrigir o auth lock (se confirmar que é causa)
 
-10. **`HeroPhoneCarousel`** já usa `getOptimizedUrl(560)`, mas as duas imagens iniciais carregam com `loading="eager"` (correto para LCP). Sem mudança aqui.
+O erro `Lock broken with 'steal' option` acontece quando o Supabase JS tenta renovar o token em uma aba enquanto outra também está tentando. Isso pode travar o `AuthContext` em loading e impedir componentes filhos de renderizar.
 
----
+**Mitigação:** ajustar `src/contexts/AuthContext.tsx` para não bloquear o render do app caso o lock falhe (renderizar com `user = null` em vez de ficar em loading infinito).
 
-## Plano em etapas
+### Passo 4 — Fallback do `AiCoinsSection`
 
-### Etapa 1 — Corrigir imagem pesada da seção "Impressão" (impacto imediato)
+O `public_ai_generations query failed: Failed to fetch` indica que essa query especificamente está sendo bloqueada (provavelmente CORS no contexto do iframe do preview, mas funciona em produção). Como o componente já retorna `null` quando `images.length === 0`, **não causa tela branca** — só não aparece o mosaico de IA. Vou apenas silenciar o `console.error` para não poluir.
 
-**Ação**: Voltar a referenciar a versão WebP otimizada e remover o PNG de 1,2 MB.
+## O que NÃO vou fazer ainda
 
-- Em `src/components/home/TechQualitySection.tsx` linha 42, trocar:
-  - De: `src="/images/tech-quality-case-new.png"`
-  - Para: `src="/tech-quality-case.webp"` (que já existe e tem 54 KB)
-- Adicionar `width`/`height` explícitos no `<img>` para evitar CLS.
-- Excluir os arquivos `public/images/tech-quality-case-new.png` (1,2 MB) e `public/tech-quality-case.png` (555 KB) — não são mais referenciados.
+- Não vou reescrever `ProductCard`, `HeroPhoneCarousel`, ou `getOptimizedUrl` — o código deles está correto e os testes mostram que funcionam
+- Não vou desfazer as edições de texto recentes — elas não tocaram em nada de imagem
 
-> Observação: a imagem nova (mão segurando capa amarela "CIMED") foi enviada como PNG e ficou pesada. Mantendo o asset original do projeto (capa graffiti). Se você quiser **manter a nova imagem da CIMED**, eu também converto para WebP otimizado (~60–80 KB) e atualizo a referência.
+## Pergunta importante antes de aprovar
 
-### Etapa 2 — Padronizar uso do `getOptimizedUrl` em todas as listagens
+Se possível, faça um teste rápido: **abra https://studio.printmycase.com.br/ em uma aba anônima** (sem cache, sem login). Se as imagens aparecerem lá, o problema é 100% cache/multi-aba do preview e não precisa mudança de código.
 
-Aplicar o helper nos componentes que ainda baixam o original:
-
-| Arquivo | Linha | Uso atual | Otimização sugerida |
-|---|---|---|---|
-| `src/components/ProductCard.tsx` | 24 | `product.device_image` | `getOptimizedUrl(..., 320)` |
-| `src/pages/Collections.tsx` | 118 | `design.image_url` | `getOptimizedUrl(..., 320)` |
-| `src/pages/CollectionPage.tsx` | 129 | `design.image_url` | `getOptimizedUrl(..., 320)` |
-| `src/pages/SelectModel.tsx` | 192 | `thumb` | `getOptimizedUrl(..., 240)` |
-| `src/components/customize/ModelSelector.tsx` | 138, 236 | `productImage` / `thumb` | `getOptimizedUrl(..., 80)` (são thumbs minúsculos) |
-| `src/components/customize/AiFiltersList.tsx` | 84 | `filter.style_image_url` | `getOptimizedUrl(..., 160)` + `loading="lazy"` + `width/height` |
-| `src/components/customize/FilterConfirmDialog.tsx` | 57 | imagem do preview | `getOptimizedUrl(..., 400)` + `loading="lazy"` |
-| `src/components/customize/MobileTabOverlay.tsx` | 155 | thumb | `getOptimizedUrl` apropriado |
-
-### Etapa 3 — Atributos HTML obrigatórios em todo `<img>`
-
-Garantir em **todo** `<img>` de listagem:
-- `loading="lazy"` (exceto LCP/herói)
-- `decoding="async"`
-- `width` e `height` numéricos (evita CLS)
-- `alt` descritivo (já está OK na maior parte)
-
-Pontos sem `loading="lazy"` hoje: `AiFiltersList`, `FilterConfirmDialog`, `ModelSelector` (linha 137 — botão sempre visível, OK manter eager), `Collections` (já tem), `ProductCard` (já tem).
-
-### Etapa 4 — `srcset` responsivo nos cards de produto/design
-
-Para cards que ocupam tamanhos diferentes em mobile vs desktop (1 col mobile vs 4 col desktop), adicionar variantes:
-```tsx
-srcSet={`${getOptimizedUrl(url, 200)} 200w, ${getOptimizedUrl(url, 400)} 400w, ${getOptimizedUrl(url, 600)} 600w`}
-sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-```
-Aplicar em `ProductCard`, `CollectionPage`, `Collections` (grid principal e Landing destaque) e `BrandPage`.
-
-### Etapa 5 — Documentação/memória
-
-Atualizar `mem://performance/image-optimization` com a regra: **toda imagem servida do Supabase Storage em listagem DEVE passar por `getOptimizedUrl` com tamanho proporcional ao slot renderizado**. Nada de PNG cru em `/public/`.
-
----
-
-## Resultado esperado
-
-- Seção "Impressão" volta a ~54 KB (de 1,2 MB) — economia imediata de >1 MB no scroll inicial.
-- Listagens (`/catalog`, `/colecoes`, `/colecao/:slug`, `/customize`, dropdown de modelos, filtros IA) passam a baixar variantes 200–400 px em WebP em vez de originais (geralmente >500 KB cada).
-- Em uma página de catálogo com 12 cards, a economia estimada é de ~5–8 MB no carregamento inicial.
-- CLS reduzido por presença consistente de `width`/`height`.
-
-Quer que eu prossiga com **todas** as 5 etapas, ou prefere começar só pela Etapa 1 + 2 (impacto maior, mudanças mais seguras)?
+Aprove o plano para eu prosseguir com o diagnóstico via browser e aplicar as correções identificadas.
