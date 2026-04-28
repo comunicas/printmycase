@@ -243,7 +243,7 @@ const Landing = () => {
                     step={3}
                     icon={<Package className="w-6 h-6 text-white" />}
                     title="Receba em casa"
-                    description="Impressão premium e entrega rápida em todo o Brasil. Pix, cartão ou boleto."
+                    description="Impressão premium e entrega rápida em todo o Brasil."
                   />
                 </ScrollReveal>
               </div>

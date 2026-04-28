@@ -11,7 +11,7 @@ const features = [
 
 const pills: { icon: React.ReactNode; label: string }[] = [
   { icon: <UserX className="w-3.5 h-3.5" />, label: 'Sem cadastro' },
-  { icon: <CreditCard className="w-3.5 h-3.5" />, label: 'Pix em 1 clique' },
+  { icon: <CreditCard className="w-3.5 h-3.5" />, label: 'Cartão em 1 clique' },
   { icon: <ShieldCheck className="w-3.5 h-3.5" />, label: 'Proteção militar' },
 ];
 
