@@ -17,8 +17,9 @@ const CollectionPage = () => {
 
   useEffect(() => {
     if (!collection) return;
-    const title = `${collection.name} | ${SITE_NAME}`;
-    const desc = collection.description || `Coleção ${collection.name} — designs exclusivos para capas de celular.`;
+    const title = `Capinhas ${collection.name} | Designs Exclusivos para Celular | PrintMyCase`;
+    const desc = collection.description ||
+      `Explore ${designs.length > 0 ? designs.length + " " : ""}designs exclusivos da coleção ${collection.name}. Capinhas personalizadas com impressão UV LED premium e frete grátis para todo o Brasil.`;
     const image = collection.cover_image || undefined;
     const url = `${SITE_URL}/colecao/${slug}`;
 
