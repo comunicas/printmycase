@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import { ArrowLeft, Search, SearchX, X } from "lucide-react";
+import { setPageSeo, SITE_URL } from "@/lib/seo";
 
 const SelectModel = () => {
   const navigate = useNavigate();
@@ -72,6 +73,15 @@ const SelectModel = () => {
 
   const hasActiveFilters = search.trim() !== "";
 
+  useEffect(() => {
+    const cleanup = setPageSeo({
+      title: "Selecione o Modelo — Criar Capinha Personalizada | PrintMyCase",
+      description: "Escolha o modelo do seu celular e crie sua capinha personalizada com IA. Disponível para iPhone, Samsung, Motorola, Xiaomi e muito mais. Frete grátis.",
+      url: `${SITE_URL}/customize`,
+    });
+    return cleanup;
+  }, []);
+
   const clearFilters = () => {
     setSearch("");
   };
@@ -87,7 +97,7 @@ const SelectModel = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-lg font-semibold text-foreground">Selecione seu modelo</h1>
+        <h1 className="text-lg font-semibold text-foreground">Selecione seu modelo de celular</h1>
       </header>
 
       <main className="flex-1 w-full max-w-5xl mx-auto p-5">
