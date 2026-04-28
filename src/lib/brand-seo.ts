@@ -35,34 +35,29 @@ export interface BrandSeoData {
 
 const BRAND_SEO: Record<string, BrandSeoData> = {
   iphone: {
-    h1: "Capas para iPhone",
-    title: "Capas para iPhone Personalizadas | Studio PrintMyCase",
-    description:
-      "Crie sua capa personalizada para iPhone com fotos, filtros de IA e acabamento soft-touch premium. Envio para todo o Brasil.",
+    h1: "Capinhas Personalizadas para iPhone",
+    title: "Capinha Personalizada para iPhone | IA + UV LED | PrintMyCase",
+    description: "Crie sua capinha personalizada para iPhone com Inteligência Artificial. Impressão UV LED premium, proteção total e frete grátis para todo o Brasil.",
   },
   samsung: {
-    h1: "Capas para Samsung Galaxy",
-    title: "Capas para Samsung Galaxy Personalizadas | Studio PrintMyCase",
-    description:
-      "Capas personalizadas para Samsung Galaxy. Use suas fotos e filtros artísticos com IA. Proteção premium com acabamento soft-touch.",
+    h1: "Capinhas Personalizadas para Samsung Galaxy",
+    title: "Capinha Personalizada Samsung Galaxy | IA + UV LED | PrintMyCase",
+    description: "Capinhas personalizadas para Samsung Galaxy com IA e impressão UV LED. Proteção premium, cores vibrantes e frete grátis para todo o Brasil.",
   },
   motorola: {
-    h1: "Capas para Motorola",
-    title: "Capas para Motorola Personalizadas | Studio PrintMyCase",
-    description:
-      "Capas personalizadas para Motorola Moto G e Edge. Envie sua foto, aplique filtros de IA e receba em casa com acabamento premium.",
+    h1: "Capinhas Personalizadas para Motorola",
+    title: "Capinha Personalizada Motorola | IA + UV LED | PrintMyCase",
+    description: "Capinhas personalizadas para Motorola Moto G e Edge com IA. Impressão UV LED, acabamento premium e frete grátis para todo o Brasil.",
   },
   xiaomi: {
-    h1: "Capas para Xiaomi",
-    title: "Capas para Xiaomi Personalizadas | Studio PrintMyCase",
-    description:
-      "Capas personalizadas para Xiaomi Redmi e Poco. Qualidade premium com impressão HD e acabamento soft-touch.",
+    h1: "Capinhas Personalizadas para Xiaomi",
+    title: "Capinha Personalizada Xiaomi | IA + UV LED | PrintMyCase",
+    description: "Capinhas personalizadas para Xiaomi Redmi e Poco com impressão UV LED e IA. Qualidade premium e frete grátis para todo o Brasil.",
   },
   outros: {
-    h1: "Capas para Outros Modelos",
-    title: "Capas Personalizadas para Celular | Studio PrintMyCase",
-    description:
-      "Capas personalizadas para diversos modelos de celular. Fotos, filtros de IA e acabamento soft-touch premium.",
+    h1: "Capinhas Personalizadas para Celular",
+    title: "Capinha Personalizada para Celular | IA + UV LED | PrintMyCase",
+    description: "Capinhas personalizadas para todos os modelos de celular. Inteligência Artificial, impressão UV LED e frete grátis para todo o Brasil.",
   },
 };
 
