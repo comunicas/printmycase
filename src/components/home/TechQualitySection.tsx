@@ -59,7 +59,7 @@ export default function TechQualitySection() {
         {/* Painel direito — conteúdo */}
         <ScrollReveal delay={150}>
           <div className="space-y-6">
-            <SectionLabel>TECNOLOGIA PRÓPRIA</SectionLabel>
+            <SectionLabel>IMPRESSÃO PREMIUM</SectionLabel>
             <h2 className="font-display font-black text-4xl md:text-5xl tracking-tight text-foreground leading-tight">
               Transforme momentos em,{' '}
               <span
