@@ -225,7 +225,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
     <div className="flex flex-col items-center gap-2 lg:gap-3">
       <div className="relative">
         <div
-          className="relative h-[min(410px,50dvh)] aspect-[260/532] lg:h-[70vh] lg:w-auto lg:aspect-[260/532] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden"
+          className="relative h-[min(620px,calc(100dvh-220px))] aspect-[260/532] lg:h-[70vh] lg:w-auto lg:aspect-[260/532] rounded-[2.2rem] lg:rounded-[2.8rem] border-[4px] lg:border-[5px] border-foreground/80 bg-foreground/5 shadow-2xl overflow-hidden"
           aria-busy={isProcessing || isUploadBusy}
           aria-describedby="customize-upload-status"
         >
