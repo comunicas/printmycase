@@ -18,6 +18,7 @@ import { clarityEvent } from "@/lib/clarity";
 import { generateEventId, pixelTrackInitiateCheckout } from "@/lib/meta-pixel";
 import { parsePendingCustomizationData } from "@/types/customization";
 import LoginDialog from "@/components/customize/LoginDialog";
+import { ProfileCompletion } from "@/components/checkout/ProfileCompletion";
 
 interface CustomizationData {
   rawImage: string | null;
