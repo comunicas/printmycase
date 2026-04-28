@@ -295,7 +295,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
             )}
             {showSafeZone && (
               <div
-                className="pointer-events-none absolute z-10 overflow-hidden border border-foreground bg-foreground/40 box-border"
+                className="pointer-events-none absolute z-10 overflow-hidden border border-foreground box-border"
                 aria-hidden="true"
                 style={{
                   left: safeZonePreset.width ? (safeZonePreset.insetX ?? "5%") : safeZonePreset.insetX,
@@ -308,6 +308,7 @@ const PhonePreview = ({ image, scale, position, rotation = 0, deviceSlug, showSa
                   borderBottomLeftRadius: safeZonePreset.width ? safeZoneRadius : safeZoneBottomRadius,
                   borderBottomRightRadius: safeZonePreset.width ? safeZoneRadius : safeZoneBottomRadius,
                   borderColor: "hsl(var(--foreground))",
+                  backgroundColor: "rgba(255, 255, 255, 0.55)",
                 }}
               />
             )}

@@ -28,7 +28,7 @@ const AdminSafeZonePreview = () => {
           className="h-full w-auto rounded-lg object-contain block"
         />
         <div
-          className="pointer-events-none absolute z-10 border-2 border-foreground bg-foreground/20 box-border"
+          className="pointer-events-none absolute z-10 border-2 border-foreground box-border"
           aria-hidden="true"
           style={{
             left: preset.width ? (preset.insetX ?? "5%") : preset.insetX,
@@ -41,6 +41,7 @@ const AdminSafeZonePreview = () => {
             borderBottomLeftRadius: preset.width ? preset.radius : preset.bottomRadius,
             borderBottomRightRadius: preset.width ? preset.radius : preset.bottomRadius,
             borderColor: "hsl(var(--foreground))",
+            backgroundColor: "rgba(255, 255, 255, 0.55)",
           }}
         />
       </div>
