@@ -127,7 +127,7 @@ const CollectionPage = () => {
                 <div className="aspect-square overflow-hidden bg-muted">
                   <img
                     src={design.image_url}
-                    alt={design.name}
+                    alt={`Capinha personalizada ${design.name} — coleção ${collection.name}`}
                     width={300}
                     height={300}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
