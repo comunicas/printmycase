@@ -403,7 +403,7 @@ const Landing = () => {
                   { rating: 5, text: 'Ficou idêntica à foto da minha cachorrinha! A qualidade da impressão é absurda.', name: 'Isabela M.', product: 'iPhone 15 Pro' },
                   { rating: 5, text: 'Pedi a do meu time e chegou em 2 dias. As cores são vibrantes, vale cada centavo.', name: 'Rafael S.', product: 'Galaxy S24' },
                   { rating: 5, text: 'A IA criou uma arte minimalista linda. Recebi 3 elogios no primeiro dia!', name: 'Thais R.', product: 'iPhone 14' },
-                  { rating: 5, text: 'Comprei o pack família e todo mundo amou. Atendimento via WhatsApp foi top.', name: 'Lucas O.', product: 'Galaxy A36' },
+                  { rating: 5, text: 'Comprei para minha família e todo mundo amou. Atendimento foi top.', name: 'Lucas O.', product: 'Galaxy A36' },
                 ].map((t, i) => (
                   <ScrollReveal key={t.name} delay={i * 100}>
                     <TestimonialCard
