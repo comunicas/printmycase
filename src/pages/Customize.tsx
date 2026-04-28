@@ -30,10 +30,11 @@ const Customize = () => {
   useEffect(() => {
     if (!c.product) return;
     const productName = c.product.name;
+    const cleanName = productName.replace(/^Capa\s+/i, "").trim();
     const slug = c.product.slug;
     const cleanup = setPageSeo({
-      title: `Capinha Personalizada ${productName} | IA + UV LED | PrintMyCase`,
-      description: `Crie sua capinha personalizada para ${productName} com Inteligência Artificial. Impressão UV LED, acabamento premium e frete grátis para todo o Brasil.`,
+      title: `Capinha Personalizada para ${cleanName} | IA + UV LED | PrintMyCase`,
+      description: `Crie sua capinha personalizada para ${cleanName} com Inteligência Artificial. Impressão UV LED, acabamento premium e frete grátis para todo o Brasil.`,
       url: `${SITE_URL}/customize/${slug}`,
       image: c.product.device_image ?? c.product.images?.[0],
     });
