@@ -265,10 +265,26 @@ const DesignPage = () => {
           {/* Purchase section */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{design.name}</h1>
+              {collection?.name && (
+                <p className="text-xs font-medium uppercase tracking-wide text-primary mb-1">
+                  Coleção {collection.name}
+                </p>
+              )}
+              <h1 className="text-2xl font-bold text-foreground">
+                Capinha {design.name.replace(/^capa personalizada\s*[-–]\s*/i, "")}
+              </h1>
               <p className="text-2xl font-bold text-primary mt-2">
                 {formatPrice(design.price_cents / 100)}
               </p>
+
+              {/* Trust strip */}
+              <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <li>✓ Frete grátis Brasil</li>
+                <li>✓ Impressão UV LED</li>
+                <li>✓ Entrega em até 2 dias</li>
+                <li>✓ Garantia 1 ano</li>
+              </ul>
+
               {design.description && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <h2 className="text-sm font-semibold text-foreground mb-2">Descrição</h2>
@@ -279,9 +295,12 @@ const DesignPage = () => {
 
             {/* Model selector */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Escolha o modelo do seu celular
+              <label className="text-sm font-medium text-foreground mb-1 block">
+                Para qual modelo você quer essa capinha?
               </label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Disponível para iPhone, Samsung, Motorola e Xiaomi
+              </p>
               <select
                 value={selectedProductId}
                 onChange={(e) => setSelectedProductId(e.target.value)}
