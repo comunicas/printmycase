@@ -132,7 +132,13 @@ interface IntroDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const IntroDialog = ({ open, onOpenChange }: IntroDialogProps) => {
+const IntroDialog = ({ open: _open, onOpenChange }: IntroDialogProps) => {
+  // Onboarding modal disabled — coach mark replaces it.
+  useEffect(() => {
+    localStorage.setItem("customize_intro_seen", "true");
+    onOpenChange(false);
+  }, []);
+  const open = false;
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [animating, setAnimating] = useState(false);
