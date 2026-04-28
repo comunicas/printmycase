@@ -402,13 +402,6 @@ const Checkout = () => {
         <div className="rounded-xl border border-border bg-card p-4 space-y-3">
           <p className="text-sm font-semibold text-foreground">Forma de pagamento</p>
           <div className="space-y-2">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
-              <div className="w-8 h-8 rounded bg-green-500 flex items-center justify-center text-white text-xs font-bold">PIX</div>
-              <div>
-                <p className="text-sm font-medium text-green-800">Pix — aprovação imediata</p>
-                <p className="text-xs text-green-600">Pague com QR Code ou copia e cola</p>
-              </div>
-            </div>
             <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
               <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
                 <CreditCard className="w-4 h-4 text-muted-foreground" />

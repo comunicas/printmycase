@@ -7,7 +7,7 @@ const PaymentBadges = () => (
       <Lock className="w-3.5 h-3.5" /> Pagamento 100% seguro
     </span>
 
-    {/* Card brands + Pix */}
+    {/* Card brands */}
     <div className="flex items-center gap-4 flex-wrap justify-center">
       {/* Visa */}
       <svg viewBox="0 0 48 32" className="h-7 w-auto text-muted-foreground/60" fill="currentColor" aria-label="Visa">
@@ -34,14 +34,6 @@ const PaymentBadges = () => (
         <text x="24" y="18" textAnchor="middle" fontSize="7" fontWeight="700" fill="currentColor" fontFamily="system-ui" letterSpacing="0.5">AMEX</text>
       </svg>
 
-      {/* Pix */}
-      <svg viewBox="0 0 48 32" className="h-7 w-auto text-muted-foreground/60" aria-label="Pix">
-        <rect width="48" height="32" rx="4" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
-        <g transform="translate(24,16) scale(0.55)" fill="currentColor">
-          <path d="M8.3 3.7c-1.2-1.2-2.8-1.9-4.5-1.9s-3.3.7-4.5 1.9L-4.4 7.4l3.7 3.7c1.2 1.2 2.8 1.9 4.5 1.9s3.3-.7 4.5-1.9l3.7-3.7L8.3 3.7zM6.6 9.4c-.7.7-1.7 1.1-2.8 1.1s-2.1-.4-2.8-1.1L-1.7 6.7-.4 5.4c.7-.7 1.7-1.1 2.8-1.1s2.1.4 2.8 1.1l2.7 2.7L6.6 9.4z" />
-          <path d="M-8.3-3.7c1.2 1.2 2.8 1.9 4.5 1.9s3.3-.7 4.5-1.9L4.4-7.4l-3.7-3.7c-1.2-1.2-2.8-1.9-4.5-1.9s-3.3.7-4.5 1.9l-3.7 3.7L-8.3-3.7zM-6.6-9.4c.7-.7 1.7-1.1 2.8-1.1s2.1.4 2.8 1.1l2.7 2.7L.4-5.4c-.7.7-1.7 1.1-2.8 1.1s-2.1-.4-2.8-1.1L-7.9-8.1l1.3-1.3z" />
-        </g>
-      </svg>
     </div>
 
     {/* Powered by Stripe */}
