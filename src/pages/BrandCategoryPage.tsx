@@ -113,7 +113,7 @@ const BrandCategoryPage = () => {
                   <div className="p-3">
                     <h2 className="font-semibold text-foreground text-sm">{seo.h1}</h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {data.count} {data.count === 1 ? "modelo" : "modelos"}
+                      {data.count} {data.count === 1 ? "modelo disponível" : "modelos disponíveis"}
                     </p>
                   </div>
                 </Link>
