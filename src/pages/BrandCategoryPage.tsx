@@ -71,11 +71,18 @@ const BrandCategoryPage = () => {
       <AppHeader breadcrumbs={breadcrumbs} />
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-          Capas de Celular Personalizadas
+          Capinha Personalizada para Celular
         </h1>
-        <p className="text-muted-foreground mb-8 max-w-2xl">
-          Escolha a marca do seu celular e personalize sua capa com fotos e filtros de IA.
+        <p className="text-muted-foreground mb-4 max-w-2xl">
+          Escolha a marca do seu celular e crie uma capinha personalizada com Inteligência Artificial.
+          Impressão UV LED premium, frete grátis para todo o Brasil.
         </p>
+        <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mb-8">
+          <li>✓ Frete grátis Brasil</li>
+          <li>✓ Impressão UV LED premium</li>
+          <li>✓ Filtros de IA</li>
+          <li>✓ A partir de R$119,90</li>
+        </ul>
 
         {loading ? (
           <LoadingSpinner />
