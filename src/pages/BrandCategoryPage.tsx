@@ -8,9 +8,9 @@ import { setPageSeo, SITE_URL, injectJsonLd } from "@/lib/seo";
 import { getOptimizedUrl } from "@/lib/image-utils";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
-const PAGE_TITLE = "Capas de Celular Personalizadas | Studio PrintMyCase";
+const PAGE_TITLE = "Capinha Personalizada por Marca | IA + UV LED + Frete Grátis | PrintMyCase";
 const PAGE_DESC =
-  "Encontre capas personalizadas para iPhone, Samsung, Motorola, Xiaomi e mais. Envie sua foto, aplique filtros de IA e receba em casa.";
+  "Capinhas personalizadas para iPhone, Samsung, Motorola e Xiaomi com impressão UV LED premium. Aplique filtros de IA, frete grátis para todo o Brasil. A partir de R$119,90.";
 
 const BrandCategoryPage = () => {
   const { products, loading } = useProducts();
