@@ -435,7 +435,6 @@ const Checkout = () => {
           </Link>
         </div>
       </div>
-      </div>
       <LoginDialog
         open={showLoginDialog}
         onOpenChange={setShowLoginDialog}
