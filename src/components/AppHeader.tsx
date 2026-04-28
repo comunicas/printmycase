@@ -157,24 +157,25 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
           <ul className="flex flex-col gap-1">
             {MOBILE_NAV_ITEMS.map((item) => (
               <li key={item.label}>
-                <Link
-                  to={item.to}
-                  onClick={closeMobile}
-                  className="block px-3 py-3 rounded-md text-base text-foreground hover:bg-accent transition-colors"
-                >
-                  {item.label}
-                </Link>
+                {item.to ? (
+                  <Link
+                    to={item.to}
+                    onClick={closeMobile}
+                    className="block px-3 py-3 rounded-md text-base text-foreground hover:bg-accent transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => item.anchor && goAnchor(item.anchor)}
+                    className="block w-full text-left px-3 py-3 rounded-md text-base text-foreground hover:bg-accent transition-colors"
+                  >
+                    {item.label}
+                  </button>
+                )}
               </li>
             ))}
-            <li>
-              <button
-                type="button"
-                onClick={goHowItWorks}
-                className="block w-full text-left px-3 py-3 rounded-md text-base text-foreground hover:bg-accent transition-colors"
-              >
-                Como funciona
-              </button>
-            </li>
           </ul>
         </nav>
         <div className="p-4 border-t">
@@ -245,7 +246,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
               variant="ghost"
               size="sm"
               className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
-              onClick={goHowItWorks}
+              onClick={() => goAnchor('como-funciona')}
             >
               Como funciona
             </Button>
@@ -253,9 +254,17 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
               variant="ghost"
               size="sm"
               className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
-              onClick={() => navigate('/catalog')}
+              onClick={() => goAnchor('ia-em-acao')}
             >
-              Modelos
+              Gerações IA
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
+              onClick={() => goAnchor('impressao')}
+            >
+              Impressão
             </Button>
           </div>
         )}
