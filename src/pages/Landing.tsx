@@ -114,7 +114,7 @@ const Landing = () => {
                     size="lg"
                     onClick={() => navigate("/colecoes")}
                   >
-                    Ver galeria
+                    Coleções
                   </DsButton>
                 </div>
 
