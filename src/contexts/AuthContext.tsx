@@ -77,17 +77,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user?.id, user?.email, user?.email_confirmed_at]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        clarityIdentify(u.id, u.email);
-        clarityTag("user_type", "logged_in");
-      } else {
-        clarityTag("user_type", "anonymous");
+    let resolved = false;
+    const finishLoading = () => {
+      if (!resolved) {
+        resolved = true;
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
+
+    // Safety net: never let the app stay stuck on the spinner.
+    // If getSession hangs (e.g. Supabase auth lock contention across tabs),
+    // we still release the loading state after 3s and treat the user as anonymous.
+    const failsafe = window.setTimeout(() => {
+      if (!resolved) {
+        clarityTag("user_type", "anonymous");
+        finishLoading();
+      }
+    }, 3000);
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        const u = session?.user ?? null;
+        setUser(u);
+        if (u) {
+          clarityIdentify(u.id, u.email);
+          clarityTag("user_type", "logged_in");
+        } else {
+          clarityTag("user_type", "anonymous");
+        }
+        finishLoading();
+      })
+      .catch((err) => {
+        console.warn("getSession failed, treating as anonymous:", err?.message || err);
+        clarityTag("user_type", "anonymous");
+        finishLoading();
+      });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
@@ -99,10 +124,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           clarityTag("user_type", "anonymous");
         }
+        // Auth state change also confirms we're past initialization.
+        finishLoading();
       },
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      window.clearTimeout(failsafe);
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
