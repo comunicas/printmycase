@@ -72,32 +72,34 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
             </div>
           )}
         </div>
-        <div className={`hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 ${isTransparent && !scrolled ? "text-white" : "text-foreground"}`}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
-            onClick={() => navigate('/colecoes')}
-          >
-            Coleções
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
-            onClick={() => { navigate('/'); setTimeout(() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' }), 100); }}
-          >
-            Como funciona
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
-            onClick={() => navigate('/catalog')}
-          >
-            Modelos
-          </Button>
-        </div>
+        {!hideNav && (
+          <div className={`hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 ${isTransparent && !scrolled ? "text-white" : "text-foreground"}`}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
+              onClick={() => navigate('/colecoes')}
+            >
+              Coleções
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
+              onClick={() => { navigate('/'); setTimeout(() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+            >
+              Como funciona
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}
+              onClick={() => navigate('/catalog')}
+            >
+              Modelos
+            </Button>
+          </div>
+        )}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <DsButton
             variant="brand"
