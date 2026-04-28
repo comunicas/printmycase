@@ -419,7 +419,7 @@ const DesignPage = () => {
             onClick={handleCheckout}
             disabled={checkoutLoading || !selectedProductId || !isAddressValid}
           >
-            {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Finalizar <ArrowRight className="w-4 h-4" /></>}
+            {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Finalizar Pedido <ArrowRight className="w-4 h-4" /></>}
           </Button>
         </div>
       </div>
