@@ -95,8 +95,7 @@ const Landing = () => {
                 <h2 className="sr-only">Capinha Personalizada com Inteligência Artificial para Celular</h2>
 
                 <p className="text-lg text-muted-foreground leading-relaxed max-w-[480px]">
-                  Envie uma foto, descreva o que imagina e a nossa IA cria uma capa única
-                  pro seu celular. Impressão premium, entrega rápida em todo Brasil.
+                  Escolha sua foto, arte ou design favorito e transforme em uma capa premium produzida com tecnologia UV profissional.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
