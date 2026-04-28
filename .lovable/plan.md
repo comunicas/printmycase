@@ -1,73 +1,68 @@
-# Plano — Reorganizar header em páginas internas
+# Plano — Acessibilidade e robustez do drawer mobile do `AppHeader`
 
-## Problema (UX)
+## Diagnóstico
 
-Hoje o `AppHeader` em páginas internas mostra **três blocos de navegação simultâneos**:
+Reli o `AppHeader.tsx` atual e o screenshot enviado. Pendências:
 
-1. **Breadcrumb** à esquerda (ex.: `Coleções › Brasil › Verde Brasil`) — navegação **contextual** (onde estou).
-2. **Menu central absoluto** (`Coleções · Como funciona · Modelos`) — navegação **global** (para onde ir).
-3. CTA + moedas + avatar à direita.
-
-Conflitos:
-
-- **Conflito semântico**: "Coleções" aparece nos dois lugares ao mesmo tempo. O usuário não distingue contexto vs. navegação.
-- **Conflito visual**: o menu central é `position: absolute left-1/2`, então em larguras intermediárias ele encosta ou colide com o breadcrumb (visível no print).
-- **Redundância**: "Modelos" no menu central duplica a função de "Capas de Celular" que aparece como primeiro crumb em quase toda página interna.
-- **Mobile**: o menu central já está oculto (`hidden lg:flex`) e o breadcrumb também (`hidden sm:flex`), então **mobile não tem nenhum acesso à navegação global** a partir de páginas internas — só CTA + moedas + avatar. Isso é uma lacuna funcional.
-
-## Princípio da solução
-
-Aplicar o padrão clássico de e-commerce (Amazon, Shopify, Mercado Livre):
-
-> **Em páginas internas, o menu global vira secundário e o breadcrumb assume o protagonismo.**
-
-Concretamente: quando há `breadcrumbs`, o menu central no desktop é **escondido** (não compete pela atenção). Quando não há breadcrumbs (Landing, Catalog raiz, etc.), o menu central aparece normalmente. Isso é o que sites grandes fazem e elimina os 3 conflitos de uma vez.
-
-Para mobile/tablet, adicionar um menu hambúrguer simples como ponto único de acesso à navegação global a partir de qualquer dispositivo.
+1. **Drawer cortado / sob o conteúdo** (visível no print): o drawer está dentro do `<header>`, que vive dentro de containers com contexto de stacking — por isso o `fixed` aparece confinado. Solução: renderizar via **portal** no `document.body`.
+2. **Fechar ao clicar fora**: já existe overlay com `onClick`, mas o painel interno não tem `stopPropagation` — funciona por acaso. Vou tornar explícito.
+3. **iOS scroll-jank**: o lock atual é só `overflow: hidden` no body, que **não funciona no iOS Safari** (continua rolando o background). Solução: usar técnica `position: fixed; top: -scrollY` e restaurar `scrollTo` ao fechar.
+4. **Foco ao abrir**: hoje o foco fica no botão hambúrguer. Mover para o botão de fechar do drawer.
+5. **Escape**: hoje não fecha. Adicionar listener de `keydown`.
+6. **Restaurar foco ao fechar**: hoje o foco fica perdido. Devolver para o botão hambúrguer (acessibilidade WCAG).
+7. **Fechar ao navegar por qualquer link**: hoje cada `Link` chama `closeMobile` manualmente. Melhor: observar mudança de `useLocation()` e fechar automaticamente — cobre links internos, externos ao menu, redirects, etc., sem repetir handlers.
+8. **Atributos ARIA**: adicionar `aria-expanded`, `aria-haspopup`, `aria-label`, `aria-modal`.
 
 ## Mudanças
 
-### 1. `src/components/AppHeader.tsx`
+Arquivo único: `src/components/AppHeader.tsx`.
 
-**a) Esconder menu central quando há breadcrumbs (desktop)**
+### a) Portal
+- Importar `createPortal` de `react-dom`.
+- Renderizar o drawer via `createPortal(drawer, document.body)` dentro do `<header>`. Garante cobertura de tela inteira independentemente do contexto de stacking pai. `z-[100]` para ficar sobre tudo.
 
-Lógica nova:
-```ts
-const showCenterNav = !hideNav && (!breadcrumbs || breadcrumbs.length === 0);
-```
+### b) iOS-safe scroll lock
+No `useEffect` que dispara quando `mobileOpen` vira `true`:
+- Salvar `scrollY = window.scrollY`.
+- Aplicar `body.style.position = 'fixed'; top = '-{scrollY}px'; left/right = 0; width = 100%; overflow = hidden`.
+- No cleanup: restaurar todos os estilos e chamar `window.scrollTo(0, scrollY)`.
+- Guardar valores anteriores para restauração precisa.
 
-O bloco `Coleções · Como funciona · Modelos` só renderiza quando `showCenterNav` é true. Isso elimina automaticamente todo o conflito visual e semântico em páginas internas (Brand, BrandModel, Collection, Design, Customize, Admin, Profile, Orders, Checkout, etc.).
+### c) Foco ao abrir + restaurar ao fechar
+- `triggerRef = useRef<HTMLButtonElement>` no botão hambúrguer.
+- `closeRef = useRef<HTMLButtonElement>` no botão X.
+- Quando abre: `setTimeout(() => closeRef.current?.focus(), 0)`.
+- No cleanup do mesmo effect: `triggerRef.current?.focus()`.
 
-**b) Liberar largura do breadcrumb no desktop**
+### d) Escape
+- No effect de abertura, adicionar `document.addEventListener('keydown', onKey)` com `if (e.key === 'Escape') setMobileOpen(false)`.
+- Remover no cleanup.
 
-Como o menu central some quando há breadcrumb, o breadcrumb ganha o espaço central e pode crescer:
-- `lg:max-w-[260px] xl:max-w-[360px] 2xl:max-w-[480px]` → trocar para `lg:max-w-[480px] xl:max-w-[640px] 2xl:max-w-none`.
-- Manter `sm:max-w-[180px] md:max-w-[240px]` em tablet (sem mudança).
+### e) Auto-close em navegação
+- Adicionar `const location = useLocation()`.
+- `lastRouteRef = useRef(pathname+search+hash)`.
+- `useEffect` que compara rota atual com `lastRouteRef` e fecha drawer quando mudar.
+- Permite remover `onClick={closeMobile}` redundante de cada Link (mas mantenho como UX imediato — não atrapalha).
 
-**c) Adicionar botão hambúrguer mobile**
+### f) Click fora
+- Manter `onClick={closeMobile}` no overlay.
+- Adicionar `onClick={(e) => e.stopPropagation()}` no painel interno (proteção explícita).
 
-Adicionar um `<Sheet>` (shadcn já existe no projeto via Radix) acionado por um ícone `Menu` à esquerda do CoinBalance, visível apenas em `lg:hidden`. Conteúdo do drawer:
-- Capas de Celular → `/capa-celular`
-- Coleções → `/colecoes`
-- Modelos (catálogo) → `/catalog`
-- Como funciona → `/#como-funciona`
-- Contato → `/contato`
+### g) ARIA
+- No drawer: `role="dialog"`, `aria-modal="true"`, `aria-label="Menu de navegação"`.
+- No trigger: `aria-expanded={mobileOpen}`, `aria-haspopup="dialog"`, `aria-label="Abrir menu"`.
+- Overlay: `aria-hidden="true"`.
 
-Isso resolve a lacuna de acesso à navegação global em mobile/tablet sem nenhum custo visual.
-
-### 2. Sem mudanças nas páginas
-
-Nenhuma página precisa ser tocada — todas já passam `breadcrumbs={...}` para o `AppHeader`, e a nova lógica é centralizada nele.
+### h) Scroll interno do drawer
+- Adicionar `overscroll-contain` no `<nav>` interno para evitar que o scroll do menu propague para o body em iOS.
 
 ## Resultado esperado
 
-| Contexto | Mobile (<640px) | Tablet (sm–md) | Desktop (lg+) |
-|---|---|---|---|
-| **Página com breadcrumb** (Brand, Product, Collection, Design, etc.) | Logo · ☰ · CTA · moedas · avatar | Logo · breadcrumb truncado · CTA · moedas · avatar | Logo · breadcrumb amplo · CTA · moedas · avatar (**sem menu central**) |
-| **Página raiz** (Landing, Catalog raiz) | Logo · ☰ · CTA · moedas · avatar | Logo · CTA · moedas · avatar | Logo · **menu central** · CTA · moedas · avatar |
+- Drawer cobre a tela inteira corretamente em qualquer página (incluindo Checkout, Customize).
+- Background travado em iOS sem rubber-band; ao fechar, volta exatamente para a posição de scroll original.
+- Tab/Escape funcionam; foco visível e previsível; leitores de tela anunciam o dialog.
+- Qualquer navegação (link interno, externo, programática) fecha o drawer automaticamente.
 
-Sem sobreposição em nenhuma viewport. Sem duplicação semântica de "Coleções". Mobile ganha acesso completo à navegação via hambúrguer.
-
-## Arquivos editados
+## Arquivo editado
 
 - `src/components/AppHeader.tsx` (única edição)

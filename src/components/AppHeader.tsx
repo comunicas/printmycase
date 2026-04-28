@@ -1,5 +1,6 @@
-import { forwardRef, useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { forwardRef, useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Menu, X } from "lucide-react";
 
@@ -18,7 +19,7 @@ interface AppHeaderProps {
   hideNav?: boolean;
 }
 
-const MOBILE_NAV_ITEMS: { label: string; to?: string; action?: () => void }[] = [
+const MOBILE_NAV_ITEMS: { label: string; to: string }[] = [
   { label: "Capas de Celular", to: "/capa-celular" },
   { label: "Coleções", to: "/colecoes" },
   { label: "Modelos", to: "/catalog" },
@@ -27,8 +28,12 @@ const MOBILE_NAV_ITEMS: { label: string; to?: string; action?: () => void }[] = 
 
 const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, variant = "default", hideNav = false }, ref) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+  const lastRouteRef = useRef(location.pathname + location.search + location.hash);
 
   useEffect(() => {
     if (variant !== "transparent") return;
@@ -37,20 +42,73 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
     return () => window.removeEventListener("scroll", onScroll);
   }, [variant]);
 
-  // Lock body scroll when mobile drawer open
+  const closeMobile = useCallback(() => {
+    setMobileOpen(false);
+  }, []);
+
+  // Auto-close drawer on any route change (covers links, programmatic navigation, redirects).
   useEffect(() => {
-    if (mobileOpen) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = original; };
+    const current = location.pathname + location.search + location.hash;
+    if (current !== lastRouteRef.current) {
+      lastRouteRef.current = current;
+      if (mobileOpen) setMobileOpen(false);
     }
+  }, [location, mobileOpen]);
+
+  // While drawer is open: iOS-safe scroll lock + Escape + focus management.
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    const focusTimer = window.setTimeout(() => {
+      closeRef.current?.focus();
+    }, 0);
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", onKey);
+
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+
+      // Restore focus to the trigger that opened the drawer (a11y).
+      triggerRef.current?.focus();
+    };
   }, [mobileOpen]);
 
   const isTransparent = variant === "transparent";
   const showGlass = isTransparent && scrolled;
   const hasBreadcrumbs = !!breadcrumbs && breadcrumbs.length > 0;
-  // Center nav only shows on root pages (no breadcrumbs) AND when hideNav is false.
-  // On internal pages the breadcrumb takes the visual lead and the global nav moves to the hamburger.
+  // Center nav only on root pages (no breadcrumbs) — on internal pages the breadcrumb leads.
   const showCenterNav = !hideNav && !hasBreadcrumbs;
 
   const goHowItWorks = () => {
@@ -58,6 +116,72 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
     navigate("/");
     setTimeout(() => document.getElementById("como-funciona")?.scrollIntoView({ behavior: "smooth" }), 100);
   };
+
+  const drawer = mobileOpen ? (
+    <div
+      className="fixed inset-0 z-[100] lg:hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menu de navegação"
+    >
+      <div
+        className="absolute inset-0 bg-black/50 animate-in fade-in"
+        onClick={closeMobile}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute right-0 top-0 h-full w-[85%] max-w-sm bg-background shadow-xl flex flex-col animate-in slide-in-from-right"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b">
+          <span className="text-base font-semibold text-foreground">Menu</span>
+          <Button
+            ref={closeRef}
+            variant="ghost"
+            size="icon"
+            onClick={closeMobile}
+            aria-label="Fechar menu"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        <nav className="flex-1 overflow-y-auto overscroll-contain p-2">
+          <ul className="flex flex-col gap-1">
+            {MOBILE_NAV_ITEMS.map((item) => (
+              <li key={item.label}>
+                <Link
+                  to={item.to}
+                  onClick={closeMobile}
+                  className="block px-3 py-3 rounded-md text-base text-foreground hover:bg-accent transition-colors"
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <button
+                type="button"
+                onClick={goHowItWorks}
+                className="block w-full text-left px-3 py-3 rounded-md text-base text-foreground hover:bg-accent transition-colors"
+              >
+                Como funciona
+              </button>
+            </li>
+          </ul>
+        </nav>
+        <div className="p-4 border-t">
+          <DsButton
+            variant="brand"
+            size="sm"
+            className="w-full"
+            onClick={() => { closeMobile(); navigate('/catalog'); }}
+          >
+            ✦ Criar minha capa
+          </DsButton>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <header
@@ -140,11 +264,14 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
           <UserMenu transparent={isTransparent && !scrolled} />
           {!hideNav && (
             <Button
+              ref={triggerRef}
               variant="ghost"
               size="icon"
               className={`lg:hidden h-9 w-9 ${isTransparent && !scrolled ? "text-white hover:text-white hover:bg-white/10" : ""}`}
               onClick={() => setMobileOpen(true)}
               aria-label="Abrir menu"
+              aria-expanded={mobileOpen}
+              aria-haspopup="dialog"
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -152,57 +279,7 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
         </div>
       </nav>
 
-      {/* Mobile drawer */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true">
-          <div
-            className="absolute inset-0 bg-black/50 animate-in fade-in"
-            onClick={() => setMobileOpen(false)}
-          />
-          <div className="absolute right-0 top-0 h-full w-[85%] max-w-sm bg-background shadow-xl flex flex-col animate-in slide-in-from-right">
-            <div className="flex items-center justify-between p-4 border-b">
-              <span className="text-base font-semibold text-foreground">Menu</span>
-              <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Fechar menu">
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <nav className="flex-1 overflow-y-auto p-2">
-              <ul className="flex flex-col gap-1">
-                {MOBILE_NAV_ITEMS.map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      to={item.to!}
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-3 py-3 rounded-md text-base text-foreground hover:bg-accent transition-colors"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-                <li>
-                  <button
-                    type="button"
-                    onClick={goHowItWorks}
-                    className="block w-full text-left px-3 py-3 rounded-md text-base text-foreground hover:bg-accent transition-colors"
-                  >
-                    Como funciona
-                  </button>
-                </li>
-              </ul>
-            </nav>
-            <div className="p-4 border-t">
-              <DsButton
-                variant="brand"
-                size="sm"
-                className="w-full"
-                onClick={() => { setMobileOpen(false); navigate('/catalog'); }}
-              >
-                ✦ Criar minha capa
-              </DsButton>
-            </div>
-          </div>
-        </div>
-      )}
+      {drawer && typeof document !== "undefined" && createPortal(drawer, document.body)}
     </header>
   );
 });
