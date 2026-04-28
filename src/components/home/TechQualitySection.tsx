@@ -61,7 +61,7 @@ export default function TechQualitySection() {
           <div className="space-y-6">
             <SectionLabel>TECNOLOGIA PRÓPRIA</SectionLabel>
             <h2 className="font-display font-black text-4xl md:text-5xl tracking-tight text-foreground leading-tight">
-              Impressão na hora,{' '}
+              Tecnologia UV profissional,{' '}
               <span
                 className="bg-clip-text text-transparent"
                 style={{ backgroundImage: 'var(--gradient-brand)' }}
