@@ -66,7 +66,7 @@ export default function TechQualitySection() {
                 className="bg-clip-text text-transparent"
                 style={{ backgroundImage: 'var(--gradient-brand)' }}
               >
-                qualidade premium.
+                uma capa exclusiva.
               </span>
             </h2>
 
