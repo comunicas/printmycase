@@ -46,7 +46,6 @@ export function useCustomizeRender(params: {
     activeFilterId: string | null;
     filterHistory: { filterId: string }[];
   }) => {
-    if (!requireAuth()) return;
     if (!state.product || !state.image) return;
 
     setIsRendering(true);
