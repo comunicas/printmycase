@@ -121,6 +121,7 @@ const Customize = () => {
               inline
               showDownload={!!c.activeFilterId}
               onDownload={c.handleDownload}
+              hasImage={!!c.image}
             />
           </div>
         </aside>
