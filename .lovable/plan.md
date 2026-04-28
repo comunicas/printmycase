@@ -1,51 +1,31 @@
-# Plano — Corrigir breadcrumbs quebrados no header
+# Plano — Ajustar breadcrumbs em mobile/tablet
 
-## Contexto sobre o componente
+## Diagnóstico
 
-Verifiquei o design system e o codebase:
+Reli o `AppHeader.tsx`:
 
-- **Não existe** componente `Breadcrumb` em `src/components/ds/` (DS local) nem em `src/components/ui/` (shadcn não foi instalado).
-- O breadcrumb é renderizado **inline dentro do `AppHeader.tsx`** (linhas 58–73), com um tipo local `Breadcrumb { label, to? }`.
-- Todas as páginas (`BrandModelPage`, `BrandPage`, `CollectionPage`, `Product`, `Profile`, `Orders`, etc.) já consomem isso via `<AppHeader breadcrumbs={...} />`.
+- **Mobile puro (<640px)**: o container de breadcrumbs usa `hidden sm:flex` — ou seja, **não é renderizado**. Não há sobreposição nem texto cortado em mobile real. Já está correto por design.
+- **Tablet `sm`–`md` (640–1023px)**: o breadcrumb aparece, mas o teto de largura (`lg:max-w-[260px] xl:max-w-[360px] 2xl:max-w-[480px]`) só ativa a partir de `lg` (1024px). Entre 640–1023px o breadcrumb fica **sem max-width**, então pode crescer e comprimir o cluster da direita (botão "✦ Criar minha capa" + moedas + avatar), causando o efeito de "cortar texto ao redor do header".
+- **Menu central** (`Coleções · Como funciona · Modelos`) só aparece em `lg+`, então abaixo de 1024px não há risco de sobreposição com ele.
 
-**Conclusão:** o `AppHeader` **é** o componente padrão de breadcrumb do projeto. Vamos consertar nele (uma única fonte de verdade), sem criar componente novo nem instalar dependências.
+## Mudança
 
-## Problema
+Arquivo único: `src/components/AppHeader.tsx`, linha 59.
 
-No print do usuário, o header mostra os textos sobrepostos:
-> "Capinhas Personalizadas para~~Samsung Galaxy~~ **Coleções** Galaxy ~~Como funciona~~ Galaxy A06 ~~Modelos~~"
+Adicionar tetos de largura também em `sm` e `md`, preservando os já existentes para `lg+`:
 
-Causas combinadas:
+- Antes: `min-w-0 lg:max-w-[260px] xl:max-w-[360px] 2xl:max-w-[480px]`
+- Depois: `min-w-0 max-w-[180px] md:max-w-[240px] lg:max-w-[260px] xl:max-w-[360px] 2xl:max-w-[480px]`
 
-1. **Menu central absoluto** — em `AppHeader.tsx` linha 76, o menu "Coleções · Como funciona · Modelos" usa `absolute left-1/2 -translate-x-1/2`, ficando **por cima** do fluxo normal.
-2. **Breadcrumbs sem teto de largura no `xl`** — o container tem `lg:max-w-[220px] xl:max-w-none`. A partir de 1280px o limite some e os crumbs invadem o menu central. A viewport do usuário (1336px) cai exatamente nesse breakpoint.
-3. **Labels longos demais** — em `BrandModelPage.tsx`:
-   - 2º crumb usa `brandSeo.h1` ("Capinhas Personalizadas para Samsung Galaxy") — texto enorme.
-   - 3º crumb usa `product.name` cru ("Capa Galaxy A06") com prefixo "Capa" redundante.
-
-## Mudanças
-
-### 1. `src/components/AppHeader.tsx` (componente padrão)
-Limitar a largura máxima do container de breadcrumbs em todos os breakpoints, garantindo que nunca invadam o menu central absoluto.
-
-- Trocar `lg:max-w-[220px] xl:max-w-none` por `lg:max-w-[260px] xl:max-w-[360px] 2xl:max-w-[480px]`.
-- O `truncate` por crumb já existe — mantém.
-
-### 2. `src/pages/BrandModelPage.tsx`
-Encurtar os labels visíveis (sem alterar o JSON-LD de SEO, que continua usando `brandSeo.h1` e `product.name` completos):
-
-- 2º crumb: usar `brandDisplayName` (ex.: "Samsung") em vez de `brandSeo.h1`.
-- 3º crumb: aplicar `product.name.replace(/^Capa\s+/i, "").trim()` para remover o prefixo redundante (ex.: "Galaxy A06").
+O `truncate` por crumb e o `min-w-0` continuam garantindo que cada item encolha com elipse sem nunca empurrar os elementos à direita.
 
 ## Resultado esperado
 
-```text
-[logo] › Capas de Celular › Samsung › Galaxy A06     Coleções  Como funciona  Modelos     [✦ Criar minha capa] [moedas] [user]
-```
+- Mobile (<640px): inalterado — breadcrumb continua oculto, sem qualquer interferência.
+- Tablet `sm` (640–767px): breadcrumb limitado a 180px, com elipse; botão "Criar minha capa", moedas e avatar permanecem totalmente visíveis.
+- Tablet `md` (768–1023px): breadcrumb limitado a 240px, com elipse.
+- Desktop `lg+`: comportamento atual preservado (sem regressão).
 
-Sem sobreposição, sem prefixo "Capa" redundante, menu central preservado, e o componente padrão (`AppHeader`) continua sendo a única fonte de verdade para breadcrumbs.
+## Arquivo editado
 
-## Arquivos editados
-
-- `src/components/AppHeader.tsx`
-- `src/pages/BrandModelPage.tsx`
+- `src/components/AppHeader.tsx` (apenas a classe do container de breadcrumbs)
