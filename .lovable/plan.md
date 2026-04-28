@@ -1,22 +1,44 @@
-# Ajuste: fundo branco na Safe Zone da câmera
+# Aprimorar seletor de modelos: busca com autocomplete + agrupamento
 
-## Objetivo
-Mudar o fundo do overlay da "Safe zone da câmera" de cinza escuro translúcido (atual `bg-foreground/40`) para **branco translúcido**, mantendo a borda exatamente como está. Aplicar para todos os modelos (a definição é única e compartilhada por todos os presets de device).
+## Problema
+O seletor atual no header de customização (`ModelSelector`) é um dropdown simples com 60+ modelos misturados, sem busca nem agrupamento. Encontrar um modelo específico exige rolar uma lista longa.
 
-## Mudanças
+## Solução
+Transformar o `ModelSelector` em um **modal de busca** (estilo command palette) com:
 
-### 1. `src/components/PhonePreview.tsx` (linha ~298)
-No `<div>` do overlay da safe zone:
-- Remover a classe `bg-foreground/40`.
-- Adicionar `backgroundColor: "rgba(255, 255, 255, 0.55)"` no objeto `style` (translúcido para ainda permitir leve visualização da imagem por baixo, mantendo aspecto branco claro).
-- Manter `border border-foreground`, `borderColor: "hsl(var(--foreground))"` e todos os demais valores (radius, posição, dimensões) inalterados.
+1. **Trigger** mantém aparência atual (foto + nome + chevron) — sem mudança visual no header.
+2. **Modal responsivo** abre ao clicar:
+   - Mobile: fullscreen, cantos retos (memória do projeto: Modals).
+   - Desktop: card centralizado, ~520px de largura, cantos arredondados.
+3. **Campo de busca** no topo com:
+   - `autoFocus` ao abrir.
+   - Placeholder: "Buscar modelo (ex: iPhone 15, S24 Ultra, Redmi)".
+   - Filtro fuzzy/case-insensitive em tempo real (match no nome sem o prefixo "Capa").
+   - Ícone de busca à esquerda + botão "limpar" (X) quando há texto.
+4. **Resultados agrupados por marca** (extraída do nome: iPhone → Apple, Galaxy → Samsung, Redmi/Poco/Xiaomi → Xiaomi, Motorola → Motorola, demais → Outros):
+   - Cabeçalhos sticky por marca com contagem.
+   - Ordenação interna alfanumérica natural (ex: 11 < 12 < 12 Pro < 12 Pro Max).
+   - Item exibe thumb 36px + nome + preço; ativo destacado com check + cor primária.
+5. **Atalhos de teclado**:
+   - `Esc` fecha (já provido pelo Dialog).
+   - `↑/↓` navega entre resultados; `Enter` seleciona; foco visual na linha.
+6. **Estado vazio**: mensagem "Nenhum modelo encontrado para '<termo>'" + sugestão para entrar em contato (link para `/contato`).
+7. **Fechar e navegar**: ao selecionar, fecha o modal e faz `navigate(/customize/{slug})` (sem reload se já está na rota).
 
-### 2. `src/pages/AdminSafeZonePreview.tsx` (preview admin em nova aba)
-Aplicar a mesma mudança para consistência:
-- Remover `bg-foreground/20` da classe.
-- Adicionar `backgroundColor: "rgba(255, 255, 255, 0.55)"` no `style`.
-- Manter borda inalterada.
+## Arquivos afetados
+- `src/components/customize/ModelSelector.tsx` — refatoração completa: trigger + Dialog com busca, agrupamento e navegação por teclado.
 
-## Observações
-- A mudança é puramente visual e aplica-se automaticamente a todos os modelos (iPhone 12/15/17 Pro/Pro Max/Air, Redmi Note 14 Pro, Poco X6 Pro), pois o overlay é único e usa os presets compartilhados.
-- O toggle "Safe zone da câmera" continua funcionando como antes (mostrar/ocultar).
+## Detalhes técnicos
+- Usar `@/components/ui/dialog` (Radix Dialog já no projeto).
+- Helpers locais (no próprio arquivo, sem novas libs):
+  - `getBrand(name)`: regex para iPhone/Galaxy/Redmi/Poco/Xiaomi/Motorola → label legível.
+  - `naturalSort(a, b)`: usa `localeCompare(b, undefined, { numeric: true, sensitivity: "base" })`.
+  - `normalize(s)`: remove acentos + lowercase + remove "Capa " inicial para o filtro.
+- `useMemo` para o índice agrupado e para os resultados filtrados (recomputa quando `query` ou `products` muda).
+- Navegação por teclado: índice ativo controlado em `useState`, `scrollIntoView({ block: "nearest" })` em mudança.
+- Reset de `query` e índice ao fechar (`onOpenChange`).
+- Sem mudanças no banco, no `useProducts` ou em `CustomizeHeader`.
+
+## Fora de escopo
+- Não altera o seletor da página `/select-model` nem o admin.
+- Não adiciona dependências (sem `cmdk`, sem `fuse.js`).
