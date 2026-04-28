@@ -79,7 +79,7 @@ const Landing = () => {
               <div className="space-y-6">
                 <SectionLabel>
                   <Sparkles className="w-3.5 h-3.5" />
-                  STUDIO COM IA
+                  STUDIO PRINTMYCASE
                 </SectionLabel>
 
                 <h1 className="font-display font-black text-5xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-foreground whitespace-pre-line">
