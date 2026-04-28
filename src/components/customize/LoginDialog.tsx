@@ -456,7 +456,12 @@ const LoginDialog = forwardRef<HTMLDivElement, LoginDialogProps>(({ open, onOpen
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className={`max-w-sm p-0 gap-0 overflow-hidden ${reason === "checkout" ? "[&>button]:hidden" : ""}`}>
+      <DialogContent
+        className={`max-w-sm p-0 gap-0 overflow-hidden ${reason === "checkout" ? "[&>button]:hidden" : ""}`}
+        onPointerDownOutside={reason === "checkout" ? (e) => e.preventDefault() : undefined}
+        onInteractOutside={reason === "checkout" ? (e) => e.preventDefault() : undefined}
+        onEscapeKeyDown={reason === "checkout" ? (e) => e.preventDefault() : undefined}
+      >
         {hasReason ? (
           <ReasonScreen
             reason={reason}
