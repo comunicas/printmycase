@@ -401,7 +401,7 @@ const Landing = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
                   { rating: 5, text: 'Ficou idêntica à foto da minha cachorrinha! A qualidade da impressão é absurda.', name: 'Isabela M.', product: 'iPhone 15 Pro' },
-                  { rating: 5, text: 'Pedi a do meu time e chegou em 2 dias. As cores são vibrantes, vale cada centavo.', name: 'Rafael S.', product: 'Galaxy S24' },
+                  { rating: 5, text: 'Pedi do meu time e chegou super rápido. As cores são vibrantes, vale cada centavo.', name: 'Rafael S.', product: 'Galaxy S24' },
                   { rating: 5, text: 'A IA criou uma arte minimalista linda. Recebi 3 elogios no primeiro dia!', name: 'Thais R.', product: 'iPhone 14' },
                   { rating: 5, text: 'Comprei para minha família e todo mundo amou. Atendimento foi top.', name: 'Lucas O.', product: 'Galaxy A36' },
                 ].map((t, i) => (
