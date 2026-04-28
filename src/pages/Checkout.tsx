@@ -284,8 +284,34 @@ const Checkout = () => {
     { label: "Checkout" },
   ];
 
-  if (productLoading || !customization || recovering) {
-    return <LoadingSpinner variant="fullPage" />;
+  if (productLoading || (user && (!customization || recovering))) {
+    return (
+      <>
+        <LoadingSpinner variant="fullPage" />
+        <LoginDialog
+          open={showLoginDialog}
+          onOpenChange={setShowLoginDialog}
+          reason="checkout"
+          redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
+        />
+      </>
+    );
+  }
+
+  if (!user || !customization) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <AppHeader breadcrumbs={breadcrumbs} />
+        <JourneyProgress currentStep={3} />
+        <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10" />
+        <LoginDialog
+          open={showLoginDialog}
+          onOpenChange={setShowLoginDialog}
+          reason="checkout"
+          redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
+        />
+      </div>
+    );
   }
 
   return (
@@ -409,6 +435,13 @@ const Checkout = () => {
           </Link>
         </div>
       </div>
+      </div>
+      <LoginDialog
+        open={showLoginDialog}
+        onOpenChange={setShowLoginDialog}
+        reason="checkout"
+        redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
+      />
     </div>
   );
 };
