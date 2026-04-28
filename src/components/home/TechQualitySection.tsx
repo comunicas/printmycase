@@ -39,7 +39,7 @@ export default function TechQualitySection() {
               />
               <div className="absolute inset-0 flex items-end justify-center p-6">
                 <img
-                  src="/tech-quality-case.webp"
+                  src="/images/tech-quality-case-new.png"
                   alt="Capinha de celular com estampa graffiti colorida impressa em alta qualidade"
                   className="w-full h-full object-contain drop-shadow-2xl"
                   loading="lazy"
