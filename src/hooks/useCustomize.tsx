@@ -39,7 +39,7 @@ export function useCustomize(productId: string | undefined) {
   const [position, setPosition] = useState(DEFAULTS.position);
   const [rotation, setRotation] = useState(DEFAULTS.rotation);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const [loginReason, setLoginReason] = useState<"filter" | "upscale" | null>(null);
+  const [loginReason, setLoginReason] = useState<"filter" | "upscale" | "checkout" | null>(null);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const termsAccepted = useRef(false);
