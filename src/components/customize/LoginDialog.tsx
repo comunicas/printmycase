@@ -102,6 +102,114 @@ function ReasonScreen({
   );
 }
 
+/* ─── Email-Only Form (checkout) ─── */
+function EmailOnlyForm({ onClose: _onClose, redirectUrl }: { onClose: () => void; redirectUrl?: string }) {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const { toast } = useToast();
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectUrl || window.location.href,
+        shouldCreateUser: true,
+      },
+    });
+    if (error) {
+      toast({ title: "Erro ao enviar link", description: error.message, variant: "destructive" });
+    } else {
+      clarityEvent("auth_magic_link_sent");
+      setSent(true);
+    }
+    setLoading(false);
+  };
+
+  const handleGoogle = async () => {
+    const { error } = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: redirectUrl || window.location.href,
+    });
+    if (error) {
+      toast({ title: "Erro ao entrar com Google", description: String(error), variant: "destructive" });
+    }
+  };
+
+  if (sent) {
+    return (
+      <div className="p-6 text-center space-y-4">
+        <div className="text-5xl">📬</div>
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Verifique seu email</h2>
+        <p className="text-sm text-muted-foreground">
+          Enviamos um link para <strong>{email}</strong>.<br />
+          Clique no link para entrar e finalizar o pedido.
+        </p>
+        <p className="text-xs text-muted-foreground">Não recebeu? Verifique a pasta de spam.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Incentive banner */}
+      <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-white">
+        <div className="flex items-center gap-2.5">
+          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+            <ShoppingBag className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="font-semibold text-sm leading-tight">Sua capinha está pronta 🎉</p>
+            <p className="text-xs text-white/85 leading-tight mt-0.5">Entre para confirmar o endereço e finalizar</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-4">
+        <Button variant="outline" className="w-full" onClick={handleGoogle}>
+          <GoogleIcon />
+          Continuar com Google
+        </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">ou use seu email</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleMagicLink} className="space-y-3">
+          <FormField label="Email" id="dlg-magic-email">
+            <Input
+              id="dlg-magic-email"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              autoFocus
+              required
+            />
+          </FormField>
+          <SubmitButton loading={loading} className="w-full">
+            Continuar →
+          </SubmitButton>
+        </form>
+
+        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+          Vamos enviar um link de acesso rápido para seu email. Ao continuar, você aceita nossos{" "}
+          <Link to="/termos" target="_blank" className="text-primary hover:underline">Termos</Link>
+          {" "}e{" "}
+          <Link to="/privacidade" target="_blank" className="text-primary hover:underline">Privacidade</Link>.
+        </p>
+      </div>
+    </>
+  );
+}
+
 /* ─── Auth Form ─── */
 function AuthForm({
   onClose,
@@ -355,6 +463,8 @@ const LoginDialog = forwardRef<HTMLDivElement, LoginDialogProps>(({ open, onOpen
             onCreateAccount={() => { setInitialTab("signup"); setShowReason(false); }}
             onLogin={() => { setInitialTab("login"); setShowReason(false); }}
           />
+        ) : reason === "checkout" ? (
+          <EmailOnlyForm onClose={() => onOpenChange(false)} redirectUrl={redirectUrl} />
         ) : (
           <AuthForm
             onClose={() => onOpenChange(false)}
