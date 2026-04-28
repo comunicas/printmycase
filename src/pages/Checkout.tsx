@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
+import JourneyProgress from "@/components/JourneyProgress";
 import { useProduct } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -280,6 +281,7 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader breadcrumbs={breadcrumbs} />
+      <JourneyProgress currentStep={3} />
       <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10 space-y-6 pb-28 lg:pb-10">
 
         {/* Mini preview */}
