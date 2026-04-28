@@ -184,11 +184,11 @@ function AuthForm({
       <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-white">
         <div className="flex items-center gap-2.5">
           <div className="flex-shrink-0 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
-            <Coins className="w-5 h-5" />
+            <ShoppingBag className="w-5 h-5" />
           </div>
           <div>
-            <p className="font-semibold text-sm leading-tight">🎁 Ganhe 50 moedas grátis!</p>
-            <p className="text-xs text-white/85 leading-tight mt-0.5">Crie sua conta e use em filtros IA, upscale e mais</p>
+            <p className="font-semibold text-sm leading-tight">Sua capinha está pronta 🎉</p>
+            <p className="text-xs text-white/85 leading-tight mt-0.5">Entre para confirmar o endereço e finalizar</p>
           </div>
         </div>
       </div>
