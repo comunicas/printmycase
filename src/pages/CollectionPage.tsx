@@ -102,9 +102,16 @@ const CollectionPage = () => {
     <div className="min-h-screen bg-background">
       <AppHeader breadcrumbs={[{ label: "Coleções", to: "/colecoes" }, { label: collection.name }]} />
       <main className="max-w-5xl mx-auto px-5 py-10">
-        <h1 className="text-3xl font-bold text-foreground mb-2">{collection.name}</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">
+          Capinhas {collection.name}
+        </h1>
         {collection.description && (
           <p className="text-muted-foreground mb-8">{collection.description}</p>
+        )}
+        {!collection.description && (
+          <p className="text-muted-foreground mb-8">
+            {designs.length > 0 ? designs.length : ""} designs exclusivos · impressão UV LED premium · frete grátis para todo o Brasil
+          </p>
         )}
 
         {designs.length === 0 ? (
