@@ -307,7 +307,7 @@ const Checkout = () => {
         <LoadingSpinner variant="fullPage" />
         <LoginDialog
           open={showLoginDialog}
-          onOpenChange={setShowLoginDialog}
+          onOpenChange={handleLoginDialogChange}
           reason="checkout"
           redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
         />
