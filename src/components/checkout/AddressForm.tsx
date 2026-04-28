@@ -192,8 +192,8 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
             <p>{neighborhood} — {city}/{state}</p>
             <p className="font-mono text-muted-foreground">{zipInput}</p>
             {shipping && (
-              <p className="text-xs text-muted-foreground mt-2">
-                {shipping.region} ({shipping.state}) — {formatPrice(shipping.priceCents / 100)}
+              <p className="text-xs text-green-700 font-medium mt-2">
+                🚚 Frete grátis{shipping.deliveryDays ? ` · ${shipping.deliveryDays}` : ""}
               </p>
             )}
           </div>
@@ -222,18 +222,11 @@ const AddressForm = ({ shipping, onShippingChange, submitted, onAddressChange }:
               </div>
             </FormField>
 
-            {shipping && shipping.allowed && (
+            {shipping && (
               <div className="flex items-center gap-2 -mt-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
                 <span className="text-xs text-green-700 font-medium">
-                  ✅ Entrega disponível — {formatPrice(shipping.priceCents / 100)}
-                  {shipping.deliveryDays ? ` · ${shipping.deliveryDays}` : ""}
+                  🚚 Frete grátis{shipping.deliveryDays ? ` · ${shipping.deliveryDays}` : ""}
                 </span>
-              </div>
-            )}
-
-            {shipping && !shipping.allowed && (
-              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-                No momento, realizamos envios apenas para a região Sudeste (SP, RJ, MG, ES).
               </div>
             )}
 
