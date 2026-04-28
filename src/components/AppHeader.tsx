@@ -15,9 +15,10 @@ interface Breadcrumb {
 interface AppHeaderProps {
   breadcrumbs?: Breadcrumb[];
   variant?: "default" | "transparent";
+  hideNav?: boolean;
 }
 
-const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, variant = "default" }, ref) => {
+const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, variant = "default", hideNav = false }, ref) => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
 
