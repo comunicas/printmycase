@@ -136,7 +136,7 @@ const DesignPage = () => {
     const graph: any[] = [
       {
         "@type": "Product",
-        name: design.name,
+        name: `Capinha ${design.name.replace(/^capa personalizada\s*[-–]\s*/i, "")}${collection?.name ? " — Coleção " + collection.name : ""}`,
         image: allImgs.length > 1 ? allImgs : image,
         url,
         description: productDesc,
