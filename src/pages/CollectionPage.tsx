@@ -31,7 +31,7 @@ const CollectionPage = () => {
     const graph: any[] = [
       {
         "@type": "CollectionPage",
-        name: collection.name,
+        name: `Capinhas ${collection.name}`,
         description: desc,
         url,
         inLanguage: "pt-BR",
