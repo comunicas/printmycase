@@ -39,12 +39,12 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  // Endpoint de auto-sync: salva CRON_SECRET_1 no Vault para uso pelo pg_cron
+  // Bootstrap: copia CRON_SECRET_1 do env para o Vault (idempotente, não vaza valor)
   const url = new URL(req.url);
-  if (url.searchParams.get("action") === "sync-vault") {
-    if (!cronSecret || provided !== cronSecret) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+  if (url.searchParams.get("action") === "bootstrap-vault") {
+    if (!cronSecret) {
+      return new Response(JSON.stringify({ error: "CRON_SECRET_1 not configured" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     const { error } = await supabase.rpc("sync_cron_secret_vault", { _value: cronSecret });
