@@ -234,7 +234,7 @@ const DesignPage = () => {
             <div className="aspect-square rounded-2xl overflow-hidden bg-muted border">
               <img
                 src={currentImage}
-                alt={`${design.name} ${selectedImageIdx > 0 ? `- foto ${selectedImageIdx + 1}` : ""}`}
+                alt={`Capinha personalizada ${design.name.replace(/^capa personalizada\s*[-–]\s*/i, "")}${collection?.name ? " — coleção " + collection.name : ""}${selectedImageIdx > 0 ? ` — foto ${selectedImageIdx + 1}` : ""} | PrintMyCase`}
                 width={600}
                 height={600}
                 className="w-full h-full object-cover cursor-zoom-in"
