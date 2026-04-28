@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2, Pencil } from "lucide-react";
+import { ArrowRight, Loader2, Pencil, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import JourneyProgress from "@/components/JourneyProgress";
@@ -321,6 +321,32 @@ const Checkout = () => {
           aiFilterApplied={!!customization?.activeFilter}
         />
 
+        {/* Métodos de pagamento aceitos */}
+        <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+          <p className="text-sm font-semibold text-foreground">Forma de pagamento</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
+              <div className="w-8 h-8 rounded bg-green-500 flex items-center justify-center text-white text-xs font-bold">PIX</div>
+              <div>
+                <p className="text-sm font-medium text-green-800">Pix — aprovação imediata</p>
+                <p className="text-xs text-green-600">Pague com QR Code ou copia e cola</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Cartão de crédito</p>
+                <p className="text-xs text-muted-foreground">Visa, Mastercard, Elo, Amex</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            🔒 Pagamento processado com segurança via Stripe
+          </p>
+        </div>
+
         <Button
           className="hidden lg:flex w-full gap-1.5"
           onClick={handleCheckout}
@@ -329,7 +355,7 @@ const Checkout = () => {
           {checkoutLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <>Finalizar Pedido <ArrowRight className="w-4 h-4" /></>
+            <>Ir para pagamento <ArrowRight className="w-4 h-4" /></>
           )}
         </Button>
 
@@ -352,6 +378,9 @@ const Checkout = () => {
               <span className="text-base font-semibold text-foreground">
                 {(totalCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </span>
+              {shipping?.deliveryDays && (
+                <span className="text-[10px] text-muted-foreground">{shipping.deliveryDays}</span>
+              )}
             </div>
             <Button
               className="flex-1 gap-1.5"
@@ -361,7 +390,7 @@ const Checkout = () => {
               {checkoutLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <>Finalizar <ArrowRight className="w-4 h-4" /></>
+                <>Ir para pagamento <ArrowRight className="w-4 h-4" /></>
               )}
             </Button>
           </div>
