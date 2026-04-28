@@ -22,27 +22,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate via CRON_SECRET (internal) or JWT (client)
+    // Public endpoint: tracking events come from anonymous + authenticated users.
+    // Optional CRON_SECRET check is preserved for internal/server-to-server use.
     const cronHeader = req.headers.get("x-cron-secret");
     const cronSecret = Deno.env.get("CRON_SECRET");
-    const authHeader = req.headers.get("Authorization");
-    let authenticated = false;
-
-    if (cronSecret && cronHeader === cronSecret) {
-      authenticated = true;
-    } else if (authHeader?.startsWith("Bearer ")) {
-      const { createClient } = await import("npm:@supabase/supabase-js@2.49.8");
-      const sb = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: authHeader } } }
-      );
-      const token = authHeader.replace("Bearer ", "");
-      const { error } = await sb.auth.getClaims(token);
-      if (!error) authenticated = true;
-    }
-
-    if (!authenticated) {
+    if (cronSecret && cronHeader && cronHeader !== cronSecret) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
