@@ -38,7 +38,11 @@ const Landing = () => {
 
   return (
     <>
-      <SeoHead />
+      <SeoHead
+        title="Capinha Personalizada com IA | Impressão UV LED | PrintMyCase"
+        description="Crie sua capinha personalizada com Inteligência Artificial em minutos. Impressão UV LED premium, frete grátis para todo o Brasil. +10 mil capas entregues."
+        canonical="https://studio.printmycase.com.br/"
+      />
       <div className="min-h-screen bg-background flex flex-col">
         <main>
           {/* Hero — Light DS v2 */}
@@ -90,6 +94,8 @@ const Landing = () => {
                     Com IA.
                   </span>
                 </h1>
+
+                <h2 className="sr-only">Capinha Personalizada com Inteligência Artificial para Celular</h2>
 
                 <p className="text-lg text-muted-foreground leading-relaxed max-w-[480px]">
                   Envie uma foto, descreva o que imagina e a nossa IA cria uma capa única
