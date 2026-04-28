@@ -114,6 +114,7 @@ export interface ShippingResult {
   state: string;
   priceCents: number;
   allowed: boolean;
+  deliveryDays?: string;
 }
 
 export function getShippingByZip(zip: string): ShippingResult | null {
@@ -128,5 +129,6 @@ export function getShippingByZip(zip: string): ShippingResult | null {
     state,
     priceCents: region.priceCents,
     allowed: ALLOWED_REGIONS.includes(region.name),
+    deliveryDays: region.deliveryDays,
   };
 }
