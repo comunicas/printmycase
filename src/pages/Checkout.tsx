@@ -378,6 +378,9 @@ const Checkout = () => {
               <span className="text-base font-semibold text-foreground">
                 {(totalCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </span>
+              {shipping?.deliveryDays && (
+                <span className="text-[10px] text-muted-foreground">{shipping.deliveryDays}</span>
+              )}
             </div>
             <Button
               className="flex-1 gap-1.5"
@@ -387,7 +390,7 @@ const Checkout = () => {
               {checkoutLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <>Finalizar <ArrowRight className="w-4 h-4" /></>
+                <>Ir para pagamento <ArrowRight className="w-4 h-4" /></>
               )}
             </Button>
           </div>
