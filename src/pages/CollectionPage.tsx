@@ -44,7 +44,7 @@ const CollectionPage = () => {
       graph.push({
         "@type": "ItemList",
         "@id": itemListId,
-        name: `Designs da coleção ${collection.name}`,
+        name: `Capinhas personalizadas da coleção ${collection.name}`,
         url,
         numberOfItems: designs.length,
         itemListOrder: "https://schema.org/ItemListOrderAscending",
