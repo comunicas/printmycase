@@ -83,12 +83,12 @@ const Landing = () => {
                 </SectionLabel>
 
                 <h1 className="font-display font-black text-5xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-foreground whitespace-pre-line">
-                  Sua capa personalizada,{"\n"}
+                  Crie capas personalizadas{" "}
                   <span
                     className="bg-clip-text text-transparent"
                     style={{ backgroundImage: "var(--gradient-brand)" }}
                   >
-                    Vira arte com IA.
+                    da IA
                   </span>
                 </h1>
 
