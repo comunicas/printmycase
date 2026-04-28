@@ -316,36 +316,26 @@ const Checkout = () => {
   if (!user || !customization) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <AppHeader breadcrumbs={breadcrumbs} />
+        <AppHeader breadcrumbs={breadcrumbs} hideNav />
         <JourneyProgress currentStep={3} />
-        <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10 space-y-6" aria-hidden="true">
-          {/* Skeleton: mini preview */}
-          <div className="flex items-center gap-4 border rounded-xl p-4 bg-card">
-            <div className="w-16 h-16 rounded-lg bg-muted animate-pulse" />
+        <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10 space-y-4">
+          <div className="flex items-center gap-4 border rounded-xl p-4 bg-card animate-pulse">
+            <div className="w-16 h-16 rounded-lg bg-muted flex-shrink-0" />
             <div className="flex-1 space-y-2">
-              <div className="h-3 w-2/3 bg-muted rounded animate-pulse" />
-              <div className="h-3 w-1/3 bg-muted rounded animate-pulse" />
+              <div className="h-3 bg-muted rounded w-36" />
+              <div className="h-2 bg-muted rounded w-24" />
             </div>
           </div>
-          {/* Skeleton: address */}
-          <div className="border rounded-xl p-4 bg-card space-y-3">
-            <div className="h-4 w-1/3 bg-muted rounded animate-pulse" />
-            <div className="h-10 w-full bg-muted rounded animate-pulse" />
-            <div className="h-10 w-full bg-muted rounded animate-pulse" />
-            <div className="grid grid-cols-2 gap-3">
-              <div className="h-10 bg-muted rounded animate-pulse" />
-              <div className="h-10 bg-muted rounded animate-pulse" />
-            </div>
+          <div className="rounded-xl border bg-card p-4 space-y-3 animate-pulse">
+            <div className="h-3 bg-muted rounded w-44" />
+            <div className="h-10 bg-muted rounded" />
+            <div className="h-10 bg-muted rounded" />
+            <div className="h-10 bg-muted rounded" />
           </div>
-          {/* Skeleton: order summary */}
-          <div className="border rounded-xl p-4 bg-card space-y-3">
-            <div className="h-4 w-1/4 bg-muted rounded animate-pulse" />
-            <div className="h-3 w-full bg-muted rounded animate-pulse" />
-            <div className="h-3 w-5/6 bg-muted rounded animate-pulse" />
-            <div className="h-5 w-1/2 bg-muted rounded animate-pulse" />
+          <div className="rounded-xl border bg-card p-4 space-y-2 animate-pulse">
+            <div className="h-3 bg-muted rounded w-32" />
+            <div className="h-8 bg-muted rounded w-24" />
           </div>
-          {/* Skeleton: CTA */}
-          <div className="h-11 w-full bg-muted rounded animate-pulse" />
         </main>
         <LoginDialog
           open={showLoginDialog}
