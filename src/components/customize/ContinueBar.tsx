@@ -11,9 +11,10 @@ interface ContinueBarProps {
   inline?: boolean;
   showDownload?: boolean;
   onDownload?: () => Promise<void> | void;
+  hasImage?: boolean;
 }
 
-const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, inline, showDownload, onDownload }: ContinueBarProps) => {
+const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, inline, showDownload, onDownload, hasImage }: ContinueBarProps) => {
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = useCallback(async () => {
