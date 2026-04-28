@@ -173,8 +173,8 @@ function EmailOnlyForm({ onClose: _onClose, redirectUrl }: { onClose: () => void
             <ShoppingBag className="w-5 h-5" />
           </div>
           <div>
-            <p className="font-semibold text-sm leading-tight">Sua capinha está pronta 🎉</p>
-            <p className="text-xs text-white/85 leading-tight mt-0.5">Entre para confirmar o endereço e finalizar</p>
+            <p className="font-semibold text-sm leading-tight">Frete grátis garantido 🚚</p>
+            <p className="text-xs text-white/85 leading-tight mt-0.5">Só seu email — sem senha, sem complicação</p>
           </div>
         </div>
       </div>
