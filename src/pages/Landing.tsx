@@ -88,7 +88,7 @@ const Landing = () => {
                     className="bg-clip-text text-transparent"
                     style={{ backgroundImage: "var(--gradient-brand)" }}
                   >
-                    da IA
+                    com IA
                   </span>
                 </h1>
 
