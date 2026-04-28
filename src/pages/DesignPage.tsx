@@ -119,8 +119,10 @@ const DesignPage = () => {
 
   useEffect(() => {
     if (!design) return;
-    const title = `${design.name} | ${SITE_NAME}`;
-    const desc = `Capa com design "${design.name}" — ${formatPrice(design.price_cents / 100)}. Escolha seu modelo e finalize!`;
+    const collectionLabel = collection?.name ? ` — Coleção ${collection.name}` : "";
+    const title = `Capinha ${design.name}${collectionLabel} | UV LED + Frete Grátis | PrintMyCase`;
+    const desc = design.description ||
+      `Capinha personalizada ${design.name}${collection?.name ? " da coleção " + collection.name : ""} por ${formatPrice(design.price_cents / 100)}. Impressão UV LED premium, frete grátis para todo o Brasil. Escolha o modelo do seu celular.`;
     const image = design.image_url;
     const url = `${SITE_URL}/colecao/${collectionSlug}/${designSlug}`;
 
@@ -134,7 +136,7 @@ const DesignPage = () => {
     const graph: any[] = [
       {
         "@type": "Product",
-        name: design.name,
+        name: `Capinha ${design.name.replace(/^capa personalizada\s*[-–]\s*/i, "")}${collection?.name ? " — Coleção " + collection.name : ""}`,
         image: allImgs.length > 1 ? allImgs : image,
         url,
         description: productDesc,
@@ -232,7 +234,7 @@ const DesignPage = () => {
             <div className="aspect-square rounded-2xl overflow-hidden bg-muted border">
               <img
                 src={currentImage}
-                alt={`${design.name} ${selectedImageIdx > 0 ? `- foto ${selectedImageIdx + 1}` : ""}`}
+                alt={`Capinha personalizada ${design.name.replace(/^capa personalizada\s*[-–]\s*/i, "")}${collection?.name ? " — coleção " + collection.name : ""}${selectedImageIdx > 0 ? ` — foto ${selectedImageIdx + 1}` : ""} | PrintMyCase`}
                 width={600}
                 height={600}
                 className="w-full h-full object-cover cursor-zoom-in"
@@ -263,10 +265,26 @@ const DesignPage = () => {
           {/* Purchase section */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{design.name}</h1>
+              {collection?.name && (
+                <p className="text-xs font-medium uppercase tracking-wide text-primary mb-1">
+                  Coleção {collection.name}
+                </p>
+              )}
+              <h1 className="text-2xl font-bold text-foreground">
+                Capinha {design.name.replace(/^capa personalizada\s*[-–]\s*/i, "")}
+              </h1>
               <p className="text-2xl font-bold text-primary mt-2">
                 {formatPrice(design.price_cents / 100)}
               </p>
+
+              {/* Trust strip */}
+              <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <li>✓ Frete grátis Brasil</li>
+                <li>✓ Impressão UV LED</li>
+                <li>✓ Entrega em até 2 dias</li>
+                <li>✓ Garantia 1 ano</li>
+              </ul>
+
               {design.description && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <h2 className="text-sm font-semibold text-foreground mb-2">Descrição</h2>
@@ -277,9 +295,12 @@ const DesignPage = () => {
 
             {/* Model selector */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Escolha o modelo do seu celular
+              <label className="text-sm font-medium text-foreground mb-1 block">
+                Para qual modelo você quer essa capinha?
               </label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Disponível para iPhone, Samsung, Motorola e Xiaomi
+              </p>
               <select
                 value={selectedProductId}
                 onChange={(e) => setSelectedProductId(e.target.value)}
@@ -398,7 +419,7 @@ const DesignPage = () => {
             onClick={handleCheckout}
             disabled={checkoutLoading || !selectedProductId || !isAddressValid}
           >
-            {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Finalizar <ArrowRight className="w-4 h-4" /></>}
+            {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Finalizar Pedido <ArrowRight className="w-4 h-4" /></>}
           </Button>
         </div>
       </div>
