@@ -8,9 +8,9 @@ import { setPageSeo, SITE_URL, injectJsonLd } from "@/lib/seo";
 import { getOptimizedUrl } from "@/lib/image-utils";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
-const PAGE_TITLE = "Capas de Celular Personalizadas | Studio PrintMyCase";
+const PAGE_TITLE = "Capinha Personalizada por Marca | IA + UV LED + Frete Grátis | PrintMyCase";
 const PAGE_DESC =
-  "Encontre capas personalizadas para iPhone, Samsung, Motorola, Xiaomi e mais. Envie sua foto, aplique filtros de IA e receba em casa.";
+  "Capinhas personalizadas para iPhone, Samsung, Motorola e Xiaomi com impressão UV LED premium. Aplique filtros de IA, frete grátis para todo o Brasil. A partir de R$119,90.";
 
 const BrandCategoryPage = () => {
   const { products, loading } = useProducts();
@@ -43,7 +43,7 @@ const BrandCategoryPage = () => {
       "@graph": [
         {
           "@type": "ItemList",
-          name: "Marcas de Capas de Celular",
+          name: "Capinhas Personalizadas por Marca de Celular",
           itemListElement: brandGroups.map(([slug, data], i) => ({
             "@type": "ListItem",
             position: i + 1,
@@ -71,11 +71,18 @@ const BrandCategoryPage = () => {
       <AppHeader breadcrumbs={breadcrumbs} />
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-          Capas de Celular Personalizadas
+          Capinha Personalizada para Celular
         </h1>
-        <p className="text-muted-foreground mb-8 max-w-2xl">
-          Escolha a marca do seu celular e personalize sua capa com fotos e filtros de IA.
+        <p className="text-muted-foreground mb-4 max-w-2xl">
+          Escolha a marca do seu celular e crie uma capinha personalizada com Inteligência Artificial.
+          Impressão UV LED premium, frete grátis para todo o Brasil.
         </p>
+        <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mb-8">
+          <li>✓ Frete grátis Brasil</li>
+          <li>✓ Impressão UV LED premium</li>
+          <li>✓ Filtros de IA</li>
+          <li>✓ A partir de R$119,90</li>
+        </ul>
 
         {loading ? (
           <LoadingSpinner />
@@ -106,7 +113,7 @@ const BrandCategoryPage = () => {
                   <div className="p-3">
                     <h2 className="font-semibold text-foreground text-sm">{seo.h1}</h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {data.count} {data.count === 1 ? "modelo" : "modelos"}
+                      {data.count} {data.count === 1 ? "modelo disponível" : "modelos disponíveis"}
                     </p>
                   </div>
                 </Link>
