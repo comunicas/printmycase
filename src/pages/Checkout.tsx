@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2, Pencil } from "lucide-react";
+import { ArrowRight, Loader2, Pencil, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import JourneyProgress from "@/components/JourneyProgress";
