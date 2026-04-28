@@ -49,15 +49,17 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
     </Button>
   );
 
-  const renderButtonContent = () =>
-    isRendering ? (
-      <><Loader2 className="w-4 h-4 animate-spin" /> Processando compra...</>
-    ) : (
-      <>
-        Comprar agora
-        <ArrowRight className="w-4 h-4" />
-      </>
-    );
+  const renderButtonContent = () => {
+    if (isRendering) {
+      return <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</>;
+    }
+    if (!hasImage) {
+      return <>📸 Envie uma foto para continuar</>;
+    }
+    return <>Ver resumo e pedir <ArrowRight className="w-4 h-4" /></>;
+  };
+
+  const continueTitle = disabled && !hasImage ? "Envie uma foto primeiro para continuar" : undefined;
 
   if (inline) {
     return (
@@ -67,7 +69,7 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
             {resetButton}
             {downloadButton}
           </div>
-          <Button className="flex-1 gap-1.5 sm:min-w-[148px] sm:flex-none" onClick={onContinue} disabled={disabled}>
+          <Button className="flex-1 gap-1.5 sm:min-w-[148px] sm:flex-none" onClick={onContinue} disabled={disabled} title={continueTitle}>
             {renderButtonContent()}
           </Button>
         </div>
@@ -85,7 +87,7 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
               {resetButton}
               {downloadButton}
             </div>
-            <Button className="gap-1.5 shrink-0" onClick={onContinue} disabled={disabled}>
+            <Button className="gap-1.5 shrink-0" onClick={onContinue} disabled={disabled} title={continueTitle}>
               {renderButtonContent()}
             </Button>
           </div>
