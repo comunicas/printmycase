@@ -33,18 +33,36 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Autenticação via CRON_SECRET (header x-cron-secret) — consistente com cleanup-pending-checkouts
-  const cronSecret = req.headers.get("x-cron-secret");
-  if (cronSecret !== Deno.env.get("CRON_SECRET")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
+  const cronSecret = Deno.env.get("CRON_SECRET_1") ?? "";
+  const provided = req.headers.get("x-cron-secret") ?? "";
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  // Bootstrap: copia CRON_SECRET_1 do env para o Vault (idempotente, não vaza valor)
+  const url = new URL(req.url);
+  if (url.searchParams.get("action") === "bootstrap-vault") {
+    if (!cronSecret) {
+      return new Response(JSON.stringify({ error: "CRON_SECRET_1 not configured" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { error } = await supabase.rpc("sync_cron_secret_vault", { _value: cronSecret });
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ ok: true, synced: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, serviceKey);
+  if (!cronSecret || provided !== cronSecret) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   let totalSent = 0;
   let totalSkipped = 0;
