@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { setPageSeo, SITE_URL } from "@/lib/seo";
 import { useParams, useNavigate } from "react-router-dom";
 import PhonePreview from "@/components/PhonePreview";
 import { formatPrice } from "@/lib/types";
@@ -25,6 +26,19 @@ const Customize = () => {
   const [mobileTab, setMobileTab] = useState<MobileTab | null>(null);
   const [showSafeZone, setShowSafeZone] = useState(true);
   const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
+
+  useEffect(() => {
+    if (!c.product) return;
+    const productName = c.product.name;
+    const slug = c.product.slug;
+    const cleanup = setPageSeo({
+      title: `Capinha Personalizada ${productName} | IA + UV LED | PrintMyCase`,
+      description: `Crie sua capinha personalizada para ${productName} com Inteligência Artificial. Impressão UV LED, acabamento premium e frete grátis para todo o Brasil.`,
+      url: `${SITE_URL}/customize/${slug}`,
+      image: c.product.device_image ?? c.product.images?.[0],
+    });
+    return cleanup;
+  }, [c.product]);
 
   if (c.productLoading) return <LoadingSpinner variant="fullPage" />;
 
