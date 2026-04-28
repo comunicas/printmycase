@@ -71,8 +71,8 @@ export default function TechQualitySection() {
             </h2>
 
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Máquinas próprias com tinta UV de alta resolução. Sua capa sai pronta
-              em até 3 minutos, com cores vibrantes que não desbotam.
+              Impressão UV de alta definição com acabamento vibrante e resistente.
+              Personalize do seu jeito e receba uma capa feita para durar.
             </p>
 
             <ul className="space-y-3">
