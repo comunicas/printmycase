@@ -11,13 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import GoogleIcon from "@/components/GoogleIcon";
 import { clarityEvent } from "@/lib/clarity";
 import { pixelEvent } from "@/lib/meta-pixel";
-import { Coins, Wand2, Sparkles, Check } from "lucide-react";
+import { Coins, Wand2, Sparkles, Check, ShoppingBag } from "lucide-react";
 
 interface LoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   redirectUrl?: string;
-  reason?: "filter" | "upscale" | null;
+  reason?: "filter" | "upscale" | "checkout" | null;
 }
 
 type Tab = "login" | "signup";
@@ -34,13 +34,18 @@ const reasonConfig = {
     title: "Para usar o Upscale IA",
     description: "Aumente a resolução da sua imagem em até 4× com IA",
   },
+  checkout: {
+    icon: ShoppingBag,
+    title: "Quase lá! Confirme sua entrega",
+    description: "Entre para garantir seu design salvo e receber sua capinha em casa",
+  },
 };
 
 const benefits = [
-  "50 moedas grátis ao se cadastrar",
-  "Filtros artísticos com IA",
-  "Upscale 4× de resolução",
-  "Sem compromisso — é grátis",
+  "Design salvo automaticamente",
+  "Endereço guardado para próximas compras",
+  "Rastreamento do pedido por email",
+  "Acesso a filtros IA grátis no cadastro",
 ];
 
 /* ─── Reason Screen ─── */
@@ -49,7 +54,7 @@ function ReasonScreen({
   onCreateAccount,
   onLogin,
 }: {
-  reason: "filter" | "upscale";
+  reason: "filter" | "upscale" | "checkout";
   onCreateAccount: () => void;
   onLogin: () => void;
 }) {
@@ -179,11 +184,11 @@ function AuthForm({
       <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-white">
         <div className="flex items-center gap-2.5">
           <div className="flex-shrink-0 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
-            <Coins className="w-5 h-5" />
+            <ShoppingBag className="w-5 h-5" />
           </div>
           <div>
-            <p className="font-semibold text-sm leading-tight">🎁 Ganhe 50 moedas grátis!</p>
-            <p className="text-xs text-white/85 leading-tight mt-0.5">Crie sua conta e use em filtros IA, upscale e mais</p>
+            <p className="font-semibold text-sm leading-tight">Sua capinha está pronta 🎉</p>
+            <p className="text-xs text-white/85 leading-tight mt-0.5">Entre para confirmar o endereço e finalizar</p>
           </div>
         </div>
       </div>
@@ -343,7 +348,7 @@ const LoginDialog = forwardRef<HTMLDivElement, LoginDialogProps>(({ open, onOpen
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
+      <DialogContent className={`max-w-sm p-0 gap-0 overflow-hidden ${reason === "checkout" ? "[&>button]:hidden" : ""}`}>
         {hasReason ? (
           <ReasonScreen
             reason={reason}
