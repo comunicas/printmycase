@@ -97,7 +97,7 @@ const BrandPage = () => {
                   {(product.device_image || product.images[0]) ? (
                     <img
                       src={getOptimizedUrl(product.device_image ?? product.images[0], 300)}
-                      alt={`Capa ${product.name}`}
+                      alt={`Capinha personalizada para ${product.name.replace(/^Capa\s+/i, "").trim()} | PrintMyCase`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                       width="300"
@@ -108,9 +108,9 @@ const BrandPage = () => {
                   )}
                 </div>
                 <div className="p-2.5">
-                  <h2 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">
-                    {product.name}
-                  </h2>
+                  <p className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">
+                    {product.name.replace(/^Capa\s+/i, "").trim()}
+                  </p>
                   <span className="inline-block mt-1.5 text-sm font-bold text-foreground bg-accent/60 px-2 py-0.5 rounded-md">
                     {formatPrice(product.price_cents / 100)}
                   </span>
