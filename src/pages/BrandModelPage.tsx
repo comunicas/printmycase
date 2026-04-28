@@ -109,10 +109,11 @@ const BrandModelPage = () => {
   }
 
   const brandSeo = getBrandSeo(brand!);
+  const cleanProductName = product.name.replace(/^Capa\s+/i, "").trim();
   const breadcrumbs = [
     { label: "Capas de Celular", to: "/capa-celular" },
-    { label: brandSeo.h1, to: `/capa-celular/${brand}` },
-    { label: product.name },
+    { label: brandDisplayName ?? brandSeo.h1, to: `/capa-celular/${brand}` },
+    { label: cleanProductName },
   ];
 
   return (
