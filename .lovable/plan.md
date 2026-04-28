@@ -1,28 +1,60 @@
-# Remover método Pix dos fluxos
+# Reorganizar nav do header (LP)
 
-O método Pix está sendo exibido em dois lugares na UI, mas o checkout do Stripe não está oferecendo Pix de fato. Vou removê-lo de ambos.
+## Sequência da landing page atual
 
-## Locais identificados
+1. `#como-funciona` (Como funciona)
+2. `TechQualitySection` (Impressão / qualidade) — **sem id ainda**
+3. `#ia-em-acao` (Gerações IA)
+4. `#destaques` (Coleções em destaque)
 
-1. **`src/pages/Checkout.tsx` (linhas 404-411)** — Card verde "Pix — aprovação imediata / Pague com QR Code ou copia e cola" no bloco "Forma de pagamento" (o item da imagem enviada).
-2. **`src/components/PaymentBadges.tsx` (linhas 37-44)** — Selo SVG "Pix" exibido junto com Visa/Mastercard/Elo/Amex. Esse componente aparece em Landing, DesignPage, Checkout e CheckoutSuccess.
+## Itens do header solicitados, na ordem da LP
 
-## Verificações feitas
+`Coleções` → `Como funciona` → `Gerações IA` → `Impressão`
 
-- **Coins (`src/pages/Coins.tsx`)**: nenhuma menção a Pix. Sem alterações.
-- **Customização e Coleções**: nenhuma menção a Pix. Sem alterações.
-- **Edge functions (`create-checkout`, `create-coin-checkout`)**: não declaram `payment_method_types` com Pix (Stripe usa o padrão configurado na conta), então nada a alterar no backend.
+(O link "Modelos" será removido tanto do desktop quanto do mobile.)
 
 ## Mudanças
 
-### 1. `src/pages/Checkout.tsx`
-Remover o bloco do card verde de Pix (linhas 405-411), mantendo apenas o card de "Cartão de crédito" dentro do bloco "Forma de pagamento".
+### 1. `src/components/home/TechQualitySection.tsx`
+Adicionar `id="impressao"` e `scroll-mt-20` ao `<section>` raiz para servir de âncora com offset do header fixo.
 
-### 2. `src/components/PaymentBadges.tsx`
-- Remover o `<svg>` do Pix (linhas 37-44).
-- Atualizar o comentário "Card brands + Pix" para "Card brands".
-- Os selos Visa, Mastercard, Elo e Amex permanecem.
+### 2. `src/components/AppHeader.tsx`
+
+**Helper genérico de scroll para âncoras** (substitui o atual `goHowItWorks`):
+```ts
+const goAnchor = (id: string) => {
+  setMobileOpen(false);
+  if (location.pathname !== "/") {
+    navigate(`/#${id}`);
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 150);
+  } else {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  }
+};
+```
+
+**Nav central desktop (linhas 226-253)** — substituir os 3 botões atuais por 4, na ordem:
+- Coleções → `navigate('/colecoes')` (mantém rota dedicada)
+- Como funciona → `goAnchor('como-funciona')`
+- Gerações IA → `goAnchor('ia-em-acao')`
+- Impressão → `goAnchor('impressao')`
+
+Remover o botão "Modelos".
+
+**Mobile (`MOBILE_NAV_ITEMS` e drawer, linhas 22-27 e 148-171)** — substituir a lista atual por:
+- Capas de Celular → `/capa-celular` (mantém)
+- Coleções → `/colecoes` (mantém)
+- Como funciona → âncora `#como-funciona`
+- Gerações IA → âncora `#ia-em-acao`
+- Impressão → âncora `#impressao`
+- Contato → `/contato` (mantém)
+
+Remover "Modelos". Como o `MOBILE_NAV_ITEMS` atual usa apenas `to`, vou tipar para suportar `{ label, to?, anchor? }` e renderizar `<button>` com `goAnchor` quando `anchor` estiver presente, mantendo `<Link>` para os itens com `to`.
+
+### 3. Sem mudanças em rotas
+
+A rota `/catalog` continua funcionando — apenas é removida do header. Os botões "Criar minha capa" / CTA primário do header (que também apontam para `/catalog`) ficam inalterados, pois o pedido é sobre os links de navegação, não sobre o CTA.
 
 ## Resultado
 
-A UI passa a refletir corretamente os métodos disponíveis (apenas cartão de crédito via Stripe), tanto no pré-checkout principal quanto nos selos de pagamento exibidos em Landing, Design, Checkout e CheckoutSuccess. Nenhum impacto nos fluxos de moedas, customização e coleções.
+Header central (desktop) e drawer (mobile) passam a refletir a sequência da LP, com âncoras suaves para as três seções existentes (`#como-funciona`, `#ia-em-acao`, `#impressao`) e link de página para `Coleções`. "Modelos" sai do menu.
