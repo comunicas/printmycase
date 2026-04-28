@@ -348,7 +348,7 @@ const LoginDialog = forwardRef<HTMLDivElement, LoginDialogProps>(({ open, onOpen
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
+      <DialogContent className={`max-w-sm p-0 gap-0 overflow-hidden ${reason === "checkout" ? "[&>button]:hidden" : ""}`}>
         {hasReason ? (
           <ReasonScreen
             reason={reason}
