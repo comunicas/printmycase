@@ -323,7 +323,7 @@ const Checkout = () => {
         <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10" />
         <LoginDialog
           open={showLoginDialog}
-          onOpenChange={setShowLoginDialog}
+          onOpenChange={handleLoginDialogChange}
           reason="checkout"
           redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
         />
