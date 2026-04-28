@@ -107,7 +107,7 @@ export function getStateByZip(zip: string): string | null {
   return zipPrefixToState[clean.substring(0, 2)] ?? null;
 }
 
-export const ALLOWED_REGIONS = ["Sudeste"];
+export const ALLOWED_REGIONS = ["Sudeste", "Sul", "Centro-Oeste", "Nordeste", "Norte"];
 
 export interface ShippingResult {
   region: string;
