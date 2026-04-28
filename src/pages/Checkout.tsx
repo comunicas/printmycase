@@ -36,7 +36,7 @@ const Checkout = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading: productLoading } = useProduct(id);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, profile, refetchProfile } = useAuth();
   const navigate = useNavigate();
   const { fetchByProduct, remove: removePending, getSignedUrl } = usePendingCheckout();
 
@@ -342,6 +342,14 @@ const Checkout = () => {
               <Pencil className="w-3.5 h-3.5" /> Editar
             </Button>
           </div>
+        )}
+
+        {user && (
+          <ProfileCompletion
+            userId={user.id}
+            currentName={profile?.full_name ?? null}
+            onComplete={() => { void refetchProfile(); }}
+          />
         )}
 
         <AddressForm
