@@ -5,6 +5,7 @@ import { useCollection } from "@/hooks/useCollections";
 import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer, defaultAggregateRating } from "@/lib/merchant-jsonld";
 import { setPageSeo, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
+import { getOptimizedUrl } from "@/lib/image-utils";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -126,12 +127,15 @@ const CollectionPage = () => {
               >
                 <div className="aspect-square overflow-hidden bg-muted">
                   <img
-                    src={design.image_url}
+                    src={getOptimizedUrl(design.image_url, 320)}
+                    srcSet={`${getOptimizedUrl(design.image_url, 200)} 200w, ${getOptimizedUrl(design.image_url, 400)} 400w, ${getOptimizedUrl(design.image_url, 600)} 600w`}
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     alt={`Capinha personalizada ${design.name} — coleção ${collection.name}`}
                     width={300}
                     height={300}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
+                    decoding="async"
                     onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none'; }}
                   />
                 </div>
