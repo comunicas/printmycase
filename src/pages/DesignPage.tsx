@@ -119,8 +119,10 @@ const DesignPage = () => {
 
   useEffect(() => {
     if (!design) return;
-    const title = `${design.name} | ${SITE_NAME}`;
-    const desc = `Capa com design "${design.name}" — ${formatPrice(design.price_cents / 100)}. Escolha seu modelo e finalize!`;
+    const collectionLabel = collection?.name ? ` — Coleção ${collection.name}` : "";
+    const title = `Capinha ${design.name}${collectionLabel} | UV LED + Frete Grátis | PrintMyCase`;
+    const desc = design.description ||
+      `Capinha personalizada ${design.name}${collection?.name ? " da coleção " + collection.name : ""} por ${formatPrice(design.price_cents / 100)}. Impressão UV LED premium, frete grátis para todo o Brasil. Escolha o modelo do seu celular.`;
     const image = design.image_url;
     const url = `${SITE_URL}/colecao/${collectionSlug}/${designSlug}`;
 
