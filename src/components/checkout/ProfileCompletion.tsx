@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import FormField from "@/components/ui/form-field";
@@ -16,6 +16,13 @@ export function ProfileCompletion({ userId, currentName, onComplete }: ProfileCo
   const [name, setName] = useState(currentName || "");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentName && currentName.trim().length > 1) {
+      setName(currentName);
+    }
+  }, [currentName]);
+
   const { toast } = useToast();
 
   if (currentName && currentName.trim().length > 1) return null;
