@@ -349,7 +349,7 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <AppHeader breadcrumbs={breadcrumbs} />
+      <AppHeader breadcrumbs={breadcrumbs} hideNav />
       <JourneyProgress currentStep={3} />
       <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10 space-y-6 pb-28 lg:pb-10">
 
