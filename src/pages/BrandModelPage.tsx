@@ -14,7 +14,7 @@ import { pixelEvent } from "@/lib/meta-pixel";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 
-const SITE_NAME = "Studio PrintMyCase";
+const SITE_NAME = "PrintMyCase";
 
 const BrandModelPage = () => {
   const { brand, model } = useParams<{ brand: string; model: string }>();
@@ -42,10 +42,10 @@ const BrandModelPage = () => {
   useEffect(() => {
     if (!product || !brand || !brandMatches) return;
 
-    const title = `Capa ${product.name} Personalizada | ${SITE_NAME}`;
-    const desc =
-      product.description ??
-      `Capa personalizada para ${product.name}. Proteção premium com acabamento soft-touch.`;
+    const cleanName = product.name.replace(/^Capa\s+/i, "").trim();
+    const title = `Capinha Personalizada para ${cleanName} | IA + UV LED | PrintMyCase`;
+    const desc = product.description ??
+      `Capinha personalizada para ${cleanName} com Inteligência Artificial. Impressão UV LED premium, frete grátis para todo o Brasil.`;
     const image = product.device_image ?? product.images[0] ?? "";
     const url = `${SITE_URL}/capa-celular/${brand}/${product.slug}`;
 
