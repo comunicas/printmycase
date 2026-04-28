@@ -184,6 +184,7 @@ const Customize = () => {
             isRendering={c.isRendering}
             showDownload={!!c.activeFilterId}
             onDownload={c.handleDownload}
+            hasImage={!!c.image}
           />
         )}
       </div>
