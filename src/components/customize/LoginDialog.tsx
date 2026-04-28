@@ -34,13 +34,18 @@ const reasonConfig = {
     title: "Para usar o Upscale IA",
     description: "Aumente a resolução da sua imagem em até 4× com IA",
   },
+  checkout: {
+    icon: ShoppingBag,
+    title: "Quase lá! Confirme sua entrega",
+    description: "Entre para garantir seu design salvo e receber sua capinha em casa",
+  },
 };
 
 const benefits = [
-  "50 moedas grátis ao se cadastrar",
-  "Filtros artísticos com IA",
-  "Upscale 4× de resolução",
-  "Sem compromisso — é grátis",
+  "Design salvo automaticamente",
+  "Endereço guardado para próximas compras",
+  "Rastreamento do pedido por email",
+  "Acesso a filtros IA grátis no cadastro",
 ];
 
 /* ─── Reason Screen ─── */
