@@ -57,6 +57,22 @@ const Checkout = () => {
     }
   }, [user, productLoading]);
 
+  // While unauthenticated, the LoginDialog is mandatory: closing it sends the user back.
+  const handleLoginDialogChange = useCallback((open: boolean) => {
+    if (!open && !user) {
+      // User dismissed the dialog without logging in — return to previous page (or customize)
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else if (id) {
+        navigate(`/customize/${id}`, { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+      return;
+    }
+    setShowLoginDialog(open);
+  }, [user, navigate, id]);
+
   const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
     setAddressData(data);
     setIsAddressValid(valid);
@@ -291,7 +307,7 @@ const Checkout = () => {
         <LoadingSpinner variant="fullPage" />
         <LoginDialog
           open={showLoginDialog}
-          onOpenChange={setShowLoginDialog}
+          onOpenChange={handleLoginDialogChange}
           reason="checkout"
           redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
         />
@@ -307,7 +323,7 @@ const Checkout = () => {
         <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10" />
         <LoginDialog
           open={showLoginDialog}
-          onOpenChange={setShowLoginDialog}
+          onOpenChange={handleLoginDialogChange}
           reason="checkout"
           redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
         />
