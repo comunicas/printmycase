@@ -6,11 +6,11 @@ export interface ShippingRegion {
 }
 
 export const shippingRegions: ShippingRegion[] = [
-  { name: "Sudeste", states: ["SP", "RJ", "MG", "ES"], priceCents: 1290, deliveryDays: "5 a 7 dias úteis" },
-  { name: "Sul", states: ["PR", "SC", "RS"], priceCents: 1590, deliveryDays: "7 a 10 dias úteis" },
-  { name: "Centro-Oeste", states: ["GO", "MT", "MS", "DF"], priceCents: 1890, deliveryDays: "8 a 12 dias úteis" },
-  { name: "Nordeste", states: ["BA", "SE", "AL", "PE", "PB", "RN", "CE", "PI", "MA"], priceCents: 2290, deliveryDays: "10 a 15 dias úteis" },
-  { name: "Norte", states: ["AM", "PA", "AC", "RO", "RR", "AP", "TO"], priceCents: 2790, deliveryDays: "12 a 18 dias úteis" },
+  { name: "Sudeste",      states: ["SP","RJ","MG","ES"],                        priceCents: 0, deliveryDays: "5 a 7 dias úteis" },
+  { name: "Sul",          states: ["PR","SC","RS"],                              priceCents: 0, deliveryDays: "7 a 10 dias úteis" },
+  { name: "Centro-Oeste", states: ["GO","MT","MS","DF"],                         priceCents: 0, deliveryDays: "8 a 12 dias úteis" },
+  { name: "Nordeste",     states: ["BA","SE","AL","PE","PB","RN","CE","PI","MA"],priceCents: 0, deliveryDays: "10 a 15 dias úteis" },
+  { name: "Norte",        states: ["AM","PA","AC","RO","RR","AP","TO"],          priceCents: 0, deliveryDays: "12 a 18 dias úteis" },
 ];
 
 /**
