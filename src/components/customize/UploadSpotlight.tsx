@@ -17,6 +17,10 @@ const UploadSpotlight = ({ open, modelName, onUploadClick, onGalleryClick }: Upl
           <Upload className="w-10 h-10 text-primary" />
         </div>
 
+        <p className="text-xs font-medium text-primary bg-primary/10 rounded-full px-3 py-1">
+          📸 Passo 1 de 3 — Envie sua foto
+        </p>
+
         <div className="text-center space-y-2">
           <h2 className="text-xl font-bold text-foreground">
             <span>Sua foto vira capa para {modelName}</span>
