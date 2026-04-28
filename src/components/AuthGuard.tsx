@@ -21,7 +21,8 @@ const AuthGuard = ({ children }: { children: ReactNode }) => {
   }
 
   if (!user) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+    sessionStorage.setItem("auth_redirect", location.pathname + location.search);
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

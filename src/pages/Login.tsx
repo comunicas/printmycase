@@ -18,15 +18,24 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/';
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
+  const getRedirect = () => {
+    const stored = sessionStorage.getItem('auth_redirect');
+    if (stored) {
+      sessionStorage.removeItem('auth_redirect');
+      return stored;
+    }
+    return searchParams.get('redirect') || '/';
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
-      navigate(redirect, { replace: true });
+      navigate(getRedirect(), { replace: true });
     }
-  }, [user, authLoading, navigate, redirect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +45,7 @@ const Login = () => {
       toast({ title: 'Erro ao entrar', description: error.message, variant: 'destructive' });
     } else {
       clarityEvent('auth_login');
-      navigate(redirect);
+      navigate(getRedirect(), { replace: true });
     }
     setLoading(false);
   };
