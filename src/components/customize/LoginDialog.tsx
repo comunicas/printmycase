@@ -36,8 +36,8 @@ const reasonConfig = {
   },
   checkout: {
     icon: ShoppingBag,
-    title: "Quase lá! Confirme sua entrega",
-    description: "Entre para garantir seu design salvo e receber sua capinha em casa",
+    title: "Ganhe frete grátis no cadastro 🎁",
+    description: "Crie sua conta em segundos e receba sua capa em todo o Brasil sem pagar frete — nunca.",
   },
 };
 
@@ -46,6 +46,13 @@ const benefits = [
   "Endereço guardado para próximas compras",
   "Rastreamento do pedido por email",
   "Acesso a filtros IA grátis no cadastro",
+];
+
+const checkoutBenefits = [
+  "🚚 Frete grátis para todo o Brasil — para sempre",
+  "🪙 50 moedas de IA grátis para usar nos filtros agora",
+  "⚡ Impressão em até 2 dias + envio expresso",
+  "🎨 Design salvo por 7 dias — sem perder nenhum detalhe",
 ];
 
 /* ─── Reason Screen ─── */
@@ -75,13 +82,19 @@ function ReasonScreen({
       <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-4 text-left space-y-2">
         <p className="text-sm font-semibold text-foreground flex items-center gap-2">
           <Coins className="w-4 h-4 text-amber-500" />
-          Crie sua conta gratuita e ganhe:
+          {reason === "checkout" ? "Incluso no seu cadastro gratuito:" : "Crie sua conta gratuita e ganhe:"}
         </p>
         <ul className="space-y-1.5">
-          {benefits.map((b) => (
+          {(reason === "checkout" ? checkoutBenefits : benefits).map((b) => (
             <li key={b} className="flex items-start gap-2 text-sm text-muted-foreground">
-              <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>{b}</span>
+              {reason === "checkout" ? (
+                <span className="text-sm leading-snug">{b}</span>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>{b}</span>
+                </>
+              )}
             </li>
           ))}
         </ul>
@@ -89,7 +102,7 @@ function ReasonScreen({
 
       <div className="space-y-2">
         <Button className="w-full" onClick={onCreateAccount}>
-          Criar conta grátis
+          {reason === "checkout" ? "Garantir frete grátis →" : "Criar conta grátis"}
         </Button>
         <button
           onClick={onLogin}
