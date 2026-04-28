@@ -14,8 +14,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const TITLE = "Capinhas Exclusivas para Celular | Studio PrintMyCase";
-const DESC = "Explore nossas coleções de capinhas exclusivas para celular. Designs únicos, proteção premium e acabamento soft-touch. Encontre a capa perfeita ou personalize a sua.";
+const TITLE = "Capinhas Personalizadas para Celular | Designs Exclusivos | PrintMyCase";
+const DESC = "Explore nossa galeria de capinhas personalizadas para celular. Designs exclusivos com impressão UV LED, frete grátis para todo o Brasil e entrega em até 2 dias.";
 
 const Collections = () => {
   const { user } = useAuthContext();
@@ -61,7 +61,7 @@ const Collections = () => {
       "@graph": [
         {
           "@type": "CollectionPage",
-          name: "Capinhas Exclusivas para Celular",
+          name: "Capinhas Personalizadas para Celular",
           description: DESC,
           url: `${SITE_URL}/colecoes`,
           inLanguage: "pt-BR",
@@ -116,7 +116,7 @@ const Collections = () => {
       <div className="aspect-square overflow-hidden bg-muted flex items-center justify-center">
         <img
           src={design.image_url}
-          alt={design.name}
+          alt={`Capinha personalizada ${design.name.replace(/^(capa personalizada|capinha celular|capa)\s*[-–]\s*/i, "")} | PrintMyCase`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
           width="300"
@@ -124,7 +124,9 @@ const Collections = () => {
         />
       </div>
       <CardContent className="p-2 sm:p-2.5">
-        <h3 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">{design.name}</h3>
+        <h3 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">
+          {design.name.replace(/^(capa personalizada|capinha celular|capa)\s*[-–]\s*/i, "")}
+        </h3>
         <span className="inline-block mt-1.5 text-sm font-bold text-foreground bg-accent/60 px-2 py-0.5 rounded-md">
           {formatPrice(design.price_cents / 100)}
         </span>
@@ -179,11 +181,20 @@ const Collections = () => {
       <section className="bg-gradient-to-b from-primary/5 to-background py-6 md:py-12 px-5">
         <div className="max-w-5xl mx-auto text-center space-y-3 md:space-y-4">
           <h1 className="text-2xl md:text-4xl font-bold text-foreground">
-            Capinhas Exclusivas para Celular
+            Capinhas Personalizadas para Celular
           </h1>
-          <p className="hidden sm:block text-muted-foreground max-w-2xl mx-auto">
-            Designs únicos criados por artistas. Proteção premium com acabamento soft-touch. Encontre a capa perfeita ou personalize a sua.
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base">
+            Designs exclusivos com{" "}
+            <strong className="text-foreground">impressão UV LED</strong>,{" "}
+            <strong className="text-foreground">frete grátis para todo o Brasil</strong>{" "}
+            e entrega em até 2 dias.
           </p>
+          <ul className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <li>✓ Frete grátis Brasil</li>
+            <li>✓ Impressão UV LED</li>
+            <li>✓ +10 mil capas entregues</li>
+            <li>✓ Garantia 1 ano</li>
+          </ul>
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -252,33 +263,29 @@ const Collections = () => {
         ) : (
           /* Vitrines por Coleção */
           <div className="space-y-10 md:space-y-12">
-            {collections.map((col, colIdx) => {
+            {collections.filter(col => col.designs.length >= 3).map((col, colIdx) => {
               const visible = col.designs.slice(0, 8);
-              // Inject CTA card at position 2 (3rd slot) of the first collection
-              const items: Array<{ kind: "design"; design: DesignData } | { kind: "cta" }> =
-                visible.map((d) => ({ kind: "design" as const, design: d }));
-              if (colIdx === 0 && items.length >= 2) {
-                items.splice(2, 0, { kind: "cta" });
-              }
+              const items = visible.map((d) => ({ kind: "design" as const, design: d }));
               return (
                 <section key={col.id} id={`colecao-${col.slug}`} className="scroll-mt-24">
-                  <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <h2 className="text-xl md:text-2xl font-bold text-foreground">{col.name}</h2>
+                  <div className="flex items-start justify-between mb-3 md:mb-4 gap-3">
+                    <div>
+                      <h2 className="text-xl md:text-2xl font-bold text-foreground">{col.name}</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {col.designs.length} capinha{col.designs.length !== 1 ? "s" : ""} · UV LED · frete grátis
+                      </p>
+                    </div>
                     <button
                       onClick={() => navigate(`/colecao/${col.slug}`)}
-                      className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
+                      className="text-sm font-medium text-primary hover:underline flex items-center gap-1 mt-1"
                     >
                       Ver tudo <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
-                    {items.map((item, i) =>
-                      item.kind === "cta" ? (
-                        <CtaCard key={`cta-${col.id}`} />
-                      ) : (
-                        <LazyDesignCard key={item.design.id} design={item.design} />
-                      )
-                    )}
+                    {items.map((item) => (
+                      <LazyDesignCard key={item.design.id} design={item.design} />
+                    ))}
                   </div>
                   {col.designs.length > 8 && (
                     <div className="hidden md:block text-center mt-4">
@@ -297,12 +304,16 @@ const Collections = () => {
         {!isSearching && (
           <section className="mt-12 md:mt-16 mb-8 text-center bg-gradient-to-br from-primary/10 to-accent/30 rounded-2xl p-5 md:p-12">
             <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
-            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Não encontrou o que procura?</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
+              Prefere algo único? Crie com IA ✨
+            </h2>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Envie sua própria foto e crie uma capinha totalmente personalizada com acabamento premium.
+              Envie uma foto, descreva sua ideia e nossa IA cria uma capinha exclusiva só sua.
+              Impressão UV LED, frete grátis, entrega em até 2 dias.
             </p>
             <Button size="lg" className="gap-2" onClick={() => navigate("/customize")}>
-              Personalizar Agora <ArrowRight className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" />
+              Criar minha capa com IA
             </Button>
           </section>
         )}
