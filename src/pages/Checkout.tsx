@@ -57,6 +57,22 @@ const Checkout = () => {
     }
   }, [user, productLoading]);
 
+  // While unauthenticated, the LoginDialog is mandatory: closing it sends the user back.
+  const handleLoginDialogChange = useCallback((open: boolean) => {
+    if (!open && !user) {
+      // User dismissed the dialog without logging in — return to previous page (or customize)
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else if (id) {
+        navigate(`/customize/${id}`, { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+      return;
+    }
+    setShowLoginDialog(open);
+  }, [user, navigate, id]);
+
   const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
     setAddressData(data);
     setIsAddressValid(valid);
