@@ -136,7 +136,9 @@ const CollectionPage = () => {
                   />
                 </div>
                 <CardContent className="p-3">
-                  <h3 className="text-sm font-semibold text-foreground line-clamp-2">{design.name}</h3>
+                  <h3 className="text-sm font-semibold text-foreground line-clamp-2">
+                    {design.name.replace(/^capa personalizada\s*[-–]\s*/i, "")}
+                  </h3>
                   <p className="text-base font-bold text-foreground mt-1">
                     {formatPrice(design.price_cents / 100)}
                   </p>
