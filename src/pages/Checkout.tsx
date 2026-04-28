@@ -17,6 +17,7 @@ import PaymentBadges from "@/components/PaymentBadges";
 import { clarityEvent } from "@/lib/clarity";
 import { generateEventId, pixelTrackInitiateCheckout } from "@/lib/meta-pixel";
 import { parsePendingCustomizationData } from "@/types/customization";
+import LoginDialog from "@/components/customize/LoginDialog";
 
 interface CustomizationData {
   rawImage: string | null;
@@ -45,6 +46,15 @@ const Checkout = () => {
   const [addressData, setAddressData] = useState<AddressData | null>(null);
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(!user);
+
+  useEffect(() => {
+    if (!user && !productLoading) {
+      setShowLoginDialog(true);
+    } else if (user) {
+      setShowLoginDialog(false);
+    }
+  }, [user, productLoading]);
 
   const handleAddressChange = useCallback((data: AddressData, valid: boolean) => {
     setAddressData(data);
@@ -274,8 +284,34 @@ const Checkout = () => {
     { label: "Checkout" },
   ];
 
-  if (productLoading || !customization || recovering) {
-    return <LoadingSpinner variant="fullPage" />;
+  if (productLoading || (user && (!customization || recovering))) {
+    return (
+      <>
+        <LoadingSpinner variant="fullPage" />
+        <LoginDialog
+          open={showLoginDialog}
+          onOpenChange={setShowLoginDialog}
+          reason="checkout"
+          redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
+        />
+      </>
+    );
+  }
+
+  if (!user || !customization) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <AppHeader breadcrumbs={breadcrumbs} />
+        <JourneyProgress currentStep={3} />
+        <main className="flex-1 max-w-xl mx-auto w-full p-5 lg:p-10" />
+        <LoginDialog
+          open={showLoginDialog}
+          onOpenChange={setShowLoginDialog}
+          reason="checkout"
+          redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
+        />
+      </div>
+    );
   }
 
   return (
@@ -399,6 +435,12 @@ const Checkout = () => {
           </Link>
         </div>
       </div>
+      <LoginDialog
+        open={showLoginDialog}
+        onOpenChange={setShowLoginDialog}
+        reason="checkout"
+        redirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
+      />
     </div>
   );
 };

@@ -56,7 +56,7 @@ const App = () => (
             <Route path="/product/:id" element={<Product />} />
             <Route path="/customize" element={<SelectModel />} />
             <Route path="/customize/:id" element={<Customize />} />
-            <Route path="/checkout/:id" element={<AuthGuard><Checkout /></AuthGuard>} />
+            <Route path="/checkout/:id" element={<Checkout />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
             <Route path="/orders" element={<AuthGuard><Orders /></AuthGuard>} />
             <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
