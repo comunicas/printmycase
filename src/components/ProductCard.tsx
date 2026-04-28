@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { type Product, formatPrice } from "@/lib/types";
 import { brandSlugFromProductName } from "@/lib/brand-seo";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 interface ProductCardProps {
   product: Product;
@@ -19,18 +20,25 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
         onClick={() => navigate(`/capa-celular/${brandSlugFromProductName(product.name)}/${product.slug}`)}
       >
         <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
-          {(product.device_image || product.images[0]) ? (
-            <img
-              src={product.device_image ?? product.images[0]}
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-              width="300"
-              height="300"
-            />
-          ) : (
-            <span className="text-muted-foreground text-xs">Sem imagem</span>
-          )}
+          {(() => {
+            const src = product.device_image ?? product.images[0];
+            if (!src) {
+              return <span className="text-muted-foreground text-xs">Sem imagem</span>;
+            }
+            return (
+              <img
+                src={getOptimizedUrl(src, 320)}
+                srcSet={`${getOptimizedUrl(src, 200)} 200w, ${getOptimizedUrl(src, 400)} 400w, ${getOptimizedUrl(src, 600)} 600w`}
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                alt={product.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+                decoding="async"
+                width="300"
+                height="300"
+              />
+            );
+          })()}
         </div>
         <CardContent className="p-2.5">
           <h3 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">

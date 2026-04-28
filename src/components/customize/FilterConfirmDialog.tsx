@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { AiFilter } from "@/lib/customize-types";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 interface FilterConfirmDialogProps {
   filter: AiFilter | null;
@@ -55,8 +56,12 @@ const FilterConfirmDialog = ({
         <DialogHeader className="items-center text-center gap-2">
           {filter?.style_image_url && (
             <img
-              src={filter.style_image_url}
+              src={getOptimizedUrl(filter.style_image_url, 240)}
               alt={filter?.name}
+              width={96}
+              height={96}
+              loading="lazy"
+              decoding="async"
               className="w-24 h-24 rounded-2xl object-cover border border-border shadow-sm"
             />
           )}

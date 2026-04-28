@@ -96,10 +96,13 @@ const BrandPage = () => {
                 <div className="aspect-square bg-white flex items-center justify-center overflow-hidden">
                   {(product.device_image || product.images[0]) ? (
                     <img
-                      src={getOptimizedUrl(product.device_image ?? product.images[0], 300)}
+                      src={getOptimizedUrl(product.device_image ?? product.images[0], 320)}
+                      srcSet={`${getOptimizedUrl(product.device_image ?? product.images[0], 200)} 200w, ${getOptimizedUrl(product.device_image ?? product.images[0], 400)} 400w, ${getOptimizedUrl(product.device_image ?? product.images[0], 600)} 600w`}
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       alt={`Capinha personalizada para ${product.name.replace(/^Capa\s+/i, "").trim()} | PrintMyCase`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
+                      decoding="async"
                       width="300"
                       height="300"
                     />

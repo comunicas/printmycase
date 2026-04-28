@@ -2,6 +2,7 @@ import { useRef, useCallback, forwardRef } from "react";
 import { Loader2, Eye, X, Wand2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 interface AiFiltersListProps {
   filters: AiFilter[];
@@ -81,7 +82,15 @@ const AiFiltersList = forwardRef<HTMLDivElement, AiFiltersListProps>(({
       >
         <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-muted">
           {filter.style_image_url ? (
-            <img src={filter.style_image_url} alt={filter.name} className="w-full h-full object-cover" />
+            <img
+              src={getOptimizedUrl(filter.style_image_url, 160)}
+              alt={filter.name}
+              width={120}
+              height={120}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/30 flex items-center justify-center">
               <Wand2 className="w-5 h-5 text-muted-foreground" />

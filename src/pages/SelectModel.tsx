@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import { ArrowLeft, Search, SearchX, X } from "lucide-react";
 import { setPageSeo, SITE_URL } from "@/lib/seo";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 const SelectModel = () => {
   const navigate = useNavigate();
@@ -189,12 +190,15 @@ const SelectModel = () => {
                 >
                   {thumb ? (
                     <img
-                      src={thumb}
+                      src={getOptimizedUrl(thumb, 240)}
+                      srcSet={`${getOptimizedUrl(thumb, 160)} 160w, ${getOptimizedUrl(thumb, 320)} 320w`}
+                      sizes="(max-width: 640px) 33vw, 200px"
                       alt={product.name}
                       width={300}
                       height={300}
                       className="w-full aspect-square object-contain rounded-lg bg-muted/30 group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
+                      decoding="async"
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   ) : (

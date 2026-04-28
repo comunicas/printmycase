@@ -39,10 +39,13 @@ export default function TechQualitySection() {
               />
               <div className="absolute inset-0 flex items-end justify-center p-6">
                 <img
-                  src="/images/tech-quality-case-new.png"
-                  alt="Capinha de celular com estampa graffiti colorida impressa em alta qualidade"
+                  src="/images/tech-quality-case-new.webp"
+                  alt="Capinha personalizada amarela com logo CIMED segurada na mão, impressa em alta qualidade"
                   className="w-full h-full object-contain drop-shadow-2xl"
                   loading="lazy"
+                  decoding="async"
+                  width="1024"
+                  height="1024"
                 />
               </div>
             </div>

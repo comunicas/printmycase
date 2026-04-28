@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { useProducts } from "@/hooks/useProducts";
 import { formatPrice, type Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 interface ModelSelectorProps {
   currentSlug?: string;
@@ -135,10 +136,11 @@ const ModelSelector = ({ currentSlug, productName, productImage }: ModelSelector
       >
         {productImage && (
           <img
-            src={productImage}
+            src={getOptimizedUrl(productImage, 80)}
             alt={productName}
             width={28}
             height={28}
+            decoding="async"
             className="w-7 h-7 rounded-md object-cover border border-border flex-shrink-0"
             onError={(e) => { e.currentTarget.style.display = "none"; }}
           />
@@ -233,11 +235,12 @@ const ModelSelector = ({ currentSlug, productName, productImage }: ModelSelector
                             >
                               {thumb ? (
                                 <img
-                                  src={thumb}
+                                  src={getOptimizedUrl(thumb, 80)}
                                   alt={p.name}
                                   width={36}
                                   height={36}
                                   loading="lazy"
+                                  decoding="async"
                                   className="w-9 h-9 rounded-md object-cover border border-border flex-shrink-0 bg-muted"
                                   onError={(e) => { e.currentTarget.style.display = "none"; }}
                                 />

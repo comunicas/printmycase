@@ -6,6 +6,7 @@ import AiFiltersList from "./AiFiltersList";
 import ProductHighlightsList from "./ProductHighlightsList";
 import type { MobileTab } from "./MobileTabBar";
 import type { AiFilter, AiFilterCategory, FilterHistoryEntry } from "@/lib/customize-types";
+import { getOptimizedUrl } from "@/lib/image-utils";
 
 const tabIds: Record<MobileTab, string> = {
   filtros: "customize-mobile-tab-filtros",
@@ -153,8 +154,12 @@ const MobileTabOverlay = ({
             <div className="space-y-4">
               <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/25 p-3">
                 <img
-                  src={productImage}
+                  src={getOptimizedUrl(productImage, 160)}
                   alt={productName}
+                  width={56}
+                  height={56}
+                  loading="lazy"
+                  decoding="async"
                   className="h-14 w-14 flex-shrink-0 rounded-lg bg-background object-contain"
                 />
                 <div className="min-w-0 space-y-1">

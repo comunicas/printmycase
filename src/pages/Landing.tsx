@@ -342,9 +342,12 @@ const Landing = () => {
                       <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
                         <img
                           src={getOptimizedUrl(design.image_url, 320)}
+                          srcSet={`${getOptimizedUrl(design.image_url, 200)} 200w, ${getOptimizedUrl(design.image_url, 400)} 400w, ${getOptimizedUrl(design.image_url, 600)} 600w`}
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
                           alt={design.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
+                          decoding="async"
                           width="300"
                           height="300"
                         />
