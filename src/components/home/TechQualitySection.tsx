@@ -17,7 +17,7 @@ const pills: { icon: React.ReactNode; label: string }[] = [
 
 export default function TechQualitySection() {
   return (
-    <section className="py-20 px-5 bg-background">
+    <section id="impressao" className="py-20 px-5 bg-background scroll-mt-20">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         {/* Painel esquerdo — imagem da capinha física */}
         <ScrollReveal>

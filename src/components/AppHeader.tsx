@@ -19,10 +19,14 @@ interface AppHeaderProps {
   hideNav?: boolean;
 }
 
-const MOBILE_NAV_ITEMS: { label: string; to: string }[] = [
+type MobileNavItem = { label: string; to?: string; anchor?: string };
+
+const MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { label: "Capas de Celular", to: "/capa-celular" },
   { label: "Coleções", to: "/colecoes" },
-  { label: "Modelos", to: "/catalog" },
+  { label: "Como funciona", anchor: "como-funciona" },
+  { label: "Gerações IA", anchor: "ia-em-acao" },
+  { label: "Impressão", anchor: "impressao" },
   { label: "Contato", to: "/contato" },
 ];
 
@@ -111,10 +115,14 @@ const AppHeader = forwardRef<HTMLElement, AppHeaderProps>(({ breadcrumbs, varian
   // Center nav only on root pages (no breadcrumbs) — on internal pages the breadcrumb leads.
   const showCenterNav = !hideNav && !hasBreadcrumbs;
 
-  const goHowItWorks = () => {
+  const goAnchor = (id: string) => {
     setMobileOpen(false);
-    navigate("/");
-    setTimeout(() => document.getElementById("como-funciona")?.scrollIntoView({ behavior: "smooth" }), 100);
+    if (location.pathname !== "/") {
+      navigate(`/#${id}`);
+      setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 150);
+    } else {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const drawer = mobileOpen ? (
