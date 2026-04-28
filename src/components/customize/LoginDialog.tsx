@@ -11,13 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import GoogleIcon from "@/components/GoogleIcon";
 import { clarityEvent } from "@/lib/clarity";
 import { pixelEvent } from "@/lib/meta-pixel";
-import { Coins, Wand2, Sparkles, Check } from "lucide-react";
+import { Coins, Wand2, Sparkles, Check, ShoppingBag } from "lucide-react";
 
 interface LoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   redirectUrl?: string;
-  reason?: "filter" | "upscale" | null;
+  reason?: "filter" | "upscale" | "checkout" | null;
 }
 
 type Tab = "login" | "signup";
