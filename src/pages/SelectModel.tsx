@@ -195,18 +195,7 @@ const SelectModel = () => {
                   style={{ animationDelay: `${i * 40}ms`, animationDuration: "350ms" }}
                 >
                   {thumb ? (
-                    <img
-                      src={getOptimizedUrl(thumb, 240)}
-                      srcSet={`${getOptimizedUrl(thumb, 160)} 160w, ${getOptimizedUrl(thumb, 320)} 320w`}
-                      sizes="(max-width: 640px) 33vw, 200px"
-                      alt={product.name}
-                      width={300}
-                      height={300}
-                      className="w-full aspect-square object-contain rounded-lg bg-muted/30 group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
+                    <ProductThumb src={thumb} alt={product.name} />
                   ) : (
                     <div className="w-full aspect-square rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground text-xs">
                       Sem imagem
