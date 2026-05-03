@@ -73,19 +73,22 @@ export function useCustomizeDraft(params: UseCustomizeDraftParams) {
 
     try {
       const draft = JSON.parse(raw);
-      if (draft.image) {
-        setOriginalImage(draft.image);
-        setImageWithResolution(draft.image);
+      if (!draft || !draft.image) {
+        // No real content to restore — clear stale entry and skip toast
+        sessionStorage.removeItem(key);
+        return;
       }
+      setOriginalImage(draft.image);
+      setImageWithResolution(draft.image);
       if (draft.scale != null) setScale(draft.scale);
       if (draft.position) setPosition(draft.position);
       if (draft.rotation != null) setRotation(draft.rotation);
       // Suppress toast on first visit when intro dialog is showing
       if (typeof window !== "undefined" && localStorage.getItem("customize_intro_seen")) {
-        toast({ title: "Rascunho restaurado" });
+        toast({ title: "✅ Rascunho restaurado" });
       }
     } catch {
-      // ignore parse failures
+      sessionStorage.removeItem(key);
     }
   }, [productSlug, userId, setImageWithResolution, setOriginalImage, setScale, setPosition, setRotation, toast]);
 
