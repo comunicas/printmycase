@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { OnboardingStep } from "@/hooks/useOnboarding";
@@ -64,7 +64,11 @@ export function OnboardingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onSkip(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogTitle className="sr-only">{content.title}</DialogTitle>
+        <DialogDescription className="sr-only">
+          Tutorial de como usar o editor de capinhas
+        </DialogDescription>
         {/* Progress dots */}
         <div className="flex items-center justify-center gap-2 pt-2">
           {Array.from({ length: totalSteps }).map((_, i) => (
