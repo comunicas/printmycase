@@ -34,8 +34,14 @@ const ProductThumb = ({ src, alt }: { src: string; alt: string }) => {
 const SelectModel = () => {
   const navigate = useNavigate();
   const { products, loading } = useProducts();
-  const [selectedBrand, setSelectedBrand] = useState<string>("");
+  const [selectedBrand, setSelectedBrand] = useState<string>("Todos");
   const [search, setSearch] = useState("");
+  const BEST_SELLER_SLUGS = new Set([
+    "iphone-16-pro-max",
+    "iphone-15",
+    "galaxy-s25",
+    "galaxy-a55",
+  ]);
 
   const brandCounts = useMemo(() => {
     const map = new Map<string, number>();
@@ -60,12 +66,12 @@ const SelectModel = () => {
   }, [brandCounts]);
 
   useEffect(() => {
-    if (!selectedBrand && brands.length > 0) setSelectedBrand(brands[0]);
+    if (!selectedBrand && brands.length > 0) setSelectedBrand("Todos");
   }, [brands, selectedBrand]);
 
   const filtered = useMemo(() => {
     let list = products;
-    if (selectedBrand) {
+    if (selectedBrand && selectedBrand !== "Todos") {
       list = list.filter((p) => extractBrand(p.name) === selectedBrand);
     }
     if (search.trim()) {
@@ -147,8 +153,8 @@ const SelectModel = () => {
         {/* Brand filters */}
         <div className="relative mb-3">
           <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {brands.map((brand) => {
-              const count = brandCounts.get(brand) || 0;
+            {["Todos", ...brands].map((brand) => {
+              const count = brand === "Todos" ? products.length : (brandCounts.get(brand) || 0);
               const isActive = selectedBrand === brand;
               return (
                 <Button
@@ -209,6 +215,7 @@ const SelectModel = () => {
             {filtered.map((product, i) => {
               const thumb = product.device_image || product.images?.[0];
               const displayName = product.name.replace(/^Capa\s+/i, "");
+              const isBestSeller = BEST_SELLER_SLUGS.has(product.slug);
               return (
                 <button
                   key={product.id}
@@ -216,6 +223,12 @@ const SelectModel = () => {
                   className="group flex flex-col items-center gap-2 rounded-xl border bg-card p-3 hover:border-primary/50 hover:shadow-md transition-all duration-200 text-left animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
                   style={{ animationDelay: `${i * 40}ms`, animationDuration: "350ms" }}
                 >
+                  <div className="relative w-full">
+                    {isBestSeller && (
+                      <span className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                        + pedido
+                      </span>
+                    )}
                   {thumb ? (
                     <ProductThumb src={thumb} alt={product.name} />
                   ) : (
@@ -223,6 +236,7 @@ const SelectModel = () => {
                       Sem imagem
                     </div>
                   )}
+                  </div>
                   <div className="w-full space-y-0.5">
                     <p className="text-sm font-medium text-foreground leading-tight line-clamp-2">{displayName}</p>
                     <p className="text-xs text-muted-foreground">
