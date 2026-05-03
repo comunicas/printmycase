@@ -9,6 +9,28 @@ import { ArrowLeft, Search, SearchX, X } from "lucide-react";
 import { setPageSeo, SITE_URL } from "@/lib/seo";
 import { getOptimizedUrl } from "@/lib/image-utils";
 
+const ProductThumb = ({ src, alt }: { src: string; alt: string }) => {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="relative w-full aspect-square">
+      {!loaded && <div className="absolute inset-0 rounded-lg bg-muted animate-pulse" aria-hidden />}
+      <img
+        src={getOptimizedUrl(src, 240)}
+        srcSet={`${getOptimizedUrl(src, 160)} 160w, ${getOptimizedUrl(src, 320)} 320w`}
+        sizes="(max-width: 640px) 33vw, 200px"
+        alt={alt}
+        width={300}
+        height={300}
+        className={`w-full h-full object-contain rounded-lg bg-muted/30 group-hover:scale-105 transition-all duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        onError={(e) => { e.currentTarget.style.display = "none"; setLoaded(true); }}
+      />
+    </div>
+  );
+};
+
 const SelectModel = () => {
   const navigate = useNavigate();
   const { products, loading } = useProducts();
@@ -124,7 +146,7 @@ const SelectModel = () => {
 
         {/* Brand filters */}
         <div className="relative mb-3">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {brands.map((brand) => {
               const count = brandCounts.get(brand) || 0;
               const isActive = selectedBrand === brand;
@@ -169,12 +191,18 @@ const SelectModel = () => {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
-            <SearchX className="h-10 w-10" />
-            <p className="text-sm font-medium">Nenhum modelo encontrado</p>
-            <Button size="sm" variant="outline" onClick={clearFilters}>
-              Limpar filtros
-            </Button>
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Search className="w-12 h-12 text-muted-foreground/40" />
+            <p className="text-lg font-medium text-foreground">Modelo não encontrado</p>
+            <p className="text-sm text-muted-foreground">
+              Tente buscar por outro nome ou{" "}
+              <button
+                onClick={() => setSearch("")}
+                className="text-primary underline underline-offset-2"
+              >
+                ver todos os modelos
+              </button>
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -189,18 +217,7 @@ const SelectModel = () => {
                   style={{ animationDelay: `${i * 40}ms`, animationDuration: "350ms" }}
                 >
                   {thumb ? (
-                    <img
-                      src={getOptimizedUrl(thumb, 240)}
-                      srcSet={`${getOptimizedUrl(thumb, 160)} 160w, ${getOptimizedUrl(thumb, 320)} 320w`}
-                      sizes="(max-width: 640px) 33vw, 200px"
-                      alt={product.name}
-                      width={300}
-                      height={300}
-                      className="w-full aspect-square object-contain rounded-lg bg-muted/30 group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
+                    <ProductThumb src={thumb} alt={product.name} />
                   ) : (
                     <div className="w-full aspect-square rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground text-xs">
                       Sem imagem
