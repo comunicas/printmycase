@@ -151,8 +151,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    console.error("[verify-coin] Error:", err.message, err.stack);
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("[verify-coin] Error:", err?.message, err?.stack);
+    return new Response(JSON.stringify({ error: "An error occurred. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
