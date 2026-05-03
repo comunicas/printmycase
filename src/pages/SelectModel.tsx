@@ -9,6 +9,28 @@ import { ArrowLeft, Search, SearchX, X } from "lucide-react";
 import { setPageSeo, SITE_URL } from "@/lib/seo";
 import { getOptimizedUrl } from "@/lib/image-utils";
 
+const ProductThumb = ({ src, alt }: { src: string; alt: string }) => {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="relative w-full aspect-square">
+      {!loaded && <div className="absolute inset-0 rounded-lg bg-muted animate-pulse" aria-hidden />}
+      <img
+        src={getOptimizedUrl(src, 240)}
+        srcSet={`${getOptimizedUrl(src, 160)} 160w, ${getOptimizedUrl(src, 320)} 320w`}
+        sizes="(max-width: 640px) 33vw, 200px"
+        alt={alt}
+        width={300}
+        height={300}
+        className={`w-full h-full object-contain rounded-lg bg-muted/30 group-hover:scale-105 transition-all duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        onError={(e) => { e.currentTarget.style.display = "none"; setLoaded(true); }}
+      />
+    </div>
+  );
+};
+
 const SelectModel = () => {
   const navigate = useNavigate();
   const { products, loading } = useProducts();
