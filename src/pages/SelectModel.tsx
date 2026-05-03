@@ -34,8 +34,14 @@ const ProductThumb = ({ src, alt }: { src: string; alt: string }) => {
 const SelectModel = () => {
   const navigate = useNavigate();
   const { products, loading } = useProducts();
-  const [selectedBrand, setSelectedBrand] = useState<string>("");
+  const [selectedBrand, setSelectedBrand] = useState<string>("Todos");
   const [search, setSearch] = useState("");
+  const BEST_SELLER_SLUGS = new Set([
+    "iphone-16-pro-max",
+    "iphone-15",
+    "galaxy-s25",
+    "galaxy-a55",
+  ]);
 
   const brandCounts = useMemo(() => {
     const map = new Map<string, number>();
