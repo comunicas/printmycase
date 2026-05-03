@@ -47,12 +47,12 @@ export function useProduct(slug: string | undefined) {
   return { product, loading };
 }
 
-function mapRow(row: ProductRow): Product {
+function mapRow(row: Partial<ProductRow> & { id: string; slug: string; name: string; price_cents: number }): Product {
   return {
     id: row.id,
     slug: row.slug,
     name: row.name,
-    description: row.description,
+    description: row.description ?? null,
     price_cents: row.price_cents,
     images: row.images ?? [],
     colors: (row.colors as unknown as Product["colors"]) ?? [],
@@ -60,10 +60,10 @@ function mapRow(row: ProductRow): Product {
     rating: Number(row.rating) || 0,
     review_count: row.review_count ?? 0,
     active: row.active ?? true,
-    stripe_price_id: row.stripe_price_id,
-    stripe_product_id: row.stripe_product_id,
+    stripe_price_id: row.stripe_price_id ?? null,
+    stripe_product_id: row.stripe_product_id ?? null,
     device_image: row.device_image ?? null,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
+    created_at: row.created_at ?? null,
+    updated_at: row.updated_at ?? null,
   };
 }
