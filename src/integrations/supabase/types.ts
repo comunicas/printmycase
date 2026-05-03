@@ -697,7 +697,7 @@ export type Database = {
           model_name: string
           notes: string | null
           phone: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -705,7 +705,7 @@ export type Database = {
           model_name: string
           notes?: string | null
           phone: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -713,7 +713,7 @@ export type Database = {
           model_name?: string
           notes?: string | null
           phone?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1161,6 +1161,57 @@ export type Database = {
           id: string | null
           image_url: string | null
           public_image_url: string | null
+        }
+        Relationships: []
+      }
+      public_products: {
+        Row: {
+          active: boolean | null
+          colors: Json | null
+          created_at: string | null
+          description: string | null
+          device_image: string | null
+          id: string | null
+          images: string[] | null
+          name: string | null
+          price_cents: number | null
+          rating: number | null
+          review_count: number | null
+          slug: string | null
+          specs: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          colors?: Json | null
+          created_at?: string | null
+          description?: string | null
+          device_image?: string | null
+          id?: string | null
+          images?: string[] | null
+          name?: string | null
+          price_cents?: number | null
+          rating?: number | null
+          review_count?: number | null
+          slug?: string | null
+          specs?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          colors?: Json | null
+          created_at?: string | null
+          description?: string | null
+          device_image?: string | null
+          id?: string | null
+          images?: string[] | null
+          name?: string | null
+          price_cents?: number | null
+          rating?: number | null
+          review_count?: number | null
+          slug?: string | null
+          specs?: Json | null
+          updated_at?: string | null
         }
         Relationships: []
       }
