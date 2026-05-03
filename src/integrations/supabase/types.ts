@@ -1129,6 +1129,30 @@ export type Database = {
       }
     }
     Views: {
+      public_ai_generated_images: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          image_size: string | null
+          prompt: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          image_size?: string | null
+          prompt?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          image_size?: string | null
+          prompt?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       public_ai_generations: {
         Row: {
           created_at: string | null
