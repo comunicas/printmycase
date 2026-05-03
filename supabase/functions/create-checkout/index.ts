@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub as string;
-    const { product_id, design_id, customization_data, raw_image_url, original_image_url, edited_image_url, shipping_cents, address_id, address_inline, save_address, initiate_checkout_event_id } = await req.json();
+    const { product_id, design_id, customization_data, raw_image_url, original_image_url, edited_image_url, shipping_cents, address_id, address_inline, save_address, initiate_checkout_event_id, fbp, fbc } = await req.json();
 
     const isCollectionPurchase = !!design_id;
 
