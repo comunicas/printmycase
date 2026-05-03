@@ -44,6 +44,28 @@ const Customize = () => {
     }
   };
 
+  const handleScaleWithOnboarding = (value: number) => {
+    c.setScale(value);
+    if (currentStep === "position") {
+      advanceStep();
+    }
+  };
+
+  const handlePositionWithOnboarding: typeof c.setPosition = (value) => {
+    c.setPosition(value);
+    if (currentStep === "position") {
+      advanceStep();
+    }
+  };
+
+  const handleFilterClickWithOnboarding: typeof c.handleFilterClick = (...args) => {
+    const result = c.handleFilterClick(...args);
+    if (currentStep === "filter") {
+      advanceStep();
+    }
+    return result;
+  };
+
   useEffect(() => {
     if (!c.product) return;
     const productName = c.product.name;
