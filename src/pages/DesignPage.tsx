@@ -11,7 +11,7 @@ import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer, defaultAggregateRating } from "@/lib/merchant-jsonld";
 import { setPageSeo, setMeta, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import { type ShippingResult } from "@/lib/shipping";
-import { generateEventId, pixelEvent, pixelTrackInitiateCheckout } from "@/lib/meta-pixel";
+import { generateEventId, pixelEvent, pixelTrackInitiateCheckout, getMetaCookies } from "@/lib/meta-pixel";
 import { clarityEvent } from "@/lib/clarity";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
