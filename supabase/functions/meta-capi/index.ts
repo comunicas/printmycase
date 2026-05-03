@@ -142,8 +142,8 @@ Deno.serve(async (req) => {
 
     if (!res.ok) {
       console.error("Meta CAPI error:", result);
-      return new Response(JSON.stringify({ error: "Meta API error", details: result }), {
-        status: res.status,
+      return new Response(JSON.stringify({ error: "Upstream error" }), {
+        status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
