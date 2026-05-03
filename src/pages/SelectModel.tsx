@@ -215,6 +215,7 @@ const SelectModel = () => {
             {filtered.map((product, i) => {
               const thumb = product.device_image || product.images?.[0];
               const displayName = product.name.replace(/^Capa\s+/i, "");
+              const isBestSeller = BEST_SELLER_SLUGS.has(product.slug);
               return (
                 <button
                   key={product.id}
@@ -222,6 +223,12 @@ const SelectModel = () => {
                   className="group flex flex-col items-center gap-2 rounded-xl border bg-card p-3 hover:border-primary/50 hover:shadow-md transition-all duration-200 text-left animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
                   style={{ animationDelay: `${i * 40}ms`, animationDuration: "350ms" }}
                 >
+                  <div className="relative w-full">
+                    {isBestSeller && (
+                      <span className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                        + pedido
+                      </span>
+                    )}
                   {thumb ? (
                     <ProductThumb src={thumb} alt={product.name} />
                   ) : (
