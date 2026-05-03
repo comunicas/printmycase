@@ -15,7 +15,7 @@ import AddressForm, { type AddressData } from "@/components/checkout/AddressForm
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentBadges from "@/components/PaymentBadges";
 import { clarityEvent } from "@/lib/clarity";
-import { generateEventId, pixelTrackInitiateCheckout } from "@/lib/meta-pixel";
+import { generateEventId, pixelTrackInitiateCheckout, getMetaCookies } from "@/lib/meta-pixel";
 import { parsePendingCustomizationData } from "@/types/customization";
 import LoginDialog from "@/components/customize/LoginDialog";
 import { ProfileCompletion } from "@/components/checkout/ProfileCompletion";
