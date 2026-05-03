@@ -88,19 +88,22 @@ async function resolveRequestContext(
     global: { headers: { Authorization: `Bearer ${token}` } },
   })
   const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token)
-  const fallbackClaims = parseJwtClaims(token)
-  const resolvedClaims = claimsData?.claims ?? fallbackClaims
 
-  if (claimsError && fallbackClaims?.role !== 'service_role') {
+  // Only trust cryptographically verified claims. Never accept unsigned/forged
+  // JWTs claiming `role: service_role` — service_role is granted only when
+  // the caller presents the actual service role key (handled above).
+  if (claimsError || !claimsData?.claims) {
     throw new Error('UNAUTHORIZED')
   }
 
-  if (resolvedClaims?.role === 'service_role') {
+  const verifiedClaims = claimsData.claims
+
+  if (verifiedClaims.role === 'service_role') {
     return { mode: 'service_role' as const }
   }
 
-  const userId = resolvedClaims?.sub
-  const userEmail = resolvedClaims?.email
+  const userId = verifiedClaims.sub
+  const userEmail = verifiedClaims.email
 
   if (typeof userId !== 'string' || typeof userEmail !== 'string') {
     throw new Error('UNAUTHORIZED')
