@@ -153,8 +153,8 @@ const SelectModel = () => {
         {/* Brand filters */}
         <div className="relative mb-3">
           <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {brands.map((brand) => {
-              const count = brandCounts.get(brand) || 0;
+            {["Todos", ...brands].map((brand) => {
+              const count = brand === "Todos" ? products.length : (brandCounts.get(brand) || 0);
               const isActive = selectedBrand === brand;
               return (
                 <Button
