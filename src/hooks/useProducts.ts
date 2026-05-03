@@ -11,15 +11,14 @@ export function useProducts(limit?: number) {
 
   useEffect(() => {
     let query = supabase
-      .from("products")
+      .from("public_products" as never)
       .select("*")
-      .eq("active", true)
       .order("updated_at", { ascending: false });
 
     if (limit) query = query.limit(limit);
 
     query.then(({ data }) => {
-      setProducts(data?.map(mapRow) ?? []);
+      setProducts((data as ProductRow[] | null)?.map(mapRow) ?? []);
       setLoading(false);
     });
   }, [limit]);
@@ -35,13 +34,12 @@ export function useProduct(slug: string | undefined) {
     if (!slug) { setLoading(false); return; }
 
     supabase
-      .from("products")
+      .from("public_products" as never)
       .select("*")
       .eq("slug", slug)
-      .eq("active", true)
       .maybeSingle()
       .then(({ data }) => {
-        setProduct(data ? mapRow(data) : null);
+        setProduct(data ? mapRow(data as ProductRow) : null);
         setLoading(false);
       });
   }, [slug]);
