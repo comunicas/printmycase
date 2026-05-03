@@ -17,6 +17,8 @@ import MobileTabBar, { type MobileTab } from "@/components/customize/MobileTabBa
 import MobileTabOverlay from "@/components/customize/MobileTabOverlay";
 import FilterHistoryBar from "@/components/customize/FilterHistoryBar";
 import ProductHighlightsList from "@/components/customize/ProductHighlightsList";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { OnboardingModal } from "@/components/OnboardingModal";
 
 const Customize = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +28,21 @@ const Customize = () => {
   const [mobileTab, setMobileTab] = useState<MobileTab | null>(null);
   const [showSafeZone, setShowSafeZone] = useState(true);
   const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
+  const {
+    currentStep,
+    isModalOpen,
+    stepIndex,
+    totalSteps,
+    advanceStep,
+    skipOnboarding,
+  } = useOnboarding();
+
+  const handleImageUploadWithOnboarding = (file: File) => {
+    c.handleImageUpload(file);
+    if (currentStep === "upload") {
+      advanceStep();
+    }
+  };
 
   useEffect(() => {
     if (!c.product) return;
@@ -45,6 +62,14 @@ const Customize = () => {
 
   return (
     <div className="h-dvh w-full bg-background flex flex-col overflow-hidden">
+      <OnboardingModal
+        isOpen={isModalOpen}
+        step={currentStep}
+        stepIndex={stepIndex}
+        totalSteps={totalSteps}
+        onNext={advanceStep}
+        onSkip={skipOnboarding}
+      />
       <div className="relative z-50">
         <CustomizeHeader
           productName={c.productName}
@@ -68,7 +93,7 @@ const Customize = () => {
             showSafeZone={showSafeZone}
             onPositionChange={c.setPosition}
             onScaleChange={c.setScale}
-            onImageUpload={c.handleImageUpload}
+            onImageUpload={handleImageUploadWithOnboarding}
             imageResolution={c.imageResolution}
             isProcessing={c.isProcessing}
             uploadState={c.uploadState}
