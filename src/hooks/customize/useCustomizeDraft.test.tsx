@@ -69,7 +69,7 @@ describe("useCustomizeDraft", () => {
       expect(result.current.state.rotation).toBe(90);
     });
 
-    expect(toast).toHaveBeenCalledWith({ title: "Rascunho restaurado" });
+    expect(toast).toHaveBeenCalledWith({ title: "✅ Rascunho restaurado" });
     expect(fetchPending).not.toHaveBeenCalled();
   });
 
