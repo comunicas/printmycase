@@ -1,35 +1,27 @@
 ## Problema
 
-A página `/customize` (Selecionar modelo) e o seletor de modelo dentro do editor mostram "Nenhum modelo encontrado" porque a query `GET public_products` retorna array vazio para usuários anônimos.
+Na Home, a query `GET public_ai_generations` retorna `[]` para visitantes anônimos, mesmo com 28 gerações marcadas como `public=true` no banco.
 
-A view `public_products` é `security_invoker=true` — herda o RLS de `products`. Hoje `products` só tem políticas para `authenticated` + `has_role(admin)`. Não há política pública. Logo, anon → 0 linhas.
+Causa: a tabela `user_ai_generations` tem apenas uma policy RESTRICTIVA (`Restrict select to owner, admin or public`) e nenhuma policy PERMISSIVA para `anon`. No Postgres, RLS exige pelo menos uma PERMISSIVE que case — sem ela, a RESTRICTIVE não é suficiente e o resultado é zero linhas. A view `public_ai_generations` é `security_invoker`, então herda esse comportamento.
 
-Confirmado no banco:
-- `public_products` view contém `WHERE active = true` ✓
-- `products` tem 73 linhas ativas ✓
-- Políticas em `products`: apenas 4, todas `{authenticated}` + `has_role admin` ✗
+A regressão é gêmea da que afetou `products` — provavelmente do mesmo endurecimento recente de RLS.
 
 ## Correção
 
-Migração SQL adicionando política pública de leitura para produtos ativos:
+Adicionar uma policy PERMISSIVE de SELECT para `anon` e `authenticated` cobrindo apenas registros públicos. A RESTRICTIVE existente continua válida e mantém o convite a usuários autenticados verem somente o que é deles + público + admin.
 
 ```sql
-CREATE POLICY "Anyone can view active products"
-ON public.products
+CREATE POLICY "Anyone can view public generations"
+ON public.user_ai_generations
 FOR SELECT
 TO anon, authenticated
-USING (active = true);
+USING (public = true);
 ```
 
-Isto:
-- Mantém a política de admin para ver inativos (já existe e continua valendo via OR de policies do mesmo comando).
-- Restaura o catálogo na home, em `/customize`, no `ModelSelector` e em todas as páginas SEO (`BrandPage`, `BrandModelPage`, etc.) que dependem da mesma view.
-- Não expõe nenhum dado novo: a view já filtra `active=true` e os mesmos campos já eram públicos antes da regressão.
+Efeito: a vitrine de IA na Home volta a renderizar; o resto continua protegido (gerações privadas continuam só para o dono ou admin, garantido pela policy RESTRICTIVE).
 
-## Verificação pós-deploy
+## Verificação
 
-1. Recarregar `/customize` em aba anônima → grid com 73 modelos.
-2. `/customize/iphone-16-pro-max` → seletor de modelo lista todas as marcas.
-3. Home → carrosséis e bestsellers voltam a renderizar.
-
-Nenhuma alteração de código frontend é necessária — é exclusivamente uma migração de banco.
+1. Recarregar a Home em aba anônima → bloco de gerações IA com 8 imagens.
+2. `GET /rest/v1/public_ai_generations` retorna lista não vazia.
+3. Logado como usuário não-admin: não vê gerações de outros usuários (RESTRICTIVE garante).
