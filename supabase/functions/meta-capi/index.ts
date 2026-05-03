@@ -51,6 +51,38 @@ Deno.serve(async (req) => {
       custom_data,
     } = await req.json();
 
+    // Validate event_name against allowlist (prevents arbitrary event injection)
+    const ALLOWED_EVENTS = new Set([
+      "PageView",
+      "ViewContent",
+      "AddToCart",
+      "InitiateCheckout",
+      "AddPaymentInfo",
+      "Purchase",
+      "Lead",
+      "CompleteRegistration",
+      "Search",
+    ]);
+    if (typeof event_name !== "string" || !ALLOWED_EVENTS.has(event_name)) {
+      return new Response(JSON.stringify({ error: "Invalid event_name" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Cap custom_data.value to a reasonable upper bound to prevent
+    // attribution/metric corruption via inflated revenue values.
+    const MAX_VALUE = 100000; // BRL
+    if (custom_data && typeof custom_data === "object") {
+      const v = (custom_data as Record<string, unknown>).value;
+      if (typeof v === "number" && (v < 0 || v > MAX_VALUE || !Number.isFinite(v))) {
+        return new Response(JSON.stringify({ error: "Invalid custom_data.value" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Fields that Meta requires SHA-256 hashed (lowercased + trimmed before hashing)
     const HASHED_FIELDS = ["em", "fn", "ln", "ph", "ct", "st", "zp", "db", "external_id"] as const;
     // Fields sent in plain text
