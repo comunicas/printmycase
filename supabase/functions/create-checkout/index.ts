@@ -15,6 +15,56 @@ const DEFAULT_ORIGIN = "https://studio.printmycase.com.br";
 const SUCCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const CHECKOUT_SESSION_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
 
+// Server-side shipping calculator. Mirrors src/lib/shipping.ts. Currently all allowed regions are free.
+const ZIP_PREFIX_TO_STATE: Record<string, string> = {
+  "01":"SP","02":"SP","03":"SP","04":"SP","05":"SP","06":"SP","07":"SP","08":"SP","09":"SP",
+  "10":"SP","11":"SP","12":"SP","13":"SP","14":"SP","15":"SP","16":"SP","17":"SP","18":"SP","19":"SP",
+  "20":"RJ","21":"RJ","22":"RJ","23":"RJ","24":"RJ","25":"RJ","26":"RJ","27":"RJ","28":"RJ",
+  "29":"ES",
+  "30":"MG","31":"MG","32":"MG","33":"MG","34":"MG","35":"MG","36":"MG","37":"MG","38":"MG","39":"MG",
+  "40":"BA","41":"BA","42":"BA","43":"BA","44":"BA","45":"BA","46":"BA","47":"BA","48":"BA",
+  "49":"SE",
+  "50":"PE","51":"PE","52":"PE","53":"PE","54":"PE","55":"PE","56":"PE",
+  "57":"AL","58":"PB","59":"RN",
+  "60":"CE","61":"CE","62":"CE","63":"CE",
+  "64":"PI","65":"MA",
+  "66":"PA","67":"PA","68":"PA","69":"AM",
+  "70":"DF","71":"DF","72":"DF","73":"DF","74":"GO","75":"GO","76":"GO","77":"TO","78":"MT","79":"MS",
+  "80":"PR","81":"PR","82":"PR","83":"PR","84":"PR","85":"PR","86":"PR","87":"PR",
+  "88":"SC","89":"SC",
+  "90":"RS","91":"RS","92":"RS","93":"RS","94":"RS","95":"RS","96":"RS","97":"RS","98":"RS","99":"RS",
+};
+const ADDITIONAL_3 = [
+  { prefix: "768", state: "RO" }, { prefix: "769", state: "RO" },
+  { prefix: "693", state: "RR" }, { prefix: "690", state: "AM" }, { prefix: "691", state: "AM" },
+  { prefix: "698", state: "AC" }, { prefix: "699", state: "AC" }, { prefix: "689", state: "AP" },
+];
+const STATE_TO_REGION: Record<string, string> = {
+  SP:"Sudeste",RJ:"Sudeste",MG:"Sudeste",ES:"Sudeste",
+  PR:"Sul",SC:"Sul",RS:"Sul",
+  GO:"Centro-Oeste",MT:"Centro-Oeste",MS:"Centro-Oeste",DF:"Centro-Oeste",
+  BA:"Nordeste",SE:"Nordeste",AL:"Nordeste",PE:"Nordeste",PB:"Nordeste",RN:"Nordeste",CE:"Nordeste",PI:"Nordeste",MA:"Nordeste",
+  AM:"Norte",PA:"Norte",AC:"Norte",RO:"Norte",RR:"Norte",AP:"Norte",TO:"Norte",
+};
+const REGION_PRICE_CENTS: Record<string, number> = {
+  "Sudeste": 0, "Sul": 0, "Centro-Oeste": 0, "Nordeste": 0, "Norte": 0,
+};
+function computeShippingCents(zip: string): number | null {
+  const clean = (zip || "").replace(/\D/g, "");
+  if (clean.length < 2) return null;
+  const three = clean.substring(0, 3);
+  let state: string | undefined;
+  for (const m of ADDITIONAL_3) {
+    if (three === m.prefix) { state = m.state; break; }
+  }
+  if (!state) state = ZIP_PREFIX_TO_STATE[clean.substring(0, 2)];
+  if (!state) return null;
+  const region = STATE_TO_REGION[state];
+  if (!region) return null;
+  const price = REGION_PRICE_CENTS[region];
+  return typeof price === "number" ? price : null;
+}
+
 function b64urlEncode(input: Uint8Array): string {
   return btoa(String.fromCharCode(...input)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
