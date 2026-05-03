@@ -29,6 +29,7 @@ const Customize = () => {
   const [showSafeZone, setShowSafeZone] = useState(true);
   const [showIntro, setShowIntro] = useState(() => !localStorage.getItem("customize_intro_seen"));
   const {
+    isFirstVisit,
     currentStep,
     isModalOpen,
     stepIndex,
