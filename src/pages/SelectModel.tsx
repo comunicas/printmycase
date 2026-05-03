@@ -169,12 +169,18 @@ const SelectModel = () => {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
-            <SearchX className="h-10 w-10" />
-            <p className="text-sm font-medium">Nenhum modelo encontrado</p>
-            <Button size="sm" variant="outline" onClick={clearFilters}>
-              Limpar filtros
-            </Button>
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Search className="w-12 h-12 text-muted-foreground/40" />
+            <p className="text-lg font-medium text-foreground">Modelo não encontrado</p>
+            <p className="text-sm text-muted-foreground">
+              Tente buscar por outro nome ou{" "}
+              <button
+                onClick={() => setSearch("")}
+                className="text-primary underline underline-offset-2"
+              >
+                ver todos os modelos
+              </button>
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
