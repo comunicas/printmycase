@@ -113,8 +113,8 @@ const Customize = () => {
             rotation={c.rotation}
             deviceSlug={c.product?.slug}
             showSafeZone={showSafeZone}
-            onPositionChange={c.setPosition}
-            onScaleChange={c.setScale}
+            onPositionChange={handlePositionWithOnboarding}
+            onScaleChange={handleScaleWithOnboarding}
             onImageUpload={handleImageUploadWithOnboarding}
             imageResolution={c.imageResolution}
             isProcessing={c.isProcessing}
@@ -154,7 +154,7 @@ const Customize = () => {
             scale={c.scale}
             rotation={c.rotation}
             showSafeZone={showSafeZone}
-            onScaleChange={c.setScale}
+            onScaleChange={handleScaleWithOnboarding}
             onRotate={c.handleRotate}
             onExpand={c.handleExpand}
             onShowSafeZoneChange={setShowSafeZone}
@@ -164,7 +164,7 @@ const Customize = () => {
             applyingFilterId={c.applyingFilterId}
             filterCost={c.aiFilterCost}
             filterHistory={c.filterHistory}
-            onFilterClick={c.handleFilterClick}
+            onFilterClick={handleFilterClickWithOnboarding}
             onCompareStart={c.handleCompareStart}
             onCompareEnd={c.handleCompareEnd}
             onRemoveFilter={c.handleRemoveFilter}
@@ -201,7 +201,7 @@ const Customize = () => {
           scale={c.scale}
           rotation={c.rotation}
           showSafeZone={showSafeZone}
-          onScaleChange={c.setScale}
+          onScaleChange={handleScaleWithOnboarding}
           onRotate={c.handleRotate}
           onExpand={c.handleExpand}
           onShowSafeZoneChange={setShowSafeZone}
@@ -211,7 +211,7 @@ const Customize = () => {
           applyingFilterId={c.applyingFilterId}
           filterCost={c.aiFilterCost}
           filterHistory={c.filterHistory}
-          onFilterClick={c.handleFilterClick}
+          onFilterClick={handleFilterClickWithOnboarding}
           onCompareStart={c.handleCompareStart}
           onCompareEnd={c.handleCompareEnd}
           onRemoveFilter={c.handleRemoveFilter}
