@@ -19,10 +19,10 @@ export async function resolveProductInfo(
   // Query slugs and UUIDs separately to avoid filter injection, then merge
   const [slugResult, uuidResult] = await Promise.all([
     slugs.length > 0
-      ? supabase.from("products").select("id, slug, name, images, device_image").in("slug", slugs)
+      ? supabase.from("public_products" as never).select("id, slug, name, images, device_image").in("slug", slugs)
       : Promise.resolve({ data: [] as { id: string; slug: string; name: string; images: string[] | null; device_image: string | null }[] }),
     uuids.length > 0
-      ? supabase.from("products").select("id, slug, name, images, device_image").in("id", uuids)
+      ? supabase.from("public_products" as never).select("id, slug, name, images, device_image").in("id", uuids)
       : Promise.resolve({ data: [] as { id: string; slug: string; name: string; images: string[] | null; device_image: string | null }[] }),
   ]);
 
