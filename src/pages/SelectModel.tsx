@@ -66,12 +66,12 @@ const SelectModel = () => {
   }, [brandCounts]);
 
   useEffect(() => {
-    if (!selectedBrand && brands.length > 0) setSelectedBrand(brands[0]);
+    if (!selectedBrand && brands.length > 0) setSelectedBrand("Todos");
   }, [brands, selectedBrand]);
 
   const filtered = useMemo(() => {
     let list = products;
-    if (selectedBrand) {
+    if (selectedBrand && selectedBrand !== "Todos") {
       list = list.filter((p) => extractBrand(p.name) === selectedBrand);
     }
     if (search.trim()) {
