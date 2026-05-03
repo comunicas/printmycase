@@ -1186,6 +1186,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      sync_cron_secret_vault: { Args: { _value: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"

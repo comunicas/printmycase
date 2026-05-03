@@ -11,7 +11,7 @@ import { formatPrice } from "@/lib/types";
 import { BRAND, merchantOffer, defaultAggregateRating } from "@/lib/merchant-jsonld";
 import { setPageSeo, setMeta, SITE_URL, breadcrumbJsonLd } from "@/lib/seo";
 import { type ShippingResult } from "@/lib/shipping";
-import { generateEventId, pixelEvent, pixelTrackInitiateCheckout } from "@/lib/meta-pixel";
+import { generateEventId, pixelEvent, pixelTrackInitiateCheckout, getMetaCookies } from "@/lib/meta-pixel";
 import { clarityEvent } from "@/lib/clarity";
 import AddressForm, { type AddressData } from "@/components/checkout/AddressForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
@@ -89,6 +89,7 @@ const DesignPage = () => {
           design_id: design.id,
           shipping_cents: shipping.priceCents,
           initiate_checkout_event_id: initiateCheckoutEventId.current,
+          ...getMetaCookies(),
           address_id: addressData.selectedAddressId,
           address_inline: addressData.selectedAddressId ? undefined : {
             street: addressData.street,

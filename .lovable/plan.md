@@ -1,51 +1,62 @@
-## Situação
+## Objetivo
+Enriquecer o evento `AddToCart` enviado via Meta CAPI com mais parâmetros de user data para melhorar a qualidade da correspondência (EMQ).
 
-Você relatou que **todas as imagens da home e cards de produtos** aparecem como **espaço em branco**, e isso começou **depois das últimas mudanças** (que foram só edições de texto no Hero).
+## Parâmetros recomendados pelo Meta — disponibilidade no nosso projeto
 
-## O que já investiguei
+| Parâmetro | Fonte no projeto | Vamos enviar? |
+|---|---|---|
+| `em` (email) | `auth.users.email` (já temos via JWT claims) | Sim |
+| `external_id` | `auth.users.id` (UUID) | Sim |
+| `fn` (first name) | `profiles.full_name` (split) | Sim |
+| `ln` (last name) | `profiles.full_name` (split) | Sim |
+| `ph` (phone) | `profiles.phone` | Sim (já existia, vamos garantir) |
+| `zp` (zip) | `addresses.zip_code` (endereço default ou mais recente) | Sim |
+| `ct` (city) | `addresses.city` | Sim |
+| `st` (state) | `addresses.state` | Sim |
+| `client_ip_address` | header da request | Sim (já existe) |
+| `client_user_agent` | navigator.userAgent | Sim (já existe) |
+| `fbp` / `fbc` | cookies `_fbp` / `_fbc` | Sim (novo) |
+| `db` (dob) | não armazenado | Não enviar |
+| `fb_login_id` | não usamos Facebook Login | Não enviar |
 
-Tenho evidências contraditórias:
+## Mudanças
 
-- ✅ Replay mostra o **carrossel do Hero rodando normal** (alternando entre Cyberpunk → Cartoon 3D → Artística)
-- ✅ Requisições de imagem do Supabase Storage retornam **HTTP 200** (testei via curl)
-- ✅ Queries de `products` e `collection_designs` retornam dados com `image_url` válidos
-- ✅ Sem erros JS no dev-server
-- ⚠️ Único erro de fetch: `public_ai_generations` (afeta só o mosaico de IA, não tudo)
-- ⚠️ Erro do Supabase Auth: `Lock broken by another request with the 'steal' option` — clássico de **múltiplas abas** do mesmo app abertas competindo pelo lock de auth
+### 1. `supabase/functions/meta-capi/index.ts`
+- Aceitar (e hashear) novos campos opcionais em `user_data`: `external_id`, `ln`, `ct`, `st`, `zp`, `db`, `fbp`, `fbc`.
+- Conforme spec do Meta: `em, fn, ln, ph, ct, st, zp, db, external_id` → SHA-256 lowercased/trimmed; `fbp`, `fbc`, `client_ip_address`, `client_user_agent` → enviados em texto puro.
+- Manter compatibilidade com chamadas existentes (todos os campos opcionais).
 
-Como você disse que requisições retornam 200 mas a tela está em branco, **o problema não é fetch — é renderização**. As causas mais prováveis nessa situação são cache do preview ou estado quebrado.
+### 2. Novo helper para enriquecer AddToCart no client
+`src/services/customize/ai.ts` — `invokeMetaCapiAddToCart`:
+- Receber `userId`.
+- Antes de chamar `meta-capi`, buscar em paralelo:
+  - `auth.getUser()` → email, id.
+  - `profiles` → `full_name`, `phone` (split full_name em fn/ln pela primeira espaço).
+  - `addresses` (do user, `order by created_at desc limit 1`) → `zip_code`, `city`, `state`.
+- Ler cookies `_fbp` e `_fbc` do `document.cookie`.
+- Enviar tudo como texto puro no `user_data`; o edge function hasheia.
 
-## Plano de ação
+### 3. `src/hooks/customize/useCustomizeTracking.ts`
+- Pegar `user` do `useAuth()` e passar `userId` ao `invokeMetaCapiAddToCart`.
+- Fallback: se não houver user logado, envia só `fbp`/`fbc` + UA/IP (como hoje).
 
-### Passo 1 — Validar visualmente no preview real (com browser tools)
+### 4. `supabase/functions/create-checkout/index.ts`
+- O `InitiateCheckout` lá dentro só envia `em`. Aplicar o mesmo enriquecimento server-side (já temos service role, podemos buscar profile + último address) e cookies `fbp`/`fbc` se vierem do client.
+- Aceitar `fbp`/`fbc` opcionais no body do `create-checkout` e repassar.
 
-Abrir o preview com a ferramenta de browser, tirar screenshot da home, e inspecionar o DOM para confirmar exatamente o que está em branco. Isso elimina ambiguidade — vou ver o mesmo que você está vendo.
+### 5. `supabase/functions/stripe-webhook/index.ts` (verificar)
+- Se enviar `Purchase` via CAPI, aplicar mesmo enriquecimento (vou inspecionar e ajustar se aplicável).
 
-### Passo 2 — Limpar cache do preview e forçar reload
+## Notas técnicas
+- Hash sempre lowercase + trim antes de SHA-256, exceto IP/UA/fbp/fbc.
+- Telefone: remover não-dígitos e prefixar `55` se não tiver código de país, antes de hashar (recomendação Meta para BR).
+- Nome: lowercase, sem acentos opcional — manteremos só lowercase+trim (suficiente).
+- Não logar PII em `console.log` (somente o nome do evento).
+- Sem mudanças de schema do banco.
 
-Se o screenshot confirmar imagens em branco, **a primeira ação** será verificar:
-- Se você tem **mais de uma aba do app aberta** (causa o erro do auth lock)
-- Se o problema persiste com hard reload (Ctrl+Shift+R)
-
-Se for só cache, resolve sem mudança de código.
-
-### Passo 3 — Corrigir o auth lock (se confirmar que é causa)
-
-O erro `Lock broken with 'steal' option` acontece quando o Supabase JS tenta renovar o token em uma aba enquanto outra também está tentando. Isso pode travar o `AuthContext` em loading e impedir componentes filhos de renderizar.
-
-**Mitigação:** ajustar `src/contexts/AuthContext.tsx` para não bloquear o render do app caso o lock falhe (renderizar com `user = null` em vez de ficar em loading infinito).
-
-### Passo 4 — Fallback do `AiCoinsSection`
-
-O `public_ai_generations query failed: Failed to fetch` indica que essa query especificamente está sendo bloqueada (provavelmente CORS no contexto do iframe do preview, mas funciona em produção). Como o componente já retorna `null` quando `images.length === 0`, **não causa tela branca** — só não aparece o mosaico de IA. Vou apenas silenciar o `console.error` para não poluir.
-
-## O que NÃO vou fazer ainda
-
-- Não vou reescrever `ProductCard`, `HeroPhoneCarousel`, ou `getOptimizedUrl` — o código deles está correto e os testes mostram que funcionam
-- Não vou desfazer as edições de texto recentes — elas não tocaram em nada de imagem
-
-## Pergunta importante antes de aprovar
-
-Se possível, faça um teste rápido: **abra https://studio.printmycase.com.br/ em uma aba anônima** (sem cache, sem login). Se as imagens aparecerem lá, o problema é 100% cache/multi-aba do preview e não precisa mudança de código.
-
-Aprove o plano para eu prosseguir com o diagnóstico via browser e aplicar as correções identificadas.
+## Entregável
+Após aprovar, eu:
+1. Atualizo `meta-capi` para suportar todos os campos.
+2. Atualizo client `invokeMetaCapiAddToCart` + hook para enriquecer.
+3. Atualizo `create-checkout` (InitiateCheckout) e, se aplicável, `stripe-webhook` (Purchase).
+4. Faço deploy das edge functions e valido com um AddToCart de teste vendo o EMQ no Events Manager.

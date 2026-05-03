@@ -51,18 +51,26 @@ Deno.serve(async (req) => {
       custom_data,
     } = await req.json();
 
-    // Hash user data fields as required by Meta
-    const hashedUserData: Record<string, string> = {};
-    if (user_data?.em) {
-      hashedUserData.em = await sha256Hash(user_data.em);
+    // Fields that Meta requires SHA-256 hashed (lowercased + trimmed before hashing)
+    const HASHED_FIELDS = ["em", "fn", "ln", "ph", "ct", "st", "zp", "db", "external_id"] as const;
+    // Fields sent in plain text
+    const PLAIN_FIELDS = ["fbp", "fbc"] as const;
+
+    const hashedUserData: Record<string, string | string[]> = {};
+    for (const f of HASHED_FIELDS) {
+      const v = user_data?.[f];
+      if (v === undefined || v === null || v === "") continue;
+      if (Array.isArray(v)) {
+        hashedUserData[f] = await Promise.all(v.filter(Boolean).map((x: string) => sha256Hash(String(x))));
+      } else {
+        hashedUserData[f] = await sha256Hash(String(v));
+      }
     }
-    if (user_data?.fn) {
-      hashedUserData.fn = await sha256Hash(user_data.fn);
+    for (const f of PLAIN_FIELDS) {
+      const v = user_data?.[f];
+      if (v) hashedUserData[f] = String(v);
     }
-    if (user_data?.ph) {
-      hashedUserData.ph = await sha256Hash(user_data.ph);
-    }
-    // client_ip_address: prefer provided value, otherwise extract from request headers
+    // client_ip_address: prefer provided, otherwise from request headers
     if (user_data?.client_ip_address) {
       hashedUserData.client_ip_address = user_data.client_ip_address;
     } else {
@@ -70,7 +78,6 @@ Deno.serve(async (req) => {
       const ip = forwarded ? forwarded.split(",")[0].trim() : req.headers.get("x-real-ip") || "0.0.0.0";
       hashedUserData.client_ip_address = ip;
     }
-    // client_user_agent: prefer provided value, otherwise extract from request
     if (user_data?.client_user_agent) {
       hashedUserData.client_user_agent = user_data.client_user_agent;
     } else {

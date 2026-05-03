@@ -8,6 +8,15 @@ export function generateEventId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+export function getMetaCookies(): { fbp: string | null; fbc: string | null } {
+  if (typeof document === "undefined") return { fbp: null, fbc: null };
+  const read = (name: string) => {
+    const m = document.cookie.match(new RegExp("(?:^|; )" + name.replace(/[.$?*|{}()[\]\\/+^]/g, "\\$&") + "=([^;]*)"));
+    return m ? decodeURIComponent(m[1]) : null;
+  };
+  return { fbp: read("_fbp"), fbc: read("_fbc") };
+}
+
 export function pixelEvent(name: string, params?: Record<string, unknown>, eventId?: string) {
   if (eventId) {
     window.fbq?.("track", name, params, { eventID: eventId });

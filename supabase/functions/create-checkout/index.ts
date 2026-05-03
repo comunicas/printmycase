@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub as string;
-    const { product_id, design_id, customization_data, raw_image_url, original_image_url, edited_image_url, shipping_cents, address_id, address_inline, save_address, initiate_checkout_event_id } = await req.json();
+    const { product_id, design_id, customization_data, raw_image_url, original_image_url, edited_image_url, shipping_cents, address_id, address_inline, save_address, initiate_checkout_event_id, fbp, fbc } = await req.json();
 
     const isCollectionPurchase = !!design_id;
 
@@ -316,23 +316,38 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fire InitiateCheckout CAPI event
+    // Fire InitiateCheckout CAPI event with enriched user_data
     if (initiate_checkout_event_id) {
-      const userEmail = claimsData.claims.email as string | undefined;
-      const capiBody: Record<string, unknown> = {
-        event_name: "InitiateCheckout",
-        event_id: initiate_checkout_event_id,
-        event_time: Math.floor(Date.now() / 1000),
-        event_source_url: origin,
-        user_data: { ...(userEmail ? { em: userEmail } : {}) },
-        custom_data: { content_ids: [product_id], content_type: "product", value: itemPriceCents / 100, currency: "BRL" },
-      };
-      const capiUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/meta-capi`;
-      fetch(capiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("CRON_SECRET") || "" },
-        body: JSON.stringify(capiBody),
-      }).catch((e) => console.error("[capi] InitiateCheckout error:", e.message));
+      try {
+        const userEmail = claimsData.claims.email as string | undefined;
+        const { buildMetaUserDataForUser, toCapiUserData } = await import("../_shared/meta-capi-user-data.ts");
+        const fwd = req.headers.get("x-forwarded-for");
+        const clientIp = fwd ? fwd.split(",")[0].trim() : (req.headers.get("x-real-ip") || undefined);
+        const ua = req.headers.get("user-agent") || undefined;
+        const enriched = await buildMetaUserDataForUser(supabaseAdmin as any, userId, {
+          email: userEmail,
+          fbp: fbp || null,
+          fbc: fbc || null,
+          clientIpAddress: clientIp,
+          clientUserAgent: ua,
+        });
+        const capiBody: Record<string, unknown> = {
+          event_name: "InitiateCheckout",
+          event_id: initiate_checkout_event_id,
+          event_time: Math.floor(Date.now() / 1000),
+          event_source_url: origin,
+          user_data: toCapiUserData(enriched),
+          custom_data: { content_ids: [product_id], content_type: "product", value: itemPriceCents / 100, currency: "BRL" },
+        };
+        const capiUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/meta-capi`;
+        fetch(capiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("CRON_SECRET") || "" },
+          body: JSON.stringify(capiBody),
+        }).catch((e) => console.error("[capi] InitiateCheckout error:", e.message));
+      } catch (e) {
+        console.error("[capi] InitiateCheckout build error:", (e as Error).message);
+      }
     }
 
     console.log("[checkout] Complete for user:", userId);
