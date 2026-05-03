@@ -695,6 +695,7 @@ export type Database = {
           created_at: string
           id: string
           model_name: string
+          notes: string | null
           phone: string
           user_id: string | null
         }
@@ -702,6 +703,7 @@ export type Database = {
           created_at?: string
           id?: string
           model_name: string
+          notes?: string | null
           phone: string
           user_id?: string | null
         }
@@ -709,6 +711,7 @@ export type Database = {
           created_at?: string
           id?: string
           model_name?: string
+          notes?: string | null
           phone?: string
           user_id?: string | null
         }
@@ -1155,6 +1158,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      insert_model_request: {
+        Args: { _model_name: string; _notes?: string; _phone: string }
+        Returns: string
       }
       move_to_dlq: {
         Args: {
