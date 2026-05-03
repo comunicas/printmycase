@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { ArrowRight, Check, Download, Loader2, RotateCcw } from "lucide-react";
+import { ArrowRight, Check, Download, Loader2, RotateCcw, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ContinueBarProps {
@@ -12,9 +12,10 @@ interface ContinueBarProps {
   showDownload?: boolean;
   onDownload?: () => Promise<void> | void;
   hasImage?: boolean;
+  priceLabel?: string;
 }
 
-const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, inline, showDownload, onDownload, hasImage }: ContinueBarProps) => {
+const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, inline, showDownload, onDownload, hasImage, priceLabel }: ContinueBarProps) => {
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = useCallback(async () => {
@@ -49,6 +50,8 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
     </Button>
   );
 
+  const showRichCta = hasImage && !isRendering;
+
   const renderButtonContent = () => {
     if (isRendering) {
       return <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</>;
@@ -56,23 +59,40 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
     if (!hasImage) {
       return <>📸 Envie uma foto para continuar</>;
     }
-    return <>Ver resumo e pedir <ArrowRight className="w-4 h-4" /></>;
+    return (
+      <>
+        <ShoppingBag className="w-5 h-5" />
+        Finalizar pedido
+        {priceLabel && <span className="ml-auto font-bold">{priceLabel}</span>}
+      </>
+    );
   };
 
   const continueTitle = disabled && !hasImage ? "Envie uma foto primeiro para continuar" : undefined;
 
+  const microcopy = showRichCta && (
+    <p className="text-center text-xs text-muted-foreground">
+      Próximo: endereço e pagamento · Frete grátis para todo o Brasil
+    </p>
+  );
+
+  const ctaClassName = showRichCta
+    ? "flex-1 h-14 rounded-xl text-base font-semibold gap-2 shadow-sm shadow-primary/20 sm:min-w-[220px] sm:flex-none"
+    : "flex-1 gap-1.5 sm:min-w-[148px] sm:flex-none";
+
   if (inline) {
     return (
-      <div className="w-full py-3">
+      <div className="w-full py-3 space-y-2">
         <div className="flex items-center gap-3 w-full">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {resetButton}
             {downloadButton}
           </div>
-          <Button className="flex-1 gap-1.5 sm:min-w-[148px] sm:flex-none" onClick={onContinue} disabled={disabled} title={continueTitle}>
+          <Button className={ctaClassName} onClick={onContinue} disabled={disabled} title={continueTitle}>
             {renderButtonContent()}
           </Button>
         </div>
+        {microcopy}
       </div>
     );
   }
@@ -87,10 +107,16 @@ const ContinueBar = ({ isModified, onReset, onContinue, disabled, isRendering, i
               {resetButton}
               {downloadButton}
             </div>
-            <Button className="gap-1.5 shrink-0" onClick={onContinue} disabled={disabled} title={continueTitle}>
+            <Button
+              className={showRichCta ? "h-14 rounded-xl text-base font-semibold gap-2 shadow-sm shadow-primary/20 shrink-0" : "gap-1.5 shrink-0"}
+              onClick={onContinue}
+              disabled={disabled}
+              title={continueTitle}
+            >
               {renderButtonContent()}
             </Button>
           </div>
+          {microcopy}
         </div>
       </div>
     </>
