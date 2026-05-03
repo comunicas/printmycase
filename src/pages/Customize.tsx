@@ -63,6 +63,14 @@ const Customize = () => {
 
   return (
     <div className="h-dvh w-full bg-background flex flex-col overflow-hidden">
+      <OnboardingModal
+        isOpen={isModalOpen}
+        step={currentStep}
+        stepIndex={stepIndex}
+        totalSteps={totalSteps}
+        onNext={advanceStep}
+        onSkip={skipOnboarding}
+      />
       <div className="relative z-50">
         <CustomizeHeader
           productName={c.productName}
@@ -86,7 +94,7 @@ const Customize = () => {
             showSafeZone={showSafeZone}
             onPositionChange={c.setPosition}
             onScaleChange={c.setScale}
-            onImageUpload={c.handleImageUpload}
+            onImageUpload={handleImageUploadWithOnboarding}
             imageResolution={c.imageResolution}
             isProcessing={c.isProcessing}
             uploadState={c.uploadState}
