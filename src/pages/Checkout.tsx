@@ -259,7 +259,7 @@ const Checkout = () => {
           edited_image_url: editedImageUrl,
           shipping_cents: shipping.priceCents,
           initiate_checkout_event_id: initiateCheckoutEventId.current,
-          ...(() => { const { fbp, fbc } = (require("@/lib/meta-pixel") as typeof import("@/lib/meta-pixel")).getMetaCookies(); return { fbp, fbc }; })(),
+          ...getMetaCookies(),
           address_id: addressData.selectedAddressId,
           address_inline: addressData.selectedAddressId ? undefined : {
             street: addressData.street,
