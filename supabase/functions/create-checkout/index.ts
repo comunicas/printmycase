@@ -209,7 +209,16 @@ Deno.serve(async (req) => {
 
     const origin = getSafeOrigin(req);
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
-    const shippingValue = shipping_cents ? Number(shipping_cents) : 0;
+    // Calculate shipping server-side from the resolved address ZIP, ignoring client-supplied value
+    const shippingZip = (shippingAddress?.zip_code || "").replace(/\D/g, "");
+    const shippingValue = computeShippingCents(shippingZip);
+    if (shippingValue === null) {
+      console.warn("[checkout] Shipping unavailable for zip:", shippingZip);
+      return new Response(JSON.stringify({ error: "Shipping unavailable for this address" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const itemPriceCents = isCollectionPurchase ? design!.price_cents : product.price_cents;
     const totalCents = itemPriceCents + shippingValue;
     const itemName = isCollectionPurchase
