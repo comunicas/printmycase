@@ -102,6 +102,37 @@ const Customize = () => {
           currentSlug={c.product?.slug}
           onShowIntro={() => setShowIntro(true)}
         />
+        {isFirstVisit && currentStep && currentStep !== "done" && (
+          <div className="hidden lg:flex items-center justify-center gap-3 py-2 px-4 border-t border-border/50 bg-background/80 backdrop-blur-sm text-xs text-muted-foreground">
+            {[
+              { key: "upload", label: "1. Foto" },
+              { key: "position", label: "2. Posicionar" },
+              { key: "filter", label: "3. Estilo IA" },
+              { key: "checkout", label: "4. Finalizar" },
+            ].map((s, i) => {
+              const stepOrder = ["upload", "position", "filter", "checkout"];
+              const currentIndex = stepOrder.indexOf(currentStep);
+              const isActive = s.key === currentStep;
+              const isDone = stepOrder.indexOf(s.key) < currentIndex;
+              return (
+                <span
+                  key={s.key}
+                  className={`flex items-center gap-1 transition-colors ${
+                    isActive
+                      ? "text-primary font-semibold"
+                      : isDone
+                      ? "text-primary/60"
+                      : "text-muted-foreground/50"
+                  }`}
+                >
+                  {isDone && <span>✓</span>}
+                  {s.label}
+                  {i < 3 && <span className="ml-3 text-border">›</span>}
+                </span>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-0 px-4 lg:px-0 overflow-hidden">
