@@ -280,6 +280,7 @@ const Customize = () => {
             showDownload={!!c.activeFilterId}
             onDownload={c.handleDownload}
             hasImage={!!c.image}
+            priceLabel={c.product?.price_cents ? formatPrice(c.product.price_cents / 100) : undefined}
           />
         )}
       </div>
